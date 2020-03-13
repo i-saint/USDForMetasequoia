@@ -34,14 +34,14 @@ mqusdPlayerWindow::mqusdPlayerWindow(mqusdPlayerPlugin* plugin, MQWindowBase& pa
         m_frame_play = vf;
 
         MQFrame* hf = CreateHorizontalFrame(vf);
-        CreateLabel(hf, L"Frame");
-        m_edit_sample = CreateEdit(hf);
-        m_edit_sample->SetNumeric(MQEdit::NUMERIC_INT);
-        m_edit_sample->SetText(L"0");
-        m_edit_sample->AddChangedEvent(this, &mqusdPlayerWindow::OnSampleEdit);
+        CreateLabel(hf, L"Time");
+        m_edit_time = CreateEdit(hf);
+        m_edit_time->SetNumeric(MQEdit::NUMERIC_INT);
+        m_edit_time->SetText(L"0");
+        m_edit_time->AddChangedEvent(this, &mqusdPlayerWindow::OnSampleEdit);
 
-        m_slider_sample = CreateSlider(vf);
-        m_slider_sample->AddChangingEvent(this, &mqusdPlayerWindow::OnSampleSlide);
+        m_slider_time = CreateSlider(vf);
+        m_slider_time->AddChangingEvent(this, &mqusdPlayerWindow::OnSampleSlide);
     }
     {
         MQFrame* vf = CreateVerticalFrame(this);
@@ -106,9 +106,9 @@ BOOL mqusdPlayerWindow::OnOpenClicked(MQWidgetBase* sender, MQDocument doc)
         if (dlg.Execute()) {
             auto path = dlg.GetFileName();
             if (m_plugin->OpenUSD(mu::ToMBS(path))) {
-                m_slider_sample->SetMin(0);
-                m_slider_sample->SetMax((double)(m_plugin->GetSampleCount() - 1));
-                m_slider_sample->SetPosition(0);
+                m_slider_time->SetMin(m_plugin->GetTimeStart());
+                m_slider_time->SetMax(m_plugin->GetTimeEnd());
+                m_slider_time->SetPosition(m_plugin->GetTimeStart());
 
                 m_frame_open->SetVisible(false);
                 m_frame_play->SetVisible(true);
@@ -128,11 +128,11 @@ BOOL mqusdPlayerWindow::OnOpenClicked(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqusdPlayerWindow::OnSampleEdit(MQWidgetBase* sender, MQDocument doc)
 {
-    auto str = mu::ToMBS(m_edit_sample->GetText());
+    auto str = mu::ToMBS(m_edit_time->GetText());
     auto value = std::atof(str.c_str());
-    m_slider_sample->SetPosition(value);
+    m_slider_time->SetPosition(value);
 
-    m_plugin->Seek(doc, (int64_t)value);
+    m_plugin->Seek(doc, value);
     return 0;
 }
 
@@ -140,11 +140,11 @@ BOOL mqusdPlayerWindow::OnSampleSlide(MQWidgetBase* sender, MQDocument doc)
 {
     const size_t buf_len = 128;
     wchar_t buf[buf_len];
-    auto value = m_slider_sample->GetPosition();
-    swprintf(buf, buf_len, L"%d", (int)value);
-    m_edit_sample->SetText(buf);
+    auto value = m_slider_time->GetPosition();
+    swprintf(buf, buf_len, L"%lf", value);
+    m_edit_time->SetText(buf);
 
-    m_plugin->Seek(doc, (int64_t)value);
+    m_plugin->Seek(doc, value);
     return 0;
 }
 

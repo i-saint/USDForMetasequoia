@@ -8,8 +8,8 @@
 #define mqusdRecorderPluginID   0xB1CC99A0
 #define mqusdPlayerPluginID     0xB1CC99A1
 
-#define mqusdVertexColorPropName    "C"
-#define mqusdMaterialIDPropName     "MID"
+#define mqusdUVAttr             "primvars:st"
+#define mqusdMaterialIDAttr     "materialIds"
 
 #define mqusdMtlTarget          "metasequoia"
 #define mqusdMtlShaderClassic   "classic"

@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "mqusdMesh.h"
+#include "mqusdNode.h"
 
 class mqusdPlayerWindow;
 
@@ -99,106 +99,15 @@ public:
     bool OpenUSD(const std::string& v);
     bool CloseUSD();
     void ImportMaterials(MQDocument doc);
-    void Seek(MQDocument doc, int64_t i);
+    void Seek(MQDocument doc, double t);
     void Refresh(MQDocument doc);
 
     mqusdPlayerSettings& GetSettings();
     bool IsArchiveOpened() const;
-    int64_t GetSampleCount() const;
+    double GetTimeStart() const;
+    double GetTimeEnd() const;
 
 private:
-    class Node
-    {
-    public:
-        enum class Type
-        {
-            Unknown,
-            Top,
-            Xform,
-            PolyMesh,
-            Material,
-        };
-
-        Node(Node *parent, UsdPrim abc);
-        virtual ~Node();
-        virtual Type getType() const;
-        virtual void update(int64_t si);
-
-        template<class NodeT> NodeT* findParent();
-
-        Node* parent = nullptr;
-        std::vector<Node*> children;
-        UsdPrim abcobj;
-        std::string name;
-    };
-    using NodePtr = std::shared_ptr<Node>;
-
-
-    class TopNode : public Node
-    {
-    using super = Node;
-    public:
-        static const Type node_type = Type::Top;
-
-        TopNode(UsdPrim abc);
-        Type getType() const override;
-    };
-
-
-    class XformNode : public Node
-    {
-    using super = Node;
-    public:
-        static const Type node_type = Type::Xform;
-
-        XformNode(Node* parent, UsdPrim abc);
-        Type getType() const override;
-        void update(int64_t si) override;
-
-        UsdGeomXformable schema;
-        XformNode* parent_xform = nullptr;
-        float4x4 local_matrix = float4x4::identity();
-        float4x4 global_matrix = float4x4::identity();
-    };
-
-
-    class MeshNode : public Node
-    {
-    using super = Node;
-    public:
-        static const Type node_type = Type::PolyMesh;
-
-        MeshNode(Node* parent, UsdPrim abc);
-        Type getType() const override;
-        void update(int64_t si) override;
-        void convert(const mqusdPlayerSettings& settings);
-
-        UsdGeomMesh schema;
-        mqusdMesh mesh;
-        XformNode* parent_xform = nullptr;
-        size_t sample_count = 0;
-
-    private:
-        void updateMeshData(int64_t si);
-    };
-
-
-    class MaterialNode : public Node
-    {
-    using super = Node;
-    public:
-        static const Type node_type = Type::Material;
-
-        MaterialNode(Node* parent, UsdPrim abc);
-        Type getType() const override;
-        void update(int64_t si) override;
-        bool valid() const;
-
-        mqusdMaterial material;
-
-    private:
-        void updateMeshData(int64_t si);
-    };
 
     void ConstructTree(Node *n);
     bool DoSeek(MQDocument doc);
@@ -207,14 +116,12 @@ private:
     mqusdPlayerWindow* m_window = nullptr;
     mqusdPlayerSettings m_settings;
 
-    std::string m_abc_path;
-    std::shared_ptr<std::fstream> m_stream;
+    std::string m_usd_path;
     UsdStageRefPtr m_stage;
-    int64_t m_sample_count = 0;
-    int64_t m_sample_index = 0;
+    double m_seek_time = 0;
 
     std::vector<NodePtr> m_nodes;
-    TopNode* m_top_node = nullptr;
+    RootNode* m_root_node = nullptr;
     std::vector<MeshNode*> m_mesh_nodes;
     std::vector<MaterialNode*> m_material_nodes;
 

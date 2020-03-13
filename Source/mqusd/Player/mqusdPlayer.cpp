@@ -1,145 +1,8 @@
 #include "pch.h"
 #include "mqusd.h"
 #include "mqusdPlayerPlugin.h"
+#include "mqusdNodeInternal.h"
 
-
-mqusdPlayerPlugin::Node::Node(Node* p, UsdPrim abc)
-    : parent(p)
-    , abcobj(abc)
-{
-    name = abc.GetName();
-    if (parent)
-        parent->children.push_back(this);
-}
-
-mqusdPlayerPlugin::Node::~Node()
-{
-}
-
-mqusdPlayerPlugin::Node::Type mqusdPlayerPlugin::Node::getType() const
-{
-    return Type::Unknown;
-}
-
-void mqusdPlayerPlugin::Node::update(int64_t si)
-{
-    for (auto child : children)
-        child->update(si);
-}
-
-template<class NodeT>
-NodeT* mqusdPlayerPlugin::Node::findParent()
-{
-    for (Node* p = parent; p != nullptr; p = p->parent) {
-        if (p->getType() == NodeT::node_type)
-            return (NodeT*)p;
-    }
-    return nullptr;
-}
-
-
-mqusdPlayerPlugin::TopNode::TopNode(UsdPrim abc)
-    : super(nullptr, abc)
-{
-}
-
-mqusdPlayerPlugin::Node::Type mqusdPlayerPlugin::TopNode::getType() const
-{
-    return Type::Top;
-}
-
-
-mqusdPlayerPlugin::XformNode::XformNode(Node* p, UsdPrim abc)
-    : super(p, abc)
-{
-    // todo
-    parent_xform = findParent<XformNode>();
-}
-
-mqusdPlayerPlugin::Node::Type mqusdPlayerPlugin::XformNode::getType() const
-{
-    return Type::Xform;
-}
-
-void mqusdPlayerPlugin::XformNode::update(int64_t si)
-{
-    if (schema) {
-        // todo
-
-        if (parent_xform)
-            global_matrix = local_matrix * parent_xform->global_matrix;
-        else
-            global_matrix = local_matrix;
-    }
-
-    super::update(si);
-}
-
-
-mqusdPlayerPlugin::MeshNode::MeshNode(Node* p, UsdPrim abc)
-    : super(p, abc)
-{
-    // todo
-    parent_xform = findParent<XformNode>();
-}
-
-mqusdPlayerPlugin::Node::Type mqusdPlayerPlugin::MeshNode::getType() const
-{
-    return Type::PolyMesh;
-}
-
-
-void mqusdPlayerPlugin::MeshNode::update(int64_t si)
-{
-    updateMeshData(si);
-    super::update(si);
-}
-
-void mqusdPlayerPlugin::MeshNode::updateMeshData(int64_t si)
-{
-    mesh.clear();
-
-    // todo
-
-    // validate
-    mesh.clearInvalidComponent();
-}
-
-void mqusdPlayerPlugin::MeshNode::convert(const mqusdPlayerSettings& settings)
-{
-    if (parent_xform)
-        mesh.applyTransform(parent_xform->global_matrix);
-    mesh.applyScale(settings.scale_factor);
-    if (settings.flip_x)
-        mesh.flipX();
-    if (settings.flip_yz)
-        mesh.flipYZ();
-    if (settings.flip_faces)
-        mesh.flipFaces();
-}
-
-
-mqusdPlayerPlugin::MaterialNode::MaterialNode(Node* p, UsdPrim abc)
-    : super(p, abc)
-{
-    // todo
-
-}
-
-mqusdPlayerPlugin::Node::Type mqusdPlayerPlugin::MaterialNode::getType() const
-{
-    return Type::Material;
-}
-
-void mqusdPlayerPlugin::MaterialNode::update(int64_t si)
-{
-    // nothing to do for now
-}
-
-bool mqusdPlayerPlugin::MaterialNode::valid() const
-{
-    return false;
-}
 
 
 
@@ -158,26 +21,26 @@ bool mqusdPlayerPlugin::OpenUSD(const std::string& path)
 //    for (auto& m : masters) {
 //        m_masters.push_back(createSchemaRecursive(nullptr, m));
 //}
-//    auto root_prim = m_stage->GetPseudoRoot();
-//    if (root_prim.IsValid()) {
-//        m_root = createSchemaRecursive(nullptr, root_prim);
-//    }
+    auto root = m_stage->GetPseudoRoot();
+    if (root.IsValid()) {
+        m_root_node = new RootNode_(root);
+        ConstructTree(m_root_node);
+    }
 
     return true;
 }
 
 bool mqusdPlayerPlugin::CloseUSD()
 {
-    m_top_node = nullptr;
+    m_root_node = nullptr;
     m_mesh_nodes.clear();
     m_material_nodes.clear();
     m_nodes.clear();
 
     m_stage = {};
-    m_stream.reset();
-    m_abc_path.clear();
+    m_usd_path.clear();
 
-    m_sample_count = m_sample_index = 0;
+    m_seek_time = 0;
     m_mqobj_id = 0;
 
     return true;
@@ -187,15 +50,15 @@ void mqusdPlayerPlugin::ConstructTree(Node* n)
 {
     m_nodes.push_back(NodePtr(n));
 
-    auto& prim = n->abcobj;
+    auto& prim = *n->getPrim();
     auto children = prim.GetChildren();
     for (auto cprim : children) {
         Node* c = nullptr;
 
-        {
+        if (!c) {
             UsdGeomMesh mesh(cprim);
             if (mesh) {
-                auto mn = new MeshNode(n, cprim);
+                auto mn = new MeshNode_(n, cprim);
                 m_mesh_nodes.push_back(mn);
                 c = mn;
             }
@@ -204,11 +67,11 @@ void mqusdPlayerPlugin::ConstructTree(Node* n)
         if (!c) {
             UsdGeomXformable xform(cprim);
             if (xform) {
-                c = new XformNode(n, cprim);
+                c = new XformNode_(n, cprim);
             }
         }
         if (!c) {
-            c = new Node(n, cprim);
+            c = new Node_(n, cprim);
         }
 
         ConstructTree(c);
@@ -242,15 +105,15 @@ void mqusdPlayerPlugin::ImportMaterials(MQDocument doc)
     }
 }
 
-void mqusdPlayerPlugin::Seek(MQDocument doc, int64_t i)
+void mqusdPlayerPlugin::Seek(MQDocument doc, double t)
 {
     if (!m_stage)
         return;
 
-    m_sample_index = i;
+    m_seek_time = t;
 
     // read abc
-    m_top_node->update(i);
+    m_root_node->update(t);
     mu::parallel_for_each(m_mesh_nodes.begin(), m_mesh_nodes.end(), [this](MeshNode* n) {
         n->convert(m_settings);
     });
@@ -269,7 +132,7 @@ void mqusdPlayerPlugin::Seek(MQDocument doc, int64_t i)
         while (doc->GetMaterialCount() <= nmaterials) {
             const size_t buf_len = 128;
             wchar_t buf[buf_len];
-            swprintf(buf, buf_len, L"abcmat%d", mi++);
+            swprintf(buf, buf_len, L"usdmat%d", mi++);
 
             auto mat = MQ_CreateMaterial();
             mat->SetName(buf);
@@ -286,7 +149,7 @@ void mqusdPlayerPlugin::Seek(MQDocument doc, int64_t i)
         doc->AddObject(obj);
         m_mqobj_id = obj->GetUniqueID();
 
-        auto name = mu::GetFilename_NoExtension(m_abc_path.c_str());
+        auto name = mu::GetFilename_NoExtension(m_usd_path.c_str());
         obj->SetName(name.c_str());
     }
     obj->Clear();
@@ -357,7 +220,7 @@ void mqusdPlayerPlugin::Seek(MQDocument doc, int64_t i)
 
 void mqusdPlayerPlugin::Refresh(MQDocument doc)
 {
-    Seek(doc, m_sample_index);
+    Seek(doc, m_seek_time);
 }
 
 mqusdPlayerSettings& mqusdPlayerPlugin::GetSettings()
@@ -370,7 +233,11 @@ bool mqusdPlayerPlugin::IsArchiveOpened() const
     return m_stage;
 }
 
-int64_t mqusdPlayerPlugin::GetSampleCount() const
+double mqusdPlayerPlugin::GetTimeStart() const
 {
-    return m_sample_count;
+    return m_stage->GetStartTimeCode();
+}
+double mqusdPlayerPlugin::GetTimeEnd() const
+{
+    return m_stage->GetEndTimeCode();
 }

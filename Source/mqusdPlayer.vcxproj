@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="mqusd\mqusd.cpp" />
     <ClCompile Include="mqusd\mqusdMesh.cpp" />
+    <ClCompile Include="mqusd\mqusdNode.cpp" />
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -31,6 +32,8 @@
   <ItemGroup>
     <ClInclude Include="mqusd\mqusd.h" />
     <ClInclude Include="mqusd\mqusdMesh.h" />
+    <ClInclude Include="mqusd\mqusdNode.h" />
+    <ClInclude Include="mqusd\mqusdNodeInternal.h" />
     <ClInclude Include="mqusd\pch.h" />
     <ClInclude Include="mqusd\Player\mqusdPlayerPlugin.h" />
     <ClInclude Include="mqusd\Player\mqusdPlayerWindow.h" />

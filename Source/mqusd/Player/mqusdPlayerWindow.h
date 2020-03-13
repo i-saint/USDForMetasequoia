@@ -25,8 +25,8 @@ private:
     MQButton* m_button_open = nullptr;
 
     MQFrame* m_frame_play = nullptr;
-    MQEdit* m_edit_sample = nullptr;
-    MQSlider* m_slider_sample = nullptr;
+    MQEdit* m_edit_time = nullptr;
+    MQSlider* m_slider_time = nullptr;
 
     MQEdit* m_edit_scale = nullptr;
     MQCheckBox* m_check_flip_faces = nullptr;

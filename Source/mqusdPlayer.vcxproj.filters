@@ -24,6 +24,12 @@
     <ClInclude Include="mqusd\Player\mqusdPlayerWindow.h">
       <Filter>mqusd</Filter>
     </ClInclude>
+    <ClInclude Include="mqusd\mqusdNode.h">
+      <Filter>mqusd</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\mqusdNodeInternal.h">
+      <Filter>mqusd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\pch.cpp">
@@ -42,6 +48,9 @@
       <Filter>mqusd</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\Player\mqusdPlayerPlugin.cpp">
+      <Filter>mqusd</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\mqusdNode.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
   </ItemGroup>
