@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "mqusdMesh.h"
+#include "mqusdSceneGraph.h"
 
 class mqusdRecorderWindow;
 
@@ -106,7 +106,7 @@ public:
     bool CloseABC();
 
     const std::string& GetMQOPath() const;
-    const std::string& GetABCPath() const;
+    const std::string& GetUSDPath() const;
     bool IsArchiveOpened() const;
     bool IsRecording() const;
     void SetRecording(bool v);
@@ -154,14 +154,13 @@ private:
     bool m_recording = false;
 
     std::string m_mqo_path;
-    std::string m_abc_path;
     mu::nanosec m_start_time = 0;
     mu::nanosec m_last_flush = 0;
     mu::nanosec m_interval = 5000000000; // 5 sec
 
-    UsdStageRefPtr m_stage;
-    UsdPrim m_root_node;
-    UsdGeomMesh m_mesh_node;
+    ScenePtr m_scene;
+    RootNode *m_root_node = nullptr;
+    MeshNode *m_mesh_node = nullptr;
 
     std::vector<double> m_timeline;
 

@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqusdNodeInternal.h"
+#include "mqusdSceneGraphImpl.h"
 
 Node_::Node_(Node* p, UsdPrim usd)
     : super(p, usd)
@@ -20,7 +20,7 @@ XformNode_::XformNode_(Node* p, UsdPrim usd)
     schema = UsdGeomXformable(usd);
 }
 
-void XformNode_::update(double si)
+void XformNode_::seek(double si)
 {
     if (schema) {
         // todo
@@ -30,8 +30,6 @@ void XformNode_::update(double si)
         else
             global_matrix = local_matrix;
     }
-
-    super::update(si);
 }
 
 
@@ -43,13 +41,7 @@ MeshNode_::MeshNode_(Node* p, UsdPrim usd)
     attr_mids = prim.GetAttribute(TfToken(mqusdMaterialIDAttr));
 }
 
-void MeshNode_::update(double si)
-{
-    updateMeshData(si);
-    super::update(si);
-}
-
-void MeshNode_::updateMeshData(double si)
+void MeshNode_::seek(double si)
 {
     mesh.clear();
     if (!schema)
@@ -57,34 +49,34 @@ void MeshNode_::updateMeshData(double si)
 
     auto t = UsdTimeCode(si);
     {
-        VtArray<int> counts;
-        schema.GetFaceVertexCountsAttr().Get(&counts, t);
-        mesh.counts.assign(counts.cdata(), counts.size());
+        VtArray<int> data;
+        schema.GetFaceVertexCountsAttr().Get(&data, t);
+        mesh.counts.assign(data.cdata(), data.size());
     }
     {
-        VtArray<int> indices;
-        schema.GetFaceVertexIndicesAttr().Get(&indices, t);
-        mesh.indices.assign(indices.cdata(), indices.size());
+        VtArray<int> data;
+        schema.GetFaceVertexIndicesAttr().Get(&data, t);
+        mesh.indices.assign(data.cdata(), data.size());
     }
     {
-        VtArray<GfVec3f> points;
-        schema.GetPointsAttr().Get(&points, t);
-        mesh.points.assign((float3*)points.cdata(), points.size());
+        VtArray<GfVec3f> data;
+        schema.GetPointsAttr().Get(&data, t);
+        mesh.points.assign((float3*)data.cdata(), data.size());
     }
     {
-        VtArray<GfVec3f> normals;
-        schema.GetNormalsAttr().Get(&normals, t);
-        mesh.normals.assign((float3*)normals.cdata(), normals.size());
+        VtArray<GfVec3f> data;
+        schema.GetNormalsAttr().Get(&data, t);
+        mesh.normals.assign((float3*)data.cdata(), data.size());
     }
     if (attr_uvs) {
-        VtArray<GfVec2f> uvs;
-        attr_uvs.Get(&uvs, t);
-        mesh.uvs.assign((float2*)uvs.cdata(), uvs.size());
+        VtArray<GfVec2f> data;
+        attr_uvs.Get(&data, t);
+        mesh.uvs.assign((float2*)data.cdata(), data.size());
     }
     if (attr_mids) {
-        VtArray<int> mids;
-        attr_mids.Get(&mids, t);
-        mesh.material_ids.assign(mids.cdata(), mids.size());
+        VtArray<int> data;
+        attr_mids.Get(&data, t);
+        mesh.material_ids.assign(data.cdata(), data.size());
     }
 
     // validate
@@ -98,7 +90,7 @@ MaterialNode_::MaterialNode_(Node* p, UsdPrim usd)
     // todo
 }
 
-void MaterialNode_::update(double si)
+void MaterialNode_::seek(double si)
 {
     // nothing to do for now
 }
@@ -116,6 +108,7 @@ Scene_::Scene_()
 
 Scene_::~Scene_()
 {
+    close();
 }
 
 bool Scene_::open(const char* p)
@@ -123,7 +116,10 @@ bool Scene_::open(const char* p)
     m_stage = UsdStage::Open(path);
     if (!m_stage)
         return false;
+
     path = p;
+    time_start = m_stage->GetStartTimeCode();
+    time_end = m_stage->GetEndTimeCode();
 
     //    auto masters = m_stage->GetMasters();
     //    for (auto& m : masters) {
@@ -135,21 +131,6 @@ bool Scene_::open(const char* p)
         constructTree(root_node);
     }
     return true;
-}
-
-void Scene_::close()
-{
-    path.clear();
-    root_node = nullptr;
-    mesh_nodes.clear();
-    material_nodes.clear();
-    nodes.clear();
-
-    m_stage = {};
-}
-
-void Scene_::update(double t)
-{
 }
 
 void Scene_::constructTree(Node* n)
@@ -182,4 +163,27 @@ void Scene_::constructTree(Node* n)
 
         constructTree(c);
     }
+}
+
+void Scene_::close()
+{
+    m_stage = {};
+    super::close();
+}
+
+void Scene_::seek(double t)
+{
+    super::seek(t);
+}
+
+
+#ifdef _WIN32
+    #define mqusdCoreAPI extern "C" __declspec(dllexport)
+#else
+    #define mqusdCoreAPI extern "C" 
+#endif
+
+mqusdCoreAPI Scene* mqusdCreateScene()
+{
+    return new Scene_();
 }

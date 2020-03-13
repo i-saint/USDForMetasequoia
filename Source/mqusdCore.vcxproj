@@ -19,23 +19,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="mqusd\Core\mqusdCore.cpp" />
+    <ClCompile Include="mqusd\Core\mqusdSceneGraphImpl.cpp" />
     <ClCompile Include="mqusd\mqusd.cpp" />
     <ClCompile Include="mqusd\mqusdMesh.cpp" />
     <ClCompile Include="mqusd\mqusdSceneGraph.cpp" />
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="mqusd\Recorder\mqusdRecorder.cpp" />
-    <ClCompile Include="mqusd\Recorder\mqusdRecorderPlugin.cpp" />
-    <ClCompile Include="mqusd\Recorder\mqusdRecorderWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mqusd\Core\mqusdCore.h" />
+    <ClInclude Include="mqusd\Core\mqusdSceneGraphImpl.h" />
     <ClInclude Include="mqusd\mqusd.h" />
     <ClInclude Include="mqusd\mqusdMesh.h" />
     <ClInclude Include="mqusd\mqusdSceneGraph.h" />
     <ClInclude Include="mqusd\pch.h" />
-    <ClInclude Include="mqusd\Recorder\mqusdRecorderPlugin.h" />
-    <ClInclude Include="mqusd\Recorder\mqusdRecorderWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshUtils.vcxproj">
@@ -52,9 +51,9 @@
     <Natvis Include="NatvisFile.natvis" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{66397903-6FF2-46C6-B51E-B323FD248FAD}</ProjectGuid>
+    <ProjectGuid>{1268FD59-3699-4E3A-9D67-A0A6A213B8FA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>mqusdRecorder</ProjectName>
+    <ProjectName>mqusdCore</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Debug'">
@@ -84,7 +83,7 @@
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>mqusdDebug;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>mqusdDebug;mqusdCoreImpl;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -104,6 +103,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>false</OmitFramePointers>
       <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>mqusdCoreImpl;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ControlFlowGuard>Guard</ControlFlowGuard>
       <FloatingPointModel>Fast</FloatingPointModel>

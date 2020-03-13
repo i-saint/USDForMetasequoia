@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "mqusdNode.h"
+#include "mqusdSceneGraph.h"
 
 class mqusdPlayerWindow;
 
@@ -116,15 +116,8 @@ private:
     mqusdPlayerWindow* m_window = nullptr;
     mqusdPlayerSettings m_settings;
 
-    std::string m_usd_path;
-    UsdStageRefPtr m_stage;
+    std::shared_ptr<Scene> m_scene;
     double m_seek_time = 0;
-
-    std::vector<NodePtr> m_nodes;
-    RootNode* m_root_node = nullptr;
-    std::vector<MeshNode*> m_mesh_nodes;
-    std::vector<MaterialNode*> m_material_nodes;
-
     mqusdMesh m_mesh_merged;
     int m_mqobj_id = 0;
 };

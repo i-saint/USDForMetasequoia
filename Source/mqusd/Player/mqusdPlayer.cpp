@@ -1,44 +1,30 @@
 #include "pch.h"
 #include "mqusd.h"
 #include "mqusdPlayerPlugin.h"
-#include "mqusdNodeInternal.h"
 
 
 
 
 bool mqusdPlayerPlugin::OpenUSD(const std::string& path)
 {
-    m_stage = UsdStage::Open(path);
-    if (!m_stage) {
+    m_scene = CreateScene();
+    if (!m_scene)
+        return false;
+
+    if (!m_scene->open(path.c_str())) {
         LogInfo(
             "failed to open %s\n"
             "it may not an usd file"
             , path.c_str());
+        m_scene = {};
         return false;
     }
-
-//    auto masters = m_stage->GetMasters();
-//    for (auto& m : masters) {
-//        m_masters.push_back(createSchemaRecursive(nullptr, m));
-//}
-    auto root = m_stage->GetPseudoRoot();
-    if (root.IsValid()) {
-        m_root_node = new RootNode_(root);
-        ConstructTree(m_root_node);
-    }
-
     return true;
 }
 
 bool mqusdPlayerPlugin::CloseUSD()
 {
-    m_root_node = nullptr;
-    m_mesh_nodes.clear();
-    m_material_nodes.clear();
-    m_nodes.clear();
-
-    m_stage = {};
-    m_usd_path.clear();
+    m_scene = {};
 
     m_seek_time = 0;
     m_mqobj_id = 0;
@@ -46,43 +32,15 @@ bool mqusdPlayerPlugin::CloseUSD()
     return true;
 }
 
-void mqusdPlayerPlugin::ConstructTree(Node* n)
-{
-    m_nodes.push_back(NodePtr(n));
-
-    auto& prim = *n->getPrim();
-    auto children = prim.GetChildren();
-    for (auto cprim : children) {
-        Node* c = nullptr;
-
-        if (!c) {
-            UsdGeomMesh mesh(cprim);
-            if (mesh) {
-                auto mn = new MeshNode_(n, cprim);
-                m_mesh_nodes.push_back(mn);
-                c = mn;
-            }
-        }
-        // xform must be last because Mesh is also Xformable
-        if (!c) {
-            UsdGeomXformable xform(cprim);
-            if (xform) {
-                c = new XformNode_(n, cprim);
-            }
-        }
-        if (!c) {
-            c = new Node_(n, cprim);
-        }
-
-        ConstructTree(c);
-    }
-}
-
 void mqusdPlayerPlugin::ImportMaterials(MQDocument doc)
 {
-    int nmaterials = (int)m_material_nodes.size();
+    if (!m_scene)
+        return;
+
+    auto& material_nodes = m_scene->material_nodes;
+    int nmaterials = (int)material_nodes.size();
     for (int mi = 0; mi < nmaterials; ++mi) {
-        auto& src= m_material_nodes[mi]->material;
+        auto& src= material_nodes[mi]->material;
         MQMaterial mqmat = nullptr;
         if (mi < doc->GetMaterialCount()) {
             mqmat = doc->GetMaterial(mi);
@@ -107,21 +65,16 @@ void mqusdPlayerPlugin::ImportMaterials(MQDocument doc)
 
 void mqusdPlayerPlugin::Seek(MQDocument doc, double t)
 {
-    if (!m_stage)
+    if (!m_scene)
         return;
 
     m_seek_time = t;
-
-    // read abc
-    m_root_node->update(t);
-    mu::parallel_for_each(m_mesh_nodes.begin(), m_mesh_nodes.end(), [this](MeshNode* n) {
-        n->convert(m_settings);
-    });
+    m_scene->seek(t);
 
     // build merged mesh
     auto& mesh = m_mesh_merged;
     mesh.clear();
-    for (auto n : m_mesh_nodes)
+    for (auto n : m_scene->mesh_nodes)
         mesh.merge(n->mesh);
     mesh.clearInvalidComponent();
 
@@ -149,7 +102,7 @@ void mqusdPlayerPlugin::Seek(MQDocument doc, double t)
         doc->AddObject(obj);
         m_mqobj_id = obj->GetUniqueID();
 
-        auto name = mu::GetFilename_NoExtension(m_usd_path.c_str());
+        auto name = mu::GetFilename_NoExtension(m_scene->path.c_str());
         obj->SetName(name.c_str());
     }
     obj->Clear();
@@ -230,14 +183,14 @@ mqusdPlayerSettings& mqusdPlayerPlugin::GetSettings()
 
 bool mqusdPlayerPlugin::IsArchiveOpened() const
 {
-    return m_stage;
+    return m_scene != nullptr;
 }
 
 double mqusdPlayerPlugin::GetTimeStart() const
 {
-    return m_stage->GetStartTimeCode();
+    return m_scene->time_start;
 }
 double mqusdPlayerPlugin::GetTimeEnd() const
 {
-    return m_stage->GetEndTimeCode();
+    return m_scene->time_end;
 }

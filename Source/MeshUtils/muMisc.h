@@ -1,5 +1,13 @@
 #pragma once
 
+#if defined(_WIN32)
+    #define muDLLSuffix ".dll"
+#elif defined(__APPLE__)
+    #define muDLLSuffix ".dylib"
+#else
+    #define muDLLSuffix ".so"
+#endif
+
 namespace mu {
 
 template < typename T, size_t N >
@@ -43,6 +51,7 @@ std::string GetCurrentModuleDirectory();
 void AddDLLSearchPath(const char *v);
 void* LoadModule(const char *path);
 void* GetModule(const char *module_name);
+void* GetSymbol(void *module, const char *name);
 bool ResolveImports(void *module);
 
 void InitializeSymbols(const char *path = nullptr);

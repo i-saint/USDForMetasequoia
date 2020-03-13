@@ -23,7 +23,8 @@ public:
     virtual ~Node();
     virtual void release();
     virtual Type getType() const;
-    virtual void update(double si);
+    virtual void seek(double si);
+    virtual void write();
 
     virtual UsdPrim* getPrim();
 
@@ -96,7 +97,11 @@ class Scene
 public:
     Scene();
     virtual ~Scene();
-    virtual void update(double t);
+    virtual void release();
+    virtual bool open(const char* path);
+    virtual void close();
+    virtual void seek(double t);
+    virtual void write();
 
 public:
     std::string path;
@@ -107,3 +112,7 @@ public:
     double time_start = 0.0;
     double time_end = 0.0;
 };
+using ScenePtr = std::shared_ptr<Scene>;
+
+ScenePtr CreateScene();
+

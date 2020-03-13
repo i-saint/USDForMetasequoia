@@ -21,7 +21,7 @@
   <ItemGroup>
     <ClCompile Include="mqusd\mqusd.cpp" />
     <ClCompile Include="mqusd\mqusdMesh.cpp" />
-    <ClCompile Include="mqusd\mqusdNode.cpp" />
+    <ClCompile Include="mqusd\mqusdSceneGraph.cpp" />
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -32,8 +32,7 @@
   <ItemGroup>
     <ClInclude Include="mqusd\mqusd.h" />
     <ClInclude Include="mqusd\mqusdMesh.h" />
-    <ClInclude Include="mqusd\mqusdNode.h" />
-    <ClInclude Include="mqusd\mqusdNodeInternal.h" />
+    <ClInclude Include="mqusd\mqusdSceneGraph.h" />
     <ClInclude Include="mqusd\pch.h" />
     <ClInclude Include="mqusd\Player\mqusdPlayerPlugin.h" />
     <ClInclude Include="mqusd\Player\mqusdPlayerWindow.h" />
@@ -73,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <IncludePath>$(SolutionDir);$(SolutionDir)mqusd;$(MQ_SDK_DIR);$(SolutionDir)Externals\$(Platform)\include;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)$(MQ_VERSION)\</OutDir>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(MQ_VERSION)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(Platform)_$(Configuration)\$(ProjectName)$(MQ_VERSION)\</IntDir>
     <LibraryPath>$(SolutionDir)Externals\$(Platform)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>

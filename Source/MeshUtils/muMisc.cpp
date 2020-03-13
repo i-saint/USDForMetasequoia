@@ -340,7 +340,7 @@ void* LoadModule(const char *path)
 #ifdef _WIN32
     return ::LoadLibraryA(path);
 #else  // _WIN32
-    return nullptr;
+    return ::dlopen(path, RTLD_NOW);
 #endif //_WIN32
 }
 
@@ -350,6 +350,15 @@ void* GetModule(const char *module_name)
     return ::GetModuleHandleA(module_name);
 #else  // _WIN32
     return nullptr;
+#endif //_WIN32
+}
+
+void* GetSymbol(void* module, const char* name)
+{
+#ifdef _WIN32
+    return ::GetProcAddress((HMODULE)module, name);
+#else  // _WIN32
+    return ::dlsym(module, name);
 #endif //_WIN32
 }
 

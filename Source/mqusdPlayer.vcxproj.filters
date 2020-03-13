@@ -15,19 +15,16 @@
     <ClInclude Include="mqusd\mqusd.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\mqusdMesh.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
     <ClInclude Include="mqusd\Player\mqusdPlayerPlugin.h">
       <Filter>mqusd</Filter>
     </ClInclude>
     <ClInclude Include="mqusd\Player\mqusdPlayerWindow.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\mqusdNode.h">
+    <ClInclude Include="mqusd\mqusdSceneGraph.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\mqusdNodeInternal.h">
+    <ClInclude Include="mqusd\mqusdMesh.h">
       <Filter>mqusd</Filter>
     </ClInclude>
   </ItemGroup>
@@ -36,9 +33,6 @@
       <Filter>mqusd</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\mqusd.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\mqusdMesh.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\Player\mqusdPlayerWindow.cpp">
@@ -50,7 +44,10 @@
     <ClCompile Include="mqusd\Player\mqusdPlayerPlugin.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\mqusdNode.cpp">
+    <ClCompile Include="mqusd\mqusdSceneGraph.cpp">
+      <Filter>mqusd</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\mqusdMesh.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
   </ItemGroup>

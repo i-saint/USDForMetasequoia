@@ -6,18 +6,26 @@
 
 bool mqusdRecorderPlugin::OpenABC(const std::string& path)
 {
-    m_stage = UsdStage::CreateNew(path);
-    m_abc_path = path;
+    m_scene = CreateScene();
+    if (!m_scene)
+        return false;
+
+    if (!m_scene->open(path.c_str())) {
+        m_scene = {};
+        return false;
+    }
+
 
     // add dummy time sampling
     // create nodes
     auto node_name = mu::GetFilename_NoExtension(m_mqo_path.c_str());
     if (node_name.empty())
-        node_name = mu::GetFilename_NoExtension(m_abc_path.c_str());
+        node_name = mu::GetFilename_NoExtension(path.c_str());
     if (node_name.empty())
         node_name = "Untitled";
 
     // todo
+
     if (m_settings.capture_colors) {
     }
     if (m_settings.capture_material_ids) {
@@ -27,13 +35,13 @@ bool mqusdRecorderPlugin::OpenABC(const std::string& path)
     m_recording = true;
     m_dirty = true;
 
-    LogInfo("succeeded to open %s\nrecording started", m_abc_path.c_str());
+    LogInfo("succeeded to open %s\nrecording started", path.c_str());
     return true;
 }
 
 bool mqusdRecorderPlugin::CloseABC()
 {
-    if (!m_stage)
+    if (!m_scene)
         return false;
 
     WaitFlush();
@@ -44,11 +52,10 @@ bool mqusdRecorderPlugin::CloseABC()
     if (m_settings.keep_time) {
     }
 
-    m_stage = {}; // flush archive
+    m_scene = {}; // flush archive
 
     m_start_time = m_last_flush = 0;
     m_timeline.clear();
-    m_abc_path.clear();
     m_recording = false;
 
     m_obj_records.clear();
@@ -62,19 +69,19 @@ const std::string& mqusdRecorderPlugin::GetMQOPath() const
 {
     return m_mqo_path;
 }
-const std::string& mqusdRecorderPlugin::GetABCPath() const
+const std::string& mqusdRecorderPlugin::GetUSDPath() const
 {
-    return m_abc_path;
+    return m_scene->path;
 }
 
 bool mqusdRecorderPlugin::IsArchiveOpened() const
 {
-    return m_stage;
+    return m_scene != nullptr;
 }
 
 bool mqusdRecorderPlugin::IsRecording() const
 {
-    return m_recording && m_stage;
+    return m_recording && m_scene;
 }
 void mqusdRecorderPlugin::SetRecording(bool v)
 {

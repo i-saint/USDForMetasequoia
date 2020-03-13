@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqusdNode.h"
+#include "mqusdSceneGraph.h"
 #include "Player/mqusdPlayerPlugin.h"
 
 Node::Node(Node* p)
@@ -24,10 +24,12 @@ Node::Type Node::getType() const
     return Type::Unknown;
 }
 
-void Node::update(double si)
+void Node::seek(double si)
 {
-    for (auto child : children)
-        child->update(si);
+}
+
+void Node::write()
+{
 }
 
 UsdPrim* Node::getPrim()
@@ -121,6 +123,58 @@ Scene::~Scene()
 {
 }
 
-void Scene::update(double t)
+void Scene::release()
 {
+    delete this;
+}
+
+bool Scene::open(const char* path)
+{
+    return false;
+}
+
+void Scene::close()
+{
+    path.clear();
+    root_node = nullptr;
+    mesh_nodes.clear();
+    material_nodes.clear();
+    nodes.clear();
+}
+
+void Scene::seek(double t)
+{
+    for (auto& n : nodes)
+        n->seek(t);
+}
+
+void Scene::write()
+{
+    for (auto& n : nodes)
+        n->write();
+}
+
+
+static void* g_core_module;
+static Scene* (*g_mqusdCreateScene)();
+
+static void LoadCoreModule()
+{
+    if (g_core_module)
+        return;
+
+    std::string path = mu::GetCurrentModuleDirectory();
+    path += "/" "mqusdCore" muDLLSuffix;
+    g_core_module = mu::LoadModule(path.c_str());
+    if (g_core_module) {
+        (void*&)g_mqusdCreateScene = mu::GetSymbol(g_core_module, "mqusdCreateScene");
+    }
+}
+
+ScenePtr CreateScene()
+{
+    LoadCoreModule();
+    if (g_mqusdCreateScene)
+        return ScenePtr(g_mqusdCreateScene());
+    return nullptr;
 }

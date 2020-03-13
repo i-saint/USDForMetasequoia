@@ -1,5 +1,7 @@
 #pragma once
-#include "mqusdNode.h"
+#include "mqusdCore.h"
+#include "mqusdSceneGraph.h"
+
 
 template<class NodeT>
 class USDNode : public NodeT
@@ -44,7 +46,7 @@ class XformNode_ : public USDNode<XformNode>
 using super = USDNode<XformNode>;
 public:
     XformNode_(Node* parent, UsdPrim usd);
-    void update(double si) override;
+    void seek(double si) override;
 
 private:
     UsdGeomXformable schema;
@@ -56,9 +58,7 @@ class MeshNode_ : public USDNode<MeshNode>
 using super = USDNode<MeshNode>;
 public:
     MeshNode_(Node* parent, UsdPrim usd);
-    void update(double si) override;
-
-    void updateMeshData(double si);
+    void seek(double si) override;
 
 private:
     UsdGeomMesh schema;
@@ -72,7 +72,7 @@ class MaterialNode_ : public USDNode<MaterialNode>
 using super = USDNode<MaterialNode>;
 public:
     MaterialNode_(Node* parent, UsdPrim usd);
-    void update(double si) override;
+    void seek(double si) override;
     bool valid() const override;
 
 private:
@@ -81,14 +81,14 @@ private:
 
 class Scene_ : public Scene
 {
+using super = Scene;
 public:
     Scene_();
     ~Scene_() override;
 
-    bool open(const char* path);
-    void close();
-
-    void update(double t) override;
+    bool open(const char* path) override;
+    void close() override;
+    void seek(double t) override;
 
 private:
     void constructTree(Node* n);

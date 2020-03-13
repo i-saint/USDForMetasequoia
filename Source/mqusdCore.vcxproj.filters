@@ -15,13 +15,13 @@
     <ClInclude Include="mqusd\mqusd.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\Recorder\mqusdRecorderPlugin.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
-    <ClInclude Include="mqusd\Recorder\mqusdRecorderWindow.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
     <ClInclude Include="mqusd\mqusdSceneGraph.h">
+      <Filter>mqusd</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\Core\mqusdSceneGraphImpl.h">
+      <Filter>mqusd</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\Core\mqusdCore.h">
       <Filter>mqusd</Filter>
     </ClInclude>
     <ClInclude Include="mqusd\mqusdMesh.h">
@@ -35,19 +35,16 @@
     <ClCompile Include="mqusd\mqusd.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\Recorder\mqusdRecorderWindow.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Recorder\mqusdRecorder.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Recorder\mqusdRecorderPlugin.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
     <ClCompile Include="mqusd\mqusdSceneGraph.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
+    <ClCompile Include="mqusd\Core\mqusdSceneGraphImpl.cpp">
+      <Filter>mqusd</Filter>
+    </ClCompile>
     <ClCompile Include="mqusd\mqusdMesh.cpp">
+      <Filter>mqusd</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\Core\mqusdCore.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
   </ItemGroup>
