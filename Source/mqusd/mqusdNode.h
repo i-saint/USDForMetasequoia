@@ -74,7 +74,6 @@ public:
 
     XformNode* parent_xform = nullptr;
     mqusdMesh mesh;
-    size_t sample_count = 0;
 };
 
 
@@ -86,7 +85,25 @@ public:
 
     MaterialNode(Node* parent);
     Type getType() const override;
-    bool valid() const;
+    virtual bool valid() const;
 
     mqusdMaterial material;
+};
+
+
+class Scene
+{
+public:
+    Scene();
+    virtual ~Scene();
+    virtual void update(double t);
+
+public:
+    std::string path;
+    std::vector<NodePtr> nodes;
+    RootNode* root_node = nullptr;
+    std::vector<MeshNode*> mesh_nodes;
+    std::vector<MaterialNode*> material_nodes;
+    double time_start = 0.0;
+    double time_end = 0.0;
 };

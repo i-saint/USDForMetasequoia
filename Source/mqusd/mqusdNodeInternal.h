@@ -22,6 +22,7 @@ protected:
     UsdPrim prim;
 };
 
+
 class Node_ : public USDNode<Node>
 {
 using super = USDNode<Node>;
@@ -29,12 +30,14 @@ public:
     Node_(Node* parent, UsdPrim usd);
 };
 
+
 class RootNode_ : public USDNode<RootNode>
 {
 using super = USDNode<RootNode>;
 public:
     RootNode_(UsdPrim usd);
 };
+
 
 class XformNode_ : public USDNode<XformNode>
 {
@@ -46,6 +49,7 @@ public:
 private:
     UsdGeomXformable schema;
 };
+
 
 class MeshNode_ : public USDNode<MeshNode>
 {
@@ -62,12 +66,32 @@ private:
     UsdAttribute attr_mids;
 };
 
+
 class MaterialNode_ : public USDNode<MaterialNode>
 {
 using super = USDNode<MaterialNode>;
 public:
     MaterialNode_(Node* parent, UsdPrim usd);
     void update(double si) override;
+    bool valid() const override;
 
 private:
+};
+
+
+class Scene_ : public Scene
+{
+public:
+    Scene_();
+    ~Scene_() override;
+
+    bool open(const char* path);
+    void close();
+
+    void update(double t) override;
+
+private:
+    void constructTree(Node* n);
+
+    UsdStageRefPtr m_stage;
 };
