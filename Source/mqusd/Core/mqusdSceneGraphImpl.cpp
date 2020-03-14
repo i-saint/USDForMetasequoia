@@ -113,11 +113,11 @@ Scene_::~Scene_()
 
 bool Scene_::open(const char* p)
 {
+    path = p;
     m_stage = UsdStage::Open(path);
     if (!m_stage)
         return false;
 
-    path = p;
     time_start = m_stage->GetStartTimeCode();
     time_end = m_stage->GetEndTimeCode();
 

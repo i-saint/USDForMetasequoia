@@ -46,7 +46,7 @@ void mqusdPlayerPlugin::GetPlugInID(DWORD *Product, DWORD *ID)
 //---------------------------------------------------------------------------
 const char *mqusdPlayerPlugin::GetPlugInName(void)
 {
-    return "Alembic Player (version " mqusdVersionString ") " mqusdCopyRight;
+    return "USD Player (version " mqusdVersionString ") " mqusdCopyRight;
 }
 
 //---------------------------------------------------------------------------
@@ -57,12 +57,12 @@ const char *mqusdPlayerPlugin::GetPlugInName(void)
 #if MQPLUGIN_VERSION >= 0x0470
 const wchar_t *mqusdPlayerPlugin::EnumString(void)
 {
-    return L"Alembic Player";
+    return L"USD Player";
 }
 #else
 const char *mqusdPlayerPlugin::EnumString(void)
 {
-    return "Alembic Player";
+    return "USD Player";
 }
 #endif
 

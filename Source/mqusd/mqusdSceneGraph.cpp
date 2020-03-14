@@ -158,14 +158,29 @@ void Scene::write()
 static void* g_core_module;
 static Scene* (*g_mqusdCreateScene)();
 
+#define mqusdTBBDll "tbb" muDLLSuffix
+#define mqusdUSDDll "usd_ms" muDLLSuffix
+#define mqusdCoreDll "mqusdCore" muDLLSuffix
+
 static void LoadCoreModule()
 {
     if (g_core_module)
         return;
 
-    std::string path = mu::GetCurrentModuleDirectory();
-    path += "/" "mqusdCore" muDLLSuffix;
-    g_core_module = mu::LoadModule(path.c_str());
+    std::string dir = mu::GetCurrentModuleDirectory();
+#ifdef _WIN32
+    std::string core_dir = dir + "/mqusdCore";
+#else
+    std::string core_dir = dir;
+#endif
+
+    std::string tbb_dll = core_dir + "/" mqusdTBBDll;
+    std::string usd_dll = core_dir + "/" mqusdUSDDll;
+    std::string core_dll = core_dir + "/" mqusdCoreDll;
+
+    mu::LoadModule(tbb_dll.c_str());
+    mu::LoadModule(usd_dll.c_str());
+    g_core_module = mu::LoadModule(core_dll.c_str());
     if (g_core_module) {
         (void*&)g_mqusdCreateScene = mu::GetSymbol(g_core_module, "mqusdCreateScene");
     }

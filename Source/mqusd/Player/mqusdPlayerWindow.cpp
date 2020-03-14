@@ -101,8 +101,8 @@ BOOL mqusdPlayerWindow::OnOpenClicked(MQWidgetBase* sender, MQDocument doc)
 {
     if (!m_plugin->IsArchiveOpened()) {
         MQOpenFileDialog dlg(*this);
-        dlg.AddFilter(L"Alembic file (*.abc)|*.abc");
-        dlg.SetDefaultExt(L"abc");
+        dlg.AddFilter(L"USD file (*.usd;*.usda;*usdc;*usdz)|*.usd;*.usda;*usdc;*usdz");
+        dlg.SetDefaultExt(L"usd");
         if (dlg.Execute()) {
             auto path = dlg.GetFileName();
             if (m_plugin->OpenUSD(mu::ToMBS(path))) {

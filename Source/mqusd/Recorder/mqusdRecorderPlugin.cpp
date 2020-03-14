@@ -46,7 +46,7 @@ void mqusdRecorderPlugin::GetPlugInID(DWORD *Product, DWORD *ID)
 //---------------------------------------------------------------------------
 const char *mqusdRecorderPlugin::GetPlugInName(void)
 {
-    return "Alembic Recorder (version " mqusdVersionString ") " mqusdCopyRight;
+    return "USD Recorder (version " mqusdVersionString ") " mqusdCopyRight;
 }
 
 //---------------------------------------------------------------------------
@@ -57,12 +57,12 @@ const char *mqusdRecorderPlugin::GetPlugInName(void)
 #if MQPLUGIN_VERSION >= 0x0470
 const wchar_t *mqusdRecorderPlugin::EnumString(void)
 {
-    return L"Alembic Recorder";
+    return L"USD Recorder";
 }
 #else
 const char *mqusdRecorderPlugin::EnumString(void)
 {
-    return "Alembic Recorder";
+    return "USD Recorder";
 }
 #endif
 
