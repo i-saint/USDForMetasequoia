@@ -24,6 +24,8 @@ endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++14 -Wno-deprecated")
 
+set(DIST_DIR "${CMAKE_INSTALL_PREFIX}/mqusd_${PLATFORM}")
+set(CORE_DIR "${DIST_DIR}/mqusdCore")
 
 function(add_subdirectory_link to from)
     if(NOT EXISTS "${CMAKE_SOURCE_DIR}/${to}")
@@ -34,6 +36,6 @@ endfunction()
 
 add_subdirectory(MeshUtils)
 add_subdirectory_link(mqsdk470 mqsdk)
-add_subdirectory_link(mqusd470 mqabc)
+add_subdirectory_link(mqusd470 mqusd)
 
 add_subdirectory(Test)

@@ -11,7 +11,7 @@ find_path(TBB_INCLUDE_DIR
 )
 mark_as_advanced(TBB_INCLUDE_DIR)
 
-find_file(TBB_LIBRARY tbb.dylib PATH_SUFFIXES lib/)
+find_file(TBB_LIBRARY libtbb.dylib PATH_SUFFIXES lib/)
 mark_as_advanced(TBB_LIBRARY)
 
 include(FindPackageHandleStandardArgs)

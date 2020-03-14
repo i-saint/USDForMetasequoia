@@ -12,7 +12,7 @@ public:
         : super(p)
         , prim(usd)
     {
-        name = usd.GetName();
+        this->name = usd.GetName();
     }
 
     UsdPrim* getPrim() override
