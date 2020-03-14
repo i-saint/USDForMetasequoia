@@ -4,7 +4,7 @@
 
 
 template<class NodeT>
-USDNode_<NodeT>::USDNode_(Node* p, UsdPrim usd)
+USDBaseNode<NodeT>::USDBaseNode(Node* p, UsdPrim usd)
     : super(p)
     , prim(usd)
 {
@@ -12,21 +12,21 @@ USDNode_<NodeT>::USDNode_(Node* p, UsdPrim usd)
 }
 
 template<class NodeT>
-UsdPrim* USDNode_<NodeT>::getPrim()
+UsdPrim* USDBaseNode<NodeT>::getPrim()
 {
     return &prim;
 }
 
 
 template<class NodeT, class SchemaT>
-USDXformableNode_<NodeT, SchemaT>::USDXformableNode_(Node* p, UsdPrim usd)
+USDXformableNode<NodeT, SchemaT>::USDXformableNode(Node* p, UsdPrim usd)
     : super(p, usd)
 {
     schema = SchemaT(usd);
 }
 
 template<class NodeT, class SchemaT>
-void USDXformableNode_<NodeT, SchemaT>::readXform(const UsdTimeCode& t)
+void USDXformableNode<NodeT, SchemaT>::readXform(const UsdTimeCode& t)
 {
     GfMatrix4d mat;
     bool reset_stack = false;
@@ -40,7 +40,7 @@ void USDXformableNode_<NodeT, SchemaT>::readXform(const UsdTimeCode& t)
 }
 
 template<class NodeT, class SchemaT>
-void USDXformableNode_<NodeT, SchemaT>::writeXform(const UsdTimeCode& t) const
+void USDXformableNode<NodeT, SchemaT>::writeXform(const UsdTimeCode& t) const
 {
     if (xf_ops.empty()) {
         xf_ops.push_back(schema.AddTransformOp());
@@ -55,35 +55,35 @@ void USDXformableNode_<NodeT, SchemaT>::writeXform(const UsdTimeCode& t) const
 }
 
 
-Node_::Node_(Node* p, UsdPrim usd)
+USDNode::USDNode(Node* p, UsdPrim usd)
     : super(p, usd)
 {
 }
 
 
-RootNode_::RootNode_(UsdPrim usd)
+USDRootNode::USDRootNode(UsdPrim usd)
     : super(nullptr, usd)
 {
 }
 
-XformNode_::XformNode_(Node* p, UsdPrim usd)
+USDXformNode::USDXformNode(Node* p, UsdPrim usd)
     : super(p, usd)
 {
     schema = UsdGeomXformable(usd);
 }
 
-void XformNode_::read(double time)
+void USDXformNode::read(double time)
 {
     readXform(time);
 }
 
-void XformNode_::write(double time) const
+void USDXformNode::write(double time) const
 {
     writeXform(time);
 }
 
 
-MeshNode_::MeshNode_(Node* p, UsdPrim usd)
+USDMeshNode::USDMeshNode(Node* p, UsdPrim usd)
     : super(p, usd)
 {
     schema = UsdGeomMesh(usd);
@@ -91,7 +91,7 @@ MeshNode_::MeshNode_(Node* p, UsdPrim usd)
     attr_mids = prim.GetAttribute(TfToken(mqusdMaterialIDAttr));
 }
 
-void MeshNode_::read(double time)
+void USDMeshNode::read(double time)
 {
     mesh.clear();
     if (!schema)
@@ -134,7 +134,7 @@ void MeshNode_::read(double time)
     mesh.clearInvalidComponent();
 }
 
-void MeshNode_::write(double time) const
+void USDMeshNode::write(double time) const
 {
     auto t = UsdTimeCode(time);
     writeXform(time);
@@ -171,36 +171,36 @@ void MeshNode_::write(double time) const
 }
 
 
-MaterialNode_::MaterialNode_(Node* p, UsdPrim usd)
+USDMaterialNode::USDMaterialNode(Node* p, UsdPrim usd)
     : super(p, usd)
 {
     // todo
 }
 
-void MaterialNode_::read(double si)
+void USDMaterialNode::read(double si)
 {
     // nothing to do for now
 }
 
-bool MaterialNode_::valid() const
+bool USDMaterialNode::valid() const
 {
     // todo
     return true;
 }
 
 
-Scene_::Scene_()
+USDScene::USDScene()
 {
 }
 
-Scene_::~Scene_()
+USDScene::~USDScene()
 {
     close();
 }
 
-bool Scene_::open(const char* p)
+bool USDScene::open(const char* path_)
 {
-    path = p;
+    path = path_;
     m_stage = UsdStage::Open(path);
     if (!m_stage)
         return false;
@@ -214,13 +214,41 @@ bool Scene_::open(const char* p)
     //}
     auto root = m_stage->GetPseudoRoot();
     if (root.IsValid()) {
-        root_node = new RootNode_(root);
+        root_node = new USDRootNode(root);
         constructTree(root_node);
     }
     return true;
 }
 
-void Scene_::constructTree(Node* n)
+bool USDScene::create(const char* path_)
+{
+    // UsdStage::CreateNew() will fail if the file already exists. try to delete existing one.
+    if (FILE* f = fopen(path_, "rb")) {
+        fclose(f);
+        std::remove(path_);
+    }
+
+    path = path_;
+    m_stage = UsdStage::CreateNew(path);
+    if (m_stage) {
+        auto root = m_stage->GetPseudoRoot();
+        if (root.IsValid()) {
+            root_node = new USDRootNode(root);
+            constructTree(root_node);
+        }
+    }
+    return m_stage;
+}
+
+bool USDScene::save()
+{
+    if (m_stage) {
+        return m_stage->GetRootLayer()->Save();
+    }
+    return false;
+}
+
+void USDScene::constructTree(Node* n)
 {
     nodes.push_back(NodePtr(n));
 
@@ -232,7 +260,7 @@ void Scene_::constructTree(Node* n)
         if (!c) {
             UsdGeomMesh mesh(cprim);
             if (mesh) {
-                auto mn = new MeshNode_(n, cprim);
+                auto mn = new USDMeshNode(n, cprim);
                 mesh_nodes.push_back(mn);
                 c = mn;
             }
@@ -252,31 +280,71 @@ void Scene_::constructTree(Node* n)
         if (!c) {
             UsdGeomXformable xform(cprim);
             if (xform) {
-                c = new XformNode_(n, cprim);
+                c = new USDXformNode(n, cprim);
             }
         }
         if (!c) {
-            c = new Node_(n, cprim);
+            c = new USDNode(n, cprim);
         }
 
         constructTree(c);
     }
 }
 
-void Scene_::close()
+void USDScene::close()
 {
     m_stage = {};
     super::close();
 }
 
-void Scene_::read(double time)
+void USDScene::read(double time)
 {
     super::read(time);
 }
 
-void Scene_::write(double time) const
+void USDScene::write(double time) const
 {
     super::write(time);
+}
+
+template<class NodeT>
+Node* USDScene::createNodeImpl(Node* parent, std::string path)
+{
+    auto prim = m_stage->DefinePrim(SdfPath(path), TfToken(NodeT::getUsdTypeName()));
+    if (prim)
+        return new NodeT(parent, prim);
+    return nullptr;
+}
+
+Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
+{
+    std::string path;
+    {
+        // sanitize
+        std::string n = name;
+        for (auto& c : n) {
+            if (!std::isalnum(c))
+                c = '_';
+        }
+        if (parent)
+            path = parent->getPath();
+        path += n;
+    }
+
+    Node* ret = nullptr;
+    switch (type) {
+    case Node::Type::Xform:
+        ret = createNodeImpl<USDXformNode>(parent, path);
+        break;
+    case Node::Type::Mesh:
+        ret = createNodeImpl<USDMeshNode>(parent, path);
+        mesh_nodes.push_back((USDMeshNode*)ret);
+        break;
+    default: break;
+    }
+    if (ret)
+        nodes.push_back(NodePtr(ret));
+    return ret;
 }
 
 
@@ -288,5 +356,5 @@ void Scene_::write(double time) const
 
 mqusdCoreAPI Scene* mqusdCreateScene()
 {
-    return new Scene_();
+    return new USDScene();
 }

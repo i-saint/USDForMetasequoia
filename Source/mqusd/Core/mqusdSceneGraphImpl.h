@@ -3,12 +3,17 @@
 #include "mqusdSceneGraph.h"
 
 
+#define DefSchemaTraits(Type, Typename)\
+    using UsdType = Type;\
+    static constexpr const char* getUsdTypeName() { return Typename; };
+
+
 template<class NodeT>
-class USDNode_ : public NodeT
+class USDBaseNode : public NodeT
 {
 using super = NodeT;
 public:
-    USDNode_(Node* p, UsdPrim usd);
+    USDBaseNode(Node* parent, UsdPrim usd);
     UsdPrim* getPrim() override;
 
 protected:
@@ -16,11 +21,11 @@ protected:
 };
 
 template<class NodeT, class SchemaT>
-class USDXformableNode_ : public USDNode_<NodeT>
+class USDXformableNode : public USDBaseNode<NodeT>
 {
-using super = USDNode_<NodeT>;
+using super = USDBaseNode<NodeT>;
 public:
-    USDXformableNode_(Node* p, UsdPrim usd);
+    USDXformableNode(Node* parent, UsdPrim usd);
 
 protected:
     void readXform(const UsdTimeCode& t);
@@ -31,27 +36,31 @@ protected:
 };
 
 
-class Node_ : public USDNode_<Node>
+class USDNode : public USDBaseNode<Node>
 {
-using super = USDNode_<Node>;
+using super = USDBaseNode<Node>;
 public:
-    Node_(Node* parent, UsdPrim usd);
+    DefSchemaTraits(UsdSchemaBase, "");
+
+    USDNode(Node* parent, UsdPrim usd);
 };
 
 
-class RootNode_ : public USDNode_<RootNode>
+class USDRootNode : public USDBaseNode<RootNode>
 {
-using super = USDNode_<RootNode>;
+using super = USDBaseNode<RootNode>;
 public:
-    RootNode_(UsdPrim usd);
+    USDRootNode(UsdPrim usd);
 };
 
 
-class XformNode_ : public USDXformableNode_<XformNode, UsdGeomXformable>
+class USDXformNode : public USDXformableNode<XformNode, UsdGeomXformable>
 {
-using super = USDXformableNode_<XformNode, UsdGeomXformable>;
+using super = USDXformableNode<XformNode, UsdGeomXformable>;
 public:
-    XformNode_(Node* parent, UsdPrim usd);
+    DefSchemaTraits(UsdGeomXformable, "Xform");
+
+    USDXformNode(Node* parent, UsdPrim usd);
     void read(double time) override;
     void write(double time) const override;
 
@@ -59,11 +68,13 @@ private:
 };
 
 
-class MeshNode_ : public USDXformableNode_<MeshNode, UsdGeomMesh>
+class USDMeshNode : public USDXformableNode<MeshNode, UsdGeomMesh>
 {
-using super = USDXformableNode_<MeshNode, UsdGeomMesh>;
+using super = USDXformableNode<MeshNode, UsdGeomMesh>;
 public:
-    MeshNode_(Node* parent, UsdPrim usd);
+    DefSchemaTraits(UsdGeomMesh, "Mesh");
+
+    USDMeshNode(Node* parent, UsdPrim usd);
     void read(double time) override;
     void write(double time) const override;
 
@@ -73,28 +84,28 @@ private:
 };
 
 
-class InstancerNode_ : USDNode_<Node>
+class USDInstancerNode : USDBaseNode<Node>
 {
-using super = USDNode_<Node>;
+using super = USDBaseNode<Node>;
 public:
-    InstancerNode_(Node* parent, UsdPrim usd);
+    USDInstancerNode(Node* parent, UsdPrim usd);
     void read(double time) override;
 };
 
-class InstanceNode_ : XformNode
+class USDInstanceNode : XformNode
 {
 using super = XformNode;
 public:
-    InstanceNode_(Node* parent);
+    USDInstanceNode(Node* parent);
     void read(double time) override;
 };
 
 
-class MaterialNode_ : public USDNode_<MaterialNode>
+class USDMaterialNode : public USDBaseNode<MaterialNode>
 {
-using super = USDNode_<MaterialNode>;
+using super = USDBaseNode<MaterialNode>;
 public:
-    MaterialNode_(Node* parent, UsdPrim usd);
+    USDMaterialNode(Node* parent, UsdPrim usd);
     void read(double time) override;
     bool valid() const override;
 
@@ -102,20 +113,26 @@ private:
 };
 
 
-class Scene_ : public Scene
+class USDScene : public Scene
 {
 using super = Scene;
 public:
-    Scene_();
-    ~Scene_() override;
+    USDScene();
+    ~USDScene() override;
 
     bool open(const char* path) override;
+    bool create(const char* path) override;
+    bool save() override;
     void close() override;
     void read(double time) override;
     void write(double time) const override;
 
+    Node* createNode(Node* parent, const char* name, Node::Type type) override;
+
 private:
     void constructTree(Node* n);
+    template<class NodeT>
+    Node* createNodeImpl(Node *parent, std::string path);
 
     UsdStageRefPtr m_stage;
 };

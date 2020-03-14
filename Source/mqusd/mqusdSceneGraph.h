@@ -15,7 +15,7 @@ public:
         Unknown,
         Root,
         Xform,
-        PolyMesh,
+        Mesh,
         Material,
     };
 
@@ -29,6 +29,7 @@ public:
     virtual UsdPrim* getPrim();
 
     template<class NodeT> NodeT* findParent();
+    std::string getPath() const;
 
     Node* parent = nullptr;
     std::vector<Node*> children;
@@ -67,7 +68,7 @@ class MeshNode : public XformNode
 {
 using super = XformNode;
 public:
-    static const Type node_type = Type::PolyMesh;
+    static const Type node_type = Type::Mesh;
 
     MeshNode(Node* parent);
     Type getType() const override;
@@ -98,9 +99,13 @@ public:
     virtual ~Scene();
     virtual void release();
     virtual bool open(const char* path);
+    virtual bool create(const char* path);
+    virtual bool save();
     virtual void close();
     virtual void read(double time);
     virtual void write(double time) const;
+
+    virtual Node* createNode(Node *parent, const char *name, Node::Type type);
 
 public:
     std::string path;

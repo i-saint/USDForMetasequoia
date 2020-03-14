@@ -37,6 +37,17 @@ UsdPrim* Node::getPrim()
     return nullptr;
 }
 
+std::string Node::getPath() const
+{
+    std::string ret;
+    if (parent)
+        ret += parent->getPath();
+    if (ret.empty() || ret.back() != '/')
+        ret += "/";
+    ret += name;
+    return ret;
+}
+
 template<class NodeT>
 NodeT* Node::findParent()
 {
@@ -79,7 +90,7 @@ MeshNode::MeshNode(Node* p)
 
 Node::Type MeshNode::getType() const
 {
-    return Type::PolyMesh;
+    return Type::Mesh;
 }
 
 void MeshNode::convert(const mqusdPlayerSettings& settings)
@@ -131,6 +142,16 @@ bool Scene::open(const char* path)
     return false;
 }
 
+bool Scene::create(const char* path)
+{
+    return false;
+}
+
+bool Scene::save()
+{
+    return false;
+}
+
 void Scene::close()
 {
     path.clear();
@@ -150,6 +171,11 @@ void Scene::write(double time) const
 {
     for (auto& n : nodes)
         n->write(time);
+}
+
+Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
+{
+    return nullptr;
 }
 
 
