@@ -67,6 +67,23 @@ private:
 };
 
 
+class InstancerNode_ : USDNode<Node>
+{
+using super = USDNode<Node>;
+public:
+    InstancerNode_(Node* parent, UsdPrim usd);
+    void seek(double si) override;
+};
+
+class InstanceNode_ : XformNode
+{
+using super = XformNode;
+public:
+    InstanceNode_(Node* parent);
+    void seek(double si) override;
+};
+
+
 class MaterialNode_ : public USDNode<MaterialNode>
 {
 using super = USDNode<MaterialNode>;

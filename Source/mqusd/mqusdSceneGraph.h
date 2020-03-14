@@ -63,9 +63,9 @@ public:
 };
 
 
-class MeshNode : public Node
+class MeshNode : public XformNode
 {
-using super = Node;
+using super = XformNode;
 public:
     static const Type node_type = Type::PolyMesh;
 
@@ -73,7 +73,6 @@ public:
     Type getType() const override;
     void convert(const mqusdPlayerSettings& settings);
 
-    XformNode* parent_xform = nullptr;
     mqusdMesh mesh;
 };
 

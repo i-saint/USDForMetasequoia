@@ -14,6 +14,19 @@ RootNode_::RootNode_(UsdPrim usd)
 }
 
 
+static void UpdateTransform(XformNode& node, const UsdGeomXformable& schema, const UsdTimeCode& t)
+{
+    GfMatrix4d mat;
+    bool reset_stack = false;
+    schema.GetLocalTransformation(&mat, &reset_stack, t);
+    node.local_matrix.assign((double4x4&)mat);
+
+    if (node.parent_xform)
+        node.global_matrix = node.local_matrix * node.parent_xform->global_matrix;
+    else
+        node.global_matrix = node.local_matrix;
+}
+
 XformNode_::XformNode_(Node* p, UsdPrim usd)
     : super(p, usd)
 {
@@ -22,14 +35,8 @@ XformNode_::XformNode_(Node* p, UsdPrim usd)
 
 void XformNode_::seek(double si)
 {
-    if (schema) {
-        // todo
-
-        if (parent_xform)
-            global_matrix = local_matrix * parent_xform->global_matrix;
-        else
-            global_matrix = local_matrix;
-    }
+    auto t = UsdTimeCode(si);
+    UpdateTransform(*this, schema, t);
 }
 
 
@@ -48,6 +55,7 @@ void MeshNode_::seek(double si)
         return;
 
     auto t = UsdTimeCode(si);
+    UpdateTransform(*this, schema, t);
     {
         VtArray<int> data;
         schema.GetFaceVertexCountsAttr().Get(&data, t);
@@ -150,6 +158,17 @@ void Scene_::constructTree(Node* n)
                 c = mn;
             }
         }
+
+        // todo
+        //if (!c) {
+        //    UsdGeomPointInstancer instancer(cprim);
+        //    if (instancer) {
+        //        auto mn = new MeshNode_(n, cprim);
+        //        mesh_nodes.push_back(mn);
+        //        c = mn;
+        //    }
+        //}
+
         // xform must be last because Mesh is also Xformable
         if (!c) {
             UsdGeomXformable xform(cprim);

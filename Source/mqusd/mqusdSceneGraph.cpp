@@ -75,7 +75,6 @@ Node::Type XformNode::getType() const
 MeshNode::MeshNode(Node* p)
     : super(p)
 {
-    parent_xform = findParent<XformNode>();
 }
 
 Node::Type MeshNode::getType() const
@@ -85,8 +84,7 @@ Node::Type MeshNode::getType() const
 
 void MeshNode::convert(const mqusdPlayerSettings& settings)
 {
-    if (parent_xform)
-        mesh.applyTransform(parent_xform->global_matrix);
+    mesh.applyTransform(global_matrix);
     mesh.applyScale(settings.scale_factor);
     if (settings.flip_x)
         mesh.flipX();
@@ -155,37 +153,37 @@ void Scene::write()
 }
 
 
-static void* g_core_module;
-static Scene* (*g_mqusdCreateScene)();
-
 #define mqusdTBBDll "tbb" muDLLSuffix
 #define mqusdUSDDll "usd_ms" muDLLSuffix
 #define mqusdCoreDll "mqusdCore" muDLLSuffix
 
+static void* g_core_module;
+static Scene* (*g_mqusdCreateScene)();
+
 static void LoadCoreModule()
 {
-    if (g_core_module)
-        return;
-
-    std::string dir = mu::GetCurrentModuleDirectory();
+    static std::once_flag s_flag;
+    std::call_once(s_flag, []() {
+        std::string dir = mu::GetCurrentModuleDirectory();
 #ifdef _WIN32
-    std::string core_dir = dir + "/mqusdCore";
+        std::string core_dir = dir + "/mqusdCore";
 #else
-    std::string core_dir = dir;
+        std::string core_dir = dir;
 #endif
 
-    std::string plugin_dir = core_dir + "/usd/plugInfo.json";
-    mu::SetEnv("PXR_PLUGINPATH_NAME", plugin_dir.c_str());
+        std::string plugin_dir = core_dir + "/usd/plugInfo.json";
+        mu::SetEnv("PXR_PLUGINPATH_NAME", plugin_dir.c_str());
 
-    std::string tbb_dll = core_dir + "/" mqusdTBBDll;
-    std::string usd_dll = core_dir + "/" mqusdUSDDll;
-    std::string core_dll = core_dir + "/" mqusdCoreDll;
-    mu::LoadModule(tbb_dll.c_str());
-    mu::LoadModule(usd_dll.c_str());
-    g_core_module = mu::LoadModule(core_dll.c_str());
-    if (g_core_module) {
-        (void*&)g_mqusdCreateScene = mu::GetSymbol(g_core_module, "mqusdCreateScene");
-    }
+        std::string tbb_dll = core_dir + "/" mqusdTBBDll;
+        std::string usd_dll = core_dir + "/" mqusdUSDDll;
+        std::string core_dll = core_dir + "/" mqusdCoreDll;
+        mu::LoadModule(tbb_dll.c_str());
+        mu::LoadModule(usd_dll.c_str());
+        g_core_module = mu::LoadModule(core_dll.c_str());
+        if (g_core_module) {
+            (void*&)g_mqusdCreateScene = mu::GetSymbol(g_core_module, "mqusdCreateScene");
+        }
+    });
 }
 
 ScenePtr CreateScene()
@@ -193,5 +191,6 @@ ScenePtr CreateScene()
     LoadCoreModule();
     if (g_mqusdCreateScene)
         return ScenePtr(g_mqusdCreateScene());
-    return nullptr;
+    else
+        return nullptr;
 }

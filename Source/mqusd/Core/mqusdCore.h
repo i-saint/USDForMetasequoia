@@ -12,6 +12,7 @@
 #include "pxr/usd/usdGeom/camera.h"
 #include "pxr/usd/usdGeom/mesh.h"
 #include "pxr/usd/usdGeom/points.h"
+#include "pxr/usd/usdGeom/pointInstancer.h"
 #include "pxr/base/gf/transform.h"
 #include "pxr/usd/ar/resolver.h"
 #include "pxr/usd/sdf/fileFormat.h"

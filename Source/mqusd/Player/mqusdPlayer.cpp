@@ -70,6 +70,9 @@ void mqusdPlayerPlugin::Seek(MQDocument doc, double t)
 
     m_seek_time = t;
     m_scene->seek(t);
+    mu::parallel_for_each(m_scene->mesh_nodes.begin(), m_scene->mesh_nodes.end(), [this](MeshNode* n) {
+        n->convert(m_settings);
+    });
 
     // build merged mesh
     auto& mesh = m_mesh_merged;
