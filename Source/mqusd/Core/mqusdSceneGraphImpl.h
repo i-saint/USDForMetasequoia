@@ -4,75 +4,81 @@
 
 
 template<class NodeT>
-class USDNode : public NodeT
+class USDNode_ : public NodeT
 {
 using super = NodeT;
 public:
-    USDNode(Node* p, UsdPrim usd)
-        : super(p)
-        , prim(usd)
-    {
-        this->name = usd.GetName();
-    }
-
-    UsdPrim* getPrim() override
-    {
-        return &prim;
-    }
+    USDNode_(Node* p, UsdPrim usd);
+    UsdPrim* getPrim() override;
 
 protected:
     UsdPrim prim;
 };
 
-
-class Node_ : public USDNode<Node>
+template<class NodeT, class SchemaT>
+class USDXformableNode_ : public USDNode_<NodeT>
 {
-using super = USDNode<Node>;
+using super = USDNode_<NodeT>;
+public:
+    USDXformableNode_(Node* p, UsdPrim usd);
+
+protected:
+    void readXform(const UsdTimeCode& t);
+    void writeXform(const UsdTimeCode& t) const;
+
+    mutable SchemaT schema;
+    mutable std::vector<UsdGeomXformOp> xf_ops;
+};
+
+
+class Node_ : public USDNode_<Node>
+{
+using super = USDNode_<Node>;
 public:
     Node_(Node* parent, UsdPrim usd);
 };
 
 
-class RootNode_ : public USDNode<RootNode>
+class RootNode_ : public USDNode_<RootNode>
 {
-using super = USDNode<RootNode>;
+using super = USDNode_<RootNode>;
 public:
     RootNode_(UsdPrim usd);
 };
 
 
-class XformNode_ : public USDNode<XformNode>
+class XformNode_ : public USDXformableNode_<XformNode, UsdGeomXformable>
 {
-using super = USDNode<XformNode>;
+using super = USDXformableNode_<XformNode, UsdGeomXformable>;
 public:
     XformNode_(Node* parent, UsdPrim usd);
-    void seek(double si) override;
+    void read(double time) override;
+    void write(double time) const override;
 
 private:
-    UsdGeomXformable schema;
 };
 
 
-class MeshNode_ : public USDNode<MeshNode>
+class MeshNode_ : public USDXformableNode_<MeshNode, UsdGeomMesh>
 {
-using super = USDNode<MeshNode>;
+using super = USDXformableNode_<MeshNode, UsdGeomMesh>;
 public:
     MeshNode_(Node* parent, UsdPrim usd);
-    void seek(double si) override;
+    void read(double time) override;
+    void write(double time) const override;
 
 private:
-    UsdGeomMesh schema;
     UsdAttribute attr_uvs;
     UsdAttribute attr_mids;
 };
 
 
-class InstancerNode_ : USDNode<Node>
+class InstancerNode_ : USDNode_<Node>
 {
-using super = USDNode<Node>;
+using super = USDNode_<Node>;
 public:
     InstancerNode_(Node* parent, UsdPrim usd);
-    void seek(double si) override;
+    void read(double time) override;
 };
 
 class InstanceNode_ : XformNode
@@ -80,16 +86,16 @@ class InstanceNode_ : XformNode
 using super = XformNode;
 public:
     InstanceNode_(Node* parent);
-    void seek(double si) override;
+    void read(double time) override;
 };
 
 
-class MaterialNode_ : public USDNode<MaterialNode>
+class MaterialNode_ : public USDNode_<MaterialNode>
 {
-using super = USDNode<MaterialNode>;
+using super = USDNode_<MaterialNode>;
 public:
     MaterialNode_(Node* parent, UsdPrim usd);
-    void seek(double si) override;
+    void read(double time) override;
     bool valid() const override;
 
 private:
@@ -105,7 +111,8 @@ public:
 
     bool open(const char* path) override;
     void close() override;
-    void seek(double t) override;
+    void read(double time) override;
+    void write(double time) const override;
 
 private:
     void constructTree(Node* n);

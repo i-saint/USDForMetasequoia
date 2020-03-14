@@ -24,11 +24,11 @@ Node::Type Node::getType() const
     return Type::Unknown;
 }
 
-void Node::seek(double si)
+void Node::read(double time)
 {
 }
 
-void Node::write()
+void Node::write(double time) const
 {
 }
 
@@ -140,16 +140,16 @@ void Scene::close()
     nodes.clear();
 }
 
-void Scene::seek(double t)
+void Scene::read(double time)
 {
     for (auto& n : nodes)
-        n->seek(t);
+        n->read(time);
 }
 
-void Scene::write()
+void Scene::write(double time) const
 {
     for (auto& n : nodes)
-        n->write();
+        n->write(time);
 }
 
 

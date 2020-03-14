@@ -69,7 +69,7 @@ void mqusdPlayerPlugin::Seek(MQDocument doc, double t)
         return;
 
     m_seek_time = t;
-    m_scene->seek(t);
+    m_scene->read(t);
     mu::parallel_for_each(m_scene->mesh_nodes.begin(), m_scene->mesh_nodes.end(), [this](MeshNode* n) {
         n->convert(m_settings);
     });

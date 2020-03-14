@@ -23,8 +23,8 @@ public:
     virtual ~Node();
     virtual void release();
     virtual Type getType() const;
-    virtual void seek(double si);
-    virtual void write();
+    virtual void read(double time);
+    virtual void write(double time) const;
 
     virtual UsdPrim* getPrim();
 
@@ -99,8 +99,8 @@ public:
     virtual void release();
     virtual bool open(const char* path);
     virtual void close();
-    virtual void seek(double t);
-    virtual void write();
+    virtual void read(double time);
+    virtual void write(double time) const;
 
 public:
     std::string path;

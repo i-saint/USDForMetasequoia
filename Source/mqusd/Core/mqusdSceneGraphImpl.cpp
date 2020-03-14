@@ -2,6 +2,59 @@
 #include "mqusd.h"
 #include "mqusdSceneGraphImpl.h"
 
+
+template<class NodeT>
+USDNode_<NodeT>::USDNode_(Node* p, UsdPrim usd)
+    : super(p)
+    , prim(usd)
+{
+    this->name = usd.GetName();
+}
+
+template<class NodeT>
+UsdPrim* USDNode_<NodeT>::getPrim()
+{
+    return &prim;
+}
+
+
+template<class NodeT, class SchemaT>
+USDXformableNode_<NodeT, SchemaT>::USDXformableNode_(Node* p, UsdPrim usd)
+    : super(p, usd)
+{
+    schema = SchemaT(usd);
+}
+
+template<class NodeT, class SchemaT>
+void USDXformableNode_<NodeT, SchemaT>::readXform(const UsdTimeCode& t)
+{
+    GfMatrix4d mat;
+    bool reset_stack = false;
+    schema.GetLocalTransformation(&mat, &reset_stack, t);
+    this->local_matrix.assign((double4x4&)mat);
+
+    if (this->parent_xform)
+        this->global_matrix = this->local_matrix * this->parent_xform->global_matrix;
+    else
+        this->global_matrix = this->local_matrix;
+}
+
+template<class NodeT, class SchemaT>
+void USDXformableNode_<NodeT, SchemaT>::writeXform(const UsdTimeCode& t) const
+{
+    if (xf_ops.empty()) {
+        xf_ops.push_back(schema.AddTransformOp());
+    }
+
+    auto& op = xf_ops[0];
+    if (op.GetOpType() == UsdGeomXformOp::TypeTransform) {
+        double4x4 data;
+        data.assign(this->local_matrix);
+        op.Set((const GfMatrix4d&)data, t);
+    }
+}
+
+
 Node_::Node_(Node* p, UsdPrim usd)
     : super(p, usd)
 {
@@ -13,30 +66,20 @@ RootNode_::RootNode_(UsdPrim usd)
 {
 }
 
-
-static void UpdateTransform(XformNode& node, const UsdGeomXformable& schema, const UsdTimeCode& t)
-{
-    GfMatrix4d mat;
-    bool reset_stack = false;
-    schema.GetLocalTransformation(&mat, &reset_stack, t);
-    node.local_matrix.assign((double4x4&)mat);
-
-    if (node.parent_xform)
-        node.global_matrix = node.local_matrix * node.parent_xform->global_matrix;
-    else
-        node.global_matrix = node.local_matrix;
-}
-
 XformNode_::XformNode_(Node* p, UsdPrim usd)
     : super(p, usd)
 {
     schema = UsdGeomXformable(usd);
 }
 
-void XformNode_::seek(double si)
+void XformNode_::read(double time)
 {
-    auto t = UsdTimeCode(si);
-    UpdateTransform(*this, schema, t);
+    readXform(time);
+}
+
+void XformNode_::write(double time) const
+{
+    writeXform(time);
 }
 
 
@@ -48,14 +91,14 @@ MeshNode_::MeshNode_(Node* p, UsdPrim usd)
     attr_mids = prim.GetAttribute(TfToken(mqusdMaterialIDAttr));
 }
 
-void MeshNode_::seek(double si)
+void MeshNode_::read(double time)
 {
     mesh.clear();
     if (!schema)
         return;
 
-    auto t = UsdTimeCode(si);
-    UpdateTransform(*this, schema, t);
+    auto t = UsdTimeCode(time);
+    readXform(time);
     {
         VtArray<int> data;
         schema.GetFaceVertexCountsAttr().Get(&data, t);
@@ -91,6 +134,42 @@ void MeshNode_::seek(double si)
     mesh.clearInvalidComponent();
 }
 
+void MeshNode_::write(double time) const
+{
+    auto t = UsdTimeCode(time);
+    writeXform(time);
+    {
+        VtArray<int> data;
+        data.assign(mesh.counts.begin(), mesh.counts.end());
+        schema.GetFaceVertexCountsAttr().Set(data, t);
+    }
+    {
+        VtArray<int> data;
+        data.assign(mesh.indices.begin(), mesh.indices.end());
+        schema.GetFaceVertexIndicesAttr().Set(data, t);
+    }
+    {
+        VtArray<GfVec3f> data;
+        data.assign((GfVec3f*)mesh.points.begin(), (GfVec3f*)mesh.points.end());
+        schema.GetPointsAttr().Set(data, t);
+    }
+    if (!mesh.normals.empty()) {
+        VtArray<GfVec3f> data;
+        data.assign((GfVec3f*)mesh.normals.begin(), (GfVec3f*)mesh.normals.end());
+        schema.GetNormalsAttr().Set(data, t);
+    }
+    if (attr_uvs && !mesh.uvs.empty()) {
+        VtArray<GfVec2f> data;
+        data.assign((GfVec2f*)mesh.uvs.begin(), (GfVec2f*)mesh.uvs.end());
+        attr_uvs.Set(data, t);
+    }
+    if (attr_mids && !mesh.material_ids.empty()) {
+        VtArray<int> data;
+        data.assign(mesh.material_ids.begin(), mesh.material_ids.end());
+        attr_mids.Set(data, t);
+    }
+}
+
 
 MaterialNode_::MaterialNode_(Node* p, UsdPrim usd)
     : super(p, usd)
@@ -98,7 +177,7 @@ MaterialNode_::MaterialNode_(Node* p, UsdPrim usd)
     // todo
 }
 
-void MaterialNode_::seek(double si)
+void MaterialNode_::read(double si)
 {
     // nothing to do for now
 }
@@ -190,9 +269,14 @@ void Scene_::close()
     super::close();
 }
 
-void Scene_::seek(double t)
+void Scene_::read(double time)
 {
-    super::seek(t);
+    super::read(time);
+}
+
+void Scene_::write(double time) const
+{
+    super::write(time);
 }
 
 
