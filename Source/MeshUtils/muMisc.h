@@ -48,6 +48,7 @@ std::string GetFilename_NoExtension(const wchar_t *src);
 
 std::string GetCurrentModuleDirectory();
 
+void SetEnv(const char* name, const char* value);
 void AddDLLSearchPath(const char *v);
 void* LoadModule(const char *path);
 void* GetModule(const char *module_name);

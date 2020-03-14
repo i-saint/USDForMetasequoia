@@ -174,10 +174,12 @@ static void LoadCoreModule()
     std::string core_dir = dir;
 #endif
 
+    std::string plugin_dir = core_dir + "/usd/plugInfo.json";
+    mu::SetEnv("PXR_PLUGINPATH_NAME", plugin_dir.c_str());
+
     std::string tbb_dll = core_dir + "/" mqusdTBBDll;
     std::string usd_dll = core_dir + "/" mqusdUSDDll;
     std::string core_dll = core_dir + "/" mqusdCoreDll;
-
     mu::LoadModule(tbb_dll.c_str());
     mu::LoadModule(usd_dll.c_str());
     g_core_module = mu::LoadModule(core_dll.c_str());

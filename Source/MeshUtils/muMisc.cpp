@@ -263,6 +263,18 @@ std::string GetCurrentModuleDirectory()
     return s_result;
 }
 
+void SetEnv(const char* name, const char* value)
+{
+#ifdef _WIN32
+    // get/setenv() and Set/GetEnvironmentVariable() is *not* compatible.
+    // set both to make sure.
+    ::_putenv_s(name, value);
+    ::SetEnvironmentVariableA(name, value);
+#else
+    ::setenv(name, value, 1);
+#endif
+}
+
 void AddDLLSearchPath(const char *v)
 {
 #if defined(_WIN32)
