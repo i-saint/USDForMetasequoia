@@ -1,10 +1,13 @@
 #pragma once
 
 #if defined(_WIN32)
+    #define muDLLPrefix 
     #define muDLLSuffix ".dll"
 #elif defined(__APPLE__)
+    #define muDLLPrefix "lib"
     #define muDLLSuffix ".dylib"
 #else
+    #define muDLLPrefix "lib"
     #define muDLLSuffix ".so"
 #endif
 
@@ -49,11 +52,9 @@ std::string GetFilename_NoExtension(const wchar_t *src);
 std::string GetCurrentModuleDirectory();
 
 void SetEnv(const char* name, const char* value);
-void AddDLLSearchPath(const char *v);
 void* LoadModule(const char *path);
 void* GetModule(const char *module_name);
 void* GetSymbol(void *module, const char *name);
-bool ResolveImports(void *module);
 
 void InitializeSymbols(const char *path = nullptr);
 void* FindSymbolByName(const char *name);

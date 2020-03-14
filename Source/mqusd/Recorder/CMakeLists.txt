@@ -1,15 +1,10 @@
-string(REGEX MATCH "([0-9]+)" MQ_VERSION "${CMAKE_CURRENT_SOURCE_DIR}")
-set(MQSDK "mqsdk${MQ_VERSION}")
-set(MQUSD_RECORDER "mqusdRecorder${MQ_VERSION}")
-find_package(Metasequoia${MQ_VERSION})
-
 file(GLOB sources ../*.cpp ../*.h *.cpp *.h)
 add_library(${MQUSD_RECORDER} MODULE ${sources})
 set_target_properties(${MQUSD_RECORDER} PROPERTIES BUNDLE ON)
 set_target_properties(${MQUSD_RECORDER} PROPERTIES BUNDLE_EXTENSION "plugin")
 set_target_properties(${MQUSD_RECORDER} PROPERTIES OUTPUT_NAME "mqusdRecorder")
 
-add_dependencies(${MQUSD_RECORDER} MeshUtils ${MQSDK})
+add_dependencies(${MQUSD_RECORDER} MeshUtils ${MQSDK} ${MQUSD_CORE})
 target_include_directories(${MQUSD_RECORDER}
     PRIVATE
         ${CMAKE_SOURCE_DIR}
@@ -21,6 +16,10 @@ target_link_libraries(${MQUSD_RECORDER}
         MeshUtils
         ${MQSDK}
         ${COCOA_LIBRARY}
+)
+add_custom_command(TARGET ${MQUSD_RECORDER} POST_BUILD
+    COMMAND cp $<TARGET_FILE:${MQUSD_CORE}> ${USD_LIBRARIES} $<TARGET_FILE_DIR:${MQUSD_RECORDER}>
+    COMMAND cp -r ${USD_PLUGIN_DIR} $<TARGET_FILE_DIR:${MQUSD_RECORDER}>
 )
 
 install(DIRECTORY $<TARGET_BUNDLE_DIR:${MQUSD_RECORDER}> DESTINATION ${DIST_DIR})

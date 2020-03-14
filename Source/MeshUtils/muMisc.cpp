@@ -8,6 +8,11 @@
     #include <unistd.h>
     #include <sys/mman.h>
     #include <dlfcn.h>
+    #ifdef __APPLE__
+        #include <mach-o/dyld.h>
+    #else
+        #include <link.h>
+    #endif
 #endif
 
 namespace mu {
@@ -275,77 +280,6 @@ void SetEnv(const char* name, const char* value)
 #endif
 }
 
-void AddDLLSearchPath(const char *v)
-{
-#if defined(_WIN32)
-    #define LIBRARY_PATH "PATH"
-#elif defined(__APPLE__)
-    #define LIBRARY_PATH "DYLD_LIBRARY_PATH"
-#else
-    #define LIBRARY_PATH "LD_LIBRARY_PATH"
-#endif
-#ifdef _WIN32
-    std::string path;
-    {
-        DWORD size = ::GetEnvironmentVariableA(LIBRARY_PATH, nullptr, 0);
-        if (size > 0) {
-            path.resize(size);
-            ::GetEnvironmentVariableA(LIBRARY_PATH, &path[0], (DWORD)path.size());
-            path.pop_back(); // delete last '\0'
-        }
-    }
-    if (path.find(v) == std::string::npos) {
-        auto pos = path.size();
-        path = std::string(v) + ";" + path;
-        for (size_t i = pos; i < path.size(); ++i) {
-            char& c = path[i];
-            if (c == '/') { c = '\\'; }
-        }
-        ::SetEnvironmentVariableA(LIBRARY_PATH, path.c_str());
-    }
-#else
-    std::string path;
-    if (auto path_ = ::getenv(LIBRARY_PATH)) {
-        path = path_;
-    }
-    if (path.find(v) == std::string::npos) {
-        if (!path.empty()) { path += ":"; }
-        auto pos = path.size();
-        path += v;
-        for (size_t i = pos; i < path.size(); ++i) {
-            char& c = path[i];
-            if (c == '\\') { c = '/'; }
-        }
-        ::setenv(LIBRARY_PATH, path.c_str(), 1);
-    }
-#endif
-#undef LIBRARY_PATH
-}
-
-
-
-bool ResolveImports(void *module)
-{
-#ifdef _WIN32
-    bool ret = true;
-    EnumerateDLLImports((HMODULE)module, [&](const char *dll, const char *funcname, DWORD ordinal, void *&addr) {
-        auto mod = ::GetModuleHandleA(dll);
-        if (!mod) { mod = ::LoadLibraryA(dll); }
-        if (!mod) {
-            ret = false; return;
-        }
-        if (funcname) {
-            ForceWrite<void*>(&addr, ::GetProcAddress(mod, funcname));
-        }
-        else {
-            ForceWrite<void*>(&addr, ::GetProcAddress(mod, MAKEINTRESOURCEA(ordinal)));
-        }
-    });
-    return ret;
-#else  // _WIN32
-    return false;
-#endif //_WIN32
-}
 
 void* LoadModule(const char *path)
 {
@@ -358,10 +292,32 @@ void* LoadModule(const char *path)
 
 void* GetModule(const char *module_name)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
+
     return ::GetModuleHandleA(module_name);
-#else  // _WIN32
+
+#elif defined(__APPLE__)
+
+    uint32_t n = _dyld_image_count();
+    for (uint32_t i = 0; i < n; ++i) {
+        auto* path = _dyld_get_image_name(i);
+        if (std::strstr(path, module_name))
+            return dlopen(path, RTLD_LAZY);
+    }
     return nullptr;
+
+#else
+
+    auto* mod = dlopen(nullptr, RTLD_LAZY);
+    link_map* it = nullptr;
+    dlinfo(mod, RTLD_DI_LINKMAP, &it);
+    while (it) {
+        if (std::strstr(it->l_name, module_name))
+            return dlopen(it->l_name, RTLD_LAZY);
+        it = it->l_next;
+    }
+    return nullptr;
+
 #endif //_WIN32
 }
 
