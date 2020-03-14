@@ -9,8 +9,8 @@ if(APPLE)
     set(MAC ON)
 endif()
 
-find_package(OpenEXR REQUIRED)
-find_package(Alembic REQUIRED)
+find_package(TBB REQUIRED)
+find_package(USD REQUIRED)
 include(ISPC)
 
 
