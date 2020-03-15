@@ -7,7 +7,7 @@
 
 bool mqusdPlayerPlugin::OpenUSD(const std::string& path)
 {
-    m_scene = CreateScene();
+    m_scene = CreateUSDScene();
     if (!m_scene)
         return false;
 

@@ -102,8 +102,8 @@ public:
     void LogInfo(const char* fmt, ...);
 
 
-    bool OpenABC(const std::string& v);
-    bool CloseABC();
+    bool OpenUSD(const std::string& v);
+    bool CloseUSD();
 
     const std::string& GetMQOPath() const;
     const std::string& GetUSDPath() const;

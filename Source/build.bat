@@ -31,5 +31,5 @@ exit /B 0
     copy _out\x64_Release\%MQ_VERSION%\mqusdCore.dll "%CORE_DIR64%"
     copy Externals\x64\lib\tbb.dll "%CORE_DIR64%"
     copy Externals\x64\lib\usd_ms.dll "%CORE_DIR64%"
-    xcopy /EI Externals\x64\lib\usd "%CORE_DIR64%\usd"
+    xcopy /EIY Externals\x64\lib\usd "%CORE_DIR64%\usd"
     exit /B 0

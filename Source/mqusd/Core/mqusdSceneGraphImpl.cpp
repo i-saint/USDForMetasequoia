@@ -3,193 +3,186 @@
 #include "mqusdSceneGraphImpl.h"
 
 
-template<class NodeT>
-USDBaseNode<NodeT>::USDBaseNode(Node* p, UsdPrim usd)
-    : super(p)
-    , prim(usd)
+USDNode::USDNode(USDNode* parent, UsdPrim prim, bool create_node)
+    : m_prim(prim)
+    , m_parent(parent)
 {
-    this->name = usd.GetName();
+    if (m_parent)
+        m_parent->m_children.push_back(this);
+    if (create_node)
+        setNode(new Node(parent ? parent->m_node : nullptr));
 }
 
-template<class NodeT>
-UsdPrim* USDBaseNode<NodeT>::getPrim()
+USDNode::~USDNode()
 {
-    return &prim;
+}
+
+void USDNode::read(double time)
+{
+}
+
+void USDNode::write(double time) const
+{
+
+}
+
+void USDNode::setNode(Node* node)
+{
+    m_node = node;
+    m_node->impl = this;
+    m_node->name = m_prim.GetPath().GetName();
+}
+
+std::string USDNode::getPath() const
+{
+    return m_prim.GetPath().GetString();
 }
 
 
-template<class NodeT, class SchemaT>
-USDXformableNode<NodeT, SchemaT>::USDXformableNode(Node* p, UsdPrim usd)
-    : super(p, usd)
+
+USDRootNode::USDRootNode(UsdPrim prim)
+    : super(nullptr, prim, false)
 {
-    schema = SchemaT(usd);
+    setNode(new RootNode());
 }
 
-template<class NodeT, class SchemaT>
-void USDXformableNode<NodeT, SchemaT>::readXform(const UsdTimeCode& t)
+USDXformNode::USDXformNode(USDNode* parent, UsdPrim prim, bool create_node)
+    : super(parent, prim, false)
 {
+    m_xform = UsdGeomXformable(prim);
+    if (create_node)
+        setNode(new XformNode(parent ? parent->m_node : nullptr));
+}
+
+void USDXformNode::read(double time)
+{
+    auto t = UsdTimeCode(time);
+    auto& dst = static_cast<XformNode&>(*m_node);
+
     GfMatrix4d mat;
     bool reset_stack = false;
-    schema.GetLocalTransformation(&mat, &reset_stack, t);
-    this->local_matrix.assign((double4x4&)mat);
+    m_xform.GetLocalTransformation(&mat, &reset_stack, t);
+    dst.local_matrix.assign((double4x4&)mat);
 
-    if (this->parent_xform)
-        this->global_matrix = this->local_matrix * this->parent_xform->global_matrix;
+    if (dst.parent_xform)
+        dst.global_matrix = dst.local_matrix * dst.parent_xform->global_matrix;
     else
-        this->global_matrix = this->local_matrix;
+        dst.global_matrix = dst.local_matrix;
 }
 
-template<class NodeT, class SchemaT>
-void USDXformableNode<NodeT, SchemaT>::writeXform(const UsdTimeCode& t) const
+void USDXformNode::write(double time) const
 {
-    if (xf_ops.empty()) {
-        xf_ops.push_back(schema.AddTransformOp());
+    if (m_xf_ops.empty()) {
+        m_xf_ops.push_back(m_xform.AddTransformOp());
     }
 
-    auto& op = xf_ops[0];
+    auto& op = m_xf_ops[0];
     if (op.GetOpType() == UsdGeomXformOp::TypeTransform) {
+        auto t = UsdTimeCode(time);
+        auto& src = static_cast<XformNode&>(*m_node);
+
         double4x4 data;
-        data.assign(this->local_matrix);
+        data.assign(src.local_matrix);
         op.Set((const GfMatrix4d&)data, t);
     }
 }
 
 
-USDNode::USDNode(Node* p, UsdPrim usd)
-    : super(p, usd)
+USDMeshNode::USDMeshNode(USDNode* parent, UsdPrim prim)
+    : super(parent, prim, false)
 {
-}
+    m_mesh = UsdGeomMesh(prim);
+    m_attr_uvs = prim.GetAttribute(TfToken(mqusdUVAttr));
+    m_attr_mids = prim.GetAttribute(TfToken(mqusdMaterialIDAttr));
 
-
-USDRootNode::USDRootNode(UsdPrim usd)
-    : super(nullptr, usd)
-{
-}
-
-USDXformNode::USDXformNode(Node* p, UsdPrim usd)
-    : super(p, usd)
-{
-    schema = UsdGeomXformable(usd);
-}
-
-void USDXformNode::read(double time)
-{
-    readXform(time);
-}
-
-void USDXformNode::write(double time) const
-{
-    writeXform(time);
-}
-
-
-USDMeshNode::USDMeshNode(Node* p, UsdPrim usd)
-    : super(p, usd)
-{
-    schema = UsdGeomMesh(usd);
-    attr_uvs = prim.GetAttribute(TfToken(mqusdUVAttr));
-    attr_mids = prim.GetAttribute(TfToken(mqusdMaterialIDAttr));
+    setNode(new MeshNode(parent ? parent->m_node : nullptr));
 }
 
 void USDMeshNode::read(double time)
 {
-    mesh.clear();
-    if (!schema)
-        return;
+    super::read(time);
 
     auto t = UsdTimeCode(time);
-    readXform(time);
+    auto& dst = static_cast<MeshNode&>(*m_node).mesh;
+    dst.clear();
     {
         VtArray<int> data;
-        schema.GetFaceVertexCountsAttr().Get(&data, t);
-        mesh.counts.assign(data.cdata(), data.size());
+        m_mesh.GetFaceVertexCountsAttr().Get(&data, t);
+        dst.counts.assign(data.cdata(), data.size());
     }
     {
         VtArray<int> data;
-        schema.GetFaceVertexIndicesAttr().Get(&data, t);
-        mesh.indices.assign(data.cdata(), data.size());
+        m_mesh.GetFaceVertexIndicesAttr().Get(&data, t);
+        dst.indices.assign(data.cdata(), data.size());
     }
     {
         VtArray<GfVec3f> data;
-        schema.GetPointsAttr().Get(&data, t);
-        mesh.points.assign((float3*)data.cdata(), data.size());
+        m_mesh.GetPointsAttr().Get(&data, t);
+        dst.points.assign((float3*)data.cdata(), data.size());
     }
     {
         VtArray<GfVec3f> data;
-        schema.GetNormalsAttr().Get(&data, t);
-        mesh.normals.assign((float3*)data.cdata(), data.size());
+        m_mesh.GetNormalsAttr().Get(&data, t);
+        dst.normals.assign((float3*)data.cdata(), data.size());
     }
-    if (attr_uvs) {
+    if (m_attr_uvs) {
         VtArray<GfVec2f> data;
-        attr_uvs.Get(&data, t);
-        mesh.uvs.assign((float2*)data.cdata(), data.size());
+        m_attr_uvs.Get(&data, t);
+        dst.uvs.assign((float2*)data.cdata(), data.size());
     }
-    if (attr_mids) {
+    if (m_attr_mids) {
         VtArray<int> data;
-        attr_mids.Get(&data, t);
-        mesh.material_ids.assign(data.cdata(), data.size());
+        m_attr_mids.Get(&data, t);
+        dst.material_ids.assign(data.cdata(), data.size());
     }
 
     // validate
-    mesh.clearInvalidComponent();
+    dst.clearInvalidComponent();
 }
 
 void USDMeshNode::write(double time) const
 {
+    super::write(time);
+
     auto t = UsdTimeCode(time);
-    writeXform(time);
+    auto& src = static_cast<MeshNode&>(*m_node).mesh;
     {
         VtArray<int> data;
-        data.assign(mesh.counts.begin(), mesh.counts.end());
-        schema.GetFaceVertexCountsAttr().Set(data, t);
+        data.assign(src.counts.begin(), src.counts.end());
+        m_mesh.GetFaceVertexCountsAttr().Set(data, t);
     }
     {
         VtArray<int> data;
-        data.assign(mesh.indices.begin(), mesh.indices.end());
-        schema.GetFaceVertexIndicesAttr().Set(data, t);
+        data.assign(src.indices.begin(), src.indices.end());
+        m_mesh.GetFaceVertexIndicesAttr().Set(data, t);
     }
     {
         VtArray<GfVec3f> data;
-        data.assign((GfVec3f*)mesh.points.begin(), (GfVec3f*)mesh.points.end());
-        schema.GetPointsAttr().Set(data, t);
+        data.assign((GfVec3f*)src.points.begin(), (GfVec3f*)src.points.end());
+        m_mesh.GetPointsAttr().Set(data, t);
     }
-    if (!mesh.normals.empty()) {
+    if (!src.normals.empty()) {
         VtArray<GfVec3f> data;
-        data.assign((GfVec3f*)mesh.normals.begin(), (GfVec3f*)mesh.normals.end());
-        schema.GetNormalsAttr().Set(data, t);
+        data.assign((GfVec3f*)src.normals.begin(), (GfVec3f*)src.normals.end());
+        m_mesh.GetNormalsAttr().Set(data, t);
     }
-    if (attr_uvs && !mesh.uvs.empty()) {
+    if (m_attr_uvs && !src.uvs.empty()) {
         VtArray<GfVec2f> data;
-        data.assign((GfVec2f*)mesh.uvs.begin(), (GfVec2f*)mesh.uvs.end());
-        attr_uvs.Set(data, t);
+        data.assign((GfVec2f*)src.uvs.begin(), (GfVec2f*)src.uvs.end());
+        m_attr_uvs.Set(data, t);
     }
-    if (attr_mids && !mesh.material_ids.empty()) {
+    if (m_attr_mids && !src.material_ids.empty()) {
         VtArray<int> data;
-        data.assign(mesh.material_ids.begin(), mesh.material_ids.end());
-        attr_mids.Set(data, t);
+        data.assign(src.material_ids.begin(), src.material_ids.end());
+        m_attr_mids.Set(data, t);
     }
 }
 
 
-USDMaterialNode::USDMaterialNode(Node* p, UsdPrim usd)
-    : super(p, usd)
-{
-    // todo
-}
-
-void USDMaterialNode::read(double si)
-{
-    // nothing to do for now
-}
-
-bool USDMaterialNode::valid() const
-{
-    // todo
-    return true;
-}
 
 
-USDScene::USDScene()
+USDScene::USDScene(Scene* scene)
+    : m_scene(scene)
 {
 }
 
@@ -200,13 +193,13 @@ USDScene::~USDScene()
 
 bool USDScene::open(const char* path_)
 {
-    path = path_;
-    m_stage = UsdStage::Open(path);
+    m_scene->path = path_;
+    m_stage = UsdStage::Open(path_);
     if (!m_stage)
         return false;
 
-    time_start = m_stage->GetStartTimeCode();
-    time_end = m_stage->GetEndTimeCode();
+    m_scene->time_start = m_stage->GetStartTimeCode();
+    m_scene->time_end = m_stage->GetEndTimeCode();
 
     //    auto masters = m_stage->GetMasters();
     //    for (auto& m : masters) {
@@ -214,8 +207,8 @@ bool USDScene::open(const char* path_)
     //}
     auto root = m_stage->GetPseudoRoot();
     if (root.IsValid()) {
-        root_node = new USDRootNode(root);
-        constructTree(root_node);
+        m_root = new USDRootNode(root);
+        constructTree(m_root);
     }
     return true;
 }
@@ -228,13 +221,13 @@ bool USDScene::create(const char* path_)
         std::remove(path_);
     }
 
-    path = path_;
-    m_stage = UsdStage::CreateNew(path);
+    m_scene->path = path_;
+    m_stage = UsdStage::CreateNew(path_);
     if (m_stage) {
         auto root = m_stage->GetPseudoRoot();
         if (root.IsValid()) {
-            root_node = new USDRootNode(root);
-            constructTree(root_node);
+            m_root = new USDRootNode(root);
+            constructTree(m_root);
         }
     }
     return m_stage;
@@ -248,21 +241,23 @@ bool USDScene::save()
     return false;
 }
 
-void USDScene::constructTree(Node* n)
+void USDScene::constructTree(USDNode* n)
 {
-    nodes.push_back(NodePtr(n));
+    mqusdDbgPrint("%s\n", n->getPath().c_str());
 
-    auto& prim = *n->getPrim();
+    m_nodes.push_back(USDNodePtr(n));
+    m_scene->nodes.push_back(NodePtr(n->m_node));
+
+    auto& prim = n->m_prim;
     auto children = prim.GetChildren();
     for (auto cprim : children) {
-        Node* c = nullptr;
+        USDNode* c = nullptr;
 
         if (!c) {
             UsdGeomMesh mesh(cprim);
             if (mesh) {
-                auto mn = new USDMeshNode(n, cprim);
-                mesh_nodes.push_back(mn);
-                c = mn;
+                c = new USDMeshNode(n, cprim);
+                m_scene->mesh_nodes.push_back(static_cast<MeshNode*>(c->m_node));
             }
         }
 
@@ -270,9 +265,6 @@ void USDScene::constructTree(Node* n)
         //if (!c) {
         //    UsdGeomPointInstancer instancer(cprim);
         //    if (instancer) {
-        //        auto mn = new MeshNode_(n, cprim);
-        //        mesh_nodes.push_back(mn);
-        //        c = mn;
         //    }
         //}
 
@@ -294,21 +286,22 @@ void USDScene::constructTree(Node* n)
 void USDScene::close()
 {
     m_stage = {};
-    super::close();
 }
 
 void USDScene::read(double time)
 {
-    super::read(time);
+    for (auto& n : m_nodes)
+        n->read(time);
 }
 
 void USDScene::write(double time) const
 {
-    super::write(time);
+    for (auto& n : m_nodes)
+        n->write(time);
 }
 
 template<class NodeT>
-Node* USDScene::createNodeImpl(Node* parent, std::string path)
+USDNode* USDScene::createNodeImpl(USDNode* parent, std::string path)
 {
     auto prim = m_stage->DefinePrim(SdfPath(path), TfToken(NodeT::getUsdTypeName()));
     if (prim)
@@ -331,20 +324,25 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
         path += n;
     }
 
-    Node* ret = nullptr;
+    USDNode* ret = nullptr;
+    USDNode* usd_parent = parent ? (USDNode*)parent->impl : nullptr;
     switch (type) {
     case Node::Type::Xform:
-        ret = createNodeImpl<USDXformNode>(parent, path);
+        ret = createNodeImpl<USDXformNode>(usd_parent, path);
         break;
     case Node::Type::Mesh:
-        ret = createNodeImpl<USDMeshNode>(parent, path);
-        mesh_nodes.push_back((USDMeshNode*)ret);
+        ret = createNodeImpl<USDMeshNode>(usd_parent, path);
         break;
     default: break;
     }
-    if (ret)
-        nodes.push_back(NodePtr(ret));
-    return ret;
+
+    if (ret) {
+        m_nodes.push_back(USDNodePtr(ret));
+        m_scene->nodes.push_back(NodePtr(ret->m_node));
+        if (type == Node::Type::Mesh)
+            m_scene->mesh_nodes.push_back(static_cast<MeshNode*>(ret->m_node));
+    }
+    return ret ? ret->m_node : nullptr;
 }
 
 
@@ -354,7 +352,7 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
     #define mqusdCoreAPI extern "C" 
 #endif
 
-mqusdCoreAPI Scene* mqusdCreateScene()
+mqusdCoreAPI SceneInterface* mqusdCreateUSDSceneInterface(Scene *scene)
 {
-    return new USDScene();
+    return new USDScene(scene);
 }

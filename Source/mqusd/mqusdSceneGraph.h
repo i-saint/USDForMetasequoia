@@ -6,6 +6,8 @@
 class UsdPrim;
 #endif
 struct mqusdPlayerSettings;
+class SceneInterface;
+using SceneInterfacePtr = std::shared_ptr<SceneInterface>;
 
 class Node
 {
@@ -21,16 +23,12 @@ public:
 
     Node(Node* parent);
     virtual ~Node();
-    virtual void release();
     virtual Type getType() const;
-    virtual void read(double time);
-    virtual void write(double time) const;
-
-    virtual UsdPrim* getPrim();
 
     template<class NodeT> NodeT* findParent();
     std::string getPath() const;
 
+    void* impl = nullptr;
     Node* parent = nullptr;
     std::vector<Node*> children;
     std::string name;
@@ -44,7 +42,7 @@ using super = Node;
 public:
     static const Type node_type = Type::Root;
 
-    RootNode(Node* parent = nullptr);
+    RootNode();
     Type getType() const override;
 };
 
@@ -97,17 +95,17 @@ class Scene
 public:
     Scene();
     virtual ~Scene();
-    virtual void release();
-    virtual bool open(const char* path);
-    virtual bool create(const char* path);
-    virtual bool save();
-    virtual void close();
-    virtual void read(double time);
-    virtual void write(double time) const;
+    bool open(const char* path);
+    bool create(const char* path);
+    bool save();
+    void close();
+    void read(double time);
+    void write(double time) const;
 
-    virtual Node* createNode(Node *parent, const char *name, Node::Type type);
+    Node* createNode(Node *parent, const char *name, Node::Type type);
 
 public:
+    SceneInterfacePtr impl;
     std::string path;
     std::vector<NodePtr> nodes;
     RootNode* root_node = nullptr;
@@ -118,5 +116,19 @@ public:
 };
 using ScenePtr = std::shared_ptr<Scene>;
 
-ScenePtr CreateScene();
+ScenePtr CreateUSDScene();
 
+
+class SceneInterface
+{
+public:
+    virtual ~SceneInterface();
+    virtual bool open(const char* path) = 0;
+    virtual bool create(const char* path) = 0;
+    virtual bool save() = 0;
+    virtual void close() = 0;
+    virtual void read(double time) = 0;
+    virtual void write(double time) const = 0;
+
+    virtual Node* createNode(Node* parent, const char* name, Node::Type type) = 0;
+};

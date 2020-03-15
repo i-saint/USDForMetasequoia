@@ -8,116 +8,96 @@
     static constexpr const char* getUsdTypeName() { return Typename; };
 
 
-template<class NodeT>
-class USDBaseNode : public NodeT
+class USDNode
 {
-using super = NodeT;
-public:
-    USDBaseNode(Node* parent, UsdPrim usd);
-    UsdPrim* getPrim() override;
-
-protected:
-    UsdPrim prim;
-};
-
-template<class NodeT, class SchemaT>
-class USDXformableNode : public USDBaseNode<NodeT>
-{
-using super = USDBaseNode<NodeT>;
-public:
-    USDXformableNode(Node* parent, UsdPrim usd);
-
-protected:
-    void readXform(const UsdTimeCode& t);
-    void writeXform(const UsdTimeCode& t) const;
-
-    mutable SchemaT schema;
-    mutable std::vector<UsdGeomXformOp> xf_ops;
-};
-
-
-class USDNode : public USDBaseNode<Node>
-{
-using super = USDBaseNode<Node>;
 public:
     DefSchemaTraits(UsdSchemaBase, "");
 
-    USDNode(Node* parent, UsdPrim usd);
+    USDNode(USDNode* parent, UsdPrim prim, bool create_node = true);
+    virtual ~USDNode();
+    virtual void read(double time);
+    virtual void write(double time) const;
+
+    void setNode(Node *node);
+    std::string getPath() const;
+
+public:
+    UsdPrim m_prim;
+    Node* m_node = nullptr;
+
+    USDNode* m_parent = nullptr;
+    std::vector<USDNode*> m_children;
 };
+using USDNodePtr = std::shared_ptr<USDNode>;
 
 
-class USDRootNode : public USDBaseNode<RootNode>
+class USDRootNode : public USDNode
 {
-using super = USDBaseNode<RootNode>;
+using super = USDNode;
 public:
     USDRootNode(UsdPrim usd);
 };
 
 
-class USDXformNode : public USDXformableNode<XformNode, UsdGeomXformable>
+class USDXformNode : public USDNode
 {
-using super = USDXformableNode<XformNode, UsdGeomXformable>;
+using super = USDNode;
 public:
     DefSchemaTraits(UsdGeomXformable, "Xform");
 
-    USDXformNode(Node* parent, UsdPrim usd);
+    USDXformNode(USDNode* parent, UsdPrim prim, bool create_node = true);
     void read(double time) override;
     void write(double time) const override;
 
 private:
+    mutable UsdGeomXformable m_xform;
+    mutable std::vector<UsdGeomXformOp> m_xf_ops;
 };
 
 
-class USDMeshNode : public USDXformableNode<MeshNode, UsdGeomMesh>
+class USDMeshNode : public USDXformNode
 {
-using super = USDXformableNode<MeshNode, UsdGeomMesh>;
+using super = USDXformNode;
 public:
     DefSchemaTraits(UsdGeomMesh, "Mesh");
 
-    USDMeshNode(Node* parent, UsdPrim usd);
+    USDMeshNode(USDNode* parent, UsdPrim usd);
     void read(double time) override;
     void write(double time) const override;
 
 private:
-    UsdAttribute attr_uvs;
-    UsdAttribute attr_mids;
+    mutable UsdGeomMesh m_mesh;
+    UsdAttribute m_attr_uvs;
+    UsdAttribute m_attr_mids;
 };
 
 
-class USDInstancerNode : USDBaseNode<Node>
+class USDInstancerNode : USDXformNode
 {
-using super = USDBaseNode<Node>;
+using super = USDXformNode;
 public:
-    USDInstancerNode(Node* parent, UsdPrim usd);
+    USDInstancerNode(USDNode* parent, UsdPrim usd);
     void read(double time) override;
-};
-
-class USDInstanceNode : XformNode
-{
-using super = XformNode;
-public:
-    USDInstanceNode(Node* parent);
-    void read(double time) override;
+    void write(double time) const override;
 };
 
 
-class USDMaterialNode : public USDBaseNode<MaterialNode>
+class USDMaterialNode : public USDNode
 {
-using super = USDBaseNode<MaterialNode>;
+using super = USDNode;
 public:
-    USDMaterialNode(Node* parent, UsdPrim usd);
+    USDMaterialNode(USDNode* parent, UsdPrim usd);
     void read(double time) override;
-    bool valid() const override;
+    void write(double time) const override;
 
 private:
 };
 
 
-class USDScene : public Scene
+class USDScene : public SceneInterface
 {
-using super = Scene;
 public:
-    USDScene();
+    USDScene(Scene *scene);
     ~USDScene() override;
 
     bool open(const char* path) override;
@@ -130,9 +110,13 @@ public:
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
 
 private:
-    void constructTree(Node* n);
+    void constructTree(USDNode* n);
     template<class NodeT>
-    Node* createNodeImpl(Node *parent, std::string path);
+    USDNode* createNodeImpl(USDNode*parent, std::string path);
 
     UsdStageRefPtr m_stage;
+    std::vector<USDNodePtr> m_nodes;
+    USDRootNode* m_root = nullptr;
+
+    Scene* m_scene = nullptr;
 };

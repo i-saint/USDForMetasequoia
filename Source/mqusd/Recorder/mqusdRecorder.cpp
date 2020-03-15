@@ -4,9 +4,9 @@
 #include "mqusdRecorderWindow.h"
 
 
-bool mqusdRecorderPlugin::OpenABC(const std::string& path)
+bool mqusdRecorderPlugin::OpenUSD(const std::string& path)
 {
-    m_scene = CreateScene();
+    m_scene = CreateUSDScene();
     if (!m_scene)
         return false;
 
@@ -39,7 +39,7 @@ bool mqusdRecorderPlugin::OpenABC(const std::string& path)
     return true;
 }
 
-bool mqusdRecorderPlugin::CloseABC()
+bool mqusdRecorderPlugin::CloseUSD()
 {
     if (!m_scene)
         return false;

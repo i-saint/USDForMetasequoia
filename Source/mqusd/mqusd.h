@@ -34,6 +34,12 @@
     #define mqusdAPI extern "C" 
 #endif
 
+#ifdef mqusdDebug
+    #define mqusdDbgPrint(...) mu::Print(__VA_ARGS__)
+#else
+    #define mqusdDbgPrint(...) 
+#endif
+
 #include "MeshUtils/MeshUtils.h"
 using mu::float2;
 using mu::float3;

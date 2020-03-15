@@ -14,27 +14,9 @@ Node::~Node()
 {
 }
 
-void Node::release()
-{
-    delete this;
-}
-
 Node::Type Node::getType() const
 {
     return Type::Unknown;
-}
-
-void Node::read(double time)
-{
-}
-
-void Node::write(double time) const
-{
-}
-
-UsdPrim* Node::getPrim()
-{
-    return nullptr;
 }
 
 std::string Node::getPath() const
@@ -59,7 +41,7 @@ NodeT* Node::findParent()
 }
 
 
-RootNode::RootNode(Node* p)
+RootNode::RootNode()
     : super(nullptr)
 {
 }
@@ -130,30 +112,35 @@ Scene::Scene()
 
 Scene::~Scene()
 {
-}
-
-void Scene::release()
-{
-    delete this;
+    close();
 }
 
 bool Scene::open(const char* path)
 {
+    if (impl)
+        return impl->open(path);
     return false;
 }
 
 bool Scene::create(const char* path)
 {
+    if (impl)
+        return impl->create(path);
     return false;
 }
 
 bool Scene::save()
 {
+    if (impl)
+        return impl->save();
     return false;
 }
 
 void Scene::close()
 {
+    if (impl)
+        impl->close();
+
     path.clear();
     root_node = nullptr;
     mesh_nodes.clear();
@@ -163,19 +150,25 @@ void Scene::close()
 
 void Scene::read(double time)
 {
-    for (auto& n : nodes)
-        n->read(time);
+    if (impl)
+        impl->read(time);
 }
 
 void Scene::write(double time) const
 {
-    for (auto& n : nodes)
-        n->write(time);
+    if (impl)
+        impl->write(time);
 }
 
 Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
 {
+    if (impl)
+        return impl->createNode(parent, name, type);
     return nullptr;
+}
+
+SceneInterface::~SceneInterface()
+{
 }
 
 
@@ -184,7 +177,7 @@ Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
 #define mqusdCoreDll muDLLPrefix "mqusdCore" muDLLSuffix
 
 static void* g_core_module;
-static Scene* (*g_mqusdCreateScene)();
+static SceneInterface* (*g_mqusdCreateUSDSceneInterface)(Scene* scene);
 
 static void LoadCoreModule()
 {
@@ -211,16 +204,19 @@ static void LoadCoreModule()
         mu::LoadModule(usd_dll.c_str());
         g_core_module = mu::LoadModule(core_dll.c_str());
         if (g_core_module) {
-            (void*&)g_mqusdCreateScene = mu::GetSymbol(g_core_module, "mqusdCreateScene");
+            (void*&)g_mqusdCreateUSDSceneInterface = mu::GetSymbol(g_core_module, "mqusdCreateUSDSceneInterface");
         }
     });
 }
 
-ScenePtr CreateScene()
+ScenePtr CreateUSDScene()
 {
     LoadCoreModule();
-    if (g_mqusdCreateScene)
-        return ScenePtr(g_mqusdCreateScene());
+    if (g_mqusdCreateUSDSceneInterface) {
+        auto ret = new Scene();
+        ret->impl.reset(g_mqusdCreateUSDSceneInterface(ret));
+        return ScenePtr(ret);
+    }
     else
         return nullptr;
 }

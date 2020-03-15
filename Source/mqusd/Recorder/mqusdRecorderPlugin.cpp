@@ -109,7 +109,7 @@ void mqusdRecorderPlugin::Exit()
         delete m_window;
         m_window = nullptr;
     }
-    CloseABC();
+    CloseUSD();
 }
 
 //---------------------------------------------------------------------------
@@ -193,7 +193,7 @@ void mqusdRecorderPlugin::OnNewDocument(MQDocument doc, const char *filename, NE
 void mqusdRecorderPlugin::OnEndDocument(MQDocument doc)
 {
     m_mqo_path.clear();
-    CloseABC();
+    CloseUSD();
 }
 
 //---------------------------------------------------------------------------
