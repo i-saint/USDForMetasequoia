@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "mqusdSceneGraph.h"
 
+namespace mqusd {
+
 class mqusdRecorderWindow;
 
 struct mqusdRecorderSettings
@@ -168,3 +170,5 @@ private:
     std::vector<MaterialRecord> m_material_records;
     std::future<void> m_task_write;
 };
+
+} // namespace mqusd

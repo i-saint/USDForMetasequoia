@@ -41,6 +41,8 @@
 #endif
 
 #include "MeshUtils/MeshUtils.h"
+
+namespace mqusd {
 using mu::float2;
 using mu::float3;
 using mu::float4;
@@ -48,3 +50,4 @@ using mu::float2x2;
 using mu::float3x3;
 using mu::float4x4;
 using mu::double4x4;
+} // namespace mqusd

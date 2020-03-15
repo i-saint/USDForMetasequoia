@@ -5,6 +5,9 @@
 #ifndef PXR_USD_USD_PRIM_H
 class UsdPrim;
 #endif
+
+namespace mqusd {
+
 struct mqusdPlayerSettings;
 class SceneInterface;
 using SceneInterfacePtr = std::shared_ptr<SceneInterface>;
@@ -165,3 +168,5 @@ public:
 
     virtual Node* createNode(Node* parent, const char* name, Node::Type type) = 0;
 };
+
+} // namespace mqusd

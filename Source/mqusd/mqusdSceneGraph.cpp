@@ -3,6 +3,8 @@
 #include "mqusdSceneGraph.h"
 #include "Player/mqusdPlayerPlugin.h"
 
+namespace mqusd {
+
 Node::Node(Node* p)
     : parent(p)
 {
@@ -250,3 +252,5 @@ ScenePtr CreateUSDScene()
     else
         return nullptr;
 }
+
+} // namespace mqusd

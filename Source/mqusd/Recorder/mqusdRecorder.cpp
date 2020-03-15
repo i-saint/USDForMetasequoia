@@ -3,6 +3,7 @@
 #include "mqusdRecorderPlugin.h"
 #include "mqusdRecorderWindow.h"
 
+namespace mqusd {
 
 bool mqusdRecorderPlugin::OpenUSD(const std::string& path)
 {
@@ -305,3 +306,5 @@ void mqusdRecorderPlugin::WriteMaterials()
         return;
 
 }
+
+} // namespace mqusd

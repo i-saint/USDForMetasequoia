@@ -1,6 +1,8 @@
 #pragma once
 #include "MQWidget.h"
 
+namespace mqusd {
+
 class mqusdPlayerPlugin;
 
 class mqusdPlayerWindow : public MQWindow
@@ -35,3 +37,5 @@ private:
 
     MQMemo* m_log = nullptr;
 };
+
+} // namespace mqusd

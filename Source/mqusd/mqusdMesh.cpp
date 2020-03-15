@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "mqusdMesh.h"
 
+namespace mqusd {
 
 Joint::Joint(const std::string& p)
     : path(p)
@@ -175,3 +176,5 @@ int Mesh::getMaxMaterialID() const
     mu::MinMax(material_ids.cdata(), material_ids.size(), mid_min, mid_max);
     return mid_max;
 }
+
+} // namespace mqusd

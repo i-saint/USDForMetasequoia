@@ -3,6 +3,8 @@
 #include "mqusdPlayerPlugin.h"
 #include "mqusdPlayerWindow.h"
 
+namespace mqusd {
+
 mqusdPlayerWindow::mqusdPlayerWindow(mqusdPlayerPlugin* plugin, MQWindowBase& parent)
     : MQWindow(parent)
 {
@@ -189,3 +191,5 @@ void mqusdPlayerWindow::LogInfo(const char* message)
         m_log->SetText(mu::ToWCS(message));
     }
 }
+
+} // namespace mqusd

@@ -3,6 +3,8 @@
 #include "mqusdRecorderPlugin.h"
 #include "mqusdRecorderWindow.h"
 
+namespace mqusd {
+
 mqusdRecorderWindow::mqusdRecorderWindow(mqusdRecorderPlugin* plugin, MQWindowBase& parent)
     : MQWindow(parent)
 {
@@ -216,3 +218,5 @@ void mqusdRecorderWindow::LogInfo(const char* message)
         m_log->SetText(mu::ToWCS(message));
     }
 }
+
+} // namespace mqusd

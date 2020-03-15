@@ -1,6 +1,8 @@
 #pragma once
 #include "MQWidget.h"
 
+namespace mqusd {
+
 class mqusdRecorderPlugin;
 
 class mqusdRecorderWindow : public MQWindow
@@ -38,3 +40,5 @@ private:
     MQButton* m_button_debug = nullptr;
 #endif // mqusdDebug
 };
+
+} // namespace mqusd

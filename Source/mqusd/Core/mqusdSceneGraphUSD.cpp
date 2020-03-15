@@ -2,6 +2,7 @@
 #include "mqusd.h"
 #include "mqusdSceneGraphUSD.h"
 
+namespace mqusd {
 
 USDNode::USDNode(USDNode* parent, UsdPrim prim, bool create_node)
     : m_prim(prim)
@@ -487,6 +488,7 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
     return ret ? ret->m_node : nullptr;
 }
 
+} // namespace mqusd
 
 #ifdef _WIN32
     #define mqusdCoreAPI extern "C" __declspec(dllexport)
@@ -494,7 +496,7 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
     #define mqusdCoreAPI extern "C" 
 #endif
 
-mqusdCoreAPI SceneInterface* mqusdCreateUSDSceneInterface(Scene *scene)
+mqusdCoreAPI mqusd::SceneInterface* mqusdCreateUSDSceneInterface(mqusd::Scene *scene)
 {
-    return new USDScene(scene);
+    return new mqusd::USDScene(scene);
 }

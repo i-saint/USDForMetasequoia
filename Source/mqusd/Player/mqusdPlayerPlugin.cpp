@@ -3,6 +3,8 @@
 #include "mqusdPlayerPlugin.h"
 #include "mqusdPlayerWindow.h"
 
+namespace mqusd {
+
 static mqusdPlayerPlugin g_plugin;
 
 // Constructor
@@ -305,10 +307,12 @@ void mqusdPlayerPlugin::LogInfo(const char* fmt, ...)
     }
 }
 
+} // namespace mqusd
+
 
 MQBasePlugin* GetPluginClass()
 {
-    return &g_plugin;
+    return &mqusd::g_plugin;
 }
 
 #ifdef _WIN32

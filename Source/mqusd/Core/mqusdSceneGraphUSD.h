@@ -2,6 +2,7 @@
 #include "mqusdCore.h"
 #include "mqusdSceneGraph.h"
 
+namespace mqusd {
 
 #define DefSchemaTraits(Type, Typename)\
     using UsdType = Type;\
@@ -153,3 +154,5 @@ private:
 
     Scene* m_scene = nullptr;
 };
+
+} // namespace mqusd

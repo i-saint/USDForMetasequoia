@@ -1,6 +1,8 @@
 #pragma once
 #include "mqusd.h"
 
+namespace mqusd {
+
 class Joint
 {
 public:
@@ -99,3 +101,5 @@ public:
 using MaterialPtr = std::shared_ptr<Material>;
 
 inline float3 to_float3(MQColor v) { return (float3&)v; };
+
+} // namespace mqusd

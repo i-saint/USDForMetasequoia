@@ -3,6 +3,8 @@
 #include "mqusdRecorderPlugin.h"
 #include "mqusdRecorderWindow.h"
 
+namespace mqusd {
+
 static mqusdRecorderPlugin g_plugin;
 
 // Constructor
@@ -313,11 +315,6 @@ void mqusdRecorderPlugin::LogInfo(const char* fmt, ...)
     }
 }
 
-MQBasePlugin* GetPluginClass()
-{
-    return &g_plugin;
-}
-
 void msmqLogInfo(const char *message)
 {
     g_plugin.LogInfo(message);
@@ -334,6 +331,13 @@ bool mqusdRecorderPlugin::DbgDoSomethingImpl(MQDocument doc)
     return false;
 }
 #endif // mqusdDebug
+
+} // namespace mqusd
+
+MQBasePlugin* GetPluginClass()
+{
+    return &mqusd::g_plugin;
+}
 
 
 #ifdef _WIN32

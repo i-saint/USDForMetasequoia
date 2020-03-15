@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "mqusdSceneGraph.h"
 
+namespace mqusd {
+
 class mqusdPlayerWindow;
 
 struct mqusdPlayerSettings
@@ -121,3 +123,5 @@ private:
     Mesh m_mesh_merged;
     int m_mqobj_id = 0;
 };
+
+} // namespace mqusd

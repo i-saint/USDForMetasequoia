@@ -2,8 +2,7 @@
 #include "mqusd.h"
 #include "mqusdPlayerPlugin.h"
 
-
-
+namespace mqusd {
 
 bool mqusdPlayerPlugin::OpenUSD(const std::string& path)
 {
@@ -197,3 +196,5 @@ double mqusdPlayerPlugin::GetTimeEnd() const
 {
     return m_scene->time_end;
 }
+
+} // namespace mqusd
