@@ -98,10 +98,23 @@ USDMeshNode::USDMeshNode(USDNode* parent, UsdPrim prim)
     : super(parent, prim, false)
 {
     m_mesh = UsdGeomMesh(prim);
-    m_attr_uvs = prim.GetAttribute(TfToken(mqusdUVAttr));
-    m_attr_mids = prim.GetAttribute(TfToken(mqusdMaterialIDAttr));
+
+    m_attr_uv = prim.GetAttribute(TfToken(mqusdAttrUV));
+    m_attr_uv_indices = prim.GetAttribute(TfToken(mqusdAttrUVIndices));
+    m_attr_mids = prim.GetAttribute(TfToken(mqusdAttrMaterialIDs));
+
+    m_attr_joints = prim.GetAttribute(TfToken(mqusdAttrJoints));
+    m_attr_joint_indices = prim.GetAttribute(TfToken(mqusdAttrJointIndices));
+    m_attr_joint_weights = prim.GetAttribute(TfToken(mqusdAttrJointWeights));
+    m_attr_bind_transform = prim.GetAttribute(TfToken(mqusdAttrBindTransform));
 
     setNode(new MeshNode(parent ? parent->m_node : nullptr));
+
+#ifdef mqusdDebug
+    for (auto& attr : m_prim.GetAuthoredAttributes()) {
+        mqusdDbgPrint("  %s (%s)\n", attr.GetName().GetText(), attr.GetTypeName().GetAsToken().GetText());
+    }
+#endif
 }
 
 void USDMeshNode::read(double time)
@@ -131,15 +144,49 @@ void USDMeshNode::read(double time)
         m_mesh.GetNormalsAttr().Get(&data, t);
         dst.normals.assign((float3*)data.cdata(), data.size());
     }
-    if (m_attr_uvs) {
+    if (m_attr_uv) {
         VtArray<GfVec2f> data;
-        m_attr_uvs.Get(&data, t);
-        dst.uvs.assign((float2*)data.cdata(), data.size());
+        m_attr_uv.Get(&data, t);
+
+        if (m_attr_uv_indices) {
+            VtArray<int> indices;
+            m_attr_uv_indices.Get(&indices, t);
+            dst.uvs.resize_discard(indices.size());
+            mu::CopyWithIndices(dst.uvs.data(), (float2*)data.cdata(), indices);
+        }
+        else {
+            dst.uvs.assign((float2*)data.cdata(), data.size());
+        }
     }
     if (m_attr_mids) {
         VtArray<int> data;
         m_attr_mids.Get(&data, t);
         dst.material_ids.assign(data.cdata(), data.size());
+    }
+
+    // skinning
+    if (m_attr_joints) {
+        VtArray<TfToken> data;
+        m_attr_joints.Get(&data, t);
+        for (auto& t : data)
+            dst.joints.push_back(t.GetString());
+    }
+    if (m_attr_joint_indices) {
+        m_attr_joint_indices.GetMetadata(mqusdKeyElementSize, &dst.joints_per_vertex);
+
+        VtArray<int> data;
+        m_attr_joint_indices.Get(&data, t);
+        dst.joint_indices.assign(data.cdata(), data.size());
+    }
+    if (m_attr_joint_weights) {
+        VtArray<float> data;
+        m_attr_joint_weights.Get(&data, t);
+        dst.joint_weights.assign(data.cdata(), data.size());
+    }
+    if (m_attr_bind_transform) {
+        GfMatrix4d data;
+        m_attr_bind_transform.Get(&data, t);
+        dst.bind_transform.assign((float4x4&)data);
     }
 
     // validate
@@ -172,10 +219,10 @@ void USDMeshNode::write(double time) const
         data.assign((GfVec3f*)src.normals.begin(), (GfVec3f*)src.normals.end());
         m_mesh.GetNormalsAttr().Set(data, t);
     }
-    if (m_attr_uvs && !src.uvs.empty()) {
+    if (m_attr_uv && !src.uvs.empty()) {
         VtArray<GfVec2f> data;
         data.assign((GfVec2f*)src.uvs.begin(), (GfVec2f*)src.uvs.end());
-        m_attr_uvs.Set(data, t);
+        m_attr_uv.Set(data, t);
     }
     if (m_attr_mids && !src.material_ids.empty()) {
         VtArray<int> data;
@@ -250,7 +297,7 @@ void USDSkeletonNode::read(double time)
         VtArray<TfToken> data;
         m_skel.GetJointsAttr().Get(&data, t);
         for (auto& token: data)
-            dst.makeJoint(token.GetString());
+            dst.addJoint(token.GetString());
         dst.buildJointRelations();
     }
     {

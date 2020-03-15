@@ -20,7 +20,7 @@ void Skeleton::clear()
     joints.clear();
 }
 
-Joint* Skeleton::makeJoint(const std::string& path)
+Joint* Skeleton::addJoint(const std::string& path)
 {
     auto ret = new Joint(path);
     joints.push_back(JointPtr(ret));
@@ -76,6 +76,15 @@ void Mesh::clear()
     material_ids.clear();
     counts.clear();
     indices.clear();
+
+    blendshapes.clear();
+
+    skeleton = {};
+    joints.clear();
+    joints_per_vertex = 0;
+    joint_indices.clear();
+    joint_weights.clear();
+    bind_transform = float4x4::identity();
 }
 
 void Mesh::resize(int npoints, int nindices, int nfaces)

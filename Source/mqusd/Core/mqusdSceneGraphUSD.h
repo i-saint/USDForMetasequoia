@@ -68,8 +68,13 @@ public:
 
 private:
     mutable UsdGeomMesh m_mesh;
-    UsdAttribute m_attr_uvs;
+    UsdAttribute m_attr_uv;
+    UsdAttribute m_attr_uv_indices;
     UsdAttribute m_attr_mids;
+    UsdAttribute m_attr_joints;
+    UsdAttribute m_attr_joint_indices;
+    UsdAttribute m_attr_joint_weights;
+    UsdAttribute m_attr_bind_transform;
 };
 
 

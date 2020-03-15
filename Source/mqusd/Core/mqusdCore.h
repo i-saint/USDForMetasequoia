@@ -1,5 +1,33 @@
 #pragma once
 
+#define mqusdAttrUV             "primvars:st"
+#define mqusdAttrUVIndices      "primvars:st:indices"
+#define mqusdAttrBindTransform  "primvars:skel:geomBindTransform"
+#define mqusdAttrJoints         "primvars:skel:joints"
+#define mqusdAttrJointIndices   "primvars:skel:jointIndices"
+#define mqusdAttrJointWeights   "primvars:skel:jointWeights"
+#define mqusdAttrMaterialIDs    "materialIds"
+
+#define mqusdKeyElementSize     TfToken("elementSize")
+#define mqusdKeyInterpolation   TfToken("interpolation")
+
+#define mqusdMtlTarget          "metasequoia"
+#define mqusdMtlShaderClassic   "classic"
+#define mqusdMtlShaderConstant  "constant"
+#define mqusdMtlShaderLambert   "lambert"
+#define mqusdMtlShaderPhong     "phong"
+#define mqusdMtlShaderBlinn     "blinn"
+#define mqusdMtlShaderHLSL      "hlsl"
+
+#define mqusdMtlUseVertexColor  ".useVertexColor"
+#define mqusdMtlDoubleSided     ".doubleSided"
+#define mqusdMtlDiffuseColor    ".diffuseColor"
+#define mqusdMtlDiffuse         ".diffuse"
+#define mqusdMtlAlpha           ".alpha"
+#define mqusdMtlAmbientColor    ".ambientColor"
+#define mqusdMtlSpecularColor   ".specularColor"
+#define mqusdMtlEmissionColor   ".emissionColor"
+
 #pragma warning(push)
 #pragma warning(disable:4244 267)
 #include "pxr/usd/usd/stage.h"

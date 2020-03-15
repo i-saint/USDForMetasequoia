@@ -8,26 +8,6 @@
 #define mqusdRecorderPluginID   0xB1CC99A0
 #define mqusdPlayerPluginID     0xB1CC99A1
 
-#define mqusdUVAttr             "primvars:st"
-#define mqusdMaterialIDAttr     "materialIds"
-
-#define mqusdMtlTarget          "metasequoia"
-#define mqusdMtlShaderClassic   "classic"
-#define mqusdMtlShaderConstant  "constant"
-#define mqusdMtlShaderLambert   "lambert"
-#define mqusdMtlShaderPhong     "phong"
-#define mqusdMtlShaderBlinn     "blinn"
-#define mqusdMtlShaderHLSL      "hlsl"
-
-#define mqusdMtlUseVertexColor  ".useVertexColor"
-#define mqusdMtlDoubleSided     ".doubleSided"
-#define mqusdMtlDiffuseColor    ".diffuseColor"
-#define mqusdMtlDiffuse         ".diffuse"
-#define mqusdMtlAlpha           ".alpha"
-#define mqusdMtlAmbientColor    ".ambientColor"
-#define mqusdMtlSpecularColor   ".specularColor"
-#define mqusdMtlEmissionColor   ".emissionColor"
-
 #ifdef _WIN32
     #define mqusdAPI extern "C" __declspec(dllexport)
 #else

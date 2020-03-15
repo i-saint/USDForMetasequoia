@@ -118,16 +118,15 @@ inline void CopyWithIndices(T *dst, const T *src, const IArray<int> indices, siz
     }
 }
 
-template<class T>
-inline void CopyWithIndices(T *dst, const T *src, const IArray<int> indices)
+template<class T, class Indices>
+inline void CopyWithIndices(T *dst, const T *src, const Indices& indices)
 {
     if (!dst || !src)
         return;
 
-    size_t size = indices.size();
-    for (int i = 0; i < (int)size; ++i) {
+    size_t n = indices.size();
+    for (size_t i = 0; i < n; ++i)
         dst[i] = src[indices[i]];
-    }
 }
 
 template<class IntArray1, class IntArray2>

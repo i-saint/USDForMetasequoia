@@ -25,7 +25,7 @@ class Skeleton
 {
 public:
     void clear();
-    Joint* makeJoint(const std::string& path);
+    Joint* addJoint(const std::string& path);
     void buildJointRelations();
 
     Joint* findJointByName(const std::string& name);
@@ -78,8 +78,16 @@ public:
     RawVector<int> counts;       // 
     RawVector<int> indices;
 
+    // blendshape
     std::vector<BlendshapePtr> blendshapes;
+
+    // skinning
     SkeletonPtr skeleton;
+    std::vector<std::string> joints;// paths to joints in skeleton
+    int joints_per_vertex = 0;
+    RawVector<int> joint_indices;   // size must be points.size() * joints_per_vertex
+    RawVector<float> joint_weights; // 
+    float4x4 bind_transform = float4x4::identity();
 };
 using MeshPtr = std::shared_ptr<Mesh>;
 
