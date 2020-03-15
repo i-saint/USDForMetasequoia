@@ -10,13 +10,12 @@ bool mqusdRecorderPlugin::OpenUSD(const std::string& path)
     if (!m_scene)
         return false;
 
-    if (!m_scene->open(path.c_str())) {
+    if (!m_scene->create(path.c_str())) {
         m_scene = {};
         return false;
     }
 
 
-    // add dummy time sampling
     // create nodes
     auto node_name = mu::GetFilename_NoExtension(m_mqo_path.c_str());
     if (node_name.empty())
@@ -24,13 +23,9 @@ bool mqusdRecorderPlugin::OpenUSD(const std::string& path)
     if (node_name.empty())
         node_name = "Untitled";
 
-    // todo
-
-    if (m_settings.capture_colors) {
-    }
-    if (m_settings.capture_material_ids) {
-    }
-    m_timeline.reserve(1024);
+    auto root_node = m_scene->root_node;
+    auto mesh_node = m_scene->createNode(root_node, node_name.c_str(), Node::Type::Mesh);
+    m_mesh_node = static_cast<MeshNode*>(mesh_node);
 
     m_recording = true;
     m_dirty = true;
@@ -49,13 +44,14 @@ bool mqusdRecorderPlugin::CloseUSD()
     if (m_settings.capture_materials) {
         WriteMaterials();
     }
-    if (m_settings.keep_time) {
-    }
 
-    m_scene = {}; // flush archive
+    // flush archive
+    m_scene->save();
+    m_scene = {};
 
+    m_frame = 0;
+    m_time = 0.0;
     m_start_time = m_last_flush = 0;
-    m_timeline.clear();
     m_recording = false;
 
     m_obj_records.clear();
@@ -184,11 +180,14 @@ void mqusdRecorderPlugin::CaptureFrame(MQDocument doc)
         ExtractMeshData(m_obj_records[oi]);
     });
 
-    auto abctime = mu::NS2Sd(m_last_flush - m_start_time) * m_settings.time_scale;
-    m_timeline.push_back(abctime);
+    if (m_settings.keep_time)
+        m_time = mu::NS2Sd(m_last_flush - m_start_time) * m_settings.time_scale;
+    else
+        m_time = (1.0 / m_settings.frame_rate) * m_frame;
+    ++m_frame;
 
-    // flush abc async
-    m_task_write = std::async(std::launch::async, [this, abctime]() { FlushABC(); });
+    // flush usd async
+    m_task_write = std::async(std::launch::async, [this]() { FlushUSD(); });
 
     // log
     int total_vertices = 0;
@@ -198,7 +197,7 @@ void mqusdRecorderPlugin::CaptureFrame(MQDocument doc)
         total_faces += (int)rec.mesh.counts.size();
     }
     LogInfo("frame %d: %d vertices, %d faces",
-        (int)(m_timeline.size() - 1), total_vertices, total_faces);
+        m_frame - 1, total_vertices, total_faces);
 }
 
 void mqusdRecorderPlugin::ExtractMeshData(ObjectRecord& rec)
@@ -270,27 +269,16 @@ void mqusdRecorderPlugin::ExtractMeshData(ObjectRecord& rec)
     dst.applyScale(m_settings.scale_factor);
 }
 
-void mqusdRecorderPlugin::FlushABC()
+void mqusdRecorderPlugin::FlushUSD()
 {
     // make merged mesh
-    m_mesh_merged.clear();
+    auto& dst = m_mesh_node->mesh;
+    dst.clear();
     for (auto& rec : m_obj_records)
-        m_mesh_merged.merge(rec.mesh);
+        dst.merge(rec.mesh);
 
-    // write to abc
-    const auto& data = m_mesh_merged;
-
-#if MQPLUGIN_VERSION >= 0x0460
-    if (m_settings.capture_normals) {
-    }
-#endif
-    if (m_settings.capture_uvs) {
-    }
-
-    if (m_settings.capture_colors) {
-    }
-    if (m_settings.capture_material_ids) {
-    }
+    // do write
+    m_scene->write(m_time);
 }
 
 void mqusdRecorderPlugin::WaitFlush()

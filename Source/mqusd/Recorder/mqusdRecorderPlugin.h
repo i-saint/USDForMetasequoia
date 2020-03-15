@@ -15,7 +15,8 @@ struct mqusdRecorderSettings
     bool freeze_subdiv = false;
     bool keep_time = false;
     float scale_factor = 0.05f;
-    float time_scale = 1.0f;
+    float frame_rate = 30.0f; // relevant only when keep_time is false
+    float time_scale = 1.0f; // relevant only when keep_time is true
 };
 
 class mqusdRecorderPlugin : public MQStationPlugin
@@ -115,7 +116,6 @@ public:
     mqusdRecorderSettings& GetSettings();
 
     void MarkSceneDirty();
-    void CaptureFrame();
     void CaptureFrame(MQDocument doc);
 
 #ifdef mqusdDebug
@@ -142,7 +142,7 @@ private:
     };
 
     void ExtractMeshData(ObjectRecord& rec);
-    void FlushABC();
+    void FlushUSD();
     void WaitFlush();
     void WriteMaterials();
 
@@ -157,14 +157,13 @@ private:
     mu::nanosec m_start_time = 0;
     mu::nanosec m_last_flush = 0;
     mu::nanosec m_interval = 5000000000; // 5 sec
+    int m_frame = 0;
+    double m_time = 0.0;
 
     ScenePtr m_scene;
     RootNode *m_root_node = nullptr;
     MeshNode *m_mesh_node = nullptr;
 
-    std::vector<double> m_timeline;
-
-    mqusdMesh m_mesh_merged;
     std::vector<ObjectRecord> m_obj_records;
     std::vector<MaterialRecord> m_material_records;
     std::future<void> m_task_write;

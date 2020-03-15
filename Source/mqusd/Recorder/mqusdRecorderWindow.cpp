@@ -140,15 +140,15 @@ BOOL mqusdRecorderWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument do
         // show file open directory
 
         MQSaveFileDialog dlg(*this);
-        dlg.AddFilter(L"Alembic file (*.abc)|*.abc");
-        dlg.SetDefaultExt(L"abc");
+        dlg.AddFilter(L"USD file (*.usd)|*.usd");
+        dlg.SetDefaultExt(L"usd");
 
         auto& mqo_path = m_plugin->GetMQOPath();
         auto dir = mu::GetDirectory(mqo_path.c_str());
         auto filename = mu::GetFilename_NoExtension(mqo_path.c_str());
         if (filename.empty())
             filename = "Untitled";
-        filename += ".abc";
+        filename += ".usd";
 
         if (!dir.empty())
             dlg.SetInitialDir(mu::ToWCS(dir));

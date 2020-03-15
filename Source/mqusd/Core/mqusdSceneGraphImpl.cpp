@@ -222,11 +222,12 @@ bool USDScene::create(const char* path_)
     }
 
     m_scene->path = path_;
-    m_stage = UsdStage::CreateNew(path_);
+    m_stage = UsdStage::CreateNew(m_scene->path);
     if (m_stage) {
         auto root = m_stage->GetPseudoRoot();
         if (root.IsValid()) {
             m_root = new USDRootNode(root);
+            m_scene->root_node = static_cast<RootNode*>(m_root->m_node);
             constructTree(m_root);
         }
     }
@@ -298,6 +299,7 @@ void USDScene::write(double time) const
 {
     for (auto& n : m_nodes)
         n->write(time);
+    m_stage->SetEndTimeCode(time);
 }
 
 template<class NodeT>

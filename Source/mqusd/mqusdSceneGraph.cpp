@@ -26,7 +26,8 @@ std::string Node::getPath() const
         ret += parent->getPath();
     if (ret.empty() || ret.back() != '/')
         ret += "/";
-    ret += name;
+    if (name != "/")
+        ret += name;
     return ret;
 }
 
@@ -184,25 +185,24 @@ static void LoadCoreModule()
     static std::once_flag s_flag;
     std::call_once(s_flag, []() {
         g_core_module = mu::GetModule(mqusdCoreDll);
-        if (g_core_module)
-            return;
-
-        std::string dir = mu::GetCurrentModuleDirectory();
+        if (!g_core_module) {
+            std::string dir = mu::GetCurrentModuleDirectory();
 #ifdef _WIN32
-        std::string core_dir = dir + "/mqusdCore";
+            std::string core_dir = dir + "/mqusdCore";
 #else
-        std::string core_dir = dir;
+            std::string core_dir = dir;
 #endif
 
-        std::string plugin_dir = core_dir + "/usd/plugInfo.json";
-        mu::SetEnv("PXR_PLUGINPATH_NAME", plugin_dir.c_str());
+            std::string plugin_dir = core_dir + "/usd/plugInfo.json";
+            mu::SetEnv("PXR_PLUGINPATH_NAME", plugin_dir.c_str());
 
-        std::string tbb_dll = core_dir + "/" mqusdTBBDll;
-        std::string usd_dll = core_dir + "/" mqusdUSDDll;
-        std::string core_dll = core_dir + "/" mqusdCoreDll;
-        mu::LoadModule(tbb_dll.c_str());
-        mu::LoadModule(usd_dll.c_str());
-        g_core_module = mu::LoadModule(core_dll.c_str());
+            std::string tbb_dll = core_dir + "/" mqusdTBBDll;
+            std::string usd_dll = core_dir + "/" mqusdUSDDll;
+            std::string core_dll = core_dir + "/" mqusdCoreDll;
+            mu::LoadModule(tbb_dll.c_str());
+            mu::LoadModule(usd_dll.c_str());
+            g_core_module = mu::LoadModule(core_dll.c_str());
+        }
         if (g_core_module) {
             (void*&)g_mqusdCreateUSDSceneInterface = mu::GetSymbol(g_core_module, "mqusdCreateUSDSceneInterface");
         }
