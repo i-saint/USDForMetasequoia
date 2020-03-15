@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqusdSceneGraphImpl.h"
+#include "mqusdSceneGraphUSD.h"
 
 
 USDNode::USDNode(USDNode* parent, UsdPrim prim, bool create_node)
@@ -179,6 +179,58 @@ void USDMeshNode::write(double time) const
 }
 
 
+USDSkeletonNode::USDSkeletonNode(USDNode* parent, UsdPrim prim)
+    : super(parent, prim, false)
+{
+    m_skel = UsdSkelSkeleton(prim);
+
+    setNode(new SkeletonNode(parent ? parent->m_node : nullptr));
+}
+
+void USDSkeletonNode::read(double time)
+{
+    super::read(time);
+
+    auto t = UsdTimeCode(time);
+    auto& dst = static_cast<SkeletonNode&>(*m_node);
+    dst.clearJoints();
+
+    {
+        VtArray<TfToken> data;
+        m_skel.GetJointsAttr().Get(&data, t);
+        for (auto& token: data)
+            dst.makeJoint(token.GetString());
+        dst.buildJointRelations();
+    }
+    {
+        VtArray<GfMatrix4d> data;
+        m_skel.GetBindTransformsAttr().Get(&data, t);
+        size_t n = data.size();
+        if (dst.joints.size() == n) {
+            for (size_t i = 0; i < n; ++i)
+                dst.joints[i]->bindpose.assign((double4x4&)data[i]);
+        }
+    }
+    {
+        VtArray<GfMatrix4d> data;
+        m_skel.GetRestTransformsAttr().Get(&data, t);
+        size_t n = data.size();
+        if (dst.joints.size() == n) {
+            for (size_t i = 0; i < n; ++i)
+                dst.joints[i]->restpose.assign((double4x4&)data[i]);
+        }
+    }
+}
+
+void USDSkeletonNode::write(double time) const
+{
+    super::write(time);
+
+    auto t = UsdTimeCode(time);
+    // todo
+}
+
+
 
 
 USDScene::USDScene(Scene* scene)
@@ -244,7 +296,9 @@ bool USDScene::save()
 
 void USDScene::constructTree(USDNode* n)
 {
-    mqusdDbgPrint("%s\n", n->getPath().c_str());
+#ifdef mqusdDebug
+    mqusdDbgPrint("%s (%s)\n", n->getPath().c_str(), n->m_prim.GetTypeName().GetText());
+#endif
 
     m_nodes.push_back(USDNodePtr(n));
     m_scene->nodes.push_back(NodePtr(n->m_node));
@@ -255,24 +309,30 @@ void USDScene::constructTree(USDNode* n)
         USDNode* c = nullptr;
 
         if (!c) {
-            UsdGeomMesh mesh(cprim);
-            if (mesh) {
+            UsdGeomMesh schema(cprim);
+            if (schema) {
                 c = new USDMeshNode(n, cprim);
                 m_scene->mesh_nodes.push_back(static_cast<MeshNode*>(c->m_node));
+            }
+        }
+        if (!c) {
+            UsdSkelSkeleton schema(cprim);
+            if (schema) {
+                c = new USDSkeletonNode(n, cprim);
             }
         }
 
         // todo
         //if (!c) {
-        //    UsdGeomPointInstancer instancer(cprim);
-        //    if (instancer) {
+        //    UsdGeomPointInstancer schema(cprim);
+        //    if (schema) {
         //    }
         //}
 
         // xform must be last because Mesh is also Xformable
         if (!c) {
-            UsdGeomXformable xform(cprim);
-            if (xform) {
+            UsdGeomXformable schema(cprim);
+            if (schema) {
                 c = new USDXformNode(n, cprim);
             }
         }

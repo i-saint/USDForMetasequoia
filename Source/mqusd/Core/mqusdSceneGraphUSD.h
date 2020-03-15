@@ -35,7 +35,7 @@ class USDRootNode : public USDNode
 {
 using super = USDNode;
 public:
-    USDRootNode(UsdPrim usd);
+    USDRootNode(UsdPrim prim);
 };
 
 
@@ -61,7 +61,7 @@ using super = USDXformNode;
 public:
     DefSchemaTraits(UsdGeomMesh, "Mesh");
 
-    USDMeshNode(USDNode* parent, UsdPrim usd);
+    USDMeshNode(USDNode* parent, UsdPrim prim);
     void read(double time) override;
     void write(double time) const override;
 
@@ -69,6 +69,21 @@ private:
     mutable UsdGeomMesh m_mesh;
     UsdAttribute m_attr_uvs;
     UsdAttribute m_attr_mids;
+};
+
+
+class USDSkeletonNode : public USDXformNode
+{
+using super = USDXformNode;
+public:
+    DefSchemaTraits(UsdSkelSkeleton, "Skeleton");
+
+    USDSkeletonNode(USDNode* parent, UsdPrim prim);
+    void read(double time) override;
+    void write(double time) const override;
+
+private:
+    mutable UsdSkelSkeleton m_skel;
 };
 
 

@@ -18,6 +18,7 @@ public:
         Root,
         Xform,
         Mesh,
+        Skeleton,
         Material,
     };
 
@@ -73,6 +74,43 @@ public:
     void convert(const mqusdPlayerSettings& settings);
 
     mqusdMesh mesh;
+};
+
+
+class Joint
+{
+public:
+    Joint(const std::string& path);
+    ~Joint();
+    std::string getPath() const;
+
+    Joint* parent = nullptr;
+    std::vector<Joint*> children;
+    std::string name;
+    std::string path;
+    float4x4 bindpose = float4x4::identity();
+    float4x4 restpose = float4x4::identity();
+    float4x4 local_matrix = float4x4::identity();
+    float4x4 global_matrix = float4x4::identity();
+};
+using JointPtr = std::shared_ptr<Joint>;
+
+class SkeletonNode : public XformNode
+{
+using super = XformNode;
+public:
+    static const Type node_type = Type::Skeleton;
+
+    SkeletonNode(Node* parent);
+    Type getType() const override;
+    Joint* findJointByName(const std::string& name);
+    Joint* findJointByPath(const std::string& path);
+
+    void clearJoints();
+    Joint* makeJoint(const std::string& path);
+    void buildJointRelations();
+
+    std::vector<JointPtr> joints;
 };
 
 

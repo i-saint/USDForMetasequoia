@@ -90,6 +90,84 @@ void MeshNode::convert(const mqusdPlayerSettings& settings)
 
 
 
+Joint::Joint(const std::string& p)
+    : path(p)
+{
+    auto pos = path.find_last_of('/');
+    if (pos == std::string::npos)
+        name = path;
+    else
+        name = std::string(path.begin() + pos + 1, path.end());
+}
+
+Joint::~Joint()
+{
+}
+
+std::string Joint::getPath() const
+{
+    std::string ret;
+    if (parent)
+        ret += parent->getPath();
+    if (ret.empty() || ret.back() != '/')
+        ret += "/";
+    ret += name;
+    return ret;
+}
+
+SkeletonNode::SkeletonNode(Node* parent)
+    : super(parent)
+{
+}
+
+Node::Type SkeletonNode::getType() const
+{
+    return Type::Skeleton;
+}
+
+Joint* SkeletonNode::findJointByName(const std::string& name)
+{
+    auto it = std::find_if(joints.begin(), joints.end(),
+        [&name](auto& joint) { return joint->name == name; });
+    return it == joints.end() ? nullptr : (*it).get();
+}
+
+Joint* SkeletonNode::findJointByPath(const std::string& path)
+{
+    auto it = std::find_if(joints.begin(), joints.end(),
+        [&path](auto& joint) { return joint->path == path; });
+    return it == joints.end() ? nullptr : (*it).get();
+}
+
+void SkeletonNode::clearJoints()
+{
+    joints.clear();
+}
+
+Joint* SkeletonNode::makeJoint(const std::string& path)
+{
+    auto ret = new Joint(path);
+    joints.push_back(JointPtr(ret));
+    return ret;
+}
+
+void SkeletonNode::buildJointRelations()
+{
+    for (auto& joint : joints) {
+        auto& path = joint->path;
+        auto pos = path.find_last_of('/');
+        if (pos != std::string::npos) {
+            auto parent_path = std::string(path.begin(), path.begin() + pos);
+            if (auto parent = findJointByPath(parent_path)) {
+                joint->parent = parent;
+                parent->children.push_back(joint.get());
+            }
+        }
+    }
+}
+
+
+
 MaterialNode::MaterialNode(Node* p)
     : super(p)
 {

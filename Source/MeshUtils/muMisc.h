@@ -61,15 +61,6 @@ void* FindSymbolByName(const char *name);
 void* FindSymbolByName(const char *name, const char *module_name);
 
 
-struct noncopyable
-{
-    noncopyable() {}
-    noncopyable(noncopyable&&) {}
-    noncopyable(const noncopyable&) = delete;
-    noncopyable& operator=(const noncopyable&) = delete;
-};
-
-
 enum class MemoryFlags
 {
     ExecuteRead,

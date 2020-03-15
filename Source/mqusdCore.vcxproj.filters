@@ -18,13 +18,13 @@
     <ClInclude Include="mqusd\mqusdSceneGraph.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\Core\mqusdSceneGraphImpl.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
     <ClInclude Include="mqusd\Core\mqusdCore.h">
       <Filter>mqusd</Filter>
     </ClInclude>
     <ClInclude Include="mqusd\mqusdMesh.h">
+      <Filter>mqusd</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\Core\mqusdSceneGraphUSD.h">
       <Filter>mqusd</Filter>
     </ClInclude>
   </ItemGroup>
@@ -38,13 +38,13 @@
     <ClCompile Include="mqusd\mqusdSceneGraph.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\Core\mqusdSceneGraphImpl.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
     <ClCompile Include="mqusd\mqusdMesh.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\Core\mqusdCore.cpp">
+      <Filter>mqusd</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\Core\mqusdSceneGraphUSD.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
   </ItemGroup>
