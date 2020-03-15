@@ -1,7 +1,72 @@
 #include "pch.h"
 #include "mqusdMesh.h"
 
-void mqusdMesh::clear()
+
+Joint::Joint(const std::string& p)
+    : path(p)
+{
+    auto pos = path.find_last_of('/');
+    if (pos == std::string::npos)
+        name = path;
+    else
+        name = std::string(path.begin() + pos + 1, path.end());
+}
+
+
+void Skeleton::clear()
+{
+    name.clear();
+    joints.clear();
+}
+
+Joint* Skeleton::makeJoint(const std::string& path)
+{
+    auto ret = new Joint(path);
+    joints.push_back(JointPtr(ret));
+    return ret;
+}
+
+void Skeleton::buildJointRelations()
+{
+    for (auto& joint : joints) {
+        auto& path = joint->path;
+        auto pos = path.find_last_of('/');
+        if (pos != std::string::npos) {
+            auto parent_path = std::string(path.begin(), path.begin() + pos);
+            if (auto parent = findJointByPath(parent_path)) {
+                joint->parent = parent;
+                parent->children.push_back(joint.get());
+            }
+        }
+    }
+}
+
+Joint* Skeleton::findJointByName(const std::string& name)
+{
+    auto it = std::find_if(joints.begin(), joints.end(),
+        [&name](auto& joint) { return joint->name == name; });
+    return it == joints.end() ? nullptr : (*it).get();
+}
+
+Joint* Skeleton::findJointByPath(const std::string& path)
+{
+    auto it = std::find_if(joints.begin(), joints.end(),
+        [&path](auto& joint) { return joint->path == path; });
+    return it == joints.end() ? nullptr : (*it).get();
+}
+
+
+void Blendshape::clear()
+{
+    name.clear();
+    indices.clear();
+    point_offsets.clear();
+    normal_offsets.clear();
+}
+
+
+
+void Mesh::clear()
 {
     points.clear();
     normals.clear();
@@ -12,7 +77,7 @@ void mqusdMesh::clear()
     indices.clear();
 }
 
-void mqusdMesh::resize(int npoints, int nindices, int nfaces)
+void Mesh::resize(int npoints, int nindices, int nfaces)
 {
     points.resize_discard(npoints);
     normals.resize_discard(nindices);
@@ -23,7 +88,7 @@ void mqusdMesh::resize(int npoints, int nindices, int nfaces)
     indices.resize_discard(nindices);
 }
 
-void mqusdMesh::merge(const mqusdMesh& v)
+void Mesh::merge(const Mesh& v)
 {
     auto append = [](auto& dst, const auto& src) {
         dst.insert(dst.end(), src.cdata(), src.cdata() + src.size());
@@ -47,7 +112,7 @@ void mqusdMesh::merge(const mqusdMesh& v)
     }
 }
 
-void mqusdMesh::clearInvalidComponent()
+void Mesh::clearInvalidComponent()
 {
     auto nindices = indices.size();
     auto nfaces = counts.size();
@@ -62,13 +127,13 @@ void mqusdMesh::clearInvalidComponent()
         material_ids.clear();
 }
 
-void mqusdMesh::applyScale(float v)
+void Mesh::applyScale(float v)
 {
     if (v != 1.0f)
         mu::Scale(points.data(), v, points.size());
 }
 
-void mqusdMesh::applyTransform(const float4x4 v)
+void Mesh::applyTransform(const float4x4 v)
 {
     if (v == float4x4::identity())
         return;
@@ -76,13 +141,13 @@ void mqusdMesh::applyTransform(const float4x4 v)
     mu::MulVectors(v, normals.cdata(), normals.data(), normals.size());
 }
 
-void mqusdMesh::flipX()
+void Mesh::flipX()
 {
     mu::InvertX(points.data(), points.size());
     mu::InvertX(normals.data(), normals.size());
 }
 
-void mqusdMesh::flipYZ()
+void Mesh::flipYZ()
 {
     auto convert = [this](auto& v) { return flip_z(swap_yz(v)); };
 
@@ -90,7 +155,7 @@ void mqusdMesh::flipYZ()
     for (auto& v : normals) v = convert(v);
 }
 
-void mqusdMesh::flipFaces()
+void Mesh::flipFaces()
 {
     size_t nfaces = counts.size();
     int* idata = indices.data();
@@ -103,7 +168,7 @@ void mqusdMesh::flipFaces()
     }
 }
 
-int mqusdMesh::getMaxMaterialID() const
+int Mesh::getMaxMaterialID() const
 {
     int mid_min = 0;
     int mid_max = 0;

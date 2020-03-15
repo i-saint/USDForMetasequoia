@@ -72,6 +72,21 @@ private:
 };
 
 
+class USDBlendshapeNode : public USDNode
+{
+using super = USDNode;
+public:
+    DefSchemaTraits(UsdSkelBlendShape, "BlendShape");
+
+    USDBlendshapeNode(USDNode* parent, UsdPrim prim);
+    void read(double time) override;
+    void write(double time) const override;
+
+private:
+    mutable UsdSkelBlendShape m_blendshape;
+};
+
+
 class USDSkeletonNode : public USDXformNode
 {
 using super = USDXformNode;
@@ -91,7 +106,7 @@ class USDInstancerNode : USDXformNode
 {
 using super = USDXformNode;
 public:
-    USDInstancerNode(USDNode* parent, UsdPrim usd);
+    USDInstancerNode(USDNode* parent, UsdPrim prim);
     void read(double time) override;
     void write(double time) const override;
 };
@@ -101,11 +116,14 @@ class USDMaterialNode : public USDNode
 {
 using super = USDNode;
 public:
-    USDMaterialNode(USDNode* parent, UsdPrim usd);
+    DefSchemaTraits(UsdShadeMaterial, "Material");
+
+    USDMaterialNode(USDNode* parent, UsdPrim prim);
     void read(double time) override;
     void write(double time) const override;
 
 private:
+    UsdShadeMaterial m_material;
 };
 
 

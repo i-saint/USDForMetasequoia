@@ -56,6 +56,8 @@ USDXformNode::USDXformNode(USDNode* parent, UsdPrim prim, bool create_node)
 
 void USDXformNode::read(double time)
 {
+    super::read(time);
+
     auto t = UsdTimeCode(time);
     auto& dst = static_cast<XformNode&>(*m_node);
 
@@ -72,14 +74,17 @@ void USDXformNode::read(double time)
 
 void USDXformNode::write(double time) const
 {
+    super::write(time);
+
+    auto t = UsdTimeCode(time);
+    auto& src = static_cast<XformNode&>(*m_node);
+
     if (m_xf_ops.empty()) {
         m_xf_ops.push_back(m_xform.AddTransformOp());
     }
 
     auto& op = m_xf_ops[0];
     if (op.GetOpType() == UsdGeomXformOp::TypeTransform) {
-        auto t = UsdTimeCode(time);
-        auto& src = static_cast<XformNode&>(*m_node);
 
         double4x4 data;
         data.assign(src.local_matrix);
@@ -103,7 +108,7 @@ void USDMeshNode::read(double time)
     super::read(time);
 
     auto t = UsdTimeCode(time);
-    auto& dst = static_cast<MeshNode&>(*m_node).mesh;
+    auto& dst = *static_cast<MeshNode&>(*m_node).mesh;
     dst.clear();
     {
         VtArray<int> data;
@@ -145,7 +150,7 @@ void USDMeshNode::write(double time) const
     super::write(time);
 
     auto t = UsdTimeCode(time);
-    auto& src = static_cast<MeshNode&>(*m_node).mesh;
+    auto& src = *static_cast<MeshNode&>(*m_node).mesh;
     {
         VtArray<int> data;
         data.assign(src.counts.begin(), src.counts.end());
@@ -179,6 +184,51 @@ void USDMeshNode::write(double time) const
 }
 
 
+
+USDBlendshapeNode::USDBlendshapeNode(USDNode* parent, UsdPrim prim)
+    : super(parent, prim, false)
+{
+    m_blendshape = UsdSkelBlendShape(prim);
+
+    setNode(new BlendshapeNode(parent ? parent->m_node : nullptr));
+    if (parent && parent->m_node->getType() == Node::Type::Mesh) {
+        static_cast<MeshNode*>(parent->m_node)->mesh->blendshapes.push_back(
+            static_cast<BlendshapeNode*>(m_node)->blendshape);
+    }
+}
+
+void USDBlendshapeNode::read(double time)
+{
+    super::read(time);
+
+    auto t = UsdTimeCode(time);
+    auto& dst = *static_cast<BlendshapeNode*>(m_node)->blendshape;
+    dst.clear();
+
+    {
+        VtArray<int> data;
+        m_blendshape.GetPointIndicesAttr().Get(&data, t);
+        dst.indices.assign(data.cdata(), data.size());
+    }
+    {
+        VtArray<GfVec3f> data;
+        m_blendshape.GetOffsetsAttr().Get(&data, t);
+        dst.point_offsets.assign((float3*)data.cdata(), data.size());
+    }
+    {
+        VtArray<GfVec3f> data;
+        m_blendshape.GetNormalOffsetsAttr().Get(&data, t);
+        dst.normal_offsets.assign((float3*)data.cdata(), data.size());
+    }
+}
+
+void USDBlendshapeNode::write(double time) const
+{
+    // todo
+}
+
+
+
 USDSkeletonNode::USDSkeletonNode(USDNode* parent, UsdPrim prim)
     : super(parent, prim, false)
 {
@@ -192,8 +242,8 @@ void USDSkeletonNode::read(double time)
     super::read(time);
 
     auto t = UsdTimeCode(time);
-    auto& dst = static_cast<SkeletonNode&>(*m_node);
-    dst.clearJoints();
+    auto& dst = *static_cast<SkeletonNode*>(m_node)->skeleton;
+    dst.clear();
 
     {
         VtArray<TfToken> data;
@@ -230,6 +280,26 @@ void USDSkeletonNode::write(double time) const
     // todo
 }
 
+
+USDMaterialNode::USDMaterialNode(USDNode* parent, UsdPrim prim)
+    : super(parent, prim, false)
+{
+    m_material = UsdShadeMaterial(prim);
+
+    setNode(new MaterialNode(parent ? parent->m_node : nullptr));
+}
+
+void USDMaterialNode::read(double time)
+{
+    super::read(time);
+    // todo
+}
+
+void USDMaterialNode::write(double time) const
+{
+    super::write(time);
+    // todo
+}
 
 
 
@@ -316,10 +386,19 @@ void USDScene::constructTree(USDNode* n)
             }
         }
         if (!c) {
+            UsdSkelBlendShape schema(cprim);
+            if (schema)
+                c = new USDBlendshapeNode(n, cprim);
+        }
+        if (!c) {
             UsdSkelSkeleton schema(cprim);
-            if (schema) {
+            if (schema)
                 c = new USDSkeletonNode(n, cprim);
-            }
+        }
+        if (!c) {
+            UsdShadeMaterial schema(cprim);
+            if (schema)
+                c = new USDMaterialNode(n, cprim);
         }
 
         // todo
@@ -389,12 +468,13 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
     USDNode* ret = nullptr;
     USDNode* usd_parent = parent ? (USDNode*)parent->impl : nullptr;
     switch (type) {
-    case Node::Type::Xform:
-        ret = createNodeImpl<USDXformNode>(usd_parent, path);
-        break;
-    case Node::Type::Mesh:
-        ret = createNodeImpl<USDMeshNode>(usd_parent, path);
-        break;
+#define Case(E, T) case Node::Type::E: ret = createNodeImpl<T>(usd_parent, path); break;
+        Case(Mesh, USDMeshNode);
+        Case(Blendshape, USDBlendshapeNode);
+        Case(Skeleton, USDSkeletonNode);
+        Case(Material, USDMaterialNode);
+        Case(Xform, USDXformNode);
+#undef Case
     default: break;
     }
 

@@ -272,7 +272,7 @@ void mqusdRecorderPlugin::ExtractMeshData(ObjectRecord& rec)
 void mqusdRecorderPlugin::FlushUSD()
 {
     // make merged mesh
-    auto& dst = m_mesh_node->mesh;
+    auto& dst = *m_mesh_node->mesh;
     dst.clear();
     for (auto& rec : m_obj_records)
         dst.merge(rec.mesh);

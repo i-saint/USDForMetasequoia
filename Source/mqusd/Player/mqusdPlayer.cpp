@@ -40,7 +40,7 @@ void mqusdPlayerPlugin::ImportMaterials(MQDocument doc)
     auto& material_nodes = m_scene->material_nodes;
     int nmaterials = (int)material_nodes.size();
     for (int mi = 0; mi < nmaterials; ++mi) {
-        auto& src= material_nodes[mi]->material;
+        auto& src= *material_nodes[mi]->material;
         MQMaterial mqmat = nullptr;
         if (mi < doc->GetMaterialCount()) {
             mqmat = doc->GetMaterial(mi);
@@ -78,7 +78,7 @@ void mqusdPlayerPlugin::Seek(MQDocument doc, double t)
     auto& mesh = m_mesh_merged;
     mesh.clear();
     for (auto n : m_scene->mesh_nodes)
-        mesh.merge(n->mesh);
+        mesh.merge(*n->mesh);
     mesh.clearInvalidComponent();
 
     // reserve materials

@@ -69,6 +69,8 @@ Node::Type XformNode::getType() const
 MeshNode::MeshNode(Node* p)
     : super(p)
 {
+    mesh = std::make_shared<Mesh>();
+    mesh->name = name;
 }
 
 Node::Type MeshNode::getType() const
@@ -78,46 +80,35 @@ Node::Type MeshNode::getType() const
 
 void MeshNode::convert(const mqusdPlayerSettings& settings)
 {
-    mesh.applyTransform(global_matrix);
-    mesh.applyScale(settings.scale_factor);
+    mesh->applyTransform(global_matrix);
+    mesh->applyScale(settings.scale_factor);
     if (settings.flip_x)
-        mesh.flipX();
+        mesh->flipX();
     if (settings.flip_yz)
-        mesh.flipYZ();
+        mesh->flipYZ();
     if (settings.flip_faces)
-        mesh.flipFaces();
+        mesh->flipFaces();
 }
 
 
-
-Joint::Joint(const std::string& p)
-    : path(p)
+BlendshapeNode::BlendshapeNode(Node* p)
+    : super(p)
 {
-    auto pos = path.find_last_of('/');
-    if (pos == std::string::npos)
-        name = path;
-    else
-        name = std::string(path.begin() + pos + 1, path.end());
+    blendshape = std::make_shared<Blendshape>();
+    blendshape->name = name;
 }
 
-Joint::~Joint()
+Node::Type BlendshapeNode::getType() const
 {
+    return Type::Blendshape;
 }
 
-std::string Joint::getPath() const
-{
-    std::string ret;
-    if (parent)
-        ret += parent->getPath();
-    if (ret.empty() || ret.back() != '/')
-        ret += "/";
-    ret += name;
-    return ret;
-}
 
 SkeletonNode::SkeletonNode(Node* parent)
     : super(parent)
 {
+    skeleton = std::make_shared<Skeleton>();
+    skeleton->name = name;
 }
 
 Node::Type SkeletonNode::getType() const
@@ -125,52 +116,13 @@ Node::Type SkeletonNode::getType() const
     return Type::Skeleton;
 }
 
-Joint* SkeletonNode::findJointByName(const std::string& name)
-{
-    auto it = std::find_if(joints.begin(), joints.end(),
-        [&name](auto& joint) { return joint->name == name; });
-    return it == joints.end() ? nullptr : (*it).get();
-}
-
-Joint* SkeletonNode::findJointByPath(const std::string& path)
-{
-    auto it = std::find_if(joints.begin(), joints.end(),
-        [&path](auto& joint) { return joint->path == path; });
-    return it == joints.end() ? nullptr : (*it).get();
-}
-
-void SkeletonNode::clearJoints()
-{
-    joints.clear();
-}
-
-Joint* SkeletonNode::makeJoint(const std::string& path)
-{
-    auto ret = new Joint(path);
-    joints.push_back(JointPtr(ret));
-    return ret;
-}
-
-void SkeletonNode::buildJointRelations()
-{
-    for (auto& joint : joints) {
-        auto& path = joint->path;
-        auto pos = path.find_last_of('/');
-        if (pos != std::string::npos) {
-            auto parent_path = std::string(path.begin(), path.begin() + pos);
-            if (auto parent = findJointByPath(parent_path)) {
-                joint->parent = parent;
-                parent->children.push_back(joint.get());
-            }
-        }
-    }
-}
-
 
 
 MaterialNode::MaterialNode(Node* p)
     : super(p)
 {
+    material = std::make_shared<Material>();
+    material->name = name;
 }
 
 Node::Type MaterialNode::getType() const

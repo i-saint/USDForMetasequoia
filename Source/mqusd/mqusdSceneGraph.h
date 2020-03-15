@@ -18,8 +18,11 @@ public:
         Root,
         Xform,
         Mesh,
+        Blendshape,
         Skeleton,
+        SkelAnimation,
         Material,
+        Scope,
     };
 
     Node(Node* parent);
@@ -73,27 +76,24 @@ public:
     Type getType() const override;
     void convert(const mqusdPlayerSettings& settings);
 
-    mqusdMesh mesh;
-};
-
-
-class Joint
-{
 public:
-    Joint(const std::string& path);
-    ~Joint();
-    std::string getPath() const;
-
-    Joint* parent = nullptr;
-    std::vector<Joint*> children;
-    std::string name;
-    std::string path;
-    float4x4 bindpose = float4x4::identity();
-    float4x4 restpose = float4x4::identity();
-    float4x4 local_matrix = float4x4::identity();
-    float4x4 global_matrix = float4x4::identity();
+    MeshPtr mesh;
 };
-using JointPtr = std::shared_ptr<Joint>;
+
+
+class BlendshapeNode : public Node
+{
+using super = Node;
+public:
+    static const Type node_type = Type::Blendshape;
+
+    BlendshapeNode(Node* parent);
+    Type getType() const override;
+
+public:
+    BlendshapePtr blendshape;
+};
+
 
 class SkeletonNode : public XformNode
 {
@@ -103,14 +103,9 @@ public:
 
     SkeletonNode(Node* parent);
     Type getType() const override;
-    Joint* findJointByName(const std::string& name);
-    Joint* findJointByPath(const std::string& path);
 
-    void clearJoints();
-    Joint* makeJoint(const std::string& path);
-    void buildJointRelations();
-
-    std::vector<JointPtr> joints;
+public:
+    SkeletonPtr skeleton;
 };
 
 
@@ -124,7 +119,7 @@ public:
     Type getType() const override;
     virtual bool valid() const;
 
-    mqusdMaterial material;
+    MaterialPtr material;
 };
 
 

@@ -118,6 +118,6 @@ private:
 
     std::shared_ptr<Scene> m_scene;
     double m_seek_time = 0;
-    mqusdMesh m_mesh_merged;
+    Mesh m_mesh_merged;
     int m_mqobj_id = 0;
 };

@@ -130,7 +130,7 @@ private:
         MQObject mqobject;
         bool need_release = false;
 
-        mqusdMesh mesh;
+        Mesh mesh;
     };
 
     struct MaterialRecord
@@ -138,7 +138,7 @@ private:
         MQDocument mqdocument;
         MQMaterial mqmaterial;
 
-        mqusdMaterial material;
+        Material material;
     };
 
     void ExtractMeshData(ObjectRecord& rec);
