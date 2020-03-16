@@ -18,7 +18,15 @@ USDNode::~USDNode()
 {
 }
 
+void USDNode::beforeRead()
+{
+}
+
 void USDNode::read(double time)
+{
+}
+
+void USDNode::beforeWrite()
 {
 }
 
@@ -46,6 +54,7 @@ USDRootNode::USDRootNode(UsdPrim prim)
 {
     setNode(new RootNode());
 }
+
 
 USDXformNode::USDXformNode(USDNode* parent, UsdPrim prim, bool create_node)
     : super(parent, prim, false)
@@ -97,16 +106,6 @@ USDMeshNode::USDMeshNode(USDNode* parent, UsdPrim prim)
     : super(parent, prim, false)
 {
     m_mesh = UsdGeomMesh(prim);
-
-    m_attr_uv = prim.GetAttribute(mqusdAttrUV);
-    m_attr_uv_indices = prim.GetAttribute(mqusdAttrUVIndices);
-    m_attr_mids = prim.GetAttribute(mqusdAttrMaterialIDs);
-
-    m_attr_joints = prim.GetAttribute(mqusdAttrJoints);
-    m_attr_joint_indices = prim.GetAttribute(mqusdAttrJointIndices);
-    m_attr_joint_weights = prim.GetAttribute(mqusdAttrJointWeights);
-    m_attr_bind_transform = prim.GetAttribute(mqusdAttrBindTransform);
-
     setNode(new MeshNode(parent ? parent->m_node : nullptr));
 
 #ifdef mqusdDebug
@@ -116,6 +115,42 @@ USDMeshNode::USDMeshNode(USDNode* parent, UsdPrim prim)
 #endif
 }
 
+void USDMeshNode::beforeRead()
+{
+    // find attributes
+    m_attr_uv = m_prim.GetAttribute(mqusdAttrUV);
+    m_attr_uv_indices = m_prim.GetAttribute(mqusdAttrUVIndices);
+    m_attr_mids = m_prim.GetAttribute(mqusdAttrMaterialIDs);
+    m_attr_joints = m_prim.GetAttribute(mqusdAttrJoints);
+    m_attr_joint_indices = m_prim.GetAttribute(mqusdAttrJointIndices);
+    m_attr_joint_weights = m_prim.GetAttribute(mqusdAttrJointWeights);
+    m_attr_bind_transform = m_prim.GetAttribute(mqusdAttrBindTransform);
+
+    // skinning data can be assumed not time sampled. so, read it at this point.
+    auto& dst = static_cast<MeshNode&>(*m_node);
+    if (m_attr_joints) {
+        VtArray<TfToken> data;
+        m_attr_joints.Get(&data);
+        for (auto& t : data)
+            dst.joints.push_back(t.GetString());
+    }
+    if (m_attr_joint_indices) {
+        m_attr_joint_indices.GetMetadata(mqusdMetaElementSize, &dst.joints_per_vertex);
+
+        m_attr_joint_indices.Get(&m_joint_indices);
+        dst.joint_indices.share(m_joint_indices.cdata(), m_joint_indices.size());
+    }
+    if (m_attr_joint_weights) {
+        m_attr_joint_weights.Get(&m_joint_weights);
+        dst.joint_weights.share(m_joint_weights.cdata(), m_joint_weights.size());
+    }
+    if (m_attr_bind_transform) {
+        GfMatrix4d data;
+        m_attr_bind_transform.Get(&data);
+        dst.bind_transform.assign((float4x4&)data);
+    }
+}
+
 void USDMeshNode::read(double time)
 {
     super::read(time);
@@ -123,94 +158,73 @@ void USDMeshNode::read(double time)
     auto t = UsdTimeCode(time);
     auto& dst = static_cast<MeshNode&>(*m_node);
     dst.clear();
+
+    // counts, indices, points
     {
-        VtArray<int> data;
-        m_mesh.GetFaceVertexCountsAttr().Get(&data, t);
-        dst.counts.assign(data.cdata(), data.size());
+        m_mesh.GetFaceVertexCountsAttr().Get(&m_counts, t);
+        dst.counts.share(m_counts.cdata(), m_counts.size());
     }
     {
-        VtArray<int> data;
-        m_mesh.GetFaceVertexIndicesAttr().Get(&data, t);
-        dst.indices.assign(data.cdata(), data.size());
+        m_mesh.GetFaceVertexIndicesAttr().Get(&m_indices, t);
+        dst.indices.share(m_indices.cdata(), m_indices.size());
     }
     {
-        VtArray<GfVec3f> data;
-        m_mesh.GetPointsAttr().Get(&data, t);
-        dst.points.assign((float3*)data.cdata(), data.size());
+        m_mesh.GetPointsAttr().Get(&m_points, t);
+        dst.points.share((float3*)m_points.cdata(), m_points.size());
     }
 
     // normals
     {
-        VtArray<GfVec3f> data;
-        m_mesh.GetNormalsAttr().Get(&data, t);
+        m_mesh.GetNormalsAttr().Get(&m_normals, t);
 
-        if (data.size() == dst.indices.size()) {
-            dst.normals.assign((float3*)data.cdata(), data.size());
+        if (m_normals.size() == dst.indices.size()) {
+            dst.normals.share((float3*)m_normals.cdata(), m_normals.size());
         }
-        else if (data.size() == dst.points.size()) {
+        else if (m_normals.size() == dst.points.size()) {
             dst.normals.resize_discard(dst.indices.size());
-            mu::CopyWithIndices(dst.normals.data(), (float3*)data.cdata(), dst.indices);
+            mu::CopyWithIndices(dst.normals.data(), (float3*)m_normals.cdata(), dst.indices);
         }
     }
 
     // uv
     if (m_attr_uv) {
-        VtArray<GfVec2f> data;
-        m_attr_uv.Get(&data, t);
+        m_attr_uv.Get(&m_uvs, t);
 
         if (m_attr_uv_indices) {
-            VtArray<int> indices;
-            m_attr_uv_indices.Get(&indices, t);
-            if (indices.size() == dst.indices.size()) {
-                dst.uvs.resize_discard(indices.size());
-                mu::CopyWithIndices(dst.uvs.data(), (float2*)data.cdata(), indices);
+            m_attr_uv_indices.Get(&m_uv_indices, t);
+            if (m_uv_indices.size() == dst.indices.size()) {
+                dst.uvs.resize_discard(m_uv_indices.size());
+                mu::CopyWithIndices(dst.uvs.data(), (float2*)m_uvs.cdata(), m_uv_indices);
             }
         }
         else {
-            if (data.size() == dst.indices.size()) {
-                dst.uvs.assign((float2*)data.cdata(), data.size());
+            if (m_uvs.size() == dst.indices.size()) {
+                dst.uvs.share((float2*)m_uvs.cdata(), m_uvs.size());
             }
-            else if (data.size() == dst.points.size()) {
+            else if (m_uvs.size() == dst.points.size()) {
                 dst.uvs.resize_discard(dst.indices.size());
-                mu::CopyWithIndices(dst.uvs.data(), (float2*)data.cdata(), dst.indices);
+                mu::CopyWithIndices(dst.uvs.data(), (float2*)m_uvs.cdata(), dst.indices);
             }
         }
     }
 
     // material ids
     if (m_attr_mids) {
-        VtArray<int> data;
-        m_attr_mids.Get(&data, t);
-        dst.material_ids.assign(data.cdata(), data.size());
-    }
-
-    // skinning
-    if (m_attr_joints) {
-        VtArray<TfToken> data;
-        m_attr_joints.Get(&data, t);
-        for (auto& t : data)
-            dst.joints.push_back(t.GetString());
-    }
-    if (m_attr_joint_indices) {
-        m_attr_joint_indices.GetMetadata(mqusdMetaElementSize, &dst.joints_per_vertex);
-
-        VtArray<int> data;
-        m_attr_joint_indices.Get(&data, t);
-        dst.joint_indices.assign(data.cdata(), data.size());
-    }
-    if (m_attr_joint_weights) {
-        VtArray<float> data;
-        m_attr_joint_weights.Get(&data, t);
-        dst.joint_weights.assign(data.cdata(), data.size());
-    }
-    if (m_attr_bind_transform) {
-        GfMatrix4d data;
-        m_attr_bind_transform.Get(&data, t);
-        dst.bind_transform.assign((float4x4&)data);
+        m_attr_mids.Get(&m_material_ids, t);
+        dst.material_ids.share(m_material_ids.cdata(), m_material_ids.size());
     }
 
     // validate
     dst.validate();
+}
+
+void USDMeshNode::beforeWrite()
+{
+    // create attributes
+    m_attr_uv = m_prim.CreateAttribute(mqusdAttrUV, SdfValueTypeNames->Float2);
+    m_attr_mids = m_prim.CreateAttribute(mqusdAttrMaterialIDs, SdfValueTypeNames->Int);
+    m_attr_joint_indices = m_prim.CreateAttribute(mqusdAttrJointIndices, SdfValueTypeNames->Int);
+    m_attr_joint_weights = m_prim.CreateAttribute(mqusdAttrJointWeights, SdfValueTypeNames->Float);
 }
 
 void USDMeshNode::write(double time) const
@@ -220,34 +234,28 @@ void USDMeshNode::write(double time) const
     auto t = UsdTimeCode(time);
     auto& src = static_cast<MeshNode&>(*m_node);
     {
-        VtArray<int> data;
-        data.assign(src.counts.begin(), src.counts.end());
-        m_mesh.GetFaceVertexCountsAttr().Set(data, t);
+        m_counts.assign(src.counts.begin(), src.counts.end());
+        m_mesh.GetFaceVertexCountsAttr().Set(m_counts, t);
     }
     {
-        VtArray<int> data;
-        data.assign(src.indices.begin(), src.indices.end());
-        m_mesh.GetFaceVertexIndicesAttr().Set(data, t);
+        m_indices.assign(src.indices.begin(), src.indices.end());
+        m_mesh.GetFaceVertexIndicesAttr().Set(m_indices, t);
     }
     {
-        VtArray<GfVec3f> data;
-        data.assign((GfVec3f*)src.points.begin(), (GfVec3f*)src.points.end());
-        m_mesh.GetPointsAttr().Set(data, t);
+        m_points.assign((GfVec3f*)src.points.begin(), (GfVec3f*)src.points.end());
+        m_mesh.GetPointsAttr().Set(m_points, t);
     }
     if (!src.normals.empty()) {
-        VtArray<GfVec3f> data;
-        data.assign((GfVec3f*)src.normals.begin(), (GfVec3f*)src.normals.end());
-        m_mesh.GetNormalsAttr().Set(data, t);
+        m_normals.assign((GfVec3f*)src.normals.begin(), (GfVec3f*)src.normals.end());
+        m_mesh.GetNormalsAttr().Set(m_normals, t);
     }
     if (m_attr_uv && !src.uvs.empty()) {
-        VtArray<GfVec2f> data;
-        data.assign((GfVec2f*)src.uvs.begin(), (GfVec2f*)src.uvs.end());
-        m_attr_uv.Set(data, t);
+        m_uvs.assign((GfVec2f*)src.uvs.begin(), (GfVec2f*)src.uvs.end());
+        m_attr_uv.Set(m_uvs, t);
     }
     if (m_attr_mids && !src.material_ids.empty()) {
-        VtArray<int> data;
-        data.assign(src.material_ids.begin(), src.material_ids.end());
-        m_attr_mids.Set(data, t);
+        m_material_ids.assign(src.material_ids.begin(), src.material_ids.end());
+        m_attr_mids.Set(m_material_ids, t);
     }
 }
 
@@ -273,19 +281,16 @@ void USDBlendshapeNode::read(double time)
     dst.clear();
 
     {
-        VtArray<int> data;
-        m_blendshape.GetPointIndicesAttr().Get(&data, t);
-        dst.indices.assign(data.cdata(), data.size());
+        m_blendshape.GetPointIndicesAttr().Get(&m_point_indices, t);
+        dst.indices.share(m_point_indices.cdata(), m_point_indices.size());
     }
     {
-        VtArray<GfVec3f> data;
-        m_blendshape.GetOffsetsAttr().Get(&data, t);
-        dst.point_offsets.assign((float3*)data.cdata(), data.size());
+        m_blendshape.GetOffsetsAttr().Get(&m_point_offsets, t);
+        dst.point_offsets.share((float3*)m_point_offsets.cdata(), m_point_offsets.size());
     }
     {
-        VtArray<GfVec3f> data;
-        m_blendshape.GetNormalOffsetsAttr().Get(&data, t);
-        dst.normal_offsets.assign((float3*)data.cdata(), data.size());
+        m_blendshape.GetNormalOffsetsAttr().Get(&m_normal_offsets, t);
+        dst.normal_offsets.share((float3*)m_normal_offsets.cdata(), m_normal_offsets.size());
     }
 }
 
@@ -411,6 +416,8 @@ bool USDScene::open(const char* path_)
         m_root = new USDRootNode(root);
         constructTree(m_root);
     }
+    for (auto& node : m_nodes)
+        node->beforeRead();
     return true;
 }
 
@@ -562,6 +569,7 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
         m_scene->nodes.push_back(NodePtr(ret->m_node));
         if (type == Node::Type::Mesh)
             m_scene->mesh_nodes.push_back(static_cast<MeshNode*>(ret->m_node));
+        ret->beforeWrite();
     }
     return ret ? ret->m_node : nullptr;
 }

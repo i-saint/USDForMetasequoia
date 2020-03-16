@@ -16,7 +16,11 @@ public:
 
     USDNode(USDNode* parent, UsdPrim prim, bool create_node = true);
     virtual ~USDNode();
+
+    virtual void beforeRead();
     virtual void read(double time);
+
+    virtual void beforeWrite();
     virtual void write(double time) const;
 
     void setNode(Node *node);
@@ -63,11 +67,14 @@ public:
     DefSchemaTraits(UsdGeomMesh, "Mesh");
 
     USDMeshNode(USDNode* parent, UsdPrim prim);
+    void beforeRead() override;
     void read(double time) override;
+    void beforeWrite() override;
     void write(double time) const override;
 
 private:
     mutable UsdGeomMesh m_mesh;
+
     UsdAttribute m_attr_uv;
     UsdAttribute m_attr_uv_indices;
     UsdAttribute m_attr_mids;
@@ -75,6 +82,16 @@ private:
     UsdAttribute m_attr_joint_indices;
     UsdAttribute m_attr_joint_weights;
     UsdAttribute m_attr_bind_transform;
+
+    mutable VtArray<int> m_counts;
+    mutable VtArray<int> m_indices;
+    mutable VtArray<GfVec3f> m_points;
+    mutable VtArray<GfVec3f> m_normals;
+    mutable VtArray<GfVec2f> m_uvs;
+    mutable VtArray<int> m_uv_indices;
+    mutable VtArray<int> m_material_ids;
+    mutable VtArray<int> m_joint_indices;
+    mutable VtArray<float> m_joint_weights;
 };
 
 
@@ -90,6 +107,9 @@ public:
 
 private:
     mutable UsdSkelBlendShape m_blendshape;
+    mutable VtArray<int> m_point_indices;
+    mutable VtArray<GfVec3f> m_point_offsets;
+    mutable VtArray<GfVec3f> m_normal_offsets;
 };
 
 

@@ -329,6 +329,11 @@ public:
     {
         operator=(v);
     }
+    SharedVector(const_pointer data, size_t size)
+    {
+        share(data, size);
+    }
+
     SharedVector(SharedVector&& v) noexcept
     {
         swap(v);
@@ -540,6 +545,10 @@ public:
     void assign(pointer first, pointer last)
     {
         assign((const_pointer)first, (const_pointer)last);
+    }
+    void assign(const_pointer data, size_t size)
+    {
+        assign(data, data + size);
     }
 
     template<class ForwardIter>

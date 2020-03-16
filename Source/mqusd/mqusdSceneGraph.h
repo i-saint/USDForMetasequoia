@@ -98,9 +98,9 @@ public:
     void clear();
 
 public:
-    RawVector<int> indices;
-    RawVector<float3> point_offsets;
-    RawVector<float3> normal_offsets;
+    SharedVector<int> indices;
+    SharedVector<float3> point_offsets;
+    SharedVector<float3> normal_offsets;
 };
 
 
@@ -168,13 +168,13 @@ public:
     int getMaxMaterialID() const;
 
 public:
-    RawVector<float3> points;    // per-vertex
-    RawVector<float3> normals;   // per-index
-    RawVector<float2> uvs;       // 
-    RawVector<float4> colors;    // 
-    RawVector<int> material_ids; // per-face
-    RawVector<int> counts;       // 
-    RawVector<int> indices;
+    SharedVector<float3> points;    // per-vertex
+    SharedVector<float3> normals;   // per-index
+    SharedVector<float2> uvs;       // 
+    SharedVector<float4> colors;    // 
+    SharedVector<int> material_ids; // per-face
+    SharedVector<int> counts;       // 
+    SharedVector<int> indices;
 
     // blendshape
     std::vector<BlendshapeNode*> blendshapes;
@@ -183,8 +183,8 @@ public:
     SkeletonNode* skeleton = nullptr;
     std::vector<std::string> joints;// paths to joints in skeleton
     int joints_per_vertex = 0;
-    RawVector<int> joint_indices;   // size must be points.size() * joints_per_vertex
-    RawVector<float> joint_weights; // 
+    SharedVector<int> joint_indices;   // size must be points.size() * joints_per_vertex
+    SharedVector<float> joint_weights; // 
     float4x4 bind_transform = float4x4::identity();
 };
 
