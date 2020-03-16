@@ -1,6 +1,5 @@
 #pragma once
 #include "mqusd.h"
-#include "mqusdMesh.h"
 
 #ifndef PXR_USD_USD_PRIM_H
 class UsdPrim;
@@ -74,27 +73,15 @@ public:
     Type getType() const override;
     void convert(const ConvertOptions& opt) override;
 
+    std::tuple<float3, quatf, float3> getLocalTRS() const;
+    std::tuple<float3, quatf, float3> getGlobalTRS() const;
+    void setLocalTRS(const float3& t, const quatf& r, const float3& s);
+    void setGlobalTRS(const float3& t, const quatf& r, const float3& s);
+
+public:
     XformNode* parent_xform = nullptr;
     float4x4 local_matrix = float4x4::identity();
     float4x4 global_matrix = float4x4::identity();
-};
-
-
-class MeshNode : public XformNode
-{
-using super = XformNode;
-public:
-    static const Type node_type = Type::Mesh;
-
-    MeshNode(Node* parent);
-    Type getType() const override;
-    void convert(const ConvertOptions& opt) override;
-
-    void toWorldSpace();
-    void toLocalSpace();
-
-public:
-    MeshPtr mesh;
 };
 
 
@@ -108,8 +95,12 @@ public:
     Type getType() const override;
     void convert(const ConvertOptions& opt) override;
 
+    void clear();
+
 public:
-    BlendshapePtr blendshape;
+    RawVector<int> indices;
+    RawVector<float3> point_offsets;
+    RawVector<float3> normal_offsets;
 };
 
 
@@ -117,14 +108,84 @@ class SkeletonNode : public XformNode
 {
 using super = XformNode;
 public:
+    class Joint
+    {
+    public:
+        Joint(const std::string& path);
+        std::tuple<float3, quatf, float3> getLocalTRS() const;
+        std::tuple<float3, quatf, float3> getGlobalTRS() const;
+        void setLocalTRS(const float3& t, const quatf& r, const float3& s);
+        void setGlobalTRS(const float3& t, const quatf& r, const float3& s);
+
+    public:
+        Joint* parent = nullptr;
+        std::vector<Joint*> children;
+        std::string name;
+        std::string path;
+        float4x4 bindpose = float4x4::identity();
+        float4x4 restpose = float4x4::identity();
+        float4x4 local_matrix = float4x4::identity();
+        float4x4 global_matrix = float4x4::identity();
+    };
+    using JointPtr = std::shared_ptr<Joint>;
+
+public:
     static const Type node_type = Type::Skeleton;
 
-    SkeletonNode(Node* parent);
+    SkeletonNode(Node* parent = nullptr);
     Type getType() const override;
     void convert(const ConvertOptions& opt) override;
 
+    void clear();
+    Joint* addJoint(const std::string& path);
+    void updateGlobalMatrices(const float4x4& base);
+
+    Joint* findJointByName(const std::string& name);
+    Joint* findJointByPath(const std::string& path);
+
 public:
-    SkeletonPtr skeleton;
+    std::vector<JointPtr> joints;
+};
+
+
+class MeshNode : public XformNode
+{
+using super = XformNode;
+public:
+    static const Type node_type = Type::Mesh;
+
+    MeshNode(Node* parent = nullptr);
+    Type getType() const override;
+    void convert(const ConvertOptions& opt) override;
+    void applyTransform(const float4x4& v);
+    void toWorldSpace();
+    void toLocalSpace();
+
+    void clear();
+    void merge(const MeshNode& other);
+    void validate();
+
+    int getMaxMaterialID() const;
+
+public:
+    RawVector<float3> points;    // per-vertex
+    RawVector<float3> normals;   // per-index
+    RawVector<float2> uvs;       // 
+    RawVector<float4> colors;    // 
+    RawVector<int> material_ids; // per-face
+    RawVector<int> counts;       // 
+    RawVector<int> indices;
+
+    // blendshape
+    std::vector<BlendshapeNode*> blendshapes;
+
+    // skinning
+    SkeletonNode* skeleton = nullptr;
+    std::vector<std::string> joints;// paths to joints in skeleton
+    int joints_per_vertex = 0;
+    RawVector<int> joint_indices;   // size must be points.size() * joints_per_vertex
+    RawVector<float> joint_weights; // 
+    float4x4 bind_transform = float4x4::identity();
 };
 
 
@@ -134,11 +195,20 @@ using super = Node;
 public:
     static const Type node_type = Type::Material;
 
-    MaterialNode(Node* parent);
+    MaterialNode(Node* parent = nullptr);
     Type getType() const override;
     virtual bool valid() const;
 
-    MaterialPtr material;
+public:
+    int shader = MQMATERIAL_SHADER_CLASSIC;
+    bool use_vertex_color = false;
+    bool double_sided = false;
+    float3 color = float3::one();
+    float diffuse = 1.0f;
+    float alpha = 1.0f;
+    float3 ambient_color = float3::zero();
+    float3 specular_color = float3::one();
+    float3 emission_color = float3::zero();
 };
 
 
@@ -184,5 +254,7 @@ public:
 
     virtual Node* createNode(Node* parent, const char* name, Node::Type type) = 0;
 };
+
+inline float3 to_float3(MQColor v) { return (float3&)v; };
 
 } // namespace mqusd

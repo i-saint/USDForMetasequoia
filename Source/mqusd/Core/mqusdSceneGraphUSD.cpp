@@ -86,7 +86,6 @@ void USDXformNode::write(double time) const
 
     auto& op = m_xf_ops[0];
     if (op.GetOpType() == UsdGeomXformOp::TypeTransform) {
-
         double4x4 data;
         data.assign(src.local_matrix);
         op.Set((const GfMatrix4d&)data, t);
@@ -99,14 +98,14 @@ USDMeshNode::USDMeshNode(USDNode* parent, UsdPrim prim)
 {
     m_mesh = UsdGeomMesh(prim);
 
-    m_attr_uv = prim.GetAttribute(TfToken(mqusdAttrUV));
-    m_attr_uv_indices = prim.GetAttribute(TfToken(mqusdAttrUVIndices));
-    m_attr_mids = prim.GetAttribute(TfToken(mqusdAttrMaterialIDs));
+    m_attr_uv = prim.GetAttribute(mqusdAttrUV);
+    m_attr_uv_indices = prim.GetAttribute(mqusdAttrUVIndices);
+    m_attr_mids = prim.GetAttribute(mqusdAttrMaterialIDs);
 
-    m_attr_joints = prim.GetAttribute(TfToken(mqusdAttrJoints));
-    m_attr_joint_indices = prim.GetAttribute(TfToken(mqusdAttrJointIndices));
-    m_attr_joint_weights = prim.GetAttribute(TfToken(mqusdAttrJointWeights));
-    m_attr_bind_transform = prim.GetAttribute(TfToken(mqusdAttrBindTransform));
+    m_attr_joints = prim.GetAttribute(mqusdAttrJoints);
+    m_attr_joint_indices = prim.GetAttribute(mqusdAttrJointIndices);
+    m_attr_joint_weights = prim.GetAttribute(mqusdAttrJointWeights);
+    m_attr_bind_transform = prim.GetAttribute(mqusdAttrBindTransform);
 
     setNode(new MeshNode(parent ? parent->m_node : nullptr));
 
@@ -122,7 +121,7 @@ void USDMeshNode::read(double time)
     super::read(time);
 
     auto t = UsdTimeCode(time);
-    auto& dst = *static_cast<MeshNode&>(*m_node).mesh;
+    auto& dst = static_cast<MeshNode&>(*m_node);
     dst.clear();
     {
         VtArray<int> data;
@@ -193,7 +192,7 @@ void USDMeshNode::read(double time)
             dst.joints.push_back(t.GetString());
     }
     if (m_attr_joint_indices) {
-        m_attr_joint_indices.GetMetadata(mqusdKeyElementSize, &dst.joints_per_vertex);
+        m_attr_joint_indices.GetMetadata(mqusdMetaElementSize, &dst.joints_per_vertex);
 
         VtArray<int> data;
         m_attr_joint_indices.Get(&data, t);
@@ -211,7 +210,7 @@ void USDMeshNode::read(double time)
     }
 
     // validate
-    dst.clearInvalidComponent();
+    dst.validate();
 }
 
 void USDMeshNode::write(double time) const
@@ -219,7 +218,7 @@ void USDMeshNode::write(double time) const
     super::write(time);
 
     auto t = UsdTimeCode(time);
-    auto& src = *static_cast<MeshNode&>(*m_node).mesh;
+    auto& src = static_cast<MeshNode&>(*m_node);
     {
         VtArray<int> data;
         data.assign(src.counts.begin(), src.counts.end());
@@ -261,8 +260,7 @@ USDBlendshapeNode::USDBlendshapeNode(USDNode* parent, UsdPrim prim)
 
     setNode(new BlendshapeNode(parent ? parent->m_node : nullptr));
     if (parent && parent->m_node->getType() == Node::Type::Mesh) {
-        static_cast<MeshNode*>(parent->m_node)->mesh->blendshapes.push_back(
-            static_cast<BlendshapeNode*>(m_node)->blendshape);
+        static_cast<MeshNode*>(parent->m_node)->blendshapes.push_back(static_cast<BlendshapeNode*>(m_node));
     }
 }
 
@@ -271,7 +269,7 @@ void USDBlendshapeNode::read(double time)
     super::read(time);
 
     auto t = UsdTimeCode(time);
-    auto& dst = *static_cast<BlendshapeNode*>(m_node)->blendshape;
+    auto& dst = *static_cast<BlendshapeNode*>(m_node);
     dst.clear();
 
     {
@@ -311,8 +309,7 @@ void USDSkeletonNode::read(double time)
     super::read(time);
 
     auto t = UsdTimeCode(time);
-    auto& node = *static_cast<SkeletonNode*>(m_node);
-    auto& dst = *node.skeleton;
+    auto& dst = *static_cast<SkeletonNode*>(m_node);
     dst.clear();
 
     // build joints
@@ -321,7 +318,6 @@ void USDSkeletonNode::read(double time)
         m_skel.GetJointsAttr().Get(&data, t);
         for (auto& token: data)
             dst.addJoint(token.GetString());
-        dst.buildJointRelations();
     }
     {
         VtArray<GfMatrix4d> data;
@@ -351,7 +347,7 @@ void USDSkeletonNode::read(double time)
             for (size_t i = 0; i < n; ++i)
                 dst.joints[i]->local_matrix.assign((double4x4&)data[i]);
         }
-        dst.updateGlobalMatrices(node.global_matrix);
+        dst.updateGlobalMatrices(dst.global_matrix);
     }
 }
 

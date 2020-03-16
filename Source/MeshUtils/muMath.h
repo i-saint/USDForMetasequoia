@@ -1060,6 +1060,11 @@ template<class T> inline tmat4x4<T> transform(const tvec3<T>& t, const tquat<T>&
     return ret;
 }
 
+template<class T> inline tmat4x4<T> transform(const std::tuple<tvec3<T>, tquat<T>, tvec3<T>>& v)
+{
+    return transform(std::get<0>(v), std::get<1>(v), std::get<2>(v));
+}
+
 template<class T> inline tmat3x3<T> transpose(const tmat3x3<T>& x)
 {
     return tmat3x3<T>{
@@ -1442,13 +1447,18 @@ template<class T> inline tquat<T> extract_rotation(const tmat4x4<T>& m)
 {
     return extract_rotation_impl(m);
 }
-template<class T> inline void extract_trs(const tmat4x4<T>& m, tvec3<T>& t, tquat<T>& r, tvec3<T>& s)
+template<class T> inline std::tuple<tvec3<T>, tquat<T>, tvec3<T>> extract_trs(const tmat4x4<T>& m)
 {
-    t = extract_position(m);
-    r = extract_rotation(m);
-    s = extract_scale(m);
+    auto t = extract_position(m);
+    auto r = extract_rotation(m);
+    auto s = extract_scale(m);
     if (near_equal(s, tvec3<T>::one()))
         s = tvec3<T>::one();
+    return { t, r, s };
+}
+template<class T> inline void extract_trs(const tmat4x4<T>& m, tvec3<T>& t, tquat<T>& r, tvec3<T>& s)
+{
+    std::tie(t, r, s) = extract_trs<T>(m);
 }
 
 template<class T> inline tmat4x4<T> cancel_s(const tmat4x4<T>& m)

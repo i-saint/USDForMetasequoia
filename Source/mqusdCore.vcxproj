@@ -22,7 +22,6 @@
     <ClCompile Include="mqusd\Core\mqusdCore.cpp" />
     <ClCompile Include="mqusd\Core\mqusdSceneGraphUSD.cpp" />
     <ClCompile Include="mqusd\mqusd.cpp" />
-    <ClCompile Include="mqusd\mqusdMesh.cpp" />
     <ClCompile Include="mqusd\mqusdSceneGraph.cpp" />
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -32,7 +31,6 @@
     <ClInclude Include="mqusd\Core\mqusdCore.h" />
     <ClInclude Include="mqusd\Core\mqusdSceneGraphUSD.h" />
     <ClInclude Include="mqusd\mqusd.h" />
-    <ClInclude Include="mqusd\mqusdMesh.h" />
     <ClInclude Include="mqusd\mqusdSceneGraph.h" />
     <ClInclude Include="mqusd\pch.h" />
   </ItemGroup>

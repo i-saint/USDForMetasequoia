@@ -1,15 +1,15 @@
 #pragma once
 
-#define mqusdAttrUV             "primvars:st"
-#define mqusdAttrUVIndices      "primvars:st:indices"
-#define mqusdAttrBindTransform  "primvars:skel:geomBindTransform"
-#define mqusdAttrJoints         "primvars:skel:joints"
-#define mqusdAttrJointIndices   "primvars:skel:jointIndices"
-#define mqusdAttrJointWeights   "primvars:skel:jointWeights"
-#define mqusdAttrMaterialIDs    "materialIds"
+#define mqusdAttrUV             TfToken("primvars:st")
+#define mqusdAttrUVIndices      TfToken("primvars:st:indices")
+#define mqusdAttrBindTransform  TfToken("primvars:skel:geomBindTransform")
+#define mqusdAttrJoints         TfToken("primvars:skel:joints")
+#define mqusdAttrJointIndices   TfToken("primvars:skel:jointIndices")
+#define mqusdAttrJointWeights   TfToken("primvars:skel:jointWeights")
+#define mqusdAttrMaterialIDs    TfToken("materialIds")
 
-#define mqusdKeyElementSize     TfToken("elementSize")
-#define mqusdKeyInterpolation   TfToken("interpolation")
+#define mqusdMetaElementSize    TfToken("elementSize")
+#define mqusdMetaInterpolation  TfToken("interpolation")
 
 #define mqusdMtlTarget          "metasequoia"
 #define mqusdMtlShaderClassic   "classic"

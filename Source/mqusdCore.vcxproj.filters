@@ -21,9 +21,6 @@
     <ClInclude Include="mqusd\Core\mqusdCore.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\mqusdMesh.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
     <ClInclude Include="mqusd\Core\mqusdSceneGraphUSD.h">
       <Filter>mqusd</Filter>
     </ClInclude>
@@ -36,9 +33,6 @@
       <Filter>mqusd</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\mqusdSceneGraph.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\mqusdMesh.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\Core\mqusdCore.cpp">

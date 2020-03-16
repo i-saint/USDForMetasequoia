@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\mqusd.cpp" />
-    <ClCompile Include="mqusd\mqusdMesh.cpp" />
     <ClCompile Include="mqusd\mqusdSceneGraph.cpp" />
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -31,7 +30,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mqusd\mqusd.h" />
-    <ClInclude Include="mqusd\mqusdMesh.h" />
     <ClInclude Include="mqusd\mqusdSceneGraph.h" />
     <ClInclude Include="mqusd\pch.h" />
     <ClInclude Include="mqusd\Player\mqusdPlayerPlugin.h" />

@@ -216,7 +216,13 @@ void mqusdRecorderPlugin::ExtractMeshData(ObjectRecord& rec)
         nindices += obj->GetFacePointCount(fi);
 
     auto& dst = rec.mesh;
-    dst.resize(npoints, nindices, nfaces);
+    dst.points.resize_discard(npoints);
+    dst.normals.resize_discard(nindices);
+    dst.uvs.resize_discard(nindices);
+    dst.colors.resize_discard(nindices);
+    dst.material_ids.resize_discard(nfaces);
+    dst.counts.resize_discard(nfaces);
+    dst.indices.resize_discard(nindices);
 
     auto dst_points = dst.points.data();
     auto dst_normals = dst.normals.data();
@@ -272,13 +278,13 @@ void mqusdRecorderPlugin::ExtractMeshData(ObjectRecord& rec)
         dst.material_ids.resize(fc);
     }
 
-    dst.applyScale(m_settings.scale_factor);
+    dst.convert(m_settings);
 }
 
 void mqusdRecorderPlugin::FlushUSD()
 {
     // make merged mesh
-    auto& dst = *m_mesh_node->mesh;
+    auto& dst = *m_mesh_node;
     dst.clear();
     for (auto& rec : m_obj_records)
         dst.merge(rec.mesh);

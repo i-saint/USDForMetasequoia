@@ -7,6 +7,7 @@ class mqusdPlayerWindow;
 
 struct mqusdPlayerSettings : public ConvertOptions
 {
+    bool flatten_meshes = false;
     bool import_materials = true;
 
     mqusdPlayerSettings();
@@ -118,7 +119,7 @@ private:
 
     std::shared_ptr<Scene> m_scene;
     double m_seek_time = 0;
-    Mesh m_mesh_merged;
+    MeshNode m_mesh_merged;
     int m_mqobj_id = 0;
 };
 
