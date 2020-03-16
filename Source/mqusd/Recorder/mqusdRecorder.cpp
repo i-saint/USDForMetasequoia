@@ -5,6 +5,11 @@
 
 namespace mqusd {
 
+mqusdRecorderSettings::mqusdRecorderSettings()
+{
+    scale_factor = 0.05f;
+}
+
 bool mqusdRecorderPlugin::OpenUSD(const std::string& path)
 {
     m_scene = CreateUSDScene();

@@ -26,6 +26,10 @@ class Skeleton
 {
 public:
     void clear();
+    void applyScale(float v);
+    void flipX();
+    void flipYZ();
+
     Joint* addJoint(const std::string& path);
     void buildJointRelations();
     void updateGlobalMatrices(const float4x4& base);
@@ -44,6 +48,10 @@ class Blendshape
 {
 public:
     void clear();
+    void applyScale(float v);
+    void applyTransform(const float4x4& v);
+    void flipX();
+    void flipYZ();
 
 public:
     std::string name;
@@ -63,7 +71,7 @@ public:
     void clearInvalidComponent();
 
     void applyScale(float v);
-    void applyTransform(const float4x4 v);
+    void applyTransform(const float4x4& v);
     void flipX();
     void flipYZ();
     void flipFaces();

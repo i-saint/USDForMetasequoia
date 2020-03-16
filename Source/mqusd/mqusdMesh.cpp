@@ -20,6 +20,42 @@ void Skeleton::clear()
     joints.clear();
 }
 
+void Skeleton::applyScale(float v)
+{
+    if (v == 1.0f)
+        return;
+
+    auto convert = [v](float4x4& m) { (float3&)m[3] *= v; };
+    for (auto& joint : joints) {
+        convert(joint->bindpose);
+        convert(joint->restpose);
+        convert(joint->local_matrix);
+        convert(joint->global_matrix);
+    }
+}
+
+void Skeleton::flipX()
+{
+    auto convert = [](float4x4& m) { m = flip_x(m); };
+    for (auto& joint : joints) {
+        convert(joint->bindpose);
+        convert(joint->restpose);
+        convert(joint->local_matrix);
+        convert(joint->global_matrix);
+    }
+}
+
+void Skeleton::flipYZ()
+{
+    auto convert = [](float4x4& m) { m = flip_z(swap_yz(m)); };
+    for (auto& joint : joints) {
+        convert(joint->bindpose);
+        convert(joint->restpose);
+        convert(joint->local_matrix);
+        convert(joint->global_matrix);
+    }
+}
+
 Joint* Skeleton::addJoint(const std::string& path)
 {
     auto ret = new Joint(path);
@@ -83,6 +119,35 @@ void Blendshape::clear()
     indices.clear();
     point_offsets.clear();
     normal_offsets.clear();
+}
+
+void Blendshape::applyScale(float v)
+{
+    if (v != 1.0f)
+        mu::Scale(point_offsets.data(), v, point_offsets.size());
+}
+
+void Blendshape::applyTransform(const float4x4& v)
+{
+    if (v == float4x4::identity())
+        return;
+
+    mu::MulVectors(v, point_offsets.cdata(), point_offsets.data(), point_offsets.size());
+    mu::MulVectors(v, normal_offsets.cdata(), normal_offsets.data(), normal_offsets.size());
+}
+
+void Blendshape::flipX()
+{
+    mu::InvertX(point_offsets.data(), point_offsets.size());
+    mu::InvertX(normal_offsets.data(), normal_offsets.size());
+}
+
+void Blendshape::flipYZ()
+{
+    auto convert = [this](auto& v) { return flip_z(swap_yz(v)); };
+
+    for (auto& v : point_offsets) v = convert(v);
+    for (auto& v : normal_offsets) v = convert(v);
 }
 
 
@@ -159,22 +224,37 @@ void Mesh::clearInvalidComponent()
 
 void Mesh::applyScale(float v)
 {
-    if (v != 1.0f)
-        mu::Scale(points.data(), v, points.size());
+    if (v == 1.0f)
+        return;
+
+    mu::Scale(points.data(), v, points.size());
+    (float3&)bind_transform[3] *= v;
+
+    for (auto& blendshape : blendshapes)
+        blendshape->applyScale(v);
 }
 
-void Mesh::applyTransform(const float4x4 v)
+void Mesh::applyTransform(const float4x4& v)
 {
     if (v == float4x4::identity())
         return;
+
     mu::MulPoints(v, points.cdata(), points.data(), points.size());
     mu::MulVectors(v, normals.cdata(), normals.data(), normals.size());
+    bind_transform *= v;
+
+    for (auto& blendshape : blendshapes)
+        blendshape->applyTransform(v);
 }
 
 void Mesh::flipX()
 {
     mu::InvertX(points.data(), points.size());
     mu::InvertX(normals.data(), normals.size());
+    bind_transform = flip_x(bind_transform);
+
+    for (auto& blendshape : blendshapes)
+        blendshape->flipX();
 }
 
 void Mesh::flipYZ()
@@ -183,6 +263,10 @@ void Mesh::flipYZ()
 
     for (auto& v : points) v = convert(v);
     for (auto& v : normals) v = convert(v);
+    bind_transform = convert(bind_transform);
+
+    for (auto& blendshape : blendshapes)
+        blendshape->flipYZ();
 }
 
 void Mesh::flipFaces()

@@ -21,6 +21,10 @@ Node::Type Node::getType() const
     return Type::Unknown;
 }
 
+void Node::convert(const ConvertOptions& opt)
+{
+}
+
 std::string Node::getPath() const
 {
     std::string ret;
@@ -66,6 +70,24 @@ Node::Type XformNode::getType() const
     return Type::Xform;
 }
 
+void XformNode::convert(const ConvertOptions& opt)
+{
+    super::convert(opt);
+
+    if (opt.scale_factor != 1.0f) {
+        (float3&)local_matrix[3] *= opt.scale_factor;
+        (float3&)global_matrix[3] *= opt.scale_factor;
+    }
+    if (opt.flip_x) {
+        local_matrix = flip_x(local_matrix);
+        global_matrix = flip_x(global_matrix);
+    }
+    if (opt.flip_yz) {
+        local_matrix = flip_z(swap_yz(local_matrix));
+        global_matrix = flip_z(swap_yz(global_matrix));
+    }
+}
+
 
 
 MeshNode::MeshNode(Node* p)
@@ -80,16 +102,26 @@ Node::Type MeshNode::getType() const
     return Type::Mesh;
 }
 
-void MeshNode::convert(const mqusdPlayerSettings& settings)
+void MeshNode::convert(const ConvertOptions& opt)
+{
+    super::convert(opt);
+
+    mesh->applyScale(opt.scale_factor);
+    if (opt.flip_x)
+        mesh->flipX();
+    if (opt.flip_yz)
+        mesh->flipYZ();
+    if (opt.flip_faces)
+        mesh->flipFaces();
+}
+
+void MeshNode::toWorldSpace()
 {
     mesh->applyTransform(global_matrix);
-    mesh->applyScale(settings.scale_factor);
-    if (settings.flip_x)
-        mesh->flipX();
-    if (settings.flip_yz)
-        mesh->flipYZ();
-    if (settings.flip_faces)
-        mesh->flipFaces();
+}
+void MeshNode::toLocalSpace()
+{
+    mesh->applyTransform(invert(global_matrix));
 }
 
 
@@ -105,6 +137,12 @@ Node::Type BlendshapeNode::getType() const
     return Type::Blendshape;
 }
 
+void BlendshapeNode::convert(const ConvertOptions& opt)
+{
+    super::convert(opt);
+    // handled by Mesh
+}
+
 
 SkeletonNode::SkeletonNode(Node* parent)
     : super(parent)
@@ -116,6 +154,17 @@ SkeletonNode::SkeletonNode(Node* parent)
 Node::Type SkeletonNode::getType() const
 {
     return Type::Skeleton;
+}
+
+void SkeletonNode::convert(const ConvertOptions& opt)
+{
+    super::convert(opt);
+
+    skeleton->applyScale(opt.scale_factor);
+    if (opt.flip_x)
+        skeleton->flipX();
+    if (opt.flip_yz)
+        skeleton->flipYZ();
 }
 
 

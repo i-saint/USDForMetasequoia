@@ -5,7 +5,7 @@ namespace mqusd {
 
 class mqusdRecorderWindow;
 
-struct mqusdRecorderSettings
+struct mqusdRecorderSettings : public ConvertOptions
 {
     bool capture_uvs = true;
     bool capture_normals = true;
@@ -16,9 +16,10 @@ struct mqusdRecorderSettings
     bool freeze_lathe = true;
     bool freeze_subdiv = false;
     bool keep_time = false;
-    float scale_factor = 0.05f;
     float frame_rate = 30.0f; // relevant only when keep_time is false
     float time_scale = 1.0f; // relevant only when keep_time is true
+
+    mqusdRecorderSettings();
 };
 
 class mqusdRecorderPlugin : public MQStationPlugin

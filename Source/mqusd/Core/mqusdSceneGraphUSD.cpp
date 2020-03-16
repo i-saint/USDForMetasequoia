@@ -139,11 +139,22 @@ void USDMeshNode::read(double time)
         m_mesh.GetPointsAttr().Get(&data, t);
         dst.points.assign((float3*)data.cdata(), data.size());
     }
+
+    // normals
     {
         VtArray<GfVec3f> data;
         m_mesh.GetNormalsAttr().Get(&data, t);
-        dst.normals.assign((float3*)data.cdata(), data.size());
+
+        if (data.size() == dst.indices.size()) {
+            dst.normals.assign((float3*)data.cdata(), data.size());
+        }
+        else if (data.size() == dst.points.size()) {
+            dst.normals.resize_discard(dst.indices.size());
+            mu::CopyWithIndices(dst.normals.data(), (float3*)data.cdata(), dst.indices);
+        }
     }
+
+    // uv
     if (m_attr_uv) {
         VtArray<GfVec2f> data;
         m_attr_uv.Get(&data, t);
@@ -151,13 +162,23 @@ void USDMeshNode::read(double time)
         if (m_attr_uv_indices) {
             VtArray<int> indices;
             m_attr_uv_indices.Get(&indices, t);
-            dst.uvs.resize_discard(indices.size());
-            mu::CopyWithIndices(dst.uvs.data(), (float2*)data.cdata(), indices);
+            if (indices.size() == dst.indices.size()) {
+                dst.uvs.resize_discard(indices.size());
+                mu::CopyWithIndices(dst.uvs.data(), (float2*)data.cdata(), indices);
+            }
         }
         else {
-            dst.uvs.assign((float2*)data.cdata(), data.size());
+            if (data.size() == dst.indices.size()) {
+                dst.uvs.assign((float2*)data.cdata(), data.size());
+            }
+            else if (data.size() == dst.points.size()) {
+                dst.uvs.resize_discard(dst.indices.size());
+                mu::CopyWithIndices(dst.uvs.data(), (float2*)data.cdata(), dst.indices);
+            }
         }
     }
+
+    // material ids
     if (m_attr_mids) {
         VtArray<int> data;
         m_attr_mids.Get(&data, t);

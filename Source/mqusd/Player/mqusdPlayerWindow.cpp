@@ -103,7 +103,8 @@ BOOL mqusdPlayerWindow::OnOpenClicked(MQWidgetBase* sender, MQDocument doc)
 {
     if (!m_plugin->IsArchiveOpened()) {
         MQOpenFileDialog dlg(*this);
-        dlg.AddFilter(L"USD file (*.usd;*.usda;*usdc;*usdz)|*.usd;*.usda;*usdc;*usdz");
+        dlg.AddFilter(L"USD Files (*.usd;*.usda;*.usdc;*.usdz)|*.usd;*.usda;*.usdc;*.usdz");
+        dlg.AddFilter(L"All Files (*.*)|*.*");
         dlg.SetDefaultExt(L"usd");
         if (dlg.Execute()) {
             auto path = dlg.GetFileName();

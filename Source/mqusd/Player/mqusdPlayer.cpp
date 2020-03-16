@@ -4,6 +4,11 @@
 
 namespace mqusd {
 
+mqusdPlayerSettings::mqusdPlayerSettings()
+{
+    scale_factor = 20.0f;
+}
+
 bool mqusdPlayerPlugin::OpenUSD(const std::string& path)
 {
     m_scene = CreateUSDScene();
@@ -70,6 +75,7 @@ void mqusdPlayerPlugin::Seek(MQDocument doc, double t)
     m_seek_time = t;
     m_scene->read(t);
     mu::parallel_for_each(m_scene->mesh_nodes.begin(), m_scene->mesh_nodes.end(), [this](MeshNode* n) {
+        n->toWorldSpace();
         n->convert(m_settings);
     });
 

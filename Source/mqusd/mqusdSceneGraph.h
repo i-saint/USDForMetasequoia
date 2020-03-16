@@ -12,6 +12,15 @@ struct mqusdPlayerSettings;
 class SceneInterface;
 using SceneInterfacePtr = std::shared_ptr<SceneInterface>;
 
+struct ConvertOptions
+{
+    float scale_factor = 1.0f;
+    bool flip_x = false;
+    bool flip_yz = false;
+    bool flip_faces = false;
+};
+
+
 class Node
 {
 public:
@@ -31,6 +40,7 @@ public:
     Node(Node* parent);
     virtual ~Node();
     virtual Type getType() const;
+    virtual void convert(const ConvertOptions& opt);
 
     template<class NodeT> NodeT* findParent();
     std::string getPath() const;
@@ -62,6 +72,7 @@ public:
 
     XformNode(Node* parent);
     Type getType() const override;
+    void convert(const ConvertOptions& opt) override;
 
     XformNode* parent_xform = nullptr;
     float4x4 local_matrix = float4x4::identity();
@@ -77,7 +88,10 @@ public:
 
     MeshNode(Node* parent);
     Type getType() const override;
-    void convert(const mqusdPlayerSettings& settings);
+    void convert(const ConvertOptions& opt) override;
+
+    void toWorldSpace();
+    void toLocalSpace();
 
 public:
     MeshPtr mesh;
@@ -92,6 +106,7 @@ public:
 
     BlendshapeNode(Node* parent);
     Type getType() const override;
+    void convert(const ConvertOptions& opt) override;
 
 public:
     BlendshapePtr blendshape;
@@ -106,6 +121,7 @@ public:
 
     SkeletonNode(Node* parent);
     Type getType() const override;
+    void convert(const ConvertOptions& opt) override;
 
 public:
     SkeletonPtr skeleton;

@@ -142,7 +142,8 @@ BOOL mqusdRecorderWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument do
         // show file open directory
 
         MQSaveFileDialog dlg(*this);
-        dlg.AddFilter(L"USD file (*.usd)|*.usd");
+        dlg.AddFilter(L"USD File (*.usd)|*.usd");
+        dlg.AddFilter(L"USD ASCII File (*.usda)|*.usda");
         dlg.SetDefaultExt(L"usd");
 
         auto& mqo_path = m_plugin->GetMQOPath();
