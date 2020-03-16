@@ -76,8 +76,8 @@ void SelectConnected(const IArray<int>& indices, const IArray<int>& counts, cons
 // ------------------------------------------------------------
 
 // Body: [](int face_index, int vertex_index) -> void
-template<class Body>
-inline void EnumerateFaceIndices(const IArray<int> counts, const Body& body)
+template<class Indices, class Body>
+inline void EnumerateFaceIndices(const Indices& counts, const Body& body)
 {
     int num_faces = (int)counts.size();
     int i = 0;
@@ -90,8 +90,8 @@ inline void EnumerateFaceIndices(const IArray<int> counts, const Body& body)
 }
 
 // Body: [](int face_index, int vertex_index, int reverse_vertex_index) -> void
-template<class Body>
-inline void EnumerateReverseFaceIndices(const IArray<int> counts, const Body& body)
+template<class Indices, class Body>
+inline void EnumerateReverseFaceIndices(const Indices& counts, const Body& body)
 {
     int num_faces = (int)counts.size();
     int i = 0;
@@ -106,16 +106,15 @@ inline void EnumerateReverseFaceIndices(const IArray<int> counts, const Body& bo
     }
 }
 
-template<class T>
-inline void CopyWithIndices(T *dst, const T *src, const IArray<int> indices, size_t beg, size_t end)
+template<class T, class Indices>
+inline void CopyWithIndices(T *dst, const T *src, const Indices& indices, size_t beg, size_t end)
 {
     if (!dst || !src)
         return;
 
     size_t size = end - beg;
-    for (int i = 0; i < (int)size; ++i) {
+    for (size_t i = 0; i < size; ++i)
         dst[i] = src[indices[beg + i]];
-    }
 }
 
 template<class T, class Indices>
@@ -129,12 +128,10 @@ inline void CopyWithIndices(T *dst, const T *src, const Indices& indices)
         dst[i] = src[indices[i]];
 }
 
-template<class IntArray1, class IntArray2>
+template<class Counts, class Offsets>
 inline void CountIndices(
-    const IntArray1 &counts,
-    IntArray2& offsets,
-    int& num_indices,
-    int& num_indices_triangulated)
+    const Counts& counts, Offsets& offsets,
+    int& num_indices, int& num_indices_triangulated)
 {
     int reti = 0, rett = 0;
     size_t num_faces = counts.size();

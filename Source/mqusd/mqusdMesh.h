@@ -15,6 +15,7 @@ public:
     std::string path;
     float4x4 bindpose = float4x4::identity();
     float4x4 restpose = float4x4::identity();
+
     float4x4 local_matrix = float4x4::identity();
     float4x4 global_matrix = float4x4::identity();
 };
@@ -27,6 +28,7 @@ public:
     void clear();
     Joint* addJoint(const std::string& path);
     void buildJointRelations();
+    void updateGlobalMatrices(const float4x4& base);
 
     Joint* findJointByName(const std::string& name);
     Joint* findJointByPath(const std::string& path);

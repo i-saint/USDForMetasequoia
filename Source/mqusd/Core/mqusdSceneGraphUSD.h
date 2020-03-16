@@ -105,6 +105,7 @@ public:
 
 private:
     mutable UsdSkelSkeleton m_skel;
+    UsdSkelCache m_skel_cache;
 };
 
 

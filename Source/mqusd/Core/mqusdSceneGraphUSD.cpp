@@ -290,9 +290,11 @@ void USDSkeletonNode::read(double time)
     super::read(time);
 
     auto t = UsdTimeCode(time);
-    auto& dst = *static_cast<SkeletonNode*>(m_node)->skeleton;
+    auto& node = *static_cast<SkeletonNode*>(m_node);
+    auto& dst = *node.skeleton;
     dst.clear();
 
+    // build joints
     {
         VtArray<TfToken> data;
         m_skel.GetJointsAttr().Get(&data, t);
@@ -317,6 +319,18 @@ void USDSkeletonNode::read(double time)
             for (size_t i = 0; i < n; ++i)
                 dst.joints[i]->restpose.assign((double4x4&)data[i]);
         }
+    }
+
+    // update joint matrices
+    if (auto query = m_skel_cache.GetSkelQuery(m_skel)) {
+        VtArray<GfMatrix4d> data;
+        query.ComputeJointLocalTransforms(&data, time);
+        size_t n = data.size();
+        if (dst.joints.size() == n) {
+            for (size_t i = 0; i < n; ++i)
+                dst.joints[i]->local_matrix.assign((double4x4&)data[i]);
+        }
+        dst.updateGlobalMatrices(node.global_matrix);
     }
 }
 

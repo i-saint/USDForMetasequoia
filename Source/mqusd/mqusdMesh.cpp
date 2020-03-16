@@ -42,6 +42,26 @@ void Skeleton::buildJointRelations()
     }
 }
 
+static void UpdateGlobalMatricesImpl(Joint& joint, const float4x4& base)
+{
+    if (joint.parent)
+        joint.global_matrix = joint.local_matrix * joint.parent->global_matrix;
+    else
+        joint.global_matrix = joint.local_matrix * base;
+
+    for (auto child : joint.children)
+        UpdateGlobalMatricesImpl(*child, base);
+}
+
+void Skeleton::updateGlobalMatrices(const float4x4& base)
+{
+    // update global matrices from top to down recursively
+    for (auto& joint : joints) {
+        if (!joint->parent)
+            UpdateGlobalMatricesImpl(*joint, base);
+    }
+}
+
 Joint* Skeleton::findJointByName(const std::string& name)
 {
     auto it = std::find_if(joints.begin(), joints.end(),
