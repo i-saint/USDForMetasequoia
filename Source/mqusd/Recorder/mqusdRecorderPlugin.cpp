@@ -325,6 +325,8 @@ void mqusdLog(const char* fmt, ...)
 
 bool mqusdRecorderPlugin::OpenUSD(const std::string& path)
 {
+    CloseUSD();
+
     m_scene = CreateUSDScene();
     if (!m_scene)
         return false;

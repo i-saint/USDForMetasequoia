@@ -312,6 +312,79 @@ void mqusdLog(const char* fmt, ...)
     g_plugin.LogInfo(s_buf);
 }
 
+
+// impl
+
+bool mqusdPlayerPlugin::OpenUSD(MQDocument doc, const std::string& path)
+{
+    CloseUSD();
+
+    m_scene = CreateUSDScene();
+    if (!m_scene)
+        return false;
+
+    if (!m_scene->open(path.c_str())) {
+        mqusdLog(
+            "failed to open %s\n"
+            "it may not an usd file"
+            , path.c_str());
+        m_scene = {};
+        return false;
+    }
+
+    m_importer.reset(new DocumentImporter(this, m_scene.get(), &m_options));
+    m_importer->initialize(doc);
+
+    return true;
+}
+
+bool mqusdPlayerPlugin::CloseUSD()
+{
+    m_importer = {};
+    m_scene = {};
+
+    m_seek_time = 0;
+    m_mqobj_id = 0;
+
+    return true;
+}
+
+void mqusdPlayerPlugin::Seek(MQDocument doc, double t)
+{
+    if (!m_importer)
+        return;
+
+    m_seek_time = t;
+    m_importer->read(doc, t);
+
+    // repaint
+    MQ_RefreshView(nullptr);
+}
+
+void mqusdPlayerPlugin::Refresh(MQDocument doc)
+{
+    Seek(doc, m_seek_time);
+}
+
+ImportOptions& mqusdPlayerPlugin::GetSettings()
+{
+    return m_options;
+}
+
+bool mqusdPlayerPlugin::IsArchiveOpened() const
+{
+    return m_scene != nullptr;
+}
+
+double mqusdPlayerPlugin::GetTimeStart() const
+{
+    return m_scene->time_start;
+}
+double mqusdPlayerPlugin::GetTimeEnd() const
+{
+    return m_scene->time_end;
+}
+
 } // namespace mqusd
 
 

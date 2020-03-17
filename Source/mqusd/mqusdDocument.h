@@ -7,7 +7,7 @@ struct ImportOptions : public ConvertOptions
 {
     bool import_skeletons = true;
     bool import_materials = true;
-    bool merge_meshes = false;
+    bool merge_meshes = true;
 
     ImportOptions()
     {
@@ -19,11 +19,13 @@ class DocumentImporter
 {
 public:
     DocumentImporter(MQBasePlugin* plugin, Scene* scene, const ImportOptions* options);
+    bool initialize(MQDocument doc);
     bool read(MQDocument doc, double t);
 
 private:
-    bool updateMesh(MQObject obj, const MeshNode& mesh);
-    bool updateSkeleton(MQDocument obj, const SkeletonNode& mesh);
+    bool updateMesh(MQObject obj, const MeshNode& src);
+    bool updateSkeleton(MQDocument obj, const SkeletonNode& src);
+    bool updateMaterials(MQDocument doc);
 
 private:
     const ImportOptions* m_options;
@@ -82,9 +84,9 @@ private:
         MaterialNode material;
     };
 
-    bool extractMaterial(MQMaterial obj, MaterialNode& dst);
     bool extractMesh(MQObject obj, MeshNode& dst);
     bool extractSkeleton(MQDocument obj, SkeletonNode& dst);
+    bool extractMaterial(MQMaterial obj, MaterialNode& dst);
 
     void flush();
     void waitFlush();

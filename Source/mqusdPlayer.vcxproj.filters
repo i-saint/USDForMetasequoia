@@ -38,9 +38,6 @@
     <ClCompile Include="mqusd\Player\mqusdPlayerWindow.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\Player\mqusdPlayer.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
     <ClCompile Include="mqusd\Player\mqusdPlayerPlugin.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>

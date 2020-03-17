@@ -5,14 +5,6 @@ namespace mqusd {
 
 class mqusdPlayerWindow;
 
-struct mqusdPlayerSettings : public ConvertOptions
-{
-    bool flatten_meshes = false;
-    bool import_materials = true;
-
-    mqusdPlayerSettings();
-};
-
 class mqusdPlayerPlugin : public MQStationPlugin
 {
 public:
@@ -97,22 +89,23 @@ public:
     void LogInfo(const char* message);
 
 
-    bool OpenUSD(const std::string& v);
+public:
+    bool OpenUSD(MQDocument doc, const std::string& v);
     bool CloseUSD();
-    void ImportMaterials(MQDocument doc);
     void Seek(MQDocument doc, double t);
     void Refresh(MQDocument doc);
 
-    mqusdPlayerSettings& GetSettings();
+    ImportOptions& GetSettings();
     bool IsArchiveOpened() const;
     double GetTimeStart() const;
     double GetTimeEnd() const;
 
 private:
     mqusdPlayerWindow* m_window = nullptr;
-    mqusdPlayerSettings m_settings;
+    ScenePtr m_scene;
+    ImportOptions m_options;
+    DocumentImporterPtr m_importer;
 
-    std::shared_ptr<Scene> m_scene;
     double m_seek_time = 0;
     MeshNode m_mesh_merged;
     int m_mqobj_id = 0;

@@ -89,6 +89,7 @@ public:
     void LogInfo(const char* message);
 
 
+public:
     bool OpenUSD(const std::string& v);
     bool CloseUSD();
     void CaptureFrame(MQDocument doc);
@@ -105,14 +106,13 @@ private:
 
 private:
     mqusdRecorderWindow* m_window = nullptr;
+    ScenePtr m_scene;
     ExportOptions m_options;
+    DocumentExporterPtr m_exporter;
 
     bool m_dirty = false;
     bool m_recording = false;
     std::string m_mqo_path;
-
-    ScenePtr m_scene;
-    DocumentExporterPtr m_exporter;
 };
 
 } // namespace mqusd

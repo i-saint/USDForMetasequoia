@@ -12,6 +12,15 @@ DocumentImporter::DocumentImporter(MQBasePlugin* plugin, Scene* scene, const Imp
 {
 }
 
+bool DocumentImporter::initialize(MQDocument doc)
+{
+    if (m_options->import_materials)
+        updateMaterials(doc);
+
+    read(doc, 0.0);
+    return true;
+}
+
 bool DocumentImporter::read(MQDocument doc, double t)
 {
     if (!m_scene)
@@ -169,6 +178,35 @@ bool DocumentImporter::updateSkeleton(MQDocument doc, const SkeletonNode& src)
 #endif
 }
 
+bool DocumentImporter::updateMaterials(MQDocument doc)
+{
+    auto& material_nodes = m_scene->material_nodes;
+    int nmaterials = (int)material_nodes.size();
+    for (int mi = 0; mi < nmaterials; ++mi) {
+        auto& src = *material_nodes[mi];
+        MQMaterial mqmat = nullptr;
+        if (mi < doc->GetMaterialCount()) {
+            mqmat = doc->GetMaterial(mi);
+            mqmat->SetName(src.name.c_str());
+        }
+        else {
+            mqmat = MQ_CreateMaterial();
+            mqmat->SetName(src.name.c_str());
+            doc->AddMaterial(mqmat);
+        }
+        mqmat->SetShader(src.shader);
+        mqmat->SetVertexColor(src.use_vertex_color ? MQMATERIAL_VERTEXCOLOR_DIFFUSE : MQMATERIAL_VERTEXCOLOR_DISABLE);
+        mqmat->SetDoubleSided(src.double_sided);
+        mqmat->SetColor((MQColor&)src.color);
+        mqmat->SetDiffuse(src.diffuse);
+        mqmat->SetAlpha(src.alpha);
+        mqmat->SetAmbientColor((MQColor&)src.ambient_color);
+        mqmat->SetSpecularColor((MQColor&)src.specular_color);
+        mqmat->SetEmissionColor((MQColor&)src.emission_color);
+    }
+    return true;
+}
+
 
 
 DocumentExporter::DocumentExporter(MQBasePlugin* plugin, Scene* scene, const ExportOptions* options)
@@ -284,24 +322,6 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     return true;
 }
 
-bool DocumentExporter::extractMaterial(MQMaterial mtl, MaterialNode& dst)
-{
-    char buf[256];
-    mtl->GetName(buf, sizeof(buf));
-
-    dst.name = buf;
-    dst.shader = mtl->GetShader();
-    dst.use_vertex_color = mtl->GetVertexColor() == MQMATERIAL_VERTEXCOLOR_DIFFUSE;
-    dst.double_sided = mtl->GetDoubleSided();
-    dst.color = to_float3(mtl->GetColor());
-    dst.diffuse = mtl->GetDiffuse();
-    dst.alpha = mtl->GetAlpha();
-    dst.ambient_color = to_float3(mtl->GetAmbientColor());
-    dst.specular_color = to_float3(mtl->GetSpecularColor());
-    dst.emission_color = to_float3(mtl->GetEmissionColor());
-    return true;
-}
-
 bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst)
 {
     int nfaces = obj->GetFaceCount();
@@ -406,6 +426,24 @@ bool DocumentExporter::extractSkeleton(MQDocument doc, SkeletonNode& mesh)
 #else
     return false;
 #endif
+}
+
+bool DocumentExporter::extractMaterial(MQMaterial mtl, MaterialNode& dst)
+{
+    char buf[256];
+    mtl->GetName(buf, sizeof(buf));
+
+    dst.name = buf;
+    dst.shader = mtl->GetShader();
+    dst.use_vertex_color = mtl->GetVertexColor() == MQMATERIAL_VERTEXCOLOR_DIFFUSE;
+    dst.double_sided = mtl->GetDoubleSided();
+    dst.color = to_float3(mtl->GetColor());
+    dst.diffuse = mtl->GetDiffuse();
+    dst.alpha = mtl->GetAlpha();
+    dst.ambient_color = to_float3(mtl->GetAmbientColor());
+    dst.specular_color = to_float3(mtl->GetSpecularColor());
+    dst.emission_color = to_float3(mtl->GetEmissionColor());
+    return true;
 }
 
 void DocumentExporter::flush()

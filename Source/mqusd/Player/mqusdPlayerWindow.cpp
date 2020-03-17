@@ -108,18 +108,13 @@ BOOL mqusdPlayerWindow::OnOpenClicked(MQWidgetBase* sender, MQDocument doc)
         dlg.SetDefaultExt(L"usd");
         if (dlg.Execute()) {
             auto path = dlg.GetFileName();
-            if (m_plugin->OpenUSD(mu::ToMBS(path))) {
+            if (m_plugin->OpenUSD(doc, mu::ToMBS(path))) {
                 m_slider_time->SetMin(m_plugin->GetTimeStart());
                 m_slider_time->SetMax(m_plugin->GetTimeEnd());
                 m_slider_time->SetPosition(m_plugin->GetTimeStart());
 
                 m_frame_open->SetVisible(false);
                 m_frame_play->SetVisible(true);
-
-                auto& settings = m_plugin->GetSettings();
-                if (settings.import_materials)
-                    m_plugin->ImportMaterials(doc);
-                m_plugin->Seek(doc, 0);
             }
         }
     }
