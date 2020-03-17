@@ -24,6 +24,9 @@
     <ClInclude Include="mqusd\mqusdSceneGraph.h">
       <Filter>mqusd</Filter>
     </ClInclude>
+    <ClInclude Include="mqusd\mqusdDocument.h">
+      <Filter>mqusd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\pch.cpp">
@@ -35,13 +38,13 @@
     <ClCompile Include="mqusd\Recorder\mqusdRecorderWindow.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\Recorder\mqusdRecorder.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
     <ClCompile Include="mqusd\Recorder\mqusdRecorderPlugin.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\mqusdSceneGraph.cpp">
+      <Filter>mqusd</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\mqusdDocument.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
   </ItemGroup>

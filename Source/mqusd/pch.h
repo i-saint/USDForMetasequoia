@@ -20,5 +20,6 @@
 #include <memory>
 #include <fstream>
 #include <future>
+#include <random>
 
 #include "mqsdk/sdk_Include.h"

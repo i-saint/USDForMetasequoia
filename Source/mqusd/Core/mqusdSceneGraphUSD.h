@@ -83,6 +83,7 @@ private:
     UsdAttribute m_attr_joint_weights;
     UsdAttribute m_attr_bind_transform;
 
+    // sample holder
     mutable VtArray<int> m_counts;
     mutable VtArray<int> m_indices;
     mutable VtArray<GfVec3f> m_points;
@@ -107,6 +108,8 @@ public:
 
 private:
     mutable UsdSkelBlendShape m_blendshape;
+
+    // sample holder
     mutable VtArray<int> m_point_indices;
     mutable VtArray<GfVec3f> m_point_offsets;
     mutable VtArray<GfVec3f> m_normal_offsets;

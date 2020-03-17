@@ -48,6 +48,7 @@ public:
     Node* parent = nullptr;
     std::vector<Node*> children;
     std::string name;
+    uint32_t id = 0;
 };
 using NodePtr = std::shared_ptr<Node>;
 
@@ -122,6 +123,7 @@ public:
         std::vector<Joint*> children;
         std::string name;
         std::string path;
+        int index = 0;
         float4x4 bindpose = float4x4::identity();
         float4x4 restpose = float4x4::identity();
         float4x4 local_matrix = float4x4::identity();

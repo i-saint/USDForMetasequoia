@@ -32,13 +32,13 @@ mqusdRecorderWindow::mqusdRecorderWindow(mqusdRecorderPlugin* plugin, MQWindowBa
             m_edit_scale->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
         }
 
-        m_check_normals = CreateCheckBox(vf, L"Capture Normals");
+        m_check_normals = CreateCheckBox(vf, L"Export Normals");
         m_check_normals->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
-        m_check_colors = CreateCheckBox(vf, L"Capture Vertex Colors");
+        m_check_colors = CreateCheckBox(vf, L"Export Vertex Colors");
         m_check_colors->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
-        m_check_mids = CreateCheckBox(vf, L"Capture Material IDs");
+        m_check_mids = CreateCheckBox(vf, L"Export Material IDs");
         m_check_mids->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
         m_check_mirror = CreateCheckBox(vf, L"Freeze Mirror");
@@ -62,7 +62,7 @@ mqusdRecorderWindow::mqusdRecorderWindow(mqusdRecorderPlugin* plugin, MQWindowBa
 
             m_edit_interval = CreateEdit(hf);
             m_edit_interval->SetNumeric(MQEdit::NUMERIC_DOUBLE);
-            m_edit_interval->AddChangedEvent(this, &mqusdRecorderWindow::OnIntervalChange);
+            m_edit_interval->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
         }
 
         m_button_recording = CreateButton(vf, L"Start Recording");
@@ -110,29 +110,26 @@ BOOL mqusdRecorderWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
     return 0;
 }
 
-BOOL mqusdRecorderWindow::OnIntervalChange(MQWidgetBase* sender, MQDocument doc)
-{
-    auto str = mu::ToMBS(m_edit_interval->GetText());
-    auto value = std::atof(str.c_str());
-    m_plugin->SetInterval(value);
-    return 0;
-}
-
 BOOL mqusdRecorderWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
 {
-    auto& settings = m_plugin->GetSettings();
+    auto& settings = m_plugin->GetOptions();
     {
         auto str = mu::ToMBS(m_edit_scale->GetText());
         auto value = std::atof(str.c_str());
         if (value != 0.0)
             settings.scale_factor = (float)value;
     }
+    {
+        auto str = mu::ToMBS(m_edit_interval->GetText());
+        auto value = std::atof(str.c_str());
+        settings.capture_interval = value;
+    }
     settings.freeze_mirror = m_check_mirror->GetChecked();
     settings.freeze_lathe = m_check_lathe->GetChecked();
     settings.freeze_subdiv = m_check_subdiv->GetChecked();
-    settings.capture_normals = m_check_normals->GetChecked();
-    settings.capture_colors = m_check_colors->GetChecked();
-    settings.capture_material_ids = m_check_mids->GetChecked();
+    settings.export_normals = m_check_normals->GetChecked();
+    settings.export_colors = m_check_colors->GetChecked();
+    settings.export_material_ids = m_check_mids->GetChecked();
     return 0;
 }
 
@@ -176,7 +173,6 @@ BOOL mqusdRecorderWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument do
 #ifdef mqusdDebug
 BOOL mqusdRecorderWindow::OnDebugClicked(MQWidgetBase* sender, MQDocument doc)
 {
-    m_plugin->DbgDoSomething();
     return 0;
 }
 #endif // mqusdDebug
@@ -185,9 +181,9 @@ void mqusdRecorderWindow::SyncSettings()
 {
     const size_t buf_len = 128;
     wchar_t buf[buf_len];
-    auto& settings = m_plugin->GetSettings();
+    auto& settings = m_plugin->GetOptions();
 
-    swprintf(buf, buf_len, L"%.2lf", m_plugin->GetInterval());
+    swprintf(buf, buf_len, L"%.2lf", settings.capture_interval);
     m_edit_interval->SetText(buf);
 
     swprintf(buf, buf_len, L"%.3f", settings.scale_factor);
@@ -197,9 +193,9 @@ void mqusdRecorderWindow::SyncSettings()
     m_check_lathe->SetChecked(settings.freeze_lathe);
     m_check_subdiv->SetChecked(settings.freeze_subdiv);
 
-    m_check_normals->SetChecked(settings.capture_normals);
-    m_check_colors->SetChecked(settings.capture_colors);
-    m_check_mids->SetChecked(settings.capture_material_ids);
+    m_check_normals->SetChecked(settings.export_normals);
+    m_check_colors->SetChecked(settings.export_colors);
+    m_check_mids->SetChecked(settings.export_material_ids);
 
     if (m_plugin->IsRecording()) {
         SetBackColor(MQCanvasColor(255, 0, 0));
@@ -215,9 +211,8 @@ void mqusdRecorderWindow::SyncSettings()
 
 void mqusdRecorderWindow::LogInfo(const char* message)
 {
-    if (m_log) {
+    if (m_log && message)
         m_log->SetText(mu::ToWCS(message));
-    }
 }
 
 } // namespace mqusd

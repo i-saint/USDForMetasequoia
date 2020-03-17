@@ -1,26 +1,9 @@
 ﻿#pragma once
-#include "mqusdSceneGraph.h"
+#include "mqusdDocument.h"
 
 namespace mqusd {
 
 class mqusdRecorderWindow;
-
-struct mqusdRecorderSettings : public ConvertOptions
-{
-    bool capture_uvs = true;
-    bool capture_normals = true;
-    bool capture_colors = false;
-    bool capture_material_ids = true;
-    bool capture_materials = true;
-    bool freeze_mirror = true;
-    bool freeze_lathe = true;
-    bool freeze_subdiv = false;
-    bool keep_time = false;
-    float frame_rate = 30.0f; // relevant only when keep_time is false
-    float time_scale = 1.0f; // relevant only when keep_time is true
-
-    mqusdRecorderSettings();
-};
 
 class mqusdRecorderPlugin : public MQStationPlugin
 {
@@ -103,73 +86,33 @@ public:
     // コールバックに対する実装部
     bool ExecuteCallback(MQDocument doc, void *option) override;
 
-    void LogInfo(const char* fmt, ...);
+    void LogInfo(const char* message);
 
 
     bool OpenUSD(const std::string& v);
     bool CloseUSD();
+    void CaptureFrame(MQDocument doc);
 
     const std::string& GetMQOPath() const;
     const std::string& GetUSDPath() const;
     bool IsArchiveOpened() const;
     bool IsRecording() const;
     void SetRecording(bool v);
-    void SetInterval(double v);
-    double GetInterval() const;
-    mqusdRecorderSettings& GetSettings();
-
-    void MarkSceneDirty();
-    void CaptureFrame(MQDocument doc);
-
-#ifdef mqusdDebug
-    void DbgDoSomething();
-    bool DbgDoSomethingImpl(MQDocument doc);
-#endif // mqusdDebug
+    ExportOptions& GetOptions();
 
 private:
-    struct ObjectRecord
-    {
-        MQDocument mqdocument;
-        MQObject mqobject;
-        bool need_release = false;
-
-        MeshNode mesh;
-    };
-
-    struct MaterialRecord
-    {
-        MQDocument mqdocument;
-        MQMaterial mqmaterial;
-
-        MaterialNode material;
-    };
-
-    void ExtractMeshData(ObjectRecord& rec);
-    void FlushUSD();
-    void WaitFlush();
-    void WriteMaterials();
+    void MarkSceneDirty();
 
 private:
     mqusdRecorderWindow* m_window = nullptr;
-    mqusdRecorderSettings m_settings;
+    ExportOptions m_options;
 
     bool m_dirty = false;
     bool m_recording = false;
-
     std::string m_mqo_path;
-    mu::nanosec m_start_time = 0;
-    mu::nanosec m_last_flush = 0;
-    mu::nanosec m_interval = 5000000000; // 5 sec
-    int m_frame = 0;
-    double m_time = 0.0;
 
     ScenePtr m_scene;
-    RootNode *m_root_node = nullptr;
-    MeshNode *m_mesh_node = nullptr;
-
-    std::vector<ObjectRecord> m_obj_records;
-    std::vector<MaterialRecord> m_material_records;
-    std::future<void> m_task_write;
+    DocumentExporterPtr m_exporter;
 };
 
 } // namespace mqusd

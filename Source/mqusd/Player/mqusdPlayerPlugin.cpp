@@ -294,17 +294,22 @@ void mqusdPlayerPlugin::Execute(ExecuteCallbackProc proc)
     BeginCallback(&info);
 }
 
-void mqusdPlayerPlugin::LogInfo(const char* fmt, ...)
+void mqusdPlayerPlugin::LogInfo(const char* message)
 {
-    if (m_window) {
-        char buf[1024 * 2];
-        va_list args;
-        va_start(args, fmt);
-        vsnprintf(buf, sizeof(buf), fmt, args);
-        va_end(args);
+    if (m_window)
+        m_window->LogInfo(message);
+}
 
-        m_window->LogInfo(buf);
-    }
+void mqusdLog(const char* fmt, ...)
+{
+    const size_t bufsize = 1024 * 16;
+    static char* s_buf = new char[bufsize];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(s_buf, bufsize, fmt, args);
+    va_end(args);
+
+    g_plugin.LogInfo(s_buf);
 }
 
 } // namespace mqusd

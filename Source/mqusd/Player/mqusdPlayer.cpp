@@ -16,7 +16,7 @@ bool mqusdPlayerPlugin::OpenUSD(const std::string& path)
         return false;
 
     if (!m_scene->open(path.c_str())) {
-        LogInfo(
+        mqusdLog(
             "failed to open %s\n"
             "it may not an usd file"
             , path.c_str());

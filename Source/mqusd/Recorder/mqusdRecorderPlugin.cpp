@@ -302,35 +302,99 @@ void mqusdRecorderPlugin::Execute(ExecuteCallbackProc proc)
     BeginCallback(&info);
 }
 
-void mqusdRecorderPlugin::LogInfo(const char* fmt, ...)
+void mqusdRecorderPlugin::LogInfo(const char* message)
 {
-    if (m_window) {
-        char buf[1024 * 2];
-        va_list args;
-        va_start(args, fmt);
-        vsnprintf(buf, sizeof(buf), fmt, args);
-        va_end(args);
+    if (m_window)
+        m_window->LogInfo(message);
+}
 
-        m_window->LogInfo(buf);
+void mqusdLog(const char* fmt, ...)
+{
+    const size_t bufsize = 1024 * 16;
+    static char* s_buf = new char[bufsize];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(s_buf, bufsize, fmt, args);
+    va_end(args);
+
+    g_plugin.LogInfo(s_buf);
+}
+
+
+// impl
+
+bool mqusdRecorderPlugin::OpenUSD(const std::string& path)
+{
+    m_scene = CreateUSDScene();
+    if (!m_scene)
+        return false;
+
+    if (!m_scene->create(path.c_str())) {
+        m_scene = {};
+        return false;
+    }
+
+    m_exporter.reset(new DocumentExporter(this, m_scene.get(), &m_options));
+    m_recording = true;
+    m_dirty = true;
+
+    mqusdLog("succeeded to open %s\nrecording started", path.c_str());
+    return true;
+}
+
+bool mqusdRecorderPlugin::CloseUSD()
+{
+    m_exporter = {};
+    m_scene = {};
+    m_recording = false;
+
+    mqusdLog("recording finished");
+    return true;
+}
+
+void mqusdRecorderPlugin::CaptureFrame(MQDocument doc)
+{
+    if (!IsRecording() || !m_dirty)
+        return;
+
+    if (m_exporter->write(doc, false)) {
+        m_dirty = false;
     }
 }
 
-void msmqLogInfo(const char *message)
+const std::string& mqusdRecorderPlugin::GetMQOPath() const
 {
-    g_plugin.LogInfo(message);
+    return m_mqo_path;
+}
+const std::string& mqusdRecorderPlugin::GetUSDPath() const
+{
+    return m_scene->path;
 }
 
-#ifdef mqusdDebug
-void mqusdRecorderPlugin::DbgDoSomething()
+bool mqusdRecorderPlugin::IsArchiveOpened() const
 {
-    Execute(&mqusdRecorderPlugin::DbgDoSomethingImpl);
+    return m_scene != nullptr;
 }
 
-bool mqusdRecorderPlugin::DbgDoSomethingImpl(MQDocument doc)
+bool mqusdRecorderPlugin::IsRecording() const
 {
-    return false;
+    return m_exporter && m_recording;
 }
-#endif // mqusdDebug
+void mqusdRecorderPlugin::SetRecording(bool v)
+{
+    m_recording = v;
+}
+
+ExportOptions& mqusdRecorderPlugin::GetOptions()
+{
+    return m_options;
+}
+
+void mqusdRecorderPlugin::MarkSceneDirty()
+{
+    m_dirty = true;
+}
+
 
 } // namespace mqusd
 

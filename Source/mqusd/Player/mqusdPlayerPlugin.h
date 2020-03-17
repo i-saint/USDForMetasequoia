@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "mqusdSceneGraph.h"
+#include "mqusdDocument.h"
 
 namespace mqusd {
 
@@ -94,7 +94,7 @@ public:
     // コールバックに対する実装部
     bool ExecuteCallback(MQDocument doc, void *option) override;
 
-    void LogInfo(const char* fmt, ...);
+    void LogInfo(const char* message);
 
 
     bool OpenUSD(const std::string& v);
@@ -107,11 +107,6 @@ public:
     bool IsArchiveOpened() const;
     double GetTimeStart() const;
     double GetTimeEnd() const;
-
-private:
-
-    void ConstructTree(Node *n);
-    bool DoSeek(MQDocument doc);
 
 private:
     mqusdPlayerWindow* m_window = nullptr;

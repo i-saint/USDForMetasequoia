@@ -4,9 +4,22 @@
 
 namespace mqusd {
 
+static uint32_t GenID()
+{
+    static uint32_t s_seed;
+    if (s_seed == 0) {
+        auto r = std::mt19937{};
+        auto d = std::uniform_int_distribution<uint32_t>{ 0, 0xefffffff };
+        s_seed = d(r);
+    }
+    return ++s_seed;
+}
+
+
 Node::Node(Node* p)
     : parent(p)
 {
+    id = GenID();
     if (parent)
         parent->children.push_back(this);
 }
@@ -364,6 +377,7 @@ void SkeletonNode::clear()
 SkeletonNode::Joint* SkeletonNode::addJoint(const std::string& path)
 {
     auto ret = new Joint(path);
+    ret->index = (int)joints.size();
     joints.push_back(JointPtr(ret));
 
     // handle parenting
@@ -442,17 +456,21 @@ Scene::~Scene()
     close();
 }
 
-bool Scene::open(const char* path)
+bool Scene::open(const char* path_)
 {
-    if (impl)
-        return impl->open(path);
+    if (impl && impl->open(path_)) {
+        path = path_;
+        return true;
+    }
     return false;
 }
 
-bool Scene::create(const char* path)
+bool Scene::create(const char* path_)
 {
-    if (impl)
-        return impl->create(path);
+    if (impl && impl->create(path_)) {
+        path = path_;
+        return true;
+    }
     return false;
 }
 

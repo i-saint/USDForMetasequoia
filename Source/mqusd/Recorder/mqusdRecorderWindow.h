@@ -12,7 +12,6 @@ public:
 
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
-    BOOL OnIntervalChange(MQWidgetBase* sender, MQDocument doc);
     BOOL OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc);
     BOOL OnRecordingClicked(MQWidgetBase* sender, MQDocument doc);
 #ifdef mqusdDebug
