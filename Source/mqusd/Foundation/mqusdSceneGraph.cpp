@@ -515,6 +515,8 @@ bool Scene::open(const char* path_)
             case Node::Type::Material:
                 material_nodes.push_back(static_cast<MaterialNode*>(node.get()));
                 break;
+            default:
+                break;
             }
         }
 

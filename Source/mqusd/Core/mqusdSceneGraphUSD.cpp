@@ -579,12 +579,6 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
 
 } // namespace mqusd
 
-#ifdef _WIN32
-    #define mqusdCoreAPI extern "C" __declspec(dllexport)
-#else
-    #define mqusdCoreAPI extern "C" 
-#endif
-
 mqusdCoreAPI mqusd::SceneInterface* mqusdCreateUSDSceneInterface(mqusd::Scene *scene)
 {
     return new mqusd::USDScene(scene);

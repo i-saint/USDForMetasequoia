@@ -22,7 +22,7 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++14 -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -fvisibility=hidden -std=c++14 -Wno-deprecated")
 
 function(add_subdirectory_link to from)
     if(NOT EXISTS "${CMAKE_SOURCE_DIR}/${to}")

@@ -11,7 +11,7 @@
 #ifdef _WIN32
     #define mqusdAPI extern "C" __declspec(dllexport)
 #else
-    #define mqusdAPI extern "C" 
+    #define mqusdAPI extern "C" __attribute__((visibility("default")))
 #endif
 
 #ifdef mqusdDebug

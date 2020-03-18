@@ -28,6 +28,13 @@
 #define mqusdMtlSpecularColor   ".specularColor"
 #define mqusdMtlEmissionColor   ".emissionColor"
 
+#ifdef _WIN32
+    #define mqusdCoreAPI extern "C" __declspec(dllexport)
+#else
+    #define mqusdCoreAPI extern "C" __attribute__((visibility("default")))
+#endif
+
+
 #pragma warning(push)
 #pragma warning(disable:4244 267)
 #include "pxr/usd/usd/stage.h"
@@ -45,3 +52,5 @@
 #include "pxr/usd/usdShade/shader.h"
 #pragma warning(pop)
 PXR_NAMESPACE_USING_DIRECTIVE;
+
+#include "Foundation/mqusdSceneGraph.h"

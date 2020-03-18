@@ -15,7 +15,7 @@
     <ClInclude Include="mqusd\mqusd.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\mqusdSceneGraph.h">
+    <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h">
       <Filter>mqusd</Filter>
     </ClInclude>
     <ClInclude Include="mqusd\Core\mqusdCore.h">
@@ -32,7 +32,7 @@
     <ClCompile Include="mqusd\mqusd.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\mqusdSceneGraph.cpp">
+    <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\Core\mqusdCore.cpp">

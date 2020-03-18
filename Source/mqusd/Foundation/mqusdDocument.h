@@ -33,7 +33,6 @@ private:
     };
 
     bool updateMesh(MQObject obj, const MeshNode& src);
-    bool updateBlendshape(MQObject obj, const BlendshapeNode& src, const MeshNode& base);
     bool updateSkeleton(MQDocument obj, const SkeletonNode& src);
     bool updateMaterials(MQDocument doc);
 
@@ -44,7 +43,7 @@ private:
     Scene* m_scene = nullptr;
     std::vector<ObjectRecord> m_obj_records;
 
-    int m_mqobj_id = 0;
+    UINT m_mqobj_id = 0;
     MeshNode m_mesh_merged;
 };
 using DocumentImporterPtr = std::shared_ptr<DocumentImporter>;

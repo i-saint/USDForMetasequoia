@@ -1,4 +1,4 @@
-file(GLOB sources ../*.cpp ../*.h *.cpp *.h)
+file(GLOB sources ../Foundation/*.cpp ../Foundation/*.h ../*.cpp ../*.h *.cpp *.h)
 add_library(${MQUSD_RECORDER} MODULE ${sources})
 set_target_properties(${MQUSD_RECORDER} PROPERTIES BUNDLE ON)
 set_target_properties(${MQUSD_RECORDER} PROPERTIES BUNDLE_EXTENSION "plugin")

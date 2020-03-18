@@ -21,10 +21,10 @@
     <ClInclude Include="mqusd\Player\mqusdPlayerWindow.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\mqusdSceneGraph.h">
+    <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\mqusdDocument.h">
+    <ClInclude Include="mqusd\Foundation\mqusdDocument.h">
       <Filter>mqusd</Filter>
     </ClInclude>
   </ItemGroup>
@@ -41,10 +41,10 @@
     <ClCompile Include="mqusd\Player\mqusdPlayerPlugin.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\mqusdSceneGraph.cpp">
+    <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\mqusdDocument.cpp">
+    <ClCompile Include="mqusd\Foundation\mqusdDocument.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
   </ItemGroup>

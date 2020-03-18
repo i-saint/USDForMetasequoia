@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "mqusd.h"
 #include "mqusdDocument.h"
 
 namespace mqusd {
@@ -27,6 +26,27 @@ bool DocumentImporter::initialize(MQDocument doc)
 
     read(doc, 0.0);
     return true;
+}
+
+static MQObject FindOrCreateMQObject(MQDocument doc, UINT& id, MQObject parent, bool& created)
+{
+    auto mqo = doc->GetObjectFromUniqueID(id);
+    if (!mqo) {
+        mqo = MQ_CreateObject();
+        if (parent) {
+            doc->InsertObject(mqo, parent);
+            mqo->SetDepth(parent->GetDepth() + 1);
+        }
+        else {
+            doc->AddObject(mqo);
+        }
+        id = mqo->GetUniqueID();
+        created = true;
+    }
+    else {
+        created = false;
+    }
+    return mqo;
 }
 
 bool DocumentImporter::read(MQDocument doc, double t)
@@ -59,6 +79,13 @@ bool DocumentImporter::read(MQDocument doc, double t)
         }
     }
 
+    // skeleton
+    if (m_options->import_skeletons) {
+        for (auto n : m_scene->skeleton_nodes)
+            updateSkeleton(doc, *n);
+    }
+
+
     // update mq object
     if (m_options->merge_meshes) {
         // build merged mesh
@@ -68,12 +95,9 @@ bool DocumentImporter::read(MQDocument doc, double t)
             mesh.merge(*n);
         mesh.validate();
 
-        auto obj = doc->GetObjectFromUniqueID(m_mqobj_id);
-        if (!obj) {
-            obj = MQ_CreateObject();
-            doc->AddObject(obj);
-            m_mqobj_id = obj->GetUniqueID();
-
+        bool created;
+        auto obj = FindOrCreateMQObject(doc, m_mqobj_id, nullptr, created);
+        if (created) {
             auto name = mu::GetFilename_NoExtension(m_scene->path.c_str());
             obj->SetName(name.c_str());
         }
@@ -82,32 +106,18 @@ bool DocumentImporter::read(MQDocument doc, double t)
         updateMesh(obj, mesh);
     }
     else {
-        auto find_or_get_mqobject = [doc](UINT& id, bool& created) {
-            auto mqo = doc->GetObjectFromUniqueID(id);
-            if (!mqo) {
-                mqo = MQ_CreateObject();
-                doc->AddObject(mqo);
-                id = mqo->GetUniqueID();
-                created = true;
-            }
-            else {
-                created = false;
-            }
-            return mqo;
-        };
-
 #if MQPLUGIN_VERSION >= 0x0470
         MQMorphManager morph_manager(m_plugin, doc);
 #endif
         for (auto& rec : m_obj_records) {
             // mesh
             bool created;
-            auto mqo = find_or_get_mqobject(rec.mqobj_id, created);
+            auto obj = FindOrCreateMQObject(doc, rec.mqobj_id, nullptr, created);
             if (created) {
                 auto name = mu::ToWCS(rec.mesh->name);
-                mqo->SetName(name.c_str());
+                obj->SetName(name.c_str());
             }
-            updateMesh(mqo, *rec.mesh);
+            updateMesh(obj, *rec.mesh);
 
             // blendshapes
             if (m_options->import_blendshapes) {
@@ -116,14 +126,14 @@ bool DocumentImporter::read(MQDocument doc, double t)
                     auto blendshape = rec.mesh->blendshapes[bi];
                     blendshape->makeMesh(rec.tmp_mesh, *rec.mesh);
 
-                    auto bqmqo = find_or_get_mqobject(rec.blendshape_ids[bi], created);
-                    updateMesh(bqmqo, rec.tmp_mesh);
+                    auto bs = FindOrCreateMQObject(doc, rec.blendshape_ids[bi], obj, created);
+                    updateMesh(bs, rec.tmp_mesh);
                     if (created) {
-                        auto name = mu::ToWCS(rec.mesh->name + "_" + blendshape->name);
-                        bqmqo->SetName(name.c_str());
-                        bqmqo->SetVisible(0);
+                        auto name = mu::ToWCS(blendshape->name);
+                        bs->SetName(name.c_str());
+                        bs->SetVisible(0);
 #if MQPLUGIN_VERSION >= 0x0470
-                        morph_manager.BindTargetObject(mqo, bqmqo);
+                        morph_manager.BindTargetObject(obj, bs);
 #endif
                     }
                 }
