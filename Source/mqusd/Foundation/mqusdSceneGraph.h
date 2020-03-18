@@ -133,6 +133,8 @@ public:
         std::string name;
         std::string path;
         int index = 0;
+        void* userdata = nullptr;
+
         float4x4 bindpose = float4x4::identity();
         float4x4 restpose = float4x4::identity();
         float4x4 local_matrix = float4x4::identity();

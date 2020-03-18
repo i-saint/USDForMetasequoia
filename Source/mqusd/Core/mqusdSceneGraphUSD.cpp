@@ -316,21 +316,25 @@ USDSkeletonNode::USDSkeletonNode(USDNode* parent, UsdPrim prim)
     setNode(new SkeletonNode(parent ? parent->m_node : nullptr));
 }
 
+void USDSkeletonNode::beforeRead()
+{
+    auto& dst = *static_cast<SkeletonNode*>(m_node);
+
+    // build joints
+    VtArray<TfToken> data;
+    m_skel.GetJointsAttr().Get(&data);
+    for (auto& token : data)
+        dst.addJoint(token.GetString());
+}
+
 void USDSkeletonNode::read(double time)
 {
     super::read(time);
 
     auto t = UsdTimeCode(time);
     auto& dst = *static_cast<SkeletonNode*>(m_node);
-    dst.clear();
 
-    // build joints
-    {
-        VtArray<TfToken> data;
-        m_skel.GetJointsAttr().Get(&data, t);
-        for (auto& token: data)
-            dst.addJoint(token.GetString());
-    }
+    // bindpose
     {
         VtArray<GfMatrix4d> data;
         m_skel.GetBindTransformsAttr().Get(&data, t);

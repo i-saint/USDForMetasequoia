@@ -122,6 +122,7 @@ public:
     DefSchemaTraits(UsdSkelSkeleton, "Skeleton");
 
     USDSkeletonNode(USDNode* parent, UsdPrim prim);
+    void beforeRead() override;
     void read(double time) override;
     void write(double time) const override;
 

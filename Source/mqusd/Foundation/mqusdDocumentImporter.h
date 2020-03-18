@@ -26,10 +26,22 @@ public:
 private:
     struct ObjectRecord
     {
-        MeshNode* mesh = nullptr;
-        UINT mqobj_id = 0;
+        MeshNode* node = nullptr;
+        UINT mqid = 0;
         std::vector<UINT> blendshape_ids;
         MeshNode tmp_mesh;
+    };
+
+    struct JointRecord
+    {
+        SkeletonNode::Joint* joint = nullptr;
+        UINT mqid = 0;
+    };
+
+    struct SkeletonRecord
+    {
+        SkeletonNode* node = nullptr;
+        std::vector<JointRecord> joints;
     };
 
     bool updateMesh(MQObject obj, const MeshNode& src);
@@ -42,6 +54,7 @@ private:
 
     Scene* m_scene = nullptr;
     std::vector<ObjectRecord> m_obj_records;
+    std::vector<SkeletonRecord> m_skel_records;
 
     UINT m_mqobj_id = 0;
     MeshNode m_mesh_merged;

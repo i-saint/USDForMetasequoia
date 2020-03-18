@@ -16,8 +16,25 @@ bool DocumentImporter::initialize(MQDocument doc)
     m_obj_records.resize(nobjs);
     for (size_t oi = 0; oi < nobjs; ++oi) {
         auto& rec = m_obj_records[oi];
-        rec.mesh = m_scene->mesh_nodes[oi];
-        rec.blendshape_ids.resize(rec.mesh->blendshapes.size());
+        rec.node = m_scene->mesh_nodes[oi];
+        rec.node->userdata = &rec;
+        rec.blendshape_ids.resize(rec.node->blendshapes.size());
+    }
+
+    size_t nskels = m_scene->skeleton_nodes.size();
+    m_skel_records.resize(nskels);
+    for (size_t si = 0; si < nskels; ++si) {
+        auto& rec = m_skel_records[si];
+        rec.node = m_scene->skeleton_nodes[si];
+        rec.node->userdata = &rec;
+
+        size_t njoints = rec.node->joints.size();
+        rec.joints.resize(njoints);
+        for (size_t ji = 0; ji < njoints; ++ji) {
+            auto& jrec = rec.joints[ji];
+            jrec.joint = rec.node->joints[ji].get();
+            jrec.joint->userdata = &jrec;
+        }
     }
 
     if (m_options->import_materials)
@@ -57,6 +74,8 @@ bool DocumentImporter::read(MQDocument doc, double t)
     m_scene->read(t);
     mu::parallel_for_each(m_scene->mesh_nodes.begin(), m_scene->mesh_nodes.end(), [this](MeshNode* n) {
         n->toWorldSpace();
+    });
+    mu::parallel_for_each(m_scene->nodes.begin(), m_scene->nodes.end(), [this](NodePtr& n) {
         n->convert(*m_options);
     });
 
@@ -80,10 +99,9 @@ bool DocumentImporter::read(MQDocument doc, double t)
 
     // skeleton
     if (m_options->import_skeletons) {
-        for (auto n : m_scene->skeleton_nodes)
-            updateSkeleton(doc, *n);
+        for (auto& rec : m_skel_records)
+            updateSkeleton(doc, *rec.node);
     }
-
 
     // update mq object
     if (m_options->merge_meshes) {
@@ -111,19 +129,19 @@ bool DocumentImporter::read(MQDocument doc, double t)
         for (auto& rec : m_obj_records) {
             // mesh
             bool created;
-            auto obj = FindOrCreateMQObject(doc, rec.mqobj_id, nullptr, created);
+            auto obj = FindOrCreateMQObject(doc, rec.mqid, nullptr, created);
             if (created) {
-                auto name = mu::ToWCS(rec.mesh->name);
+                auto name = mu::ToWCS(rec.node->name);
                 obj->SetName(name.c_str());
             }
-            updateMesh(obj, *rec.mesh);
+            updateMesh(obj, *rec.node);
 
             // blendshapes
             if (m_options->import_blendshapes) {
-                size_t nbs = rec.mesh->blendshapes.size();
+                size_t nbs = rec.node->blendshapes.size();
                 for (size_t bi = 0; bi < nbs; ++bi) {
-                    auto blendshape = rec.mesh->blendshapes[bi];
-                    blendshape->makeMesh(rec.tmp_mesh, *rec.mesh);
+                    auto blendshape = rec.node->blendshapes[bi];
+                    blendshape->makeMesh(rec.tmp_mesh, *rec.node);
 
                     auto bs = FindOrCreateMQObject(doc, rec.blendshape_ids[bi], obj, created);
                     updateMesh(bs, rec.tmp_mesh);
@@ -214,23 +232,25 @@ bool DocumentImporter::updateSkeleton(MQDocument doc, const SkeletonNode& src)
     MQBoneManager bone_manager(m_plugin, doc);
     bone_manager.BeginImport();
 
-    std::vector<UINT> bone_ids;
-    std::vector<UINT> vertex_ids;
-    std::vector<float> weights;
-    int nobjects = doc->GetObjectCount();
+    auto& rec = *(SkeletonRecord*)src.userdata;
+    size_t njoints = rec.joints.size();
+    for (size_t ji = 0; ji < njoints; ++ji) {
+        auto& joint = *src.joints[ji];
+        auto& jrec = rec.joints[ji];
 
-    bone_manager.EnumBoneID(bone_ids);
-    for (auto bid : bone_ids) {
-        MQPoint base_pos;
-        bone_manager.GetBasePos(bid, base_pos);
-        // todo
+        float3 t; quatf r; float3 s;
+        std::tie(t, r, s) = mu::extract_trs(joint.bindpose);
 
-        for (int oi = 0; oi < nobjects; ++oi) {
-            auto obj = doc->GetObject(oi);
-            int nweights = bone_manager.GetWeightedVertexArray(bid, obj, vertex_ids, weights);
-            if (nweights == 0)
-                continue;
-            // todo
+        if (jrec.mqid == 0) {
+            MQBoneManager::ADD_BONE_PARAM param;
+            param.name = mu::ToWCS(joint.name);
+            param.pos = (MQPoint&)t;
+            if (joint.parent)
+                param.parent_id = ((JointRecord*)joint.parent->userdata)->mqid;
+            jrec.mqid = bone_manager.AddBone(param);
+        }
+        else {
+            bone_manager.SetBasePos(jrec.mqid, (MQPoint&)t);
         }
     }
 
