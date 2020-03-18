@@ -295,6 +295,49 @@ void BlendshapeNode::clear()
     normal_offsets.clear();
 }
 
+void BlendshapeNode::makeMesh(MeshNode& dst, const MeshNode& base)
+{
+    dst.points = base.points;
+    dst.normals = base.normals;
+    dst.uvs = base.uvs;
+    dst.colors = base.colors;
+    dst.material_ids = base.material_ids;
+    dst.counts = base.counts;
+    dst.indices = base.indices;
+
+    if (indices.empty()) {
+        size_t npoints = dst.points.size();
+        if (!point_offsets.empty() && point_offsets.size() == npoints) {
+            auto* points = dst.points.data();
+            for (size_t pi = 0; pi < npoints; ++pi)
+                points[pi] += point_offsets[pi];
+        }
+
+        size_t nnormals = dst.points.size();
+        if (!normal_offsets.empty() && normal_offsets.size() == nnormals) {
+            auto* normals = dst.normals.data();
+            for (size_t pi = 0; pi < nnormals; ++pi)
+                normals[pi] += normal_offsets[pi];
+            mu::Normalize(normals, dst.normals.size());
+        }
+    }
+    else {
+        size_t nindices = indices.size();
+        auto* idx = indices.data();
+        if (!point_offsets.empty()) {
+            auto* points = dst.points.data();
+            for (size_t ii = 0; ii < nindices; ++ii)
+                points[idx[ii]] += point_offsets[ii];
+        }
+        if (!normal_offsets.empty()) {
+            auto* normals = dst.normals.data();
+            for (size_t ii = 0; ii < nindices; ++ii)
+                normals[idx[ii]] += normal_offsets[ii];
+            mu::Normalize(normals, dst.normals.size());
+        }
+    }
+}
+
 
 
 SkeletonNode::Joint::Joint(const std::string& p)
@@ -460,6 +503,21 @@ bool Scene::open(const char* path_)
 {
     if (impl && impl->open(path_)) {
         path = path_;
+
+        for (auto& node : nodes) {
+            switch (node->getType()) {
+            case Node::Type::Mesh:
+                mesh_nodes.push_back(static_cast<MeshNode*>(node.get()));
+                break;
+            case Node::Type::Skeleton:
+                skeleton_nodes.push_back(static_cast<SkeletonNode*>(node.get()));
+                break;
+            case Node::Type::Material:
+                material_nodes.push_back(static_cast<MaterialNode*>(node.get()));
+                break;
+            }
+        }
+
         return true;
     }
     return false;
@@ -507,8 +565,12 @@ void Scene::write(double time) const
 
 Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
 {
-    if (impl)
-        return impl->createNode(parent, name, type);
+    if (impl) {
+        auto ret = impl->createNode(parent, name, type);
+        if (type == Node::Type::Mesh)
+            mesh_nodes.push_back(static_cast<MeshNode*>(ret));
+        return ret;
+    }
     return nullptr;
 }
 

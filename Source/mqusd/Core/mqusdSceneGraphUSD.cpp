@@ -157,7 +157,6 @@ void USDMeshNode::read(double time)
 
     auto t = UsdTimeCode(time);
     auto& dst = static_cast<MeshNode&>(*m_node);
-    dst.clear();
 
     // counts, indices, points
     {
@@ -184,6 +183,9 @@ void USDMeshNode::read(double time)
             dst.normals.resize_discard(dst.indices.size());
             mu::CopyWithIndices(dst.normals.data(), (float3*)m_normals.cdata(), dst.indices);
         }
+        else {
+            dst.normals.clear();
+        }
     }
 
     // uv
@@ -196,6 +198,9 @@ void USDMeshNode::read(double time)
                 dst.uvs.resize_discard(m_uv_indices.size());
                 mu::CopyWithIndices(dst.uvs.data(), (float2*)m_uvs.cdata(), m_uv_indices);
             }
+            else {
+                dst.uvs.clear();
+            }
         }
         else {
             if (m_uvs.size() == dst.indices.size()) {
@@ -204,6 +209,9 @@ void USDMeshNode::read(double time)
             else if (m_uvs.size() == dst.points.size()) {
                 dst.uvs.resize_discard(dst.indices.size());
                 mu::CopyWithIndices(dst.uvs.data(), (float2*)m_uvs.cdata(), dst.indices);
+            }
+            else {
+                dst.uvs.clear();
             }
         }
     }
@@ -278,7 +286,6 @@ void USDBlendshapeNode::read(double time)
 
     auto t = UsdTimeCode(time);
     auto& dst = *static_cast<BlendshapeNode*>(m_node);
-    dst.clear();
 
     {
         m_blendshape.GetPointIndicesAttr().Get(&m_point_indices, t);
@@ -466,10 +473,8 @@ void USDScene::constructTree(USDNode* n)
 
         if (!c) {
             UsdGeomMesh schema(cprim);
-            if (schema) {
+            if (schema)
                 c = new USDMeshNode(n, cprim);
-                m_scene->mesh_nodes.push_back(static_cast<MeshNode*>(c->m_node));
-            }
         }
         if (!c) {
             UsdSkelBlendShape schema(cprim);
@@ -567,8 +572,6 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
     if (ret) {
         m_nodes.push_back(USDNodePtr(ret));
         m_scene->nodes.push_back(NodePtr(ret->m_node));
-        if (type == Node::Type::Mesh)
-            m_scene->mesh_nodes.push_back(static_cast<MeshNode*>(ret->m_node));
         ret->beforeWrite();
     }
     return ret ? ret->m_node : nullptr;

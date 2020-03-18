@@ -14,6 +14,14 @@ DocumentImporter::DocumentImporter(MQBasePlugin* plugin, Scene* scene, const Imp
 
 bool DocumentImporter::initialize(MQDocument doc)
 {
+    size_t nobjs = m_scene->mesh_nodes.size();
+    m_obj_records.resize(nobjs);
+    for (size_t oi = 0; oi < nobjs; ++oi) {
+        auto& rec = m_obj_records[oi];
+        rec.mesh = m_scene->mesh_nodes[oi];
+        rec.blendshape_ids.resize(rec.mesh->blendshapes.size());
+    }
+
     if (m_options->import_materials)
         updateMaterials(doc);
 
@@ -74,7 +82,53 @@ bool DocumentImporter::read(MQDocument doc, double t)
         updateMesh(obj, mesh);
     }
     else {
-        // todo
+        auto find_or_get_mqobject = [doc](UINT& id, bool& created) {
+            auto mqo = doc->GetObjectFromUniqueID(id);
+            if (!mqo) {
+                mqo = MQ_CreateObject();
+                doc->AddObject(mqo);
+                id = mqo->GetUniqueID();
+                created = true;
+            }
+            else {
+                created = false;
+            }
+            return mqo;
+        };
+
+#if MQPLUGIN_VERSION >= 0x0470
+        MQMorphManager morph_manager(m_plugin, doc);
+#endif
+        for (auto& rec : m_obj_records) {
+            // mesh
+            bool created;
+            auto mqo = find_or_get_mqobject(rec.mqobj_id, created);
+            if (created) {
+                auto name = mu::ToWCS(rec.mesh->name);
+                mqo->SetName(name.c_str());
+            }
+            updateMesh(mqo, *rec.mesh);
+
+            // blendshapes
+            if (m_options->import_blendshapes) {
+                size_t nbs = rec.mesh->blendshapes.size();
+                for (size_t bi = 0; bi < nbs; ++bi) {
+                    auto blendshape = rec.mesh->blendshapes[bi];
+                    blendshape->makeMesh(rec.tmp_mesh, *rec.mesh);
+
+                    auto bqmqo = find_or_get_mqobject(rec.blendshape_ids[bi], created);
+                    updateMesh(bqmqo, rec.tmp_mesh);
+                    if (created) {
+                        auto name = mu::ToWCS(rec.mesh->name + "_" + blendshape->name);
+                        bqmqo->SetName(name.c_str());
+                        bqmqo->SetVisible(0);
+#if MQPLUGIN_VERSION >= 0x0470
+                        morph_manager.BindTargetObject(mqo, bqmqo);
+#endif
+                    }
+                }
+            }
+        }
     }
 
     return true;

@@ -7,9 +7,17 @@ class UsdPrim;
 
 namespace mqusd {
 
-struct mqusdPlayerSettings;
+class Node;
+class RootNode;
+class XformNode;
+class MeshNode;
+class BlendshapeNode;
+class SkeletonNode;
+class MaterialNode;
+
 class SceneInterface;
 using SceneInterfacePtr = std::shared_ptr<SceneInterface>;
+
 
 struct ConvertOptions
 {
@@ -31,7 +39,6 @@ public:
         Mesh,
         Blendshape,
         Skeleton,
-        SkelAnimation,
         Material,
         Scope,
     };
@@ -49,6 +56,7 @@ public:
     std::vector<Node*> children;
     std::string name;
     uint32_t id = 0;
+    void* userdata = nullptr;
 };
 using NodePtr = std::shared_ptr<Node>;
 
@@ -97,6 +105,7 @@ public:
     void convert(const ConvertOptions& opt) override;
 
     void clear();
+    void makeMesh(MeshNode& dst, const MeshNode& base);
 
 public:
     SharedVector<int> indices;
@@ -234,6 +243,7 @@ public:
     std::vector<NodePtr> nodes;
     RootNode* root_node = nullptr;
     std::vector<MeshNode*> mesh_nodes;
+    std::vector<SkeletonNode*> skeleton_nodes;
     std::vector<MaterialNode*> material_nodes;
     double time_start = 0.0;
     double time_end = 0.0;
