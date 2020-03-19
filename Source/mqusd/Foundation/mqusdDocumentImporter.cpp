@@ -97,6 +97,19 @@ bool DocumentImporter::read(MQDocument doc, double t)
         }
     }
 
+#if MQPLUGIN_VERSION >= 0x0470
+    MQMorphManager morph_manager(m_plugin, doc);
+    if (m_options->import_blendshapes) {
+        m_morph_manager = &morph_manager;
+    }
+
+    MQBoneManager bone_manager(m_plugin, doc);
+    if (m_options->import_skeletons) {
+        m_bone_manager = &bone_manager;
+        m_bone_manager->BeginImport();
+    }
+#endif
+
     // skeleton
     if (m_options->import_skeletons) {
         for (auto& rec : m_skel_records)
@@ -123,9 +136,6 @@ bool DocumentImporter::read(MQDocument doc, double t)
         updateMesh(doc, obj, mesh);
     }
     else {
-#if MQPLUGIN_VERSION >= 0x0470
-        MQMorphManager morph_manager(m_plugin, doc);
-#endif
         for (auto& rec : m_obj_records) {
             MQObject parent = nullptr;
             if (auto pmesh = rec.node->findParentMesh()) {
@@ -155,7 +165,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
                         bs->SetName(name.c_str());
                         bs->SetVisible(0);
 #if MQPLUGIN_VERSION >= 0x0470
-                        morph_manager.BindTargetObject(obj, bs);
+                        m_morph_manager->BindTargetObject(obj, bs);
 #endif
                     }
                 }
@@ -163,6 +173,12 @@ bool DocumentImporter::read(MQDocument doc, double t)
         }
     }
 
+#if MQPLUGIN_VERSION >= 0x0470
+    if (m_options->import_skeletons)
+        m_bone_manager->EndImport();
+    m_bone_manager = nullptr;
+    m_morph_manager = nullptr;
+#endif
     return true;
 }
 
@@ -232,34 +248,45 @@ bool DocumentImporter::updateMesh(MQDocument doc, MQObject obj, const MeshNode& 
 
 #if MQPLUGIN_VERSION >= 0x0470
     if (m_options->import_skeletons && src.skeleton) {
-        MQBoneManager bone_manager(m_plugin, doc);
+        m_bone_manager->AddSkinObject(obj);
 
-        std::vector<SkeletonNode::Joint*> joints;
+        std::vector<UINT> joint_ids;
         if (!src.joints.empty()) {
             for (auto& path : src.joints) {
                 auto joint = src.skeleton->findJointByPath(path);
                 if (!joint)
                     goto bailout; // should not be here
-                joints.push_back(joint);
+                joint_ids.push_back(((JointRecord*)joint->userdata)->mqid);
             }
         }
         else {
             for (auto& joint : src.skeleton->joints) {
-                joints.push_back(joint.get());
+                joint_ids.push_back(((JointRecord*)joint->userdata)->mqid);
             }
         }
 
         int jpv = src.joints_per_vertex;
         auto* indices = src.joint_indices.cdata();
         auto* weights = src.joint_weights.cdata();
-        for (int pi = 0; pi < npoints; ++pi) {
-            for (int ji = 0;  ji < jpv; ++ji) {
-                float weight = weights[ji];
-                UINT joint_id = ((JointRecord*)joints[ji]->userdata)->mqid;
-                bone_manager.SetVertexWeight(obj, pi, joint_id, weight);
+        if (src.joint_indices.size() == jpv && src.joint_weights.size() == jpv) {
+            for (int pi = 0; pi < npoints; ++pi) {
+                for (int ji = 0; ji < jpv; ++ji) {
+                    float weight = weights[ji];
+                    if (weight > 0)
+                        m_bone_manager->SetVertexWeight(obj, pi, joint_ids[indices[ji]], weight);
+                }
             }
-            indices += jpv;
-            weights += jpv;
+        }
+        else {
+            for (int pi = 0; pi < npoints; ++pi) {
+                for (int ji = 0; ji < jpv; ++ji) {
+                    float weight = weights[ji];
+                    if (weight > 0)
+                        m_bone_manager->SetVertexWeight(obj, pi, joint_ids[indices[ji]], weight);
+                }
+                indices += jpv;
+                weights += jpv;
+            }
         }
     bailout:;
     }

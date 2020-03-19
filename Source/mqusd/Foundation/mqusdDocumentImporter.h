@@ -51,6 +51,10 @@ private:
 private:
     const ImportOptions* m_options;
     MQBasePlugin* m_plugin = nullptr;
+#if MQPLUGIN_VERSION >= 0x0470
+    MQBoneManager* m_bone_manager = nullptr;
+    MQMorphManager* m_morph_manager = nullptr;
+#endif
 
     Scene* m_scene = nullptr;
     std::vector<ObjectRecord> m_obj_records;

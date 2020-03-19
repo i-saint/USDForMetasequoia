@@ -65,6 +65,12 @@ mqusdPlayerWindow::mqusdPlayerWindow(mqusdPlayerPlugin* plugin, MQWindowBase& pa
         m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
         m_check_flip_faces->AddChangedEvent(this, &mqusdPlayerWindow::OnSettingsUpdate);
 
+        m_check_blendshapes = CreateCheckBox(vf, L"Import Blendshapes");
+        m_check_blendshapes->AddChangedEvent(this, &mqusdPlayerWindow::OnSettingsUpdate);
+
+        m_check_skeletons = CreateCheckBox(vf, L"Import Skeletons");
+        m_check_skeletons->AddChangedEvent(this, &mqusdPlayerWindow::OnSettingsUpdate);
+
         m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
         m_check_merge->AddChangedEvent(this, &mqusdPlayerWindow::OnSettingsUpdate);
     }
@@ -165,6 +171,8 @@ BOOL mqusdPlayerWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     settings.flip_x = m_check_flip_x->GetChecked();
     settings.flip_yz = m_check_flip_yz->GetChecked();
     settings.flip_faces = m_check_flip_faces->GetChecked();
+    settings.import_blendshapes = m_check_blendshapes->GetChecked();
+    settings.import_skeletons = m_check_skeletons->GetChecked();
     settings.merge_meshes = m_check_merge->GetChecked();
 
     m_plugin->Refresh(doc);
@@ -183,6 +191,8 @@ void mqusdPlayerWindow::SyncSettings()
     m_check_flip_x->SetChecked(settings.flip_x);
     m_check_flip_yz->SetChecked(settings.flip_yz);
     m_check_flip_faces->SetChecked(settings.flip_faces);
+    m_check_blendshapes->SetChecked(settings.import_blendshapes);
+    m_check_skeletons->SetChecked(settings.import_skeletons);
     m_check_merge->SetChecked(settings.merge_meshes);
 }
 
