@@ -120,21 +120,26 @@ bool DocumentImporter::read(MQDocument doc, double t)
         }
         obj->Clear();
 
-        updateMesh(obj, mesh);
+        updateMesh(doc, obj, mesh);
     }
     else {
 #if MQPLUGIN_VERSION >= 0x0470
         MQMorphManager morph_manager(m_plugin, doc);
 #endif
         for (auto& rec : m_obj_records) {
-            // mesh
+            MQObject parent = nullptr;
+            if (auto pmesh = rec.node->findParentMesh()) {
+                UINT pid = ((ObjectRecord*)pmesh->userdata)->mqid;
+                parent = doc->GetObjectFromUniqueID(pid);
+            }
+
             bool created;
-            auto obj = FindOrCreateMQObject(doc, rec.mqid, nullptr, created);
+            auto obj = FindOrCreateMQObject(doc, rec.mqid, parent, created);
             if (created) {
                 auto name = mu::ToWCS(rec.node->name);
                 obj->SetName(name.c_str());
             }
-            updateMesh(obj, *rec.node);
+            updateMesh(doc, obj, *rec.node);
 
             // blendshapes
             if (m_options->import_blendshapes) {
@@ -144,7 +149,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
                     blendshape->makeMesh(rec.tmp_mesh, *rec.node);
 
                     auto bs = FindOrCreateMQObject(doc, rec.blendshape_ids[bi], obj, created);
-                    updateMesh(bs, rec.tmp_mesh);
+                    updateMesh(doc, bs, rec.tmp_mesh);
                     if (created) {
                         auto name = mu::ToWCS(blendshape->name);
                         bs->SetName(name.c_str());
@@ -161,11 +166,12 @@ bool DocumentImporter::read(MQDocument doc, double t)
     return true;
 }
 
-bool DocumentImporter::updateMesh(MQObject obj, const MeshNode& src)
+bool DocumentImporter::updateMesh(MQDocument doc, MQObject obj, const MeshNode& src)
 {
     obj->Clear();
 
     int nfaces = (int)src.counts.size();
+    int npoints = (int)src.points.size();
 
     // points
     {
@@ -223,6 +229,42 @@ bool DocumentImporter::updateMesh(MQObject obj, const MeshNode& src)
         for (int fi = 0; fi < nfaces; ++fi)
             obj->SetFaceMaterial(fi, data[fi]);
     }
+
+#if MQPLUGIN_VERSION >= 0x0470
+    if (m_options->import_skeletons && src.skeleton) {
+        MQBoneManager bone_manager(m_plugin, doc);
+
+        std::vector<SkeletonNode::Joint*> joints;
+        if (!src.joints.empty()) {
+            for (auto& path : src.joints) {
+                auto joint = src.skeleton->findJointByPath(path);
+                if (!joint)
+                    goto bailout; // should not be here
+                joints.push_back(joint);
+            }
+        }
+        else {
+            for (auto& joint : src.skeleton->joints) {
+                joints.push_back(joint.get());
+            }
+        }
+
+        int jpv = src.joints_per_vertex;
+        auto* indices = src.joint_indices.cdata();
+        auto* weights = src.joint_weights.cdata();
+        for (int pi = 0; pi < npoints; ++pi) {
+            for (int ji = 0;  ji < jpv; ++ji) {
+                float weight = weights[ji];
+                UINT joint_id = ((JointRecord*)joints[ji]->userdata)->mqid;
+                bone_manager.SetVertexWeight(obj, pi, joint_id, weight);
+            }
+            indices += jpv;
+            weights += jpv;
+        }
+    bailout:;
+    }
+#endif
+
     return true;
 }
 

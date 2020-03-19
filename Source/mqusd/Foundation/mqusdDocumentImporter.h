@@ -44,7 +44,7 @@ private:
         std::vector<JointRecord> joints;
     };
 
-    bool updateMesh(MQObject obj, const MeshNode& src);
+    bool updateMesh(MQDocument doc, MQObject obj, const MeshNode& src);
     bool updateSkeleton(MQDocument obj, const SkeletonNode& src);
     bool updateMaterials(MQDocument doc);
 

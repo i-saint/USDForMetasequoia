@@ -108,11 +108,18 @@ USDMeshNode::USDMeshNode(USDNode* parent, UsdPrim prim)
     m_mesh = UsdGeomMesh(prim);
     setNode(new MeshNode(parent ? parent->m_node : nullptr));
 
-#ifdef mqusdDebug
-    for (auto& attr : m_prim.GetAuthoredAttributes()) {
-        mqusdDbgPrint("  %s (%s)\n", attr.GetName().GetText(), attr.GetTypeName().GetAsToken().GetText());
-    }
-#endif
+//#ifdef mqusdDebug
+//    for (auto& attr : m_prim.GetAuthoredAttributes()) {
+//        mqusdDbgPrint("  attr %s (%s)\n", attr.GetName().GetText(), attr.GetTypeName().GetAsToken().GetText());
+//    }
+//    for (auto& rel : m_prim.GetAuthoredRelationships()) {
+//        SdfPathVector paths;
+//        rel.GetTargets(&paths);
+//        for (auto& path : paths) {
+//            mqusdDbgPrint("  rel %s %s\n", rel.GetName().GetText(), path.GetText());
+//        }
+//    }
+//#endif
 }
 
 void USDMeshNode::beforeRead()
@@ -487,8 +494,10 @@ void USDScene::constructTree(USDNode* n)
         }
         if (!c) {
             UsdSkelSkeleton schema(cprim);
-            if (schema)
+            if (schema) {
                 c = new USDSkeletonNode(n, cprim);
+                (USDNode*&)m_current_skeleton = c;
+            }
         }
         if (!c) {
             UsdShadeMaterial schema(cprim);
@@ -515,6 +524,18 @@ void USDScene::constructTree(USDNode* n)
         }
 
         constructTree(c);
+    }
+
+    UsdSkelRoot skel_root(prim);
+    if (skel_root && m_current_skeleton) {
+        n->eachChildR([this](USDNode *n) {
+            if (n->m_node->getType() == Node::Type::Mesh) {
+                auto mesh_node = static_cast<MeshNode*>(n->m_node);
+                if (!mesh_node->skeleton)
+                    mesh_node->skeleton = static_cast<SkeletonNode*>(m_current_skeleton->m_node);
+            }
+        });
+        m_current_skeleton = nullptr;
     }
 }
 

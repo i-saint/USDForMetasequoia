@@ -25,6 +25,15 @@ public:
     void setNode(Node *node);
     std::string getPath() const;
 
+    template<class Body>
+    void eachChildR(const Body& body)
+    {
+        for (auto c : m_children) {
+            body(c);
+            c->eachChildR(body);
+        }
+    }
+
 public:
     UsdPrim m_prim;
     Node* m_node = nullptr;
@@ -180,6 +189,7 @@ private:
     UsdStageRefPtr m_stage;
     std::vector<USDNodePtr> m_nodes;
     USDRootNode* m_root = nullptr;
+    USDSkeletonNode* m_current_skeleton = nullptr;
 
     Scene* m_scene = nullptr;
 };

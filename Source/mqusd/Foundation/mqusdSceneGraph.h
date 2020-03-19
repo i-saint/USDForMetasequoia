@@ -179,6 +179,7 @@ public:
     void validate();
 
     int getMaxMaterialID() const;
+    MeshNode* findParentMesh() const;
 
 public:
     SharedVector<float3> points;    // per-vertex
