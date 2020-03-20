@@ -199,6 +199,66 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst)
         dst.material_ids.resize(fc);
     }
 
+#if MQPLUGIN_VERSION >= 0x0470
+    if (m_options->export_skeletons) {
+        // bone weights
+
+        RawVector<int> joint_counts;
+        RawVector<int> joint_indices;
+        RawVector<float> joint_weights;
+        int nbones = m_bone_manager->GetBoneNum();
+
+        {
+            std::vector<UINT> bone_ids;
+            std::vector<int> bone_id_to_index;
+            int min_bone_id;
+            int max_bone_id;
+
+            // build bone id -> index table
+            m_bone_manager->EnumBoneID(bone_ids);
+            mu::MinMax((const int*)bone_ids.data(), bone_ids.size(), min_bone_id, max_bone_id);
+            bone_id_to_index.resize(max_bone_id + 1);
+            for (int bi = 0; bi < nbones; ++bi)
+                bone_id_to_index[bone_ids[bi]] = bi;
+
+            // get bone indices & weights
+            joint_counts.resize_zeroclear(npoints);
+            joint_indices.resize_zeroclear(npoints * nbones);
+            joint_weights.resize_zeroclear(npoints * nbones);
+            auto* ji = joint_indices.data();
+            auto* jw = joint_weights.data();
+            for (int pi = 0; pi < npoints; ++pi) {
+                UINT vid = obj->GetVertexUniqueID(pi);
+                int c = m_bone_manager->GetVertexWeightArray(obj, vid, nbones, (UINT*)ji, jw);
+                for (int bi = 0; bi < c; ++bi)
+                    ji[bi] = bone_id_to_index[ji[bi]];
+                joint_counts[pi] = c;
+                ji += nbones;
+                jw += nbones;
+            }
+            // 0-100 -> 0.00-1.00
+            mu::Scale(joint_weights.data(), 0.01f, joint_weights.size());
+        }
+
+        {
+            int min_bone_count;
+            int max_bone_count;
+            mu::MinMax(joint_counts.cdata(), joint_counts.size(), min_bone_count, max_bone_count);
+            dst.joints_per_vertex = max_bone_count;
+            dst.joint_indices.resize_zeroclear(npoints * max_bone_count);
+            dst.joint_weights.resize_zeroclear(npoints * max_bone_count);
+            auto* ji = dst.joint_indices.data();
+            auto* jw = dst.joint_weights.data();
+            for (int pi = 0; pi < npoints; ++pi) {
+                joint_indices.copy_to(ji, max_bone_count, nbones * pi);
+                joint_weights.copy_to(jw, max_bone_count, nbones * pi);
+                ji += max_bone_count;
+                jw += max_bone_count;
+            }
+        }
+    }
+#endif
+
     dst.convert(*m_options);
 
     return true;
@@ -224,32 +284,16 @@ bool DocumentExporter::extractSkeleton(MQDocument doc, SkeletonNode& dst)
 {
 #if MQPLUGIN_VERSION >= 0x0470
     std::vector<UINT> bone_ids;
-    std::vector<UINT> tmp_vids;
-    std::vector<float> tmp_weights;
-
-    RawVector<int> joint_counts;
-    RawVector<int> indices;
-    RawVector<float> weights;
-
-    int nobjects = doc->GetObjectCount();
-
     m_bone_manager->EnumBoneID(bone_ids);
     for (auto bid : bone_ids) {
-        auto path = getBonePath(bid);
+        auto path = mu::ToMBS(getBonePath(bid));
+        auto joint = dst.addJoint(path);
 
         MQPoint base_pos;
         MQMatrix base_matrix;
         m_bone_manager->GetBasePos(bid, base_pos);
         m_bone_manager->GetBaseMatrix(bid, base_matrix);
         // todo
-
-        for (int oi = 0; oi < nobjects; ++oi) {
-            auto obj = doc->GetObject(oi);
-            int nweights = m_bone_manager->GetWeightedVertexArray(bid, obj, tmp_vids, tmp_weights);
-            if (nweights == 0)
-                continue;
-            // todo
-        }
     }
 
     return true;

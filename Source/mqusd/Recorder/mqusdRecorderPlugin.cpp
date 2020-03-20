@@ -346,11 +346,13 @@ bool mqusdRecorderPlugin::OpenUSD(const std::string& path)
 
 bool mqusdRecorderPlugin::CloseUSD()
 {
-    m_exporter = {};
-    m_scene = {};
-    m_recording = false;
+    if (m_recording) {
+        m_exporter = {};
+        m_scene = {};
+        m_recording = false;
 
-    mqusdLog("recording finished");
+        mqusdLog("recording finished");
+    }
     return true;
 }
 

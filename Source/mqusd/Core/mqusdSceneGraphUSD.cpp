@@ -134,29 +134,7 @@ void USDMeshNode::beforeRead()
     m_attr_joint_weights = m_prim.GetAttribute(mqusdAttrJointWeights);
     m_attr_bind_transform = m_prim.GetAttribute(mqusdAttrBindTransform);
 
-    // skinning data can be assumed not time sampled. so, read it at this point.
     auto& dst = static_cast<MeshNode&>(*m_node);
-    if (m_attr_joints) {
-        VtArray<TfToken> data;
-        m_attr_joints.Get(&data);
-        for (auto& t : data)
-            dst.joints.push_back(t.GetString());
-    }
-    if (m_attr_joint_indices) {
-        m_attr_joint_indices.GetMetadata(mqusdMetaElementSize, &dst.joints_per_vertex);
-
-        m_attr_joint_indices.Get(&m_joint_indices);
-        dst.joint_indices.share(m_joint_indices.cdata(), m_joint_indices.size());
-    }
-    if (m_attr_joint_weights) {
-        m_attr_joint_weights.Get(&m_joint_weights);
-        dst.joint_weights.share(m_joint_weights.cdata(), m_joint_weights.size());
-    }
-    if (m_attr_bind_transform) {
-        GfMatrix4d data;
-        m_attr_bind_transform.Get(&data);
-        dst.bind_transform.assign((float4x4&)data);
-    }
 
     // resolve blendshapes
     auto rel_blendshapes = m_prim.GetRelationship(mqusdRelBlendshapeTargets);
@@ -179,6 +157,29 @@ void USDMeshNode::beforeRead()
             if (auto n = m_scene->findNode(paths.front().GetString()))
                 dst.skeleton = static_cast<SkeletonNode*>(n->m_node);
         }
+    }
+
+    // skinning data can be assumed not time sampled. so, read it at this point.
+    if (m_attr_joints) {
+        VtArray<TfToken> data;
+        m_attr_joints.Get(&data);
+        for (auto& t : data)
+            dst.joints.push_back(t.GetString());
+    }
+    if (m_attr_joint_indices) {
+        m_attr_joint_indices.GetMetadata(mqusdMetaElementSize, &dst.joints_per_vertex);
+
+        m_attr_joint_indices.Get(&m_joint_indices);
+        dst.joint_indices.share(m_joint_indices.cdata(), m_joint_indices.size());
+    }
+    if (m_attr_joint_weights) {
+        m_attr_joint_weights.Get(&m_joint_weights);
+        dst.joint_weights.share(m_joint_weights.cdata(), m_joint_weights.size());
+    }
+    if (m_attr_bind_transform) {
+        GfMatrix4d data;
+        m_attr_bind_transform.Get(&data);
+        dst.bind_transform.assign((float4x4&)data);
     }
 }
 
