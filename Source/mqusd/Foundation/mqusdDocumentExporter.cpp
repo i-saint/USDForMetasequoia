@@ -241,7 +241,7 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst)
     }
 
 #if MQPLUGIN_VERSION >= 0x0470
-    if (m_options->export_skeletons) {
+    if (m_skeleton) {
         // bone weights
 
         RawVector<int> joint_counts;
@@ -252,8 +252,8 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst)
         {
             std::vector<UINT> bone_ids;
             std::vector<int> bone_id_to_index;
-            int min_bone_id;
-            int max_bone_id;
+            int min_bone_id = 0;
+            int max_bone_id = 0;
 
             // build bone id -> index table
             m_bone_manager->EnumBoneID(bone_ids);
@@ -299,9 +299,6 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst)
         }
     }
 #endif
-
-    dst.convert(*m_options);
-
     return true;
 }
 
@@ -334,7 +331,10 @@ bool DocumentExporter::extractSkeleton(MQDocument doc, SkeletonNode& dst)
         MQMatrix base_matrix;
         m_bone_manager->GetBasePos(bid, base_pos);
         m_bone_manager->GetBaseMatrix(bid, base_matrix);
-        // todo
+
+        float4x4 bindpose = to_float4x4(base_matrix);
+        (float3&)bindpose[3] = to_float3(base_pos);
+        joint->bindpose = bindpose;
     }
 
     return true;
@@ -363,6 +363,9 @@ bool DocumentExporter::extractMaterial(MQMaterial mtl, MaterialNode& dst)
 
 void DocumentExporter::flush()
 {
+    mu::parallel_for_each(m_scene->nodes.begin(), m_scene->nodes.end(), [this](NodePtr& n) {
+        n->convert(*m_options);
+    });
     if (m_options->merge_meshes) {
         // make merged mesh
         auto& dst = *m_merged_mesh;

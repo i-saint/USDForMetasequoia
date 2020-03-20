@@ -286,6 +286,8 @@ public:
     virtual Node* createNode(Node* parent, const char* name, Node::Type type) = 0;
 };
 
-inline float3 to_float3(MQColor v) { return (float3&)v; };
+inline float3 to_float3(const MQColor& v) { return (float3&)v; }
+inline float3 to_float3(const MQPoint& v) { return (float3&)v; }
+inline float4x4 to_float4x4(const MQMatrix& v) { return (float4x4&)v; }
 
 } // namespace mqusd

@@ -379,6 +379,20 @@ void USDSkelRootNode::beforeRead()
     }
 }
 
+void USDSkelRootNode::beforeWrite()
+{
+    super::beforeWrite();
+
+    auto& src = *static_cast<SkelRootNode*>(m_node);
+    if (src.skeleton) {
+        auto rel_skel = m_prim.CreateRelationship(mqusdRelSkeleton);
+
+        SdfPathVector targets;
+        targets.push_back(SdfPath(src.skeleton->getPath()));
+        rel_skel.SetTargets(targets);
+    }
+}
+
 
 USDSkeletonNode::USDSkeletonNode(USDNode* parent, UsdPrim prim)
     : super(parent, prim, false)
@@ -397,19 +411,11 @@ void USDSkeletonNode::beforeRead()
     m_skel.GetJointsAttr().Get(&data);
     for (auto& token : data)
         dst.addJoint(token.GetString());
-}
-
-void USDSkeletonNode::read(double time)
-{
-    super::read(time);
-
-    auto t = UsdTimeCode(time);
-    auto& dst = *static_cast<SkeletonNode*>(m_node);
 
     // bindpose
     {
         VtArray<GfMatrix4d> data;
-        m_skel.GetBindTransformsAttr().Get(&data, t);
+        m_skel.GetBindTransformsAttr().Get(&data);
         size_t n = data.size();
         if (dst.joints.size() == n) {
             for (size_t i = 0; i < n; ++i)
@@ -418,13 +424,21 @@ void USDSkeletonNode::read(double time)
     }
     {
         VtArray<GfMatrix4d> data;
-        m_skel.GetRestTransformsAttr().Get(&data, t);
+        m_skel.GetRestTransformsAttr().Get(&data);
         size_t n = data.size();
         if (dst.joints.size() == n) {
             for (size_t i = 0; i < n; ++i)
                 dst.joints[i]->restpose.assign((double4x4&)data[i]);
         }
     }
+}
+
+void USDSkeletonNode::read(double time)
+{
+    super::read(time);
+
+    auto t = UsdTimeCode(time);
+    auto& dst = *static_cast<SkeletonNode*>(m_node);
 
     // update joint matrices
     if (auto query = m_skel_cache.GetSkelQuery(m_skel)) {
@@ -436,6 +450,28 @@ void USDSkeletonNode::read(double time)
                 dst.joints[i]->local_matrix.assign((double4x4&)data[i]);
         }
         dst.updateGlobalMatrices(dst.global_matrix);
+    }
+}
+
+void USDSkeletonNode::beforeWrite()
+{
+    auto& src = *static_cast<SkeletonNode*>(m_node);
+    size_t njoints = src.joints.size();
+
+    {
+        VtArray<TfToken> data;
+        data.resize(njoints);
+        for (size_t ji = 0; ji < njoints; ++ji)
+            data[ji] = TfToken(src.joints[ji]->path);
+        m_skel.GetJointsAttr().Set(data);
+    }
+
+    {
+        VtArray<GfMatrix4d> data;
+        data.resize(src.joints.size());
+        for (size_t ji = 0; ji < njoints; ++ji)
+            ((double4x4&)data[ji]).assign(src.joints[ji]->bindpose);
+        m_skel.GetBindTransformsAttr().Set(data);
     }
 }
 
@@ -621,8 +657,15 @@ void USDScene::read(double time)
 void USDScene::write(double time) const
 {
     s_current_scene = const_cast<USDScene*>(this);
+
+    if (m_frame == 0) {
+        for (auto& n : m_nodes)
+            n->beforeWrite();
+    }
     for (auto& n : m_nodes)
         n->write(time);
+    ++m_frame;
+
     m_stage->SetEndTimeCode(time);
 }
 
@@ -675,7 +718,6 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
     if (ret) {
         m_nodes.push_back(USDNodePtr(ret));
         m_scene->nodes.push_back(NodePtr(ret->m_node));
-        ret->beforeWrite();
     }
     return ret ? ret->m_node : nullptr;
 }

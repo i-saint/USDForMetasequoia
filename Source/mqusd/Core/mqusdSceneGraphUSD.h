@@ -135,6 +135,7 @@ public:
 
     USDSkelRootNode(USDNode* parent, UsdPrim prim);
     void beforeRead() override;
+    void beforeWrite() override;
 
 private:
     UsdRelationship m_skel;
@@ -150,6 +151,7 @@ public:
     USDSkeletonNode(USDNode* parent, UsdPrim prim);
     void beforeRead() override;
     void read(double time) override;
+    void beforeWrite() override;
     void write(double time) const override;
 
 private:
@@ -212,6 +214,7 @@ private:
     USDRootNode* m_root = nullptr;
 
     Scene* m_scene = nullptr;
+    mutable int m_frame = 0;
 };
 
 } // namespace mqusd
