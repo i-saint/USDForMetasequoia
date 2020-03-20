@@ -277,7 +277,7 @@ bool DocumentImporter::updateMesh(MQDocument doc, MQObject obj, const MeshNode& 
                 }
             }
         }
-        else {
+        else if (src.joint_indices.size() == npoints * jpv && src.joint_weights.size() == npoints * jpv) {
             for (int pi = 0; pi < npoints; ++pi) {
                 for (int ji = 0; ji < jpv; ++ji) {
                     float weight = weights[ji];
@@ -287,6 +287,9 @@ bool DocumentImporter::updateMesh(MQDocument doc, MQObject obj, const MeshNode& 
                 indices += jpv;
                 weights += jpv;
             }
+        }
+        else {
+            // invalid data
         }
     bailout:;
     }

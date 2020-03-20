@@ -361,7 +361,7 @@ void mqusdRecorderPlugin::CaptureFrame(MQDocument doc)
     if (!IsRecording() || !m_dirty)
         return;
 
-    if (m_exporter->write(doc, false)) {
+    if (m_exporter->write(doc, true)) {
         m_dirty = false;
     }
 }

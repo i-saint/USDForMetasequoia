@@ -126,9 +126,9 @@ USDMeshNode::USDMeshNode(USDNode* parent, UsdPrim prim)
 void USDMeshNode::beforeRead()
 {
     // find attributes
+    m_attr_mids = m_prim.GetAttribute(mqusdAttrMaterialIDs);
     m_attr_uv = m_prim.GetAttribute(mqusdAttrUV);
     m_attr_uv_indices = m_prim.GetAttribute(mqusdAttrUVIndices);
-    m_attr_mids = m_prim.GetAttribute(mqusdAttrMaterialIDs);
     m_attr_joints = m_prim.GetAttribute(mqusdAttrJoints);
     m_attr_joint_indices = m_prim.GetAttribute(mqusdAttrJointIndices);
     m_attr_joint_weights = m_prim.GetAttribute(mqusdAttrJointWeights);
@@ -261,10 +261,33 @@ void USDMeshNode::read(double time)
 void USDMeshNode::beforeWrite()
 {
     // create attributes
-    m_attr_uv = m_prim.CreateAttribute(mqusdAttrUV, SdfValueTypeNames->Float2);
-    m_attr_mids = m_prim.CreateAttribute(mqusdAttrMaterialIDs, SdfValueTypeNames->Int);
-    m_attr_joint_indices = m_prim.CreateAttribute(mqusdAttrJointIndices, SdfValueTypeNames->Int);
-    m_attr_joint_weights = m_prim.CreateAttribute(mqusdAttrJointWeights, SdfValueTypeNames->Float);
+    m_attr_mids = m_prim.CreateAttribute(mqusdAttrMaterialIDs, SdfValueTypeNames->IntArray, false);
+    m_attr_uv = m_prim.CreateAttribute(mqusdAttrUV, SdfValueTypeNames->Float2Array, false);
+
+    auto& src = static_cast<MeshNode&>(*m_node);
+    if (src.joints_per_vertex > 0) {
+        m_attr_joint_indices = m_prim.CreateAttribute(mqusdAttrJointIndices, SdfValueTypeNames->IntArray, false);
+        m_attr_joint_weights = m_prim.CreateAttribute(mqusdAttrJointWeights, SdfValueTypeNames->FloatArray, false);
+
+        m_attr_joint_indices.SetMetadata(mqusdMetaInterpolation, "vertex");
+        m_attr_joint_indices.SetMetadata(mqusdMetaElementSize, src.joints_per_vertex);
+        m_attr_joint_weights.SetMetadata(mqusdMetaInterpolation, "vertex");
+        m_attr_joint_weights.SetMetadata(mqusdMetaElementSize, src.joints_per_vertex);
+
+        // skinning data can be assumed not time sampled. so, read it at this point.
+        m_joint_indices.assign(src.joint_indices.begin(), src.joint_indices.end());
+        m_attr_joint_indices.Set(m_joint_indices);
+
+        m_joint_weights.assign(src.joint_weights.begin(), src.joint_weights.end());
+        m_attr_joint_weights.Set(m_joint_weights);
+
+        if (src.bind_transform != float4x4::identity()) {
+            GfMatrix4d data;
+            ((double4x4&)data).assign(src.bind_transform);
+            m_attr_bind_transform = m_prim.CreateAttribute(mqusdAttrBindTransform, SdfValueTypeNames->Matrix4d, false);
+            m_attr_bind_transform.Set(data);
+        }
+    }
 }
 
 void USDMeshNode::write(double time) const
@@ -296,15 +319,6 @@ void USDMeshNode::write(double time) const
     if (m_attr_mids && !src.material_ids.empty()) {
         m_material_ids.assign(src.material_ids.begin(), src.material_ids.end());
         m_attr_mids.Set(m_material_ids, t);
-    }
-
-    if (m_attr_joint_indices && !src.joint_indices.empty()) {
-        m_joint_indices.assign(src.joint_indices.begin(), src.joint_indices.end());
-        m_attr_joint_indices.Set(m_joint_indices, t);
-    }
-    if (m_attr_joint_weights && !src.joint_weights.empty()) {
-        m_joint_weights.assign(src.joint_weights.begin(), src.joint_weights.end());
-        m_attr_joint_weights.Set(m_joint_weights, t);
     }
 }
 
