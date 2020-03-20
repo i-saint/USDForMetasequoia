@@ -8,14 +8,6 @@ DocumentExporter::DocumentExporter(MQBasePlugin* plugin, Scene* scene, const Exp
     , m_scene(scene)
     , m_options(options)
 {
-    // create nodes
-    auto node_name = mu::GetFilename_NoExtension(scene->path.c_str());
-    if (node_name.empty())
-        node_name = "Untitled";
-
-    auto root_node = m_scene->root_node;
-    auto mesh_node = m_scene->createNode(root_node, node_name.c_str(), Node::Type::Mesh);
-    m_mesh_node = static_cast<MeshNode*>(mesh_node);
 }
 
 DocumentExporter::~DocumentExporter()
@@ -31,6 +23,13 @@ DocumentExporter::~DocumentExporter()
     m_scene->save();
 }
 
+
+static inline std::string GetName(MQObject obj)
+{
+    char buf[256];
+    obj->GetName(buf, sizeof(buf));
+    return buf;
+}
 
 bool DocumentExporter::write(MQDocument doc, bool one_shot)
 {
@@ -63,12 +62,47 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     m_bone_manager = &bone_manager;
 #endif
 
+    if (!m_root) {
+        m_root = m_scene->root_node;
+#if MQPLUGIN_VERSION >= 0x0470
+        if (m_options->export_skeletons && m_bone_manager->GetBoneNum() != 0) {
+            auto skel_root = (SkelRootNode*)m_scene->createNode(m_root, "Model", Node::Type::SkelRoot);
+            skel_root->skeleton= (SkeletonNode*)m_scene->createNode(skel_root, "Skel", Node::Type::Skeleton);
+            m_root = skel_root;
+            m_skeleton = skel_root->skeleton;
+        }
+#endif
+        if (m_options->merge_meshes) {
+            // create nodes
+            auto node_name = mu::GetFilename_NoExtension(m_scene->path.c_str());
+            if (node_name.empty())
+                node_name = "Untitled";
+            m_merged_mesh = (MeshNode*)m_scene->createNode(m_root, node_name.c_str(), Node::Type::Mesh);
+        }
+    }
+
     // prepare
     int nobjects = doc->GetObjectCount();
     m_obj_records.resize(nobjects);
     for (int oi = 0; oi < nobjects; ++oi) {
         auto& rec = m_obj_records[oi];
         auto obj = doc->GetObject(oi);
+
+        if (!rec.mesh) {
+            if (m_options->merge_meshes) {
+                rec.mesh_data = std::make_shared<MeshNode>();
+                rec.mesh = rec.mesh_data.get();
+            }
+            else {
+                rec.mesh = (MeshNode*)m_scene->createNode(m_root, GetName(obj).c_str(), Node::Type::Mesh);
+            }
+
+            if (!rec.mesh) {
+                mqusdLog("failed to create mesh node.");
+                return false;
+            }
+        }
+
         if ((obj->GetMirrorType() != MQOBJECT_MIRROR_NONE && m_options->freeze_mirror) ||
             (obj->GetLatheType() != MQOBJECT_LATHE_NONE && m_options->freeze_lathe) ||
             (obj->GetPatchType() != MQOBJECT_PATCH_NONE && m_options->freeze_subdiv))
@@ -101,10 +135,17 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
         extractMaterial(rec.mqmaterial, rec.material);
     }
 
+    // skeleton
+#if MQPLUGIN_VERSION >= 0x0470
+    if (m_skeleton) {
+        extractSkeleton(doc, *m_skeleton);
+    }
+#endif
+
     // extract mesh data
     mu::parallel_for(0, nobjects, [this](int oi) {
         auto& rec = m_obj_records[oi];
-        extractMesh(rec.mqobject, rec.mesh);
+        extractMesh(rec.mqobject, *rec.mesh);
     });
 
 
@@ -121,8 +162,8 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     int total_vertices = 0;
     int total_faces = 0;
     for (auto& rec : m_obj_records) {
-        total_vertices += (int)rec.mesh.points.size();
-        total_faces += (int)rec.mesh.counts.size();
+        total_vertices += (int)rec.mesh->points.size();
+        total_faces += (int)rec.mesh->counts.size();
     }
     mqusdLog("frame %d: %d vertices, %d faces",
         m_frame - 1, total_vertices, total_faces);
@@ -322,11 +363,13 @@ bool DocumentExporter::extractMaterial(MQMaterial mtl, MaterialNode& dst)
 
 void DocumentExporter::flush()
 {
-    // make merged mesh
-    auto& dst = *m_mesh_node;
-    dst.clear();
-    for (auto& rec : m_obj_records)
-        dst.merge(rec.mesh);
+    if (m_options->merge_meshes) {
+        // make merged mesh
+        auto& dst = *m_merged_mesh;
+        dst.clear();
+        for (auto& rec : m_obj_records)
+            dst.merge(rec.mesh);
+    }
 
     // do write
     m_scene->write(m_time);

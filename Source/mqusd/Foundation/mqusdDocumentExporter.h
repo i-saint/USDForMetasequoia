@@ -40,7 +40,8 @@ private:
     {
         MQObject mqobject;
         bool need_release = false;
-        MeshNode mesh;
+        MeshNode* mesh;
+        std::shared_ptr<MeshNode> mesh_data;
     };
 
     struct MaterialRecord
@@ -68,8 +69,9 @@ private:
 #endif
 
     Scene* m_scene = nullptr;
-    RootNode* m_root_node = nullptr;
-    MeshNode* m_mesh_node = nullptr;
+    Node* m_root = nullptr;
+    SkeletonNode* m_skeleton = nullptr;
+    MeshNode* m_merged_mesh = nullptr;
 
     mu::nanosec m_start_time = 0;
     mu::nanosec m_last_write = 0;

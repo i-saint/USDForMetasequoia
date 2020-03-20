@@ -641,7 +641,13 @@ USDNode* USDScene::createNodeImpl(USDNode* parent, std::string path)
 Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
 {
     s_current_scene = this;
+
     std::string path;
+    if (parent) {
+        path = parent->getPath();
+        if (path != "/")
+            path += '/';
+    }
     {
         // sanitize
         std::string n = name;
@@ -649,8 +655,6 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
             if (!std::isalnum(c))
                 c = '_';
         }
-        if (parent)
-            path = parent->getPath();
         path += n;
     }
 
