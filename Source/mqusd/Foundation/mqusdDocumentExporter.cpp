@@ -55,6 +55,14 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
         ++m_frame;
     }
 
+#if MQPLUGIN_VERSION >= 0x0470
+    MQMorphManager morph_manager(m_plugin, doc);
+    m_morph_manager = &morph_manager;
+
+    MQBoneManager bone_manager(m_plugin, doc);
+    m_bone_manager = &bone_manager;
+#endif
+
     // prepare
     int nobjects = doc->GetObjectCount();
     m_obj_records.resize(nobjects);
@@ -103,6 +111,11 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     // flush async
     m_task_write = std::async(std::launch::async, [this]() { flush(); });
     m_last_write = t;
+
+#if MQPLUGIN_VERSION >= 0x0470
+    m_morph_manager = nullptr;
+    m_bone_manager = nullptr;
+#endif
 
     // log
     int total_vertices = 0;
@@ -191,25 +204,48 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst)
     return true;
 }
 
-bool DocumentExporter::extractSkeleton(MQDocument doc, SkeletonNode& mesh)
+std::wstring DocumentExporter::getBonePath(UINT bone_id)
+{
+    std::wstring ret;
+
+    UINT parent_id;
+    if (m_bone_manager->GetParent(bone_id, parent_id)) {
+        ret += getBonePath(parent_id);
+        ret += L'/';
+    }
+
+    std::wstring name;
+    m_bone_manager->GetName(bone_id, name);
+    ret += name;
+    return ret;
+}
+
+bool DocumentExporter::extractSkeleton(MQDocument doc, SkeletonNode& dst)
 {
 #if MQPLUGIN_VERSION >= 0x0470
-    MQBoneManager bone_manager(m_plugin, doc);
-
     std::vector<UINT> bone_ids;
-    std::vector<UINT> vertex_ids;
-    std::vector<float> weights;
+    std::vector<UINT> tmp_vids;
+    std::vector<float> tmp_weights;
+
+    RawVector<int> joint_counts;
+    RawVector<int> indices;
+    RawVector<float> weights;
+
     int nobjects = doc->GetObjectCount();
 
-    bone_manager.EnumBoneID(bone_ids);
+    m_bone_manager->EnumBoneID(bone_ids);
     for (auto bid : bone_ids) {
+        auto path = getBonePath(bid);
+
         MQPoint base_pos;
-        bone_manager.GetBasePos(bid, base_pos);
+        MQMatrix base_matrix;
+        m_bone_manager->GetBasePos(bid, base_pos);
+        m_bone_manager->GetBaseMatrix(bid, base_matrix);
         // todo
 
         for (int oi = 0; oi < nobjects; ++oi) {
             auto obj = doc->GetObject(oi);
-            int nweights = bone_manager.GetWeightedVertexArray(bid, obj, vertex_ids, weights);
+            int nweights = m_bone_manager->GetWeightedVertexArray(bid, obj, tmp_vids, tmp_weights);
             if (nweights == 0)
                 continue;
             // todo

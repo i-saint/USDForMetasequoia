@@ -8,12 +8,15 @@ namespace mqusd {
     static constexpr const char* getUsdTypeName() { return Typename; };
 
 
+class USDNode;
+class USDScene;
+
 class USDNode
 {
 public:
     DefSchemaTraits(UsdSchemaBase, "");
 
-    USDNode(USDNode* parent, UsdPrim prim, bool create_node = true);
+    USDNode(USDNode* parent, UsdPrim prim, bool create_node);
     virtual ~USDNode();
 
     virtual void beforeRead();
@@ -36,8 +39,8 @@ public:
 
 public:
     UsdPrim m_prim;
+    USDScene* m_scene = nullptr;
     Node* m_node = nullptr;
-
     USDNode* m_parent = nullptr;
     std::vector<USDNode*> m_children;
 };
@@ -124,6 +127,20 @@ private:
 };
 
 
+class USDSkelRootNode : public USDXformNode
+{
+using super = USDXformNode;
+public:
+    DefSchemaTraits(UsdSkelRoot, "SkelRoot");
+
+    USDSkelRootNode(USDNode* parent, UsdPrim prim);
+    void beforeRead() override;
+
+private:
+    UsdRelationship m_skel;
+};
+
+
 class USDSkeletonNode : public USDXformNode
 {
 using super = USDXformNode;
@@ -169,6 +186,8 @@ private:
 class USDScene : public SceneInterface
 {
 public:
+    static USDScene* getCurrent();
+
     USDScene(Scene *scene);
     ~USDScene() override;
 
@@ -178,8 +197,9 @@ public:
     void close() override;
     void read(double time) override;
     void write(double time) const override;
-
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
+
+    USDNode* findNode(const std::string& path);
 
 private:
     void constructTree(USDNode* n);
@@ -188,8 +208,8 @@ private:
 
     UsdStageRefPtr m_stage;
     std::vector<USDNodePtr> m_nodes;
+    std::map<std::string, USDNode*> m_node_table;
     USDRootNode* m_root = nullptr;
-    USDSkeletonNode* m_current_skeleton = nullptr;
 
     Scene* m_scene = nullptr;
 };

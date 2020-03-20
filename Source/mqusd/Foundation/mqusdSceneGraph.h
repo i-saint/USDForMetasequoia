@@ -12,6 +12,7 @@ class RootNode;
 class XformNode;
 class MeshNode;
 class BlendshapeNode;
+class SkelRootNode;
 class SkeletonNode;
 class MaterialNode;
 
@@ -38,6 +39,7 @@ public:
         Xform,
         Mesh,
         Blendshape,
+        SkelRoot,
         Skeleton,
         Material,
         Scope,
@@ -111,6 +113,20 @@ public:
     SharedVector<int> indices;
     SharedVector<float3> point_offsets;
     SharedVector<float3> normal_offsets;
+};
+
+
+class SkelRootNode : public XformNode
+{
+using super = XformNode;
+public:
+    static const Type node_type = Type::SkelRoot;
+
+    SkelRootNode(Node* parent = nullptr);
+    Type getType() const override;
+
+public:
+    SkeletonNode* skeleton = nullptr;
 };
 
 

@@ -11,6 +11,7 @@ struct ExportOptions : public ConvertOptions
     bool export_colors = false;
     bool export_material_ids = true;
     bool export_materials = true;
+    bool export_blendshapes = true;
     bool export_skeletons = true;
     bool freeze_mirror = true;
     bool freeze_lathe = true;
@@ -56,9 +57,15 @@ private:
     void waitFlush();
     void writeMaterials();
 
+    std::wstring getBonePath(UINT bone_id);
+
 private:
     const ExportOptions* m_options;
     MQBasePlugin* m_plugin = nullptr;
+#if MQPLUGIN_VERSION >= 0x0470
+    MQBoneManager* m_bone_manager = nullptr;
+    MQMorphManager* m_morph_manager = nullptr;
+#endif
 
     Scene* m_scene = nullptr;
     RootNode* m_root_node = nullptr;

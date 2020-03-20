@@ -349,6 +349,17 @@ void BlendshapeNode::makeMesh(MeshNode& dst, const MeshNode& base)
 
 
 
+SkelRootNode::SkelRootNode(Node* parent)
+    : super(parent)
+{
+}
+
+Node::Type SkelRootNode::getType() const
+{
+    return Type::SkelRoot;
+}
+
+
 SkeletonNode::Joint::Joint(const std::string& p)
     : path(p)
 {
