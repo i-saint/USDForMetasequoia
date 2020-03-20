@@ -265,6 +265,8 @@ void USDMeshNode::beforeWrite()
     m_attr_uv = m_prim.CreateAttribute(mqusdAttrUV, SdfValueTypeNames->Float2Array, false);
 
     auto& src = static_cast<MeshNode&>(*m_node);
+
+    // skinning attributes
     if (src.joints_per_vertex > 0) {
         m_attr_joint_indices = m_prim.CreateAttribute(mqusdAttrJointIndices, SdfValueTypeNames->IntArray, false);
         m_attr_joint_weights = m_prim.CreateAttribute(mqusdAttrJointWeights, SdfValueTypeNames->FloatArray, false);
@@ -287,6 +289,15 @@ void USDMeshNode::beforeWrite()
             m_attr_bind_transform = m_prim.CreateAttribute(mqusdAttrBindTransform, SdfValueTypeNames->Matrix4d, false);
             m_attr_bind_transform.Set(data);
         }
+    }
+
+    // blendshapes
+    if (!src.blendshapes.empty()) {
+        auto rel_blendshapes = m_prim.CreateRelationship(mqusdRelBlendshapeTargets, false);
+        SdfPathVector targets;
+        for(auto* blendshape : src.blendshapes)
+            targets.push_back(SdfPath(blendshape->getPath()));
+        rel_blendshapes.SetTargets(targets);
     }
 }
 
@@ -332,30 +343,44 @@ USDBlendshapeNode::USDBlendshapeNode(USDNode* parent, UsdPrim prim)
     setNode(new BlendshapeNode(parent ? parent->m_node : nullptr));
 }
 
-void USDBlendshapeNode::read(double time)
+void USDBlendshapeNode::beforeRead()
 {
-    super::read(time);
+    super::beforeRead();
 
-    auto t = UsdTimeCode(time);
     auto& dst = *static_cast<BlendshapeNode*>(m_node);
 
     {
-        m_blendshape.GetPointIndicesAttr().Get(&m_point_indices, t);
+        m_blendshape.GetPointIndicesAttr().Get(&m_point_indices);
         dst.indices.share(m_point_indices.cdata(), m_point_indices.size());
     }
     {
-        m_blendshape.GetOffsetsAttr().Get(&m_point_offsets, t);
+        m_blendshape.GetOffsetsAttr().Get(&m_point_offsets);
         dst.point_offsets.share((float3*)m_point_offsets.cdata(), m_point_offsets.size());
     }
     {
-        m_blendshape.GetNormalOffsetsAttr().Get(&m_normal_offsets, t);
+        m_blendshape.GetNormalOffsetsAttr().Get(&m_normal_offsets);
         dst.normal_offsets.share((float3*)m_normal_offsets.cdata(), m_normal_offsets.size());
     }
 }
 
-void USDBlendshapeNode::write(double time) const
+void USDBlendshapeNode::beforeWrite()
 {
-    // todo
+    super::beforeWrite();
+
+    auto& src = *static_cast<const BlendshapeNode*>(m_node);
+
+    if (!src.indices.empty()) {
+        m_point_indices.assign(src.indices.begin(), src.indices.end());
+        m_blendshape.GetPointIndicesAttr().Set(m_point_indices);
+    }
+    if (!src.point_offsets.empty()) {
+        m_point_offsets.assign((GfVec3f*)src.point_offsets.begin(), (GfVec3f*)src.point_offsets.end());
+        m_blendshape.GetOffsetsAttr().Set(m_point_offsets);
+    }
+    if (!src.normal_offsets.empty()) {
+        m_normal_offsets.assign((GfVec3f*)src.normal_offsets.begin(), (GfVec3f*)src.normal_offsets.end());
+        m_blendshape.GetNormalOffsetsAttr().Set(m_normal_offsets);
+    }
 }
 
 
@@ -399,7 +424,7 @@ void USDSkelRootNode::beforeWrite()
 
     auto& src = *static_cast<SkelRootNode*>(m_node);
     if (src.skeleton) {
-        auto rel_skel = m_prim.CreateRelationship(mqusdRelSkeleton);
+        auto rel_skel = m_prim.CreateRelationship(mqusdRelSkeleton, false);
 
         SdfPathVector targets;
         targets.push_back(SdfPath(src.skeleton->getPath()));

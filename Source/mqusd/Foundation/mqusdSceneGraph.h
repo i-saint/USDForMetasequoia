@@ -108,6 +108,7 @@ public:
 
     void clear();
     void makeMesh(MeshNode& dst, const MeshNode& base);
+    void makeOffsets(const MeshNode& target, const MeshNode& base);
 
 public:
     SharedVector<int> indices;

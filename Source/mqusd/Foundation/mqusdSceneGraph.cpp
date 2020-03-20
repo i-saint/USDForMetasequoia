@@ -347,6 +347,28 @@ void BlendshapeNode::makeMesh(MeshNode& dst, const MeshNode& base)
     }
 }
 
+void BlendshapeNode::makeOffsets(const MeshNode& target, const MeshNode& base)
+{
+    if (!base.points.empty() && base.points.size() == target.points.size()) {
+        size_t n = base.points.size();
+        point_offsets.resize_discard(n);
+        auto* b = base.points.cdata();
+        auto* t = target.points.cdata();
+        auto* d = point_offsets.data();
+        for (size_t i = 0; i < n; ++i)
+            d[i] = t[i] - b[i];
+    }
+    if (!base.normals.empty() && base.normals.size() == target.normals.size()) {
+        size_t n = base.normals.size();
+        normal_offsets.resize_discard(n);
+        auto* b = base.points.cdata();
+        auto* t = target.points.cdata();
+        auto* d = normal_offsets.data();
+        for (size_t i = 0; i < n; ++i)
+            d[i] = t[i] - b[i];
+    }
+}
+
 
 
 SkelRootNode::SkelRootNode(Node* parent)

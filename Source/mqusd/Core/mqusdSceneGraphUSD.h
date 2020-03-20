@@ -114,8 +114,8 @@ public:
     DefSchemaTraits(UsdSkelBlendShape, "BlendShape");
 
     USDBlendshapeNode(USDNode* parent, UsdPrim prim);
-    void read(double time) override;
-    void write(double time) const override;
+    void beforeRead() override;
+    void beforeWrite() override;
 
 private:
     mutable UsdSkelBlendShape m_blendshape;

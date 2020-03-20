@@ -38,10 +38,15 @@ public:
 private:
     struct ObjectRecord
     {
-        MQObject mqobject;
+        MQObject mqobj = nullptr;
+        MQObject mqobj_orig = nullptr;
         bool need_release = false;
-        MeshNode* mesh;
+
+        MeshNode* mesh = nullptr;
+        BlendshapeNode* blendshape = nullptr;
         std::shared_ptr<MeshNode> mesh_data;
+
+        ObjectRecord* bs_base = nullptr;
     };
 
     struct MaterialRecord
@@ -50,6 +55,7 @@ private:
         MaterialNode material;
     };
 
+    ObjectRecord* findRecord(MQObject obj);
     bool extractMesh(MQObject obj, MeshNode& dst);
     bool extractSkeleton(MQDocument obj, SkeletonNode& dst);
     bool extractMaterial(MQMaterial obj, MaterialNode& dst);

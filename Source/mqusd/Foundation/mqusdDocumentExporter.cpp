@@ -26,7 +26,13 @@ DocumentExporter::~DocumentExporter()
 
 static inline std::string GetName(MQObject obj)
 {
-    char buf[256];
+    char buf[256] = "";
+    obj->GetName(buf, sizeof(buf));
+    return buf;
+}
+static inline std::string GetName(MQMaterial obj)
+{
+    char buf[256] = "";
     obj->GetName(buf, sizeof(buf));
     return buf;
 }
@@ -87,28 +93,15 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     for (int oi = 0; oi < nobjects; ++oi) {
         auto& rec = m_obj_records[oi];
         auto obj = doc->GetObject(oi);
-
-        if (!rec.mesh) {
-            if (m_options->merge_meshes) {
-                rec.mesh_data = std::make_shared<MeshNode>();
-                rec.mesh = rec.mesh_data.get();
-            }
-            else {
-                rec.mesh = (MeshNode*)m_scene->createNode(m_root, GetName(obj).c_str(), Node::Type::Mesh);
-            }
-
-            if (!rec.mesh) {
-                mqusdLog("failed to create mesh node.");
-                return false;
-            }
-        }
+        rec.mqobj_orig = obj;
 
         if ((obj->GetMirrorType() != MQOBJECT_MIRROR_NONE && m_options->freeze_mirror) ||
             (obj->GetLatheType() != MQOBJECT_LATHE_NONE && m_options->freeze_lathe) ||
             (obj->GetPatchType() != MQOBJECT_PATCH_NONE && m_options->freeze_subdiv))
         {
             // make clones to get meshes that are applied mirror/lathe/subdiv
-            rec.mqobject = obj->Clone();
+            rec.mqobj = obj->Clone();
+            rec.need_release = true;
 
             DWORD freeze_flags = 0;
             if (m_options->freeze_mirror)
@@ -117,12 +110,58 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
                 freeze_flags |= MQOBJECT_FREEZE_LATHE;
             if (m_options->freeze_subdiv)
                 freeze_flags |= MQOBJECT_FREEZE_PATCH;
-            rec.mqobject->Freeze(freeze_flags);
-
-            rec.need_release = true;
+            rec.mqobj->Freeze(freeze_flags);
         }
         else {
-            rec.mqobject = obj;
+            rec.mqobj = obj;
+        }
+    }
+
+#if MQPLUGIN_VERSION >= 0x0470
+    // handle blendshapes
+    std::vector<MQObject> bs_bases;
+    std::vector<MQObject> bs_targets;
+    m_morph_manager->EnumBaseObjects(bs_bases);
+    for (auto base : bs_bases) {
+        auto rec = findRecord(base);
+        m_morph_manager->GetTargetObjects(base, bs_targets);
+        for (auto target : bs_targets) {
+            auto trec = findRecord(target);
+            trec->bs_base = rec;
+        }
+    }
+#endif
+
+    for (int oi = 0; oi < nobjects; ++oi) {
+        auto& rec = m_obj_records[oi];
+        auto obj = doc->GetObject(oi);
+        rec.mqobj_orig = obj;
+
+        if (!rec.mesh) {
+            if (m_options->merge_meshes) {
+                if (!rec.bs_base) {
+                    rec.mesh_data = std::make_shared<MeshNode>();
+                    rec.mesh = rec.mesh_data.get();
+                }
+            }
+            else {
+                auto name = GetName(obj);
+                if (rec.bs_base) {
+                    auto base_mesh = rec.bs_base->mesh;
+                    rec.mesh_data = std::make_shared<MeshNode>();
+                    rec.mesh = rec.mesh_data.get();
+                    rec.blendshape = (BlendshapeNode*)m_scene->createNode(base_mesh, name.c_str(), Node::Type::Blendshape);
+                    base_mesh->blendshapes.push_back(rec.blendshape);
+                }
+                else {
+                    rec.mesh = (MeshNode*)m_scene->createNode(m_root, name.c_str(), Node::Type::Mesh);
+                }
+            }
+
+            if (!rec.mesh) {
+                mqusdLog("failed to create mesh node.");
+                return false;
+            }
         }
     }
 
@@ -145,7 +184,15 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     // extract mesh data
     mu::parallel_for(0, nobjects, [this](int oi) {
         auto& rec = m_obj_records[oi];
-        extractMesh(rec.mqobject, *rec.mesh);
+        if (rec.mesh)
+            extractMesh(rec.mqobj, *rec.mesh);
+    });
+
+    // make blendshape offsets
+    mu::parallel_for(0, nobjects, [this](int oi) {
+        auto& rec = m_obj_records[oi];
+        if (rec.blendshape)
+            rec.blendshape->makeOffsets(*rec.mesh, *rec.bs_base->mesh);
     });
 
 
@@ -168,6 +215,14 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     mqusdLog("frame %d: %d vertices, %d faces",
         m_frame - 1, total_vertices, total_faces);
     return true;
+}
+
+DocumentExporter::ObjectRecord* DocumentExporter::findRecord(MQObject obj)
+{
+    auto it = std::find_if(m_obj_records.begin(), m_obj_records.end(), [obj](auto& rec) {
+        return rec.mqobj_orig == obj;
+    });
+    return it == m_obj_records.end() ? nullptr : &(*it);
 }
 
 bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst)
@@ -194,7 +249,7 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst)
     auto dst_counts = dst.counts.data();
     auto dst_indices = dst.indices.data();
 
-    dst.name = obj->GetName();
+    dst.name = GetName(obj);
 
     // points
     obj->GetVertexArray((MQPoint*)dst_points);
@@ -345,10 +400,7 @@ bool DocumentExporter::extractSkeleton(MQDocument doc, SkeletonNode& dst)
 
 bool DocumentExporter::extractMaterial(MQMaterial mtl, MaterialNode& dst)
 {
-    char buf[256];
-    mtl->GetName(buf, sizeof(buf));
-
-    dst.name = buf;
+    dst.name = GetName(mtl);
     dst.shader = mtl->GetShader();
     dst.use_vertex_color = mtl->GetVertexColor() == MQMATERIAL_VERTEXCOLOR_DIFFUSE;
     dst.double_sided = mtl->GetDoubleSided();
@@ -390,8 +442,8 @@ void DocumentExporter::waitFlush()
     for (auto& rec : m_obj_records) {
         if (rec.need_release) {
             rec.need_release = false;
-            rec.mqobject->DeleteThis();
-            rec.mqobject = nullptr;
+            rec.mqobj->DeleteThis();
+            rec.mqobj = nullptr;
         }
     }
 }
