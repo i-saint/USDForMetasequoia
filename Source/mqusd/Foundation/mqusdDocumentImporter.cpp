@@ -254,9 +254,10 @@ bool DocumentImporter::updateMesh(MQDocument doc, MQObject obj, const MeshNode& 
         if (!src.joints.empty()) {
             for (auto& path : src.joints) {
                 auto joint = src.skeleton->findJointByPath(path);
-                if (!joint)
-                    goto bailout; // should not be here
-                joint_ids.push_back(((JointRecord*)joint->userdata)->mqid);
+                if (joint)
+                    joint_ids.push_back(((JointRecord*)joint->userdata)->mqid);
+                else
+                    joint_ids.push_back(0); // should not be here
             }
         }
         else {
@@ -268,22 +269,24 @@ bool DocumentImporter::updateMesh(MQDocument doc, MQObject obj, const MeshNode& 
         int jpv = src.joints_per_vertex;
         auto* indices = src.joint_indices.cdata();
         auto* weights = src.joint_weights.cdata();
+
+        auto assign_weight = [&](int pi) {
+            for (int ji = 0; ji < jpv; ++ji) {
+                float weight = weights[ji];
+                if (weight > 0) {
+                    m_bone_manager->SetVertexWeight(obj, obj->GetVertexUniqueID(pi), joint_ids[indices[ji]], weight);
+                }
+            }
+        };
+
         if (src.joint_indices.size() == jpv && src.joint_weights.size() == jpv) {
             for (int pi = 0; pi < npoints; ++pi) {
-                for (int ji = 0; ji < jpv; ++ji) {
-                    float weight = weights[ji];
-                    if (weight > 0)
-                        m_bone_manager->SetVertexWeight(obj, pi, joint_ids[indices[ji]], weight);
-                }
+                assign_weight(pi);
             }
         }
         else if (src.joint_indices.size() == npoints * jpv && src.joint_weights.size() == npoints * jpv) {
             for (int pi = 0; pi < npoints; ++pi) {
-                for (int ji = 0; ji < jpv; ++ji) {
-                    float weight = weights[ji];
-                    if (weight > 0)
-                        m_bone_manager->SetVertexWeight(obj, pi, joint_ids[indices[ji]], weight);
-                }
+                assign_weight(pi);
                 indices += jpv;
                 weights += jpv;
             }
@@ -291,7 +294,6 @@ bool DocumentImporter::updateMesh(MQDocument doc, MQObject obj, const MeshNode& 
         else {
             // invalid data
         }
-    bailout:;
     }
 #endif
 
