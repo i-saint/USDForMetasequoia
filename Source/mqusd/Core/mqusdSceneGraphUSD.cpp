@@ -169,7 +169,9 @@ void USDMeshNode::beforeRead()
             dst.joints.push_back(t.GetString());
     }
     if (m_attr_joint_indices && m_attr_joint_weights) {
+        TfToken interpolation;
         m_attr_joint_indices.GetMetadata(mqusdMetaElementSize, &dst.joints_per_vertex);
+        m_attr_joint_indices.GetMetadata(mqusdMetaInterpolation, &interpolation);
 
         m_attr_joint_indices.Get(&m_joint_indices);
         dst.joint_indices.share(m_joint_indices.cdata(), m_joint_indices.size());
@@ -260,21 +262,6 @@ void USDMeshNode::read(double time)
 }
 
 
-template<class T>
-static inline bool is_uniform(const T* data, size_t data_size, size_t element_size)
-{
-    auto* base = data;
-    size_t n = data_size / element_size;
-    for (size_t di = 1; di < n; ++di) {
-        data += element_size;
-        for (size_t ei = 0; ei < element_size; ++ei) {
-            if (data[ei] != base[ei])
-                return false;
-        }
-    }
-    return true;
-}
-
 void USDMeshNode::beforeWrite()
 {
     // create attributes
@@ -288,9 +275,7 @@ void USDMeshNode::beforeWrite()
         m_attr_joint_indices = m_prim.CreateAttribute(mqusdAttrJointIndices, SdfValueTypeNames->IntArray, false);
         m_attr_joint_weights = m_prim.CreateAttribute(mqusdAttrJointWeights, SdfValueTypeNames->FloatArray, false);
 
-        m_attr_joint_indices.SetMetadata(mqusdMetaInterpolation, "vertex");
         m_attr_joint_indices.SetMetadata(mqusdMetaElementSize, src.joints_per_vertex);
-        m_attr_joint_weights.SetMetadata(mqusdMetaInterpolation, "vertex");
         m_attr_joint_weights.SetMetadata(mqusdMetaElementSize, src.joints_per_vertex);
 
         // skinning data can be assumed not time sampled. so, read it at this point.
@@ -298,10 +283,14 @@ void USDMeshNode::beforeWrite()
         if (is_uniform(src.joint_indices.cdata(), src.joint_indices.size(), src.joints_per_vertex) &&
             is_uniform(src.joint_weights.cdata(), src.joint_weights.size(), src.joints_per_vertex))
         {
+            m_attr_joint_indices.SetMetadata(mqusdMetaInterpolation, mqusdInterpolationConstant);
+            m_attr_joint_weights.SetMetadata(mqusdMetaInterpolation, mqusdInterpolationConstant);
             m_joint_indices.assign(src.joint_indices.begin(), src.joint_indices.begin() + src.joints_per_vertex);
             m_joint_weights.assign(src.joint_weights.begin(), src.joint_weights.begin() + src.joints_per_vertex);
         }
         else {
+            m_attr_joint_indices.SetMetadata(mqusdMetaInterpolation, mqusdInterpolationVertex);
+            m_attr_joint_weights.SetMetadata(mqusdMetaInterpolation, mqusdInterpolationVertex);
             m_joint_indices.assign(src.joint_indices.begin(), src.joint_indices.end());
             m_joint_weights.assign(src.joint_weights.begin(), src.joint_weights.end());
         }
@@ -524,18 +513,25 @@ void USDSkeletonNode::beforeWrite()
 
     {
         VtArray<TfToken> data;
-        data.resize(njoints);
-        for (size_t ji = 0; ji < njoints; ++ji)
-            data[ji] = TfToken(src.joints[ji]->path);
+        transform_container(data, src.joints, [](TfToken& dst, auto& joint) {
+            dst = TfToken(joint->path);
+        });
         m_skel.GetJointsAttr().Set(data);
     }
 
     {
         VtArray<GfMatrix4d> data;
-        data.resize(src.joints.size());
-        for (size_t ji = 0; ji < njoints; ++ji)
-            ((double4x4&)data[ji]).assign(src.joints[ji]->bindpose);
+        transform_container(data, src.joints, [](GfMatrix4d& dst, auto& joint) {
+            ((double4x4&)dst).assign(joint->bindpose);
+        });
         m_skel.GetBindTransformsAttr().Set(data);
+    }
+    if (!is_uniform(src.joints, [](auto& joint) { return joint->restpose == float4x4::identity(); })) {
+        VtArray<GfMatrix4d> data;
+        transform_container(data, src.joints, [](GfMatrix4d& dst, auto& joint) {
+            ((double4x4&)dst).assign(joint->restpose);
+        });
+        m_skel.GetRestTransformsAttr().Set(data);
     }
 }
 
@@ -758,15 +754,7 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
         if (path != "/")
             path += '/';
     }
-    {
-        // sanitize
-        std::string n = name;
-        for (auto& c : n) {
-            if (!std::isalnum(c))
-                c = '_';
-        }
-        path += n;
-    }
+    path += SanitizeNodeName(name);
 
     USDNode* ret = nullptr;
     USDNode* usd_parent = parent ? (USDNode*)parent->impl : nullptr;

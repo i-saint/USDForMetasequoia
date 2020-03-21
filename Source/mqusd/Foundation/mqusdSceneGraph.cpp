@@ -4,6 +4,28 @@
 
 namespace mqusd {
 
+std::string SanitizeNodeName(const std::string& name)
+{
+    std::string ret = name;
+    for (auto& c : ret) {
+        if (!std::isalnum(c))
+            c = '_';
+    }
+    return ret;
+}
+
+std::string SanitizeNodePath(const std::string& path)
+{
+    std::string ret = path;
+    for (auto& c : ret) {
+        if (c == '/')
+            continue;
+        if (!std::isalnum(c))
+            c = '_';
+    }
+    return ret;
+}
+
 static uint32_t GenID()
 {
     static uint32_t s_seed;
@@ -459,8 +481,9 @@ void SkeletonNode::clear()
     joints.clear();
 }
 
-SkeletonNode::Joint* SkeletonNode::addJoint(const std::string& path)
+SkeletonNode::Joint* SkeletonNode::addJoint(const std::string& path_)
 {
+    auto path = SanitizeNodePath(path_);
     auto ret = new Joint(path);
     ret->index = (int)joints.size();
     joints.push_back(JointPtr(ret));

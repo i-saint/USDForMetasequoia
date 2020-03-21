@@ -11,8 +11,11 @@
 #define mqusdRelBlendshapeTargets   TfToken("skel:blendShapeTargets")
 #define mqusdRelSkeleton            TfToken("skel:skeleton")
 
-#define mqusdMetaElementSize    TfToken("elementSize")
-#define mqusdMetaInterpolation  TfToken("interpolation")
+#define mqusdMetaElementSize        TfToken("elementSize")
+#define mqusdMetaInterpolation      TfToken("interpolation")
+
+#define mqusdInterpolationVertex    TfToken("vertex")
+#define mqusdInterpolationConstant  TfToken("constant")
 
 #define mqusdMtlTarget          "metasequoia"
 #define mqusdMtlShaderClassic   "classic"

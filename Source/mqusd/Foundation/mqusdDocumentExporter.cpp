@@ -195,11 +195,8 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     }
 
     // skeleton
-#if MQPLUGIN_VERSION >= 0x0470
-    if (m_skeleton) {
+    if (m_skeleton)
         extractSkeleton(doc, *m_skeleton);
-    }
-#endif
 
     // extract mesh data
     mu::parallel_for(0, nobjects, [this](int oi) {
@@ -398,6 +395,7 @@ std::wstring DocumentExporter::getBonePath(UINT bone_id)
 bool DocumentExporter::extractSkeleton(MQDocument doc, SkeletonNode& dst)
 {
 #if MQPLUGIN_VERSION >= 0x0470
+    // get global joint matrices
     std::vector<UINT> bone_ids;
     m_bone_manager->EnumBoneID(bone_ids);
     for (auto bid : bone_ids) {
@@ -409,9 +407,20 @@ bool DocumentExporter::extractSkeleton(MQDocument doc, SkeletonNode& dst)
         m_bone_manager->GetBasePos(bid, base_pos);
         m_bone_manager->GetBaseMatrix(bid, base_matrix);
 
-        float4x4 bindpose = to_float4x4(base_matrix);
-        (float3&)bindpose[3] = to_float3(base_pos);
-        joint->bindpose = bindpose;
+        float4x4 base_pose = float4x4::identity();
+        //float4x4 base_pose = to_float4x4(base_matrix);
+        (float3&)base_pose[3] = to_float3(base_pos);
+        joint->global_matrix = base_pose;
+    }
+
+    // setup bindpose & restpose
+    for (auto& joint : dst.joints) {
+        if (joint->parent)
+            joint->local_matrix = joint->global_matrix * mu::invert(joint->parent->global_matrix);
+        else
+            joint->local_matrix = joint->global_matrix;
+        joint->bindpose = joint->global_matrix;
+        joint->restpose = joint->local_matrix;
     }
 
     return true;
