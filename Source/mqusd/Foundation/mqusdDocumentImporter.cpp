@@ -44,20 +44,29 @@ bool DocumentImporter::initialize(MQDocument doc)
     return true;
 }
 
-static MQObject FindOrCreateMQObject(MQDocument doc, UINT& id, MQObject parent, bool& created)
+DocumentImporter::ObjectRecord* DocumentImporter::findRecord(UINT mqid)
 {
-    auto mqo = doc->GetObjectFromUniqueID(id);
+    if (mqid == 0)
+        return nullptr;
+    auto it = std::find_if(m_obj_records.begin(), m_obj_records.end(), [mqid](auto& rec) {
+        return rec.mqid == mqid;
+    });
+    return it == m_obj_records.end() ? nullptr : &(*it);
+}
+
+MQObject DocumentImporter::findOrCreateMQObject(MQDocument doc, UINT& id, UINT parent_id, bool& created)
+{
+    MQObject mqo = id != 0 ? doc->GetObjectFromUniqueID(id) : nullptr;
     if (!mqo) {
         mqo = MQ_CreateObject();
-        if (parent) {
-            doc->InsertObject(mqo, parent);
-            mqo->SetDepth(parent->GetDepth() + 1);
-        }
-        else {
-            doc->AddObject(mqo);
-        }
+        doc->AddObject(mqo);
         id = mqo->GetUniqueID();
         created = true;
+
+        if (auto prec = findRecord(parent_id)) {
+            auto parent = doc->GetObjectFromUniqueID(prec->mqid);
+            mqo->SetDepth(parent->GetDepth() + 1);
+        }
     }
     else {
         created = false;
@@ -126,7 +135,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
         mesh.validate();
 
         bool created;
-        auto obj = FindOrCreateMQObject(doc, m_mqobj_id, nullptr, created);
+        auto obj = findOrCreateMQObject(doc, m_mqobj_id, 0, created);
         if (created) {
             auto name = mu::GetFilename_NoExtension(m_scene->path.c_str());
             obj->SetName(name.c_str());
@@ -137,14 +146,12 @@ bool DocumentImporter::read(MQDocument doc, double t)
     }
     else {
         for (auto& rec : m_obj_records) {
-            MQObject parent = nullptr;
-            if (auto pmesh = rec.node->findParentMesh()) {
-                UINT pid = ((ObjectRecord*)pmesh->userdata)->mqid;
-                parent = doc->GetObjectFromUniqueID(pid);
-            }
+            UINT parent_id = 0;
+            if (auto pmesh = rec.node->findParentMesh())
+                parent_id = ((ObjectRecord*)pmesh->userdata)->mqid;
 
             bool created;
-            auto obj = FindOrCreateMQObject(doc, rec.mqid, parent, created);
+            auto obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
             if (created) {
                 auto name = mu::ToWCS(rec.node->name);
                 obj->SetName(name.c_str());
@@ -158,7 +165,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
                     auto blendshape = rec.node->blendshapes[bi];
                     blendshape->makeMesh(rec.tmp_mesh, *rec.node);
 
-                    auto bs = FindOrCreateMQObject(doc, rec.blendshape_ids[bi], obj, created);
+                    auto bs = findOrCreateMQObject(doc, rec.blendshape_ids[bi], rec.mqid, created);
                     updateMesh(doc, bs, rec.tmp_mesh);
                     if (created) {
                         auto name = mu::ToWCS(blendshape->name);
