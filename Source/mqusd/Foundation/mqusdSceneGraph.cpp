@@ -361,8 +361,8 @@ void BlendshapeNode::makeOffsets(const MeshNode& target, const MeshNode& base)
     if (!base.normals.empty() && base.normals.size() == target.normals.size()) {
         size_t n = base.normals.size();
         normal_offsets.resize_discard(n);
-        auto* b = base.points.cdata();
-        auto* t = target.points.cdata();
+        auto* b = base.normals.cdata();
+        auto* t = target.normals.cdata();
         auto* d = normal_offsets.data();
         for (size_t i = 0; i < n; ++i)
             d[i] = t[i] - b[i];

@@ -23,6 +23,12 @@ DocumentExporter::~DocumentExporter()
     m_scene->save();
 }
 
+bool DocumentExporter::initialize(MQDocument doc)
+{
+    m_scene->up_axis = UpAxis::Y;
+    return true;
+}
+
 
 static inline std::string GetName(MQObject obj)
 {

@@ -33,6 +33,7 @@ class DocumentExporter
 public:
     DocumentExporter(MQBasePlugin* plugin, Scene* scene, const ExportOptions* options);
     ~DocumentExporter();
+    bool initialize(MQDocument doc);
     bool write(MQDocument doc, bool one_shot);
 
 private:

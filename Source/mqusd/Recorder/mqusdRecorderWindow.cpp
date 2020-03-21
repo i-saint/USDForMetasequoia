@@ -156,7 +156,7 @@ BOOL mqusdRecorderWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument do
 
         if (dlg.Execute()) {
             auto path = dlg.GetFileName();
-            if (m_plugin->OpenUSD(mu::ToMBS(path))) {
+            if (m_plugin->OpenUSD(doc, mu::ToMBS(path))) {
                 m_plugin->CaptureFrame(doc);
             }
         }

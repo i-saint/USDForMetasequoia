@@ -90,7 +90,7 @@ public:
 
 
 public:
-    bool OpenUSD(const std::string& v);
+    bool OpenUSD(MQDocument doc, const std::string& v);
     bool CloseUSD();
     void CaptureFrame(MQDocument doc);
 

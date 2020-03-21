@@ -243,6 +243,13 @@ public:
 };
 
 
+enum class UpAxis
+{
+    Unknown,
+    Y,
+    Z,
+};
+
 class Scene
 {
 public:
@@ -265,6 +272,7 @@ public:
     std::vector<MeshNode*> mesh_nodes;
     std::vector<SkeletonNode*> skeleton_nodes;
     std::vector<MaterialNode*> material_nodes;
+    UpAxis up_axis = UpAxis::Unknown;
     double time_start = 0.0;
     double time_end = 0.0;
 };

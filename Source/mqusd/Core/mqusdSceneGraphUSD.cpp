@@ -90,15 +90,17 @@ void USDXformNode::write(double time) const
     auto t = UsdTimeCode(time);
     auto& src = static_cast<XformNode&>(*m_node);
 
-    if (m_xf_ops.empty()) {
-        m_xf_ops.push_back(m_xform.AddTransformOp());
-    }
+    if (src.local_matrix != float4x4::identity()) {
+        if (m_xf_ops.empty()) {
+            m_xf_ops.push_back(m_xform.AddTransformOp());
+        }
 
-    auto& op = m_xf_ops[0];
-    if (op.GetOpType() == UsdGeomXformOp::TypeTransform) {
-        double4x4 data;
-        data.assign(src.local_matrix);
-        op.Set((const GfMatrix4d&)data, t);
+        auto& op = m_xf_ops[0];
+        if (op.GetOpType() == UsdGeomXformOp::TypeTransform) {
+            double4x4 data;
+            data.assign(src.local_matrix);
+            op.Set((const GfMatrix4d&)data, t);
+        }
     }
 }
 
@@ -166,13 +168,12 @@ void USDMeshNode::beforeRead()
         for (auto& t : data)
             dst.joints.push_back(t.GetString());
     }
-    if (m_attr_joint_indices) {
+    if (m_attr_joint_indices && m_attr_joint_weights) {
         m_attr_joint_indices.GetMetadata(mqusdMetaElementSize, &dst.joints_per_vertex);
 
         m_attr_joint_indices.Get(&m_joint_indices);
         dst.joint_indices.share(m_joint_indices.cdata(), m_joint_indices.size());
-    }
-    if (m_attr_joint_weights) {
+
         m_attr_joint_weights.Get(&m_joint_weights);
         dst.joint_weights.share(m_joint_weights.cdata(), m_joint_weights.size());
     }
@@ -258,6 +259,22 @@ void USDMeshNode::read(double time)
     dst.validate();
 }
 
+
+template<class T>
+static inline bool is_uniform(const T* data, size_t data_size, size_t element_size)
+{
+    auto* base = data;
+    size_t n = data_size / element_size;
+    for (size_t di = 1; di < n; ++di) {
+        data += element_size;
+        for (size_t ei = 0; ei < element_size; ++ei) {
+            if (data[ei] != base[ei])
+                return false;
+        }
+    }
+    return true;
+}
+
 void USDMeshNode::beforeWrite()
 {
     // create attributes
@@ -277,10 +294,18 @@ void USDMeshNode::beforeWrite()
         m_attr_joint_weights.SetMetadata(mqusdMetaElementSize, src.joints_per_vertex);
 
         // skinning data can be assumed not time sampled. so, read it at this point.
-        m_joint_indices.assign(src.joint_indices.begin(), src.joint_indices.end());
-        m_attr_joint_indices.Set(m_joint_indices);
 
-        m_joint_weights.assign(src.joint_weights.begin(), src.joint_weights.end());
+        if (is_uniform(src.joint_indices.cdata(), src.joint_indices.size(), src.joints_per_vertex) &&
+            is_uniform(src.joint_weights.cdata(), src.joint_weights.size(), src.joints_per_vertex))
+        {
+            m_joint_indices.assign(src.joint_indices.begin(), src.joint_indices.begin() + src.joints_per_vertex);
+            m_joint_weights.assign(src.joint_weights.begin(), src.joint_weights.begin() + src.joints_per_vertex);
+        }
+        else {
+            m_joint_indices.assign(src.joint_indices.begin(), src.joint_indices.end());
+            m_joint_weights.assign(src.joint_weights.begin(), src.joint_weights.end());
+        }
+        m_attr_joint_indices.Set(m_joint_indices);
         m_attr_joint_weights.Set(m_joint_weights);
 
         if (src.bind_transform != float4x4::identity()) {

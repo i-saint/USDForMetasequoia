@@ -323,7 +323,7 @@ void mqusdLog(const char* fmt, ...)
 
 // impl
 
-bool mqusdRecorderPlugin::OpenUSD(const std::string& path)
+bool mqusdRecorderPlugin::OpenUSD(MQDocument doc, const std::string& path)
 {
     CloseUSD();
 
@@ -337,6 +337,8 @@ bool mqusdRecorderPlugin::OpenUSD(const std::string& path)
     }
 
     m_exporter.reset(new DocumentExporter(this, m_scene.get(), &m_options));
+    m_exporter->initialize(doc);
+
     m_recording = true;
     m_dirty = true;
 
