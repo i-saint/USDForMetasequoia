@@ -24,6 +24,9 @@
     <ClInclude Include="mqusd\Core\mqusdSceneGraphUSD.h">
       <Filter>mqusd</Filter>
     </ClInclude>
+    <ClInclude Include="mqusd\Foundation\mqusdSerialization.h">
+      <Filter>mqusd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\pch.cpp">

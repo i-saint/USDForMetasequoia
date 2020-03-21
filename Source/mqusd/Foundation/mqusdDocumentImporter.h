@@ -34,7 +34,7 @@ private:
 
     struct JointRecord
     {
-        SkeletonNode::Joint* joint = nullptr;
+        Joint* joint = nullptr;
         UINT mqid = 0;
     };
 

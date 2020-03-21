@@ -1,5 +1,6 @@
 #pragma once
 #include "mqusd.h"
+#include "mqusdSerialization.h"
 
 #ifndef PXR_USD_USD_PRIM_H
 class UsdPrim;
@@ -44,23 +45,31 @@ public:
         Material,
         Scope,
     };
+    static std::shared_ptr<Node> create(std::istream& is);
 
     Node(Node* parent);
     virtual ~Node();
     virtual Type getType() const;
+    virtual void serialize(std::ostream& os) const;
+    virtual void deserialize(std::istream& is);
     virtual void convert(const ConvertOptions& opt);
 
     template<class NodeT> NodeT* findParent();
     std::string getPath() const;
 
+public:
+    // serializable
+    std::string name;
+    uint32_t id = 0;
+
+    // non-serializable
     void* impl = nullptr;
     Node* parent = nullptr;
     std::vector<Node*> children;
-    std::string name;
-    uint32_t id = 0;
     void* userdata = nullptr;
 };
-using NodePtr = std::shared_ptr<Node>;
+mqusdSerializable(Node);
+mqusdDeclPtr(Node);
 
 
 class RootNode : public Node
@@ -80,8 +89,10 @@ using super = Node;
 public:
     static const Type node_type = Type::Xform;
 
-    XformNode(Node* parent);
+    XformNode(Node* parent = nullptr);
     Type getType() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
     void convert(const ConvertOptions& opt) override;
 
     std::tuple<float3, quatf, float3> getLocalTRS() const;
@@ -90,9 +101,12 @@ public:
     void setGlobalTRS(const float3& t, const quatf& r, const float3& s);
 
 public:
-    XformNode* parent_xform = nullptr;
+    // serializable
     float4x4 local_matrix = float4x4::identity();
     float4x4 global_matrix = float4x4::identity();
+
+    // non-serializable
+    XformNode* parent_xform = nullptr;
 };
 
 
@@ -102,8 +116,10 @@ using super = Node;
 public:
     static const Type node_type = Type::Blendshape;
 
-    BlendshapeNode(Node* parent);
+    BlendshapeNode(Node* parent = nullptr);
     Type getType() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
     void convert(const ConvertOptions& opt) override;
 
     void clear();
@@ -111,6 +127,7 @@ public:
     void makeOffsets(const MeshNode& target, const MeshNode& base);
 
 public:
+    // serializable
     SharedVector<int> indices;
     SharedVector<float3> point_offsets;
     SharedVector<float3> normal_offsets;
@@ -127,43 +144,53 @@ public:
     Type getType() const override;
 
 public:
+    // non-serializable
     SkeletonNode* skeleton = nullptr;
 };
 
+
+class Joint
+{
+public:
+    static std::shared_ptr<Joint> create(std::istream& is);
+
+    Joint();
+    Joint(const std::string& path);
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+    std::tuple<float3, quatf, float3> getLocalTRS() const;
+    std::tuple<float3, quatf, float3> getGlobalTRS() const;
+    void setLocalTRS(const float3& t, const quatf& r, const float3& s);
+    void setGlobalTRS(const float3& t, const quatf& r, const float3& s);
+
+public:
+    // serializable
+    std::string name;
+    std::string path;
+    int index = 0;
+    float4x4 bindpose = float4x4::identity(); // world space
+    float4x4 restpose = float4x4::identity(); // default pose. local space
+    float4x4 local_matrix = float4x4::identity();  // for animation
+    float4x4 global_matrix = float4x4::identity(); // 
+
+    // non-serializable
+    Joint* parent = nullptr;
+    std::vector<Joint*> children;
+    void* userdata = nullptr;
+};
+mqusdSerializable(Joint);
+mqusdDeclPtr(Joint);
 
 class SkeletonNode : public XformNode
 {
 using super = XformNode;
 public:
-    class Joint
-    {
-    public:
-        Joint(const std::string& path);
-        std::tuple<float3, quatf, float3> getLocalTRS() const;
-        std::tuple<float3, quatf, float3> getGlobalTRS() const;
-        void setLocalTRS(const float3& t, const quatf& r, const float3& s);
-        void setGlobalTRS(const float3& t, const quatf& r, const float3& s);
-
-    public:
-        Joint* parent = nullptr;
-        std::vector<Joint*> children;
-        std::string name;
-        std::string path;
-        int index = 0;
-        void* userdata = nullptr;
-
-        float4x4 bindpose = float4x4::identity(); // world space
-        float4x4 restpose = float4x4::identity(); // default pose. local space
-        float4x4 local_matrix = float4x4::identity();  // for animation
-        float4x4 global_matrix = float4x4::identity(); // 
-    };
-    using JointPtr = std::shared_ptr<Joint>;
-
-public:
     static const Type node_type = Type::Skeleton;
 
     SkeletonNode(Node* parent = nullptr);
     Type getType() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
     void convert(const ConvertOptions& opt) override;
 
     void clear();
@@ -174,6 +201,7 @@ public:
     Joint* findJointByPath(const std::string& path);
 
 public:
+    // serializable
     std::vector<JointPtr> joints;
 };
 
@@ -186,6 +214,8 @@ public:
 
     MeshNode(Node* parent = nullptr);
     Type getType() const override;
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
     void convert(const ConvertOptions& opt) override;
     void applyTransform(const float4x4& v);
     void toWorldSpace();
@@ -199,6 +229,7 @@ public:
     MeshNode* findParentMesh() const;
 
 public:
+    // serializable
     SharedVector<float3> points;    // per-vertex
     SharedVector<float3> normals;   // per-index
     SharedVector<float2> uvs;       // 
@@ -207,16 +238,15 @@ public:
     SharedVector<int> counts;       // 
     SharedVector<int> indices;
 
-    // blendshape
-    std::vector<BlendshapeNode*> blendshapes;
-
-    // skinning
-    SkeletonNode* skeleton = nullptr;
-    std::vector<std::string> joints;// paths to joints in skeleton
+    std::vector<std::string> joints; // paths to joints in skeleton
     int joints_per_vertex = 0;
     SharedVector<int> joint_indices;   // size must be points.size() * joints_per_vertex
     SharedVector<float> joint_weights; // 
     float4x4 bind_transform = float4x4::identity();
+
+    // non-serializable
+    std::vector<BlendshapeNode*> blendshapes;
+    SkeletonNode* skeleton = nullptr;
 };
 
 
@@ -228,9 +258,12 @@ public:
 
     MaterialNode(Node* parent = nullptr);
     Type getType() const override;
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
     virtual bool valid() const;
 
 public:
+    // serializable
     int shader = MQMATERIAL_SHADER_CLASSIC;
     bool use_vertex_color = false;
     bool double_sided = false;
@@ -253,8 +286,13 @@ enum class UpAxis
 class Scene
 {
 public:
+    static std::shared_ptr<Scene> create(std::istream& is);
+
     Scene();
-    virtual ~Scene();
+    ~Scene();
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+
     bool open(const char* path);
     bool create(const char* path);
     bool save();
@@ -265,18 +303,22 @@ public:
     Node* createNode(Node *parent, const char *name, Node::Type type);
 
 public:
-    SceneInterfacePtr impl;
+    // serializable
     std::string path;
     std::vector<NodePtr> nodes;
+    UpAxis up_axis = UpAxis::Unknown;
+    double time_start = 0.0;
+    double time_end = 0.0;
+
+    // non-serializable
+    SceneInterfacePtr impl;
     RootNode* root_node = nullptr;
     std::vector<MeshNode*> mesh_nodes;
     std::vector<SkeletonNode*> skeleton_nodes;
     std::vector<MaterialNode*> material_nodes;
-    UpAxis up_axis = UpAxis::Unknown;
-    double time_start = 0.0;
-    double time_end = 0.0;
 };
-using ScenePtr = std::shared_ptr<Scene>;
+mqusdSerializable(Scene);
+mqusdDeclPtr(Scene);
 
 ScenePtr CreateUSDScene();
 

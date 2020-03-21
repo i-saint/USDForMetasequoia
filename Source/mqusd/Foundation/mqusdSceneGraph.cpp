@@ -38,6 +38,52 @@ static uint32_t GenID()
 }
 
 
+
+#define EachMember(F)\
+    F(name) F(id)
+
+void Node::serialize(std::ostream& os) const
+{
+    auto type = getType();
+    write(os, type);
+
+#define Body(V) write(os, V);
+    EachMember(Body)
+#undef Body
+}
+
+void Node::deserialize(std::istream& is)
+{
+    // type will be consumed by create()
+#define Body(V) read(is, V);
+    EachMember(Body)
+#undef Body
+}
+#undef EachMember
+
+NodePtr Node::create(std::istream& is)
+{
+    Type type;
+    read(is, type);
+
+    NodePtr ret;
+    switch (type) {
+    case Type::Root: ret = std::make_shared<RootNode>(); break;
+    case Type::Xform: ret = std::make_shared<XformNode>(); break;
+    case Type::Mesh: ret = std::make_shared<MeshNode>(); break;
+    case Type::Blendshape: ret = std::make_shared<BlendshapeNode>(); break;
+    case Type::SkelRoot: ret = std::make_shared<SkelRootNode>(); break;
+    case Type::Skeleton: ret = std::make_shared<SkelRootNode>(); break;
+    case Type::Material: ret = std::make_shared<MaterialNode>(); break;
+    default:
+        throw std::runtime_error("Node::create() failed");
+        break;
+    }
+    if (ret)
+        ret->deserialize(is);
+    return ret;
+}
+
 Node::Node(Node* p)
     : parent(p)
 {
@@ -93,6 +139,26 @@ Node::Type RootNode::getType() const
 }
 
 
+#define EachMember(F)\
+    F(local_matrix) F(global_matrix)
+
+void XformNode::serialize(std::ostream& os) const
+{
+    super::serialize(os);
+#define Body(V) write(os, V);
+    EachMember(Body)
+#undef Body
+}
+
+void XformNode::deserialize(std::istream& is)
+{
+    super::deserialize(is);
+#define Body(V) read(is, V);
+    EachMember(Body)
+#undef Body
+}
+#undef EachMember
+
 XformNode::XformNode(Node* p)
     : super(p)
 {
@@ -144,6 +210,26 @@ void XformNode::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 }
 
 
+
+#define EachMember(F)\
+    F(points) F(normals) F(uvs) F(colors) F(material_ids) F(counts) F(indices)
+
+void MeshNode::serialize(std::ostream& os) const
+{
+    super::serialize(os);
+#define Body(V) write(os, V);
+    EachMember(Body)
+#undef Body
+}
+
+void MeshNode::deserialize(std::istream& is)
+{
+    super::deserialize(is);
+#define Body(V) read(is, V);
+    EachMember(Body)
+#undef Body
+}
+#undef EachMember
 
 MeshNode::MeshNode(Node* p)
     : super(p)
@@ -312,6 +398,27 @@ MeshNode* MeshNode::findParentMesh() const
 }
 
 
+
+#define EachMember(F)\
+    F(indices) F(point_offsets) F(normal_offsets)
+
+void BlendshapeNode::serialize(std::ostream& os) const
+{
+    super::serialize(os);
+#define Body(V) write(os, V);
+    EachMember(Body)
+#undef Body
+}
+
+void BlendshapeNode::deserialize(std::istream& is)
+{
+    super::deserialize(is);
+#define Body(V) read(is, V);
+    EachMember(Body)
+#undef Body
+}
+#undef EachMember
+
 BlendshapeNode::BlendshapeNode(Node* p)
     : super(p)
 {
@@ -413,7 +520,37 @@ Node::Type SkelRootNode::getType() const
 }
 
 
-SkeletonNode::Joint::Joint(const std::string& p)
+
+#define EachMember(F)\
+    F(name) F(path) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)
+
+void Joint::serialize(std::ostream& os) const
+{
+#define Body(V) write(os, V);
+    EachMember(Body)
+#undef Body
+}
+
+void Joint::deserialize(std::istream& is)
+{
+#define Body(V) read(is, V);
+    EachMember(Body)
+#undef Body
+}
+#undef EachMember
+
+JointPtr Joint::create(std::istream& is)
+{
+    auto ret = std::shared_ptr<Joint>();
+    ret->deserialize(is);
+    return ret;
+}
+
+Joint::Joint()
+{
+}
+
+Joint::Joint(const std::string& p)
     : path(p)
 {
     auto pos = path.find_last_of('/');
@@ -423,24 +560,45 @@ SkeletonNode::Joint::Joint(const std::string& p)
         name = std::string(path.begin() + pos + 1, path.end());
 }
 
-std::tuple<float3, quatf, float3> SkeletonNode::Joint::getLocalTRS() const
+std::tuple<float3, quatf, float3> Joint::getLocalTRS() const
 {
     return mu::extract_trs(local_matrix);
 }
-std::tuple<float3, quatf, float3> SkeletonNode::Joint::getGlobalTRS() const
+std::tuple<float3, quatf, float3> Joint::getGlobalTRS() const
 {
     return mu::extract_trs(global_matrix);
 }
 
-void SkeletonNode::Joint::setLocalTRS(const float3& t, const quatf& r, const float3& s)
+void Joint::setLocalTRS(const float3& t, const quatf& r, const float3& s)
 {
     local_matrix = mu::transform(t, r, s);
 }
-void SkeletonNode::Joint::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
+void Joint::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 {
     global_matrix = mu::transform(t, r, s);
 }
 
+
+
+#define EachMember(F)\
+    F(joints)
+
+void SkeletonNode::serialize(std::ostream& os) const
+{
+    super::serialize(os);
+#define Body(V) write(os, V);
+    EachMember(Body)
+#undef Body
+}
+
+void SkeletonNode::deserialize(std::istream& is)
+{
+    super::deserialize(is);
+#define Body(V) read(is, V);
+    EachMember(Body)
+#undef Body
+}
+#undef EachMember
 
 SkeletonNode::SkeletonNode(Node* parent)
     : super(parent)
@@ -490,7 +648,7 @@ void SkeletonNode::clear()
     joints.clear();
 }
 
-SkeletonNode::Joint* SkeletonNode::addJoint(const std::string& path_)
+Joint* SkeletonNode::addJoint(const std::string& path_)
 {
     auto path = SanitizeNodePath(path_);
     auto ret = new Joint(path);
@@ -509,7 +667,7 @@ SkeletonNode::Joint* SkeletonNode::addJoint(const std::string& path_)
     return ret;
 }
 
-static void UpdateGlobalMatricesImpl(SkeletonNode::Joint& joint, const float4x4& base)
+static void UpdateGlobalMatricesImpl(Joint& joint, const float4x4& base)
 {
     if (joint.parent)
         joint.global_matrix = joint.local_matrix * joint.parent->global_matrix;
@@ -529,14 +687,14 @@ void SkeletonNode::updateGlobalMatrices(const float4x4& base)
     }
 }
 
-SkeletonNode::Joint* SkeletonNode::findJointByName(const std::string& name)
+Joint* SkeletonNode::findJointByName(const std::string& name)
 {
     auto it = std::find_if(joints.begin(), joints.end(),
         [&name](auto& joint) { return joint->name == name; });
     return it == joints.end() ? nullptr : (*it).get();
 }
 
-SkeletonNode::Joint* SkeletonNode::findJointByPath(const std::string& path)
+Joint* SkeletonNode::findJointByPath(const std::string& path)
 {
     // rbegin() & rend() because in many cases this method is called to find last added joint
     auto it = std::find_if(joints.rbegin(), joints.rend(),
@@ -546,6 +704,25 @@ SkeletonNode::Joint* SkeletonNode::findJointByPath(const std::string& path)
 
 
 
+#define EachMember(F)\
+    F(shader) F(use_vertex_color) F(double_sided) F(color) F(diffuse) F(alpha) F(ambient_color) F(specular_color) F(emission_color)
+
+void MaterialNode::serialize(std::ostream& os) const
+{
+    super::serialize(os);
+#define Body(V) write(os, V);
+    EachMember(Body)
+#undef Body
+}
+
+void MaterialNode::deserialize(std::istream& is)
+{
+    super::deserialize(is);
+#define Body(V) read(is, V);
+    EachMember(Body)
+#undef Body
+}
+#undef EachMember
 
 MaterialNode::MaterialNode(Node* p)
     : super(p)
@@ -563,6 +740,30 @@ bool MaterialNode::valid() const
 }
 
 
+#define EachMember(F)\
+    F(path) F(nodes) F(up_axis) F(time_start) F(time_end)
+
+void Scene::serialize(std::ostream& os) const
+{
+#define Body(V) mqusd::write(os, V);
+    EachMember(Body)
+#undef Body
+}
+
+void Scene::deserialize(std::istream& is)
+{
+#define Body(V) mqusd::read(is, V);
+    EachMember(Body)
+#undef Body
+}
+#undef EachMember
+
+ScenePtr Scene::create(std::istream& is)
+{
+    auto ret = std::shared_ptr<Scene>();
+    ret->deserialize(is);
+    return ret;
+}
 
 Scene::Scene()
 {

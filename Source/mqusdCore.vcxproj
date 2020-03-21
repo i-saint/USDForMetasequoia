@@ -30,6 +30,7 @@
   <ItemGroup>
     <ClInclude Include="mqusd\Core\mqusdCore.h" />
     <ClInclude Include="mqusd\Core\mqusdSceneGraphUSD.h" />
+    <ClInclude Include="mqusd\Foundation\mqusdSerialization.h" />
     <ClInclude Include="mqusd\mqusd.h" />
     <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h" />
     <ClInclude Include="mqusd\pch.h" />
