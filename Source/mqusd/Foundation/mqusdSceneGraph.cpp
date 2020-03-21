@@ -193,14 +193,23 @@ void MeshNode::convert(const ConvertOptions& opt)
 
     if (opt.flip_faces) {
         size_t nfaces = counts.size();
-        int* idata = indices.data();
-        int* cdata = counts.data();
-        for (size_t fi = 0; fi < nfaces; ++fi) {
-            int c = *cdata;
-            std::reverse(idata, idata + c);
-            idata += c;
-            ++cdata;
-        }
+        auto* cdata = counts.cdata();
+
+        auto do_flip = [nfaces, cdata](auto *data) {
+            for (size_t fi = 0; fi < nfaces; ++fi) {
+                int c = cdata[fi];
+                std::reverse(data, data + c);
+                data += c;
+            }
+        };
+
+        do_flip(indices.data());
+        if (uvs.size() == indices.size())
+            do_flip(uvs.data());
+        if (normals.size() == indices.size())
+            do_flip(normals.data());
+        if (colors.size() == indices.size())
+            do_flip(colors.data());
     }
 }
 

@@ -41,6 +41,12 @@ mqusdRecorderWindow::mqusdRecorderWindow(mqusdRecorderPlugin* plugin, MQWindowBa
         m_check_mids = CreateCheckBox(vf, L"Export Material IDs");
         m_check_mids->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
+        m_check_blendshapes = CreateCheckBox(vf, L"Export Morphs");
+        m_check_blendshapes->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
+
+        m_check_skeletons = CreateCheckBox(vf, L"Export Bones");
+        m_check_skeletons->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
+
         m_check_mirror = CreateCheckBox(vf, L"Freeze Mirror");
         m_check_mirror->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
@@ -49,6 +55,18 @@ mqusdRecorderWindow::mqusdRecorderWindow(mqusdRecorderPlugin* plugin, MQWindowBa
 
         m_check_subdiv = CreateCheckBox(vf, L"Freeze Subdiv");
         m_check_subdiv->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
+
+        m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
+        m_check_flip_faces->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
+
+        m_check_flip_x = CreateCheckBox(vf, L"Flip X");
+        m_check_flip_x->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
+
+        m_check_flip_yz = CreateCheckBox(vf, L"Flip YZ");
+        m_check_flip_yz->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
+
+        m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
+        m_check_merge->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
     }
 
     {
@@ -130,6 +148,14 @@ BOOL mqusdRecorderWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     settings.export_normals = m_check_normals->GetChecked();
     settings.export_colors = m_check_colors->GetChecked();
     settings.export_material_ids = m_check_mids->GetChecked();
+    settings.export_blendshapes = m_check_blendshapes->GetChecked();
+    settings.export_skeletons = m_check_skeletons->GetChecked();
+
+    settings.flip_faces = m_check_flip_faces->GetChecked();
+    settings.flip_x = m_check_flip_x->GetChecked();
+    settings.flip_yz = m_check_flip_yz->GetChecked();
+    settings.merge_meshes = m_check_merge->GetChecked();
+
     return 0;
 }
 
@@ -196,6 +222,13 @@ void mqusdRecorderWindow::SyncSettings()
     m_check_normals->SetChecked(settings.export_normals);
     m_check_colors->SetChecked(settings.export_colors);
     m_check_mids->SetChecked(settings.export_material_ids);
+    m_check_blendshapes->SetChecked(settings.export_blendshapes);
+    m_check_skeletons->SetChecked(settings.export_skeletons);
+
+    m_check_flip_faces->SetChecked(settings.flip_faces);
+    m_check_flip_x->SetChecked(settings.flip_x);
+    m_check_flip_yz->SetChecked(settings.flip_yz);
+    m_check_merge->SetChecked(settings.merge_meshes);
 
     if (m_plugin->IsRecording()) {
         SetBackColor(MQCanvasColor(255, 0, 0));

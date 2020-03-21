@@ -27,12 +27,22 @@ private:
     MQFrame* m_frame_settings = nullptr;
     MQEdit* m_edit_interval = nullptr;
     MQEdit* m_edit_scale = nullptr;
+
     MQCheckBox* m_check_mirror = nullptr;
     MQCheckBox* m_check_lathe = nullptr;
     MQCheckBox* m_check_subdiv = nullptr;
+
     MQCheckBox* m_check_normals = nullptr;
     MQCheckBox* m_check_colors = nullptr;
     MQCheckBox* m_check_mids = nullptr;
+    MQCheckBox* m_check_blendshapes = nullptr;
+    MQCheckBox* m_check_skeletons = nullptr;
+
+    MQCheckBox* m_check_flip_faces = nullptr;
+    MQCheckBox* m_check_flip_x = nullptr;
+    MQCheckBox* m_check_flip_yz = nullptr;
+    MQCheckBox* m_check_merge = nullptr;
+
     MQButton* m_button_recording = nullptr;
     MQMemo* m_log = nullptr;
 #ifdef mqusdDebug
