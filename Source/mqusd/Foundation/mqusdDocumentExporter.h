@@ -38,6 +38,9 @@ public:
 private:
     struct ObjectRecord
     {
+        std::string name;
+        UINT mqid = 0;
+        UINT mqparentid = 0;
         MQObject mqobj = nullptr;
         MQObject mqobj_orig = nullptr;
         bool need_release = false;
@@ -55,7 +58,8 @@ private:
         MaterialNode material;
     };
 
-    ObjectRecord* findRecord(MQObject obj);
+    ObjectRecord* findRecord(UINT mqid);
+    Node* findOrCreateNode(UINT mqid);
     bool extractMesh(MQObject obj, MeshNode& dst);
     bool extractSkeleton(MQDocument obj, SkeletonNode& dst);
     bool extractMaterial(MQMaterial obj, MaterialNode& dst);

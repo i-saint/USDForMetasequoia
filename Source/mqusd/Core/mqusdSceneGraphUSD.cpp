@@ -705,7 +705,10 @@ void USDScene::write(double time) const
         n->write(time);
     ++m_frame;
 
-    m_stage->SetEndTimeCode(time);
+    if (!std::isnan(time) && time > m_max_time) {
+        m_stage->SetEndTimeCode(time);
+        m_max_time = time;
+    }
 }
 
 template<class NodeT>

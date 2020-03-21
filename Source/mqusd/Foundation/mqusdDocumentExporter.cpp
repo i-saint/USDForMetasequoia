@@ -37,6 +37,44 @@ static inline std::string GetName(MQMaterial obj)
     return buf;
 }
 
+Node* DocumentExporter::findOrCreateNode(UINT mqid)
+{
+    auto rec = findRecord(mqid);
+    if (!rec)
+        return nullptr;
+
+    Node* ret = nullptr;
+    if (m_options->merge_meshes) {
+        if (!rec->bs_base) {
+            rec->mesh_data = std::make_shared<MeshNode>();
+            rec->mesh = rec->mesh_data.get();
+        }
+        ret = rec->mesh;
+    }
+    else {
+        if (rec->bs_base) {
+            if (!rec->blendshape) {
+                auto base_mesh = rec->bs_base->mesh;
+                rec->mesh_data = std::make_shared<MeshNode>();
+                rec->mesh = rec->mesh_data.get();
+                rec->blendshape = (BlendshapeNode*)m_scene->createNode(base_mesh, rec->name.c_str(), Node::Type::Blendshape);
+                base_mesh->blendshapes.push_back(rec->blendshape);
+            }
+            ret = rec->blendshape;
+        }
+        else {
+            if (!rec->mesh) {
+                auto parent = findOrCreateNode(rec->mqparentid);
+                if (!parent)
+                    parent = m_root;
+                rec->mesh = (MeshNode*)m_scene->createNode(parent, rec->name.c_str(), Node::Type::Mesh);
+            }
+            ret = rec->mesh;
+        }
+    }
+    return ret;
+}
+
 bool DocumentExporter::write(MQDocument doc, bool one_shot)
 {
     waitFlush();
@@ -93,6 +131,10 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     for (int oi = 0; oi < nobjects; ++oi) {
         auto& rec = m_obj_records[oi];
         auto obj = doc->GetObject(oi);
+        rec.name = GetName(obj);
+        rec.mqid = obj->GetUniqueID();
+        if (auto parent = doc->GetParentObject(obj))
+            rec.mqparentid = parent->GetUniqueID();
         rec.mqobj_orig = obj;
 
         if ((obj->GetMirrorType() != MQOBJECT_MIRROR_NONE && m_options->freeze_mirror) ||
@@ -123,47 +165,19 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     std::vector<MQObject> bs_targets;
     m_morph_manager->EnumBaseObjects(bs_bases);
     for (auto base : bs_bases) {
-        auto rec = findRecord(base);
+        auto rec = findRecord(base->GetUniqueID());
         m_morph_manager->GetTargetObjects(base, bs_targets);
         for (auto target : bs_targets) {
-            auto trec = findRecord(target);
+            auto trec = findRecord(target->GetUniqueID());
             trec->bs_base = rec;
         }
     }
 #endif
 
-    for (int oi = 0; oi < nobjects; ++oi) {
-        auto& rec = m_obj_records[oi];
-        auto obj = doc->GetObject(oi);
-        rec.mqobj_orig = obj;
+    // create nodes
+    for(auto& rec : m_obj_records)
+        findOrCreateNode(rec.mqid);
 
-        if (!rec.mesh) {
-            if (m_options->merge_meshes) {
-                if (!rec.bs_base) {
-                    rec.mesh_data = std::make_shared<MeshNode>();
-                    rec.mesh = rec.mesh_data.get();
-                }
-            }
-            else {
-                auto name = GetName(obj);
-                if (rec.bs_base) {
-                    auto base_mesh = rec.bs_base->mesh;
-                    rec.mesh_data = std::make_shared<MeshNode>();
-                    rec.mesh = rec.mesh_data.get();
-                    rec.blendshape = (BlendshapeNode*)m_scene->createNode(base_mesh, name.c_str(), Node::Type::Blendshape);
-                    base_mesh->blendshapes.push_back(rec.blendshape);
-                }
-                else {
-                    rec.mesh = (MeshNode*)m_scene->createNode(m_root, name.c_str(), Node::Type::Mesh);
-                }
-            }
-
-            if (!rec.mesh) {
-                mqusdLog("failed to create mesh node.");
-                return false;
-            }
-        }
-    }
 
     // extract material data
     int nmaterials = doc->GetMaterialCount();
@@ -217,10 +231,12 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     return true;
 }
 
-DocumentExporter::ObjectRecord* DocumentExporter::findRecord(MQObject obj)
+DocumentExporter::ObjectRecord* DocumentExporter::findRecord(UINT mqid)
 {
-    auto it = std::find_if(m_obj_records.begin(), m_obj_records.end(), [obj](auto& rec) {
-        return rec.mqobj_orig == obj;
+    if (mqid == 0)
+        return nullptr;
+    auto it = std::find_if(m_obj_records.begin(), m_obj_records.end(), [mqid](auto& rec) {
+        return rec.mqid == mqid;
     });
     return it == m_obj_records.end() ? nullptr : &(*it);
 }

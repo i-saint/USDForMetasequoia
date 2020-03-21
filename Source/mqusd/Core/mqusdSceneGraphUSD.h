@@ -215,6 +215,7 @@ private:
 
     Scene* m_scene = nullptr;
     mutable int m_frame = 0;
+    mutable double m_max_time = 0.0;
 };
 
 } // namespace mqusd
