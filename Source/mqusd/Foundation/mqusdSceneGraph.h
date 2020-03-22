@@ -16,6 +16,7 @@ class BlendshapeNode;
 class SkelRootNode;
 class SkeletonNode;
 class MaterialNode;
+class Scene;
 
 class SceneInterface;
 using SceneInterfacePtr = std::shared_ptr<SceneInterface>;
@@ -52,6 +53,7 @@ public:
     virtual Type getType() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
+    virtual void resolve(Scene& scene);
     virtual void convert(const ConvertOptions& opt);
 
     template<class NodeT> NodeT* findParent();
@@ -302,6 +304,9 @@ public:
 
     Node* createNode(Node *parent, const char *name, Node::Type type);
 
+private:
+    void classifyNode(Node *node);
+
 public:
     // serializable
     std::string path;
@@ -337,6 +342,7 @@ public:
     virtual void write(double time) const = 0;
 
     virtual Node* createNode(Node* parent, const char* name, Node::Type type) = 0;
+    virtual bool wrapNode(Node* node) = 0;
 };
 
 
@@ -380,6 +386,8 @@ inline void transform_container(DstContainer& dst, const SrcContainer& src, cons
 
 std::string SanitizeNodeName(const std::string& name);
 std::string SanitizeNodePath(const std::string& path);
+std::string GetParentPath(const std::string& path);
+std::string GetLeafName(const std::string& path);
 
 
 } // namespace mqusd

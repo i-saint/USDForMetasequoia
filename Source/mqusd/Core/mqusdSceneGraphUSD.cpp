@@ -15,6 +15,20 @@ USDNode::USDNode(USDNode* parent, UsdPrim prim, bool create_node)
         setNode(new Node(parent ? parent->m_node : nullptr));
 }
 
+USDNode::USDNode(Node* n, UsdPrim prim)
+    : m_prim(prim)
+    , m_node(n)
+{
+
+    m_scene = USDScene::getCurrent();
+
+    m_node->impl = this;
+    if (m_node->parent) {
+        m_parent = (USDNode*)m_node->parent->impl;
+        m_parent->m_children.push_back(this);
+    }
+}
+
 USDNode::~USDNode()
 {
 }
@@ -63,6 +77,12 @@ USDXformNode::USDXformNode(USDNode* parent, UsdPrim prim, bool create_node)
     m_xform = UsdGeomXformable(prim);
     if (create_node)
         setNode(new XformNode(parent ? parent->m_node : nullptr));
+}
+
+USDXformNode::USDXformNode(Node* n, UsdPrim prim)
+    : super(n, prim)
+{
+    m_xform = UsdGeomXformable(prim);
 }
 
 void USDXformNode::read(double time)
@@ -125,21 +145,28 @@ USDMeshNode::USDMeshNode(USDNode* parent, UsdPrim prim)
 //#endif
 }
 
+USDMeshNode::USDMeshNode(Node* n, UsdPrim prim)
+    : super(n, prim)
+{
+    m_mesh = UsdGeomMesh(prim);
+}
+
 void USDMeshNode::beforeRead()
 {
     // find attributes
     m_attr_mids = m_prim.GetAttribute(mqusdAttrMaterialIDs);
     m_attr_uv = m_prim.GetAttribute(mqusdAttrUV);
     m_attr_uv_indices = m_prim.GetAttribute(mqusdAttrUVIndices);
-    m_attr_joints = m_prim.GetAttribute(mqusdAttrJoints);
-    m_attr_joint_indices = m_prim.GetAttribute(mqusdAttrJointIndices);
-    m_attr_joint_weights = m_prim.GetAttribute(mqusdAttrJointWeights);
-    m_attr_bind_transform = m_prim.GetAttribute(mqusdAttrBindTransform);
+    m_attr_joints = m_prim.GetAttribute(UsdSkelTokens->skelJoints);
+    m_attr_joint_indices = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelJointIndices);
+    m_attr_joint_weights = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelJointWeights);
+    m_attr_bind_transform = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelGeomBindTransform);
+
 
     auto& dst = static_cast<MeshNode&>(*m_node);
 
     // resolve blendshapes
-    auto rel_blendshapes = m_prim.GetRelationship(mqusdRelBlendshapeTargets);
+    auto rel_blendshapes = m_prim.GetRelationship(UsdSkelTokens->skelBlendShapeTargets);
     if (rel_blendshapes) {
         SdfPathVector paths;
         rel_blendshapes.GetTargets(&paths);
@@ -151,7 +178,7 @@ void USDMeshNode::beforeRead()
 
     // resolve skeleton
     // note: skeleton may be related to SkelRoot and be resolved by USDSkelRoot::beforeRead()
-    auto rel_skel = m_prim.GetRelationship(mqusdRelSkeleton);
+    auto rel_skel = m_prim.GetRelationship(UsdSkelTokens->skelSkeleton);
     if (rel_skel) {
         SdfPathVector paths;
         rel_skel.GetTargets(&paths);
@@ -170,8 +197,8 @@ void USDMeshNode::beforeRead()
     }
     if (m_attr_joint_indices && m_attr_joint_weights) {
         TfToken interpolation;
-        m_attr_joint_indices.GetMetadata(mqusdMetaElementSize, &dst.joints_per_vertex);
-        m_attr_joint_indices.GetMetadata(mqusdMetaInterpolation, &interpolation);
+        m_attr_joint_indices.GetMetadata(UsdGeomTokens->elementSize, &dst.joints_per_vertex);
+        m_attr_joint_indices.GetMetadata(UsdGeomTokens->interpolation, &interpolation);
 
         m_attr_joint_indices.Get(&m_joint_indices);
         dst.joint_indices.share(m_joint_indices.cdata(), m_joint_indices.size());
@@ -272,25 +299,25 @@ void USDMeshNode::beforeWrite()
 
     // skinning attributes
     if (src.joints_per_vertex > 0) {
-        m_attr_joint_indices = m_prim.CreateAttribute(mqusdAttrJointIndices, SdfValueTypeNames->IntArray, false);
-        m_attr_joint_weights = m_prim.CreateAttribute(mqusdAttrJointWeights, SdfValueTypeNames->FloatArray, false);
+        m_attr_joint_indices = m_prim.CreateAttribute(UsdSkelTokens->primvarsSkelJointIndices, SdfValueTypeNames->IntArray, false);
+        m_attr_joint_weights = m_prim.CreateAttribute(UsdSkelTokens->primvarsSkelJointWeights, SdfValueTypeNames->FloatArray, false);
 
-        m_attr_joint_indices.SetMetadata(mqusdMetaElementSize, src.joints_per_vertex);
-        m_attr_joint_weights.SetMetadata(mqusdMetaElementSize, src.joints_per_vertex);
+        m_attr_joint_indices.SetMetadata(UsdGeomTokens->elementSize, src.joints_per_vertex);
+        m_attr_joint_weights.SetMetadata(UsdGeomTokens->elementSize, src.joints_per_vertex);
 
         // skinning data can be assumed not time sampled. so, read it at this point.
 
         if (is_uniform(src.joint_indices.cdata(), src.joint_indices.size(), src.joints_per_vertex) &&
             is_uniform(src.joint_weights.cdata(), src.joint_weights.size(), src.joints_per_vertex))
         {
-            m_attr_joint_indices.SetMetadata(mqusdMetaInterpolation, mqusdInterpolationConstant);
-            m_attr_joint_weights.SetMetadata(mqusdMetaInterpolation, mqusdInterpolationConstant);
+            m_attr_joint_indices.SetMetadata(UsdGeomTokens->interpolation, UsdGeomTokens->constant);
+            m_attr_joint_weights.SetMetadata(UsdGeomTokens->interpolation, UsdGeomTokens->constant);
             m_joint_indices.assign(src.joint_indices.begin(), src.joint_indices.begin() + src.joints_per_vertex);
             m_joint_weights.assign(src.joint_weights.begin(), src.joint_weights.begin() + src.joints_per_vertex);
         }
         else {
-            m_attr_joint_indices.SetMetadata(mqusdMetaInterpolation, mqusdInterpolationVertex);
-            m_attr_joint_weights.SetMetadata(mqusdMetaInterpolation, mqusdInterpolationVertex);
+            m_attr_joint_indices.SetMetadata(UsdGeomTokens->interpolation, UsdGeomTokens->vertex);
+            m_attr_joint_weights.SetMetadata(UsdGeomTokens->interpolation, UsdGeomTokens->vertex);
             m_joint_indices.assign(src.joint_indices.begin(), src.joint_indices.end());
             m_joint_weights.assign(src.joint_weights.begin(), src.joint_weights.end());
         }
@@ -300,14 +327,14 @@ void USDMeshNode::beforeWrite()
         if (src.bind_transform != float4x4::identity()) {
             GfMatrix4d data;
             ((double4x4&)data).assign(src.bind_transform);
-            m_attr_bind_transform = m_prim.CreateAttribute(mqusdAttrBindTransform, SdfValueTypeNames->Matrix4d, false);
+            m_attr_bind_transform = m_prim.CreateAttribute(UsdSkelTokens->primvarsSkelGeomBindTransform, SdfValueTypeNames->Matrix4d, false);
             m_attr_bind_transform.Set(data);
         }
     }
 
     // blendshapes
     if (!src.blendshapes.empty()) {
-        auto rel_blendshapes = m_prim.CreateRelationship(mqusdRelBlendshapeTargets, false);
+        auto rel_blendshapes = m_prim.CreateRelationship(UsdSkelTokens->skelBlendShapeTargets, false);
         SdfPathVector targets;
         for(auto* blendshape : src.blendshapes)
             targets.push_back(SdfPath(blendshape->getPath()));
@@ -357,6 +384,12 @@ USDBlendshapeNode::USDBlendshapeNode(USDNode* parent, UsdPrim prim)
     setNode(new BlendshapeNode(parent ? parent->m_node : nullptr));
 }
 
+USDBlendshapeNode::USDBlendshapeNode(Node* n, UsdPrim prim)
+    : super(n, prim)
+{
+    m_blendshape = UsdSkelBlendShape(prim);
+}
+
 void USDBlendshapeNode::beforeRead()
 {
     super::beforeRead();
@@ -404,13 +437,18 @@ USDSkelRootNode::USDSkelRootNode(USDNode* parent, UsdPrim prim)
     setNode(new SkelRootNode(parent ? parent->m_node : nullptr));
 }
 
+USDSkelRootNode::USDSkelRootNode(Node* n, UsdPrim prim)
+    : super(n, prim)
+{
+}
+
 void USDSkelRootNode::beforeRead()
 {
     super::beforeRead();
 
     // resolve skeleton
     auto& dst = *static_cast<SkelRootNode*>(m_node);
-    auto rel_skel = m_prim.GetRelationship(mqusdRelSkeleton);
+    auto rel_skel = m_prim.GetRelationship(UsdSkelTokens->skelSkeleton);
     if (rel_skel) {
         SdfPathVector paths;
         rel_skel.GetTargets(&paths);
@@ -438,7 +476,7 @@ void USDSkelRootNode::beforeWrite()
 
     auto& src = *static_cast<SkelRootNode*>(m_node);
     if (src.skeleton) {
-        auto rel_skel = m_prim.CreateRelationship(mqusdRelSkeleton, false);
+        auto rel_skel = m_prim.CreateRelationship(UsdSkelTokens->skelSkeleton, false);
 
         SdfPathVector targets;
         targets.push_back(SdfPath(src.skeleton->getPath()));
@@ -453,6 +491,12 @@ USDSkeletonNode::USDSkeletonNode(USDNode* parent, UsdPrim prim)
     m_skel = UsdSkelSkeleton(prim);
 
     setNode(new SkeletonNode(parent ? parent->m_node : nullptr));
+}
+
+USDSkeletonNode::USDSkeletonNode(Node* n, UsdPrim prim)
+    : super(n, prim)
+{
+    m_skel = UsdSkelSkeleton(prim);
 }
 
 void USDSkeletonNode::beforeRead()
@@ -550,6 +594,12 @@ USDMaterialNode::USDMaterialNode(USDNode* parent, UsdPrim prim)
     m_material = UsdShadeMaterial(prim);
 
     setNode(new MaterialNode(parent ? parent->m_node : nullptr));
+}
+
+USDMaterialNode::USDMaterialNode(Node* n, UsdPrim prim)
+    : super(n, prim)
+{
+    m_material = UsdShadeMaterial(prim);
 }
 
 void USDMaterialNode::read(double time)
@@ -775,6 +825,41 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
         m_scene->nodes.push_back(NodePtr(ret->m_node));
     }
     return ret ? ret->m_node : nullptr;
+}
+
+template<class NodeT>
+USDNode* USDScene::wrapNodeImpl(Node* node)
+{
+    USDNode* usd_parent = nullptr;
+    std::string path = SanitizeNodePath(node->getPath());
+    auto prim = m_stage->DefinePrim(SdfPath(path), TfToken(NodeT::getUsdTypeName()));
+    if (prim) {
+        auto ret = new NodeT(node, prim);
+        m_node_table[path] = ret;
+        return ret;
+    }
+    return nullptr;
+}
+
+bool USDScene::wrapNode(Node* node)
+{
+    USDNode* ret = nullptr;
+    switch (node->getType()) {
+#define Case(E, T) case Node::Type::E: ret = wrapNodeImpl<T>(node); break;
+        Case(Mesh, USDMeshNode);
+        Case(Blendshape, USDBlendshapeNode);
+        Case(SkelRoot, USDSkelRootNode);
+        Case(Skeleton, USDSkeletonNode);
+        Case(Material, USDMaterialNode);
+        Case(Xform, USDXformNode);
+#undef Case
+    default: break;
+    }
+
+    if (ret) {
+        m_nodes.push_back(USDNodePtr(ret));
+    }
+    return ret;
 }
 
 USDNode* USDScene::findNode(const std::string& path)

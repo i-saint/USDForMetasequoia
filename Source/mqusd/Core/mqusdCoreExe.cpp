@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 #endif
 
     std::string usd_path;
-    std::string out_path;
+    std::string file_path;
     double time = std::numeric_limits<double>::quiet_NaN();
     bool out = false;
     for (int ai = 1; ai < argc;) {
@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
             if (strcmp(argv[ai], "-o") == 0)
                 out = true;
             if (strcmp(argv[ai], "-f") == 0)
-                out_path = argv[++ai];
+                file_path = argv[++ai];
             if (strcmp(argv[ai], "-t") == 0)
                 sscanf(argv[++ai], "%lf", &time);
         }
@@ -43,18 +43,35 @@ int main(int argc, char *argv[])
 
     mqusd::SetModuleDir(mu::GetCurrentModuleDirectory());
     auto scene = mqusd::CreateUSDScene();
-    if (!scene || !scene->open(usd_path.c_str()))
+    if (!scene)
         return 1;
 
     if (out) {
-        scene->deserialize(std::cin);
-        scene->write(time);
-        scene->save();
+        try {
+            if (!scene->create(usd_path.c_str()))
+                return 1;
+
+            if (!file_path.empty()) {
+                std::fstream f(file_path.c_str(), std::ios::in | std::ios::binary);
+                scene->deserialize(f);
+            }
+            else {
+                scene->deserialize(std::cin);
+            }
+            scene->write(time);
+            scene->save();
+        }
+        catch (std::exception& e) {
+            printf("error: %s\n", e.what());
+        }
     }
     else {
+        if (!scene->open(usd_path.c_str()))
+            return 1;
+
         scene->read(time);
-        if (!out_path.empty()) {
-            std::fstream of(out_path.c_str(), std::ios::out | std::ios::binary);
+        if (!file_path.empty()) {
+            std::fstream of(file_path.c_str(), std::ios::out | std::ios::binary);
             scene->serialize(of);
         }
         else {

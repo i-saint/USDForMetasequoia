@@ -3,19 +3,6 @@
 #define mqusdAttrMaterialIDs    TfToken("materialIds")
 #define mqusdAttrUV             TfToken("primvars:st")
 #define mqusdAttrUVIndices      TfToken("primvars:st:indices")
-#define mqusdAttrBindTransform  TfToken("primvars:skel:geomBindTransform")
-#define mqusdAttrJoints         TfToken("primvars:skel:joints")
-#define mqusdAttrJointIndices   TfToken("primvars:skel:jointIndices")
-#define mqusdAttrJointWeights   TfToken("primvars:skel:jointWeights")
-
-#define mqusdRelBlendshapeTargets   TfToken("skel:blendShapeTargets")
-#define mqusdRelSkeleton            TfToken("skel:skeleton")
-
-#define mqusdMetaElementSize        TfToken("elementSize")
-#define mqusdMetaInterpolation      TfToken("interpolation")
-
-#define mqusdInterpolationVertex    TfToken("vertex")
-#define mqusdInterpolationConstant  TfToken("constant")
 
 #define mqusdMtlTarget          "metasequoia"
 #define mqusdMtlShaderClassic   "classic"

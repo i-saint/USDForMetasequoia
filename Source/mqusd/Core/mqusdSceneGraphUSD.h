@@ -17,6 +17,7 @@ public:
     DefSchemaTraits(UsdSchemaBase, "");
 
     USDNode(USDNode* parent, UsdPrim prim, bool create_node);
+    USDNode(Node* n, UsdPrim prim);
     virtual ~USDNode();
 
     virtual void beforeRead();
@@ -62,6 +63,7 @@ public:
     DefSchemaTraits(UsdGeomXformable, "Xform");
 
     USDXformNode(USDNode* parent, UsdPrim prim, bool create_node = true);
+    USDXformNode(Node* n, UsdPrim prim);
     void read(double time) override;
     void write(double time) const override;
 
@@ -78,6 +80,7 @@ public:
     DefSchemaTraits(UsdGeomMesh, "Mesh");
 
     USDMeshNode(USDNode* parent, UsdPrim prim);
+    USDMeshNode(Node* n, UsdPrim prim);
     void beforeRead() override;
     void read(double time) override;
     void beforeWrite() override;
@@ -114,6 +117,7 @@ public:
     DefSchemaTraits(UsdSkelBlendShape, "BlendShape");
 
     USDBlendshapeNode(USDNode* parent, UsdPrim prim);
+    USDBlendshapeNode(Node* n, UsdPrim prim);
     void beforeRead() override;
     void beforeWrite() override;
 
@@ -134,6 +138,7 @@ public:
     DefSchemaTraits(UsdSkelRoot, "SkelRoot");
 
     USDSkelRootNode(USDNode* parent, UsdPrim prim);
+    USDSkelRootNode(Node* n, UsdPrim prim);
     void beforeRead() override;
     void beforeWrite() override;
 
@@ -149,6 +154,7 @@ public:
     DefSchemaTraits(UsdSkelSkeleton, "Skeleton");
 
     USDSkeletonNode(USDNode* parent, UsdPrim prim);
+    USDSkeletonNode(Node* n, UsdPrim prim);
     void beforeRead() override;
     void read(double time) override;
     void beforeWrite() override;
@@ -165,6 +171,7 @@ class USDInstancerNode : USDXformNode
 using super = USDXformNode;
 public:
     USDInstancerNode(USDNode* parent, UsdPrim prim);
+    USDInstancerNode(Node* n, UsdPrim prim);
     void read(double time) override;
     void write(double time) const override;
 };
@@ -177,6 +184,7 @@ public:
     DefSchemaTraits(UsdShadeMaterial, "Material");
 
     USDMaterialNode(USDNode* parent, UsdPrim prim);
+    USDMaterialNode(Node* n, UsdPrim prim);
     void read(double time) override;
     void write(double time) const override;
 
@@ -200,13 +208,14 @@ public:
     void read(double time) override;
     void write(double time) const override;
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
+    bool wrapNode(Node* node) override;
 
     USDNode* findNode(const std::string& path);
 
 private:
     void constructTree(USDNode* n);
-    template<class NodeT>
-    USDNode* createNodeImpl(USDNode*parent, std::string path);
+    template<class NodeT> USDNode* createNodeImpl(USDNode* parent, std::string path);
+    template<class NodeT> USDNode* wrapNodeImpl(Node* node);
 
     UsdStageRefPtr m_stage;
     std::vector<USDNodePtr> m_nodes;

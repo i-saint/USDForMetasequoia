@@ -26,6 +26,25 @@ std::string SanitizeNodePath(const std::string& path)
     return ret;
 }
 
+std::string GetParentPath(const std::string& path)
+{
+    auto pos = path.find_last_of('/');
+    if (pos == std::string::npos || pos == 0)
+        return "";
+    else
+        return std::string(path.begin(), path.begin() + pos);
+}
+
+std::string GetLeafName(const std::string& path)
+{
+    auto pos = path.find_last_of('/');
+    if (pos == std::string::npos)
+        return path;
+    else
+        return std::string(path.begin() + 1, path.end());
+}
+
+
 static uint32_t GenID()
 {
     static uint32_t s_seed;
@@ -58,6 +77,9 @@ void Node::deserialize(std::istream& is)
 #define Body(V) read(is, V);
     EachMember(Body)
 #undef Body
+}
+void Node::resolve(Scene& scene)
+{
 }
 #undef EachMember
 
@@ -541,7 +563,7 @@ void Joint::deserialize(std::istream& is)
 
 JointPtr Joint::create(std::istream& is)
 {
-    auto ret = std::shared_ptr<Joint>();
+    auto ret = std::make_shared<Joint>();
     ret->deserialize(is);
     return ret;
 }
@@ -553,11 +575,7 @@ Joint::Joint()
 Joint::Joint(const std::string& p)
     : path(p)
 {
-    auto pos = path.find_last_of('/');
-    if (pos == std::string::npos)
-        name = path;
-    else
-        name = std::string(path.begin() + pos + 1, path.end());
+    name = GetLeafName(p);
 }
 
 std::tuple<float3, quatf, float3> Joint::getLocalTRS() const
@@ -656,9 +674,8 @@ Joint* SkeletonNode::addJoint(const std::string& path_)
     joints.push_back(JointPtr(ret));
 
     // handle parenting
-    auto pos = path.find_last_of('/');
-    if (pos != std::string::npos) {
-        auto parent_path = std::string(path.begin(), path.begin() + pos);
+    auto parent_path = GetParentPath(path);
+    if (!parent_path.empty()) {
         if (auto parent = findJointByPath(parent_path)) {
             ret->parent = parent;
             parent->children.push_back(ret);
@@ -755,6 +772,15 @@ void Scene::deserialize(std::istream& is)
 #define Body(V) mqusd::read(is, V);
     EachMember(Body)
 #undef Body
+
+    for (auto& n : nodes) {
+        n->resolve(*this);
+        classifyNode(n.get());
+    }
+    if (impl) {
+        for (auto& n : nodes)
+            impl->wrapNode(n.get());
+    }
 }
 #undef EachMember
 
@@ -774,27 +800,29 @@ Scene::~Scene()
     close();
 }
 
+void Scene::classifyNode(Node* node)
+{
+    switch (node->getType()) {
+    case Node::Type::Mesh:
+        mesh_nodes.push_back(static_cast<MeshNode*>(node));
+        break;
+    case Node::Type::Skeleton:
+        skeleton_nodes.push_back(static_cast<SkeletonNode*>(node));
+        break;
+    case Node::Type::Material:
+        material_nodes.push_back(static_cast<MaterialNode*>(node));
+        break;
+    default:
+        break;
+    }
+}
+
 bool Scene::open(const char* path_)
 {
     if (impl && impl->open(path_)) {
         path = path_;
-
-        for (auto& node : nodes) {
-            switch (node->getType()) {
-            case Node::Type::Mesh:
-                mesh_nodes.push_back(static_cast<MeshNode*>(node.get()));
-                break;
-            case Node::Type::Skeleton:
-                skeleton_nodes.push_back(static_cast<SkeletonNode*>(node.get()));
-                break;
-            case Node::Type::Material:
-                material_nodes.push_back(static_cast<MaterialNode*>(node.get()));
-                break;
-            default:
-                break;
-            }
-        }
-
+        for (auto& n : nodes)
+            classifyNode(n.get());
         return true;
     }
     return false;
@@ -824,6 +852,7 @@ void Scene::close()
     path.clear();
     root_node = nullptr;
     mesh_nodes.clear();
+    skeleton_nodes.clear();
     material_nodes.clear();
     nodes.clear();
 }
@@ -844,8 +873,7 @@ Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
 {
     if (impl) {
         auto ret = impl->createNode(parent, name, type);
-        if (type == Node::Type::Mesh)
-            mesh_nodes.push_back(static_cast<MeshNode*>(ret));
+        classifyNode(ret);
         return ret;
     }
     return nullptr;
