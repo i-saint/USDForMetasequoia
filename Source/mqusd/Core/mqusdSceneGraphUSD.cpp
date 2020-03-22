@@ -78,6 +78,10 @@ USDRootNode::USDRootNode(UsdPrim prim)
     setNode(new RootNode());
 }
 
+USDRootNode::USDRootNode(Node* n, UsdPrim prim)
+    : super(n, prim)
+{
+}
 
 USDXformNode::USDXformNode(USDNode* parent, UsdPrim prim, bool create_node)
     : super(parent, prim, false)
@@ -840,11 +844,20 @@ USDNode* USDScene::wrapNodeImpl(Node* node)
 {
     USDNode* usd_parent = nullptr;
     std::string path = SanitizeNodePath(node->getPath());
-    auto prim = m_stage->DefinePrim(SdfPath(path), TfToken(NodeT::getUsdTypeName()));
+
+    UsdPrim prim;
+    if (path == "/")
+        prim = m_stage->GetPseudoRoot();
+    else
+        prim = m_stage->DefinePrim(SdfPath(path), TfToken(NodeT::getUsdTypeName()));
+
     if (prim) {
         auto ret = new NodeT(node, prim);
         m_node_table[path] = ret;
         return ret;
+    }
+    else {
+        mqusdDbgPrint("USDScene::wrapNodeImpl(): failed to create prim %s\n", path.c_str());
     }
     return nullptr;
 }
@@ -854,6 +867,7 @@ bool USDScene::wrapNode(Node* node)
     USDNode* ret = nullptr;
     switch (node->getType()) {
 #define Case(E, T) case Node::Type::E: ret = wrapNodeImpl<T>(node); break;
+        Case(Root, USDRootNode);
         Case(Mesh, USDMeshNode);
         Case(Blendshape, USDBlendshapeNode);
         Case(SkelRoot, USDSkelRootNode);

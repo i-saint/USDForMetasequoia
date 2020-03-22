@@ -53,6 +53,7 @@ class USDRootNode : public USDNode
 using super = USDNode;
 public:
     USDRootNode(UsdPrim prim);
+    USDRootNode(Node* n, UsdPrim prim);
 };
 
 

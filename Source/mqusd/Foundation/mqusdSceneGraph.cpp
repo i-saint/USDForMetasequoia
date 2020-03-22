@@ -29,7 +29,7 @@ std::string SanitizeNodePath(const std::string& path)
 std::string GetParentPath(const std::string& path)
 {
     auto pos = path.find_last_of('/');
-    if (pos == std::string::npos)
+    if (pos == std::string::npos || (pos == 0 && path.size() == 1))
         return "";
     else if (pos == 0)
         return "/";
@@ -123,7 +123,8 @@ Node::Node(Node* p, const char* name)
             path = parent->path;
         if (path != "/")
             path += "/";
-        path += name;
+        if (std::strcmp(name, "/") != 0)
+            path += name;
     }
 }
 
@@ -162,7 +163,7 @@ NodeT* Node::findParent()
 
 
 RootNode::RootNode()
-    : super(nullptr, nullptr)
+    : super(nullptr, "/")
 {
 }
 
@@ -252,7 +253,8 @@ void XformNode::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 
 #define EachMember(F)\
     F(points) F(normals) F(uvs) F(colors) F(material_ids) F(counts) F(indices)\
-    F(blendshape_paths) F(skeleton_path) F(joint_paths) F(joints_per_vertex) F(joint_indices) F(joint_weights) F(bind_transform)
+    F(joints_per_vertex) F(joint_indices) F(joint_weights) F(bind_transform)\
+    F(blendshape_paths) F(skeleton_path) F(joint_paths)
 
 void MeshNode::serialize(std::ostream& os)
 {

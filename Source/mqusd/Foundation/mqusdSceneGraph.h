@@ -254,14 +254,14 @@ public:
     SharedVector<int> counts;       // 
     SharedVector<int> indices;
 
-    std::vector<std::string> blendshape_paths;
-    std::string skeleton_path;
-    std::vector<std::string> joint_paths; // paths to joints in skeleton
-
     int joints_per_vertex = 0;
     SharedVector<int> joint_indices;   // size must be points.size() * joints_per_vertex
     SharedVector<float> joint_weights; // 
     float4x4 bind_transform = float4x4::identity();
+
+    std::vector<std::string> blendshape_paths;
+    std::string skeleton_path;
+    std::vector<std::string> joint_paths; // paths to joints in skeleton
 
     // non-serializable
     std::vector<BlendshapeNode*> blendshapes;
