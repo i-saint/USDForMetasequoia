@@ -320,6 +320,8 @@ public:
 mqusdSerializable(Scene);
 mqusdDeclPtr(Scene);
 
+void SetModuleDir(const std::string& v);
+void SetPluginPath(const std::string& v);
 ScenePtr CreateUSDScene();
 
 

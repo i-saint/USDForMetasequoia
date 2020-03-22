@@ -218,4 +218,6 @@ private:
     mutable double m_max_time = 0.0;
 };
 
+ScenePtr CreateUSDSceneInternal();
+
 } // namespace mqusd

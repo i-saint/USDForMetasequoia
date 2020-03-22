@@ -73,7 +73,7 @@ NodePtr Node::create(std::istream& is)
     case Type::Mesh: ret = std::make_shared<MeshNode>(); break;
     case Type::Blendshape: ret = std::make_shared<BlendshapeNode>(); break;
     case Type::SkelRoot: ret = std::make_shared<SkelRootNode>(); break;
-    case Type::Skeleton: ret = std::make_shared<SkelRootNode>(); break;
+    case Type::Skeleton: ret = std::make_shared<SkeletonNode>(); break;
     case Type::Material: ret = std::make_shared<MaterialNode>(); break;
     default:
         throw std::runtime_error("Node::create() failed");
@@ -860,8 +860,23 @@ SceneInterface::~SceneInterface()
 #define mqusdUSDDll muDLLPrefix "usd_ms" muDLLSuffix
 #define mqusdCoreDll muDLLPrefix "mqusdCore" muDLLSuffix
 
+static std::string g_module_dir;
+static std::string g_plugin_path;
 static void* g_core_module;
 static SceneInterface* (*g_mqusdCreateUSDSceneInterface)(Scene* scene);
+
+static std::string GetDefaultModulePath()
+{
+    std::string dir = mu::GetCurrentModuleDirectory();
+#ifdef _WIN32
+    return dir + "/mqusdCore";
+#else
+    return dir;
+#endif
+}
+
+void SetModuleDir(const std::string& v) { g_module_dir = v; }
+void SetPluginPath(const std::string& v) { g_plugin_path = v; }
 
 static void LoadCoreModule()
 {
@@ -869,15 +884,9 @@ static void LoadCoreModule()
     std::call_once(s_flag, []() {
         g_core_module = mu::GetModule(mqusdCoreDll);
         if (!g_core_module) {
-            std::string dir = mu::GetCurrentModuleDirectory();
-#ifdef _WIN32
-            std::string core_dir = dir + "/mqusdCore";
-#else
-            std::string core_dir = dir;
-#endif
-
-            std::string plugin_dir = core_dir + "/usd/plugInfo.json";
-            mu::SetEnv("PXR_PLUGINPATH_NAME", plugin_dir.c_str());
+            std::string core_dir = g_module_dir.empty() ? GetDefaultModulePath() : g_module_dir;
+            std::string plugin_path = g_plugin_path.empty() ? core_dir + "/usd/plugInfo.json" : g_plugin_path;
+            mu::SetEnv("PXR_PLUGINPATH_NAME", plugin_path.c_str());
 
             std::string tbb_dll = core_dir + "/" mqusdTBBDll;
             std::string usd_dll = core_dir + "/" mqusdUSDDll;

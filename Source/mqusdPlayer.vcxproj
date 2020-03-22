@@ -43,9 +43,6 @@
     <ProjectReference Include="mqsdk.vcxproj">
       <Project>{d28511e8-4687-434e-8c18-c23fe683af2f}</Project>
     </ProjectReference>
-    <ProjectReference Include="setup.vcxproj">
-      <Project>{1c5de91b-7ae9-4304-9fa1-0de1aba8c02d}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="NatvisFile.natvis" />

@@ -11,43 +11,40 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqusd\Core\mqusdCore.cpp" />
-    <ClCompile Include="mqusd\Core\mqusdSceneGraphUSD.cpp" />
-    <ClCompile Include="mqusd\mqusd.cpp" />
+    <ClCompile Include="mqusd\Core\mqusdCoreExe.cpp" />
     <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp" />
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mqusd\Core\mqusdCore.h" />
-    <ClInclude Include="mqusd\Core\mqusdSceneGraphUSD.h" />
-    <ClInclude Include="mqusd\Foundation\mqusdSerialization.h" />
-    <ClInclude Include="mqusd\mqusd.h" />
-    <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h" />
     <ClInclude Include="mqusd\pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="NatvisFile.natvis" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshUtils.vcxproj">
       <Project>{fd3fe1ff-abe5-40db-b867-144e9dd9b23c}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Natvis Include="NatvisFile.natvis" />
+    <ProjectReference Include="mqusdCore.vcxproj">
+      <Project>{1268fd59-3699-4e3a-9d67-a0a6a213b8fa}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{1268FD59-3699-4E3A-9D67-A0A6A213B8FA}</ProjectGuid>
+    <ProjectGuid>{C632D2A6-8D87-4688-8C46-FE76D8289490}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>mqusdCore</ProjectName>
+    <ProjectName>mqusdCoreExe</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Debug'">
     <PlatformToolset>v142</PlatformToolset>
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Release'">
     <PlatformToolset>v142</PlatformToolset>
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />

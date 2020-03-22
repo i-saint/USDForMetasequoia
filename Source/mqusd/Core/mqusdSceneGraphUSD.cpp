@@ -783,6 +783,13 @@ USDNode* USDScene::findNode(const std::string& path)
     return it == m_node_table.end() ? nullptr : it->second;
 }
 
+ScenePtr CreateUSDSceneInternal()
+{
+    auto ret = new Scene();
+    ret->impl.reset(new mqusd::USDScene(ret));
+    return ScenePtr(ret);
+}
+
 } // namespace mqusd
 
 mqusdCoreAPI mqusd::SceneInterface* mqusdCreateUSDSceneInterface(mqusd::Scene *scene)
