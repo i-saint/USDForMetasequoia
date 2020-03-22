@@ -48,7 +48,7 @@ public:
     };
     static std::shared_ptr<Node> create(std::istream& is);
 
-    Node(Node* parent);
+    Node(Node* parent, const char *name);
     virtual ~Node();
     virtual Type getType() const;
     virtual void serialize(std::ostream& os) const;
@@ -56,12 +56,13 @@ public:
     virtual void resolve(Scene& scene);
     virtual void convert(const ConvertOptions& opt);
 
+    std::string getName() const;
+    const std::string& getPath() const;
     template<class NodeT> NodeT* findParent();
-    std::string getPath() const;
 
 public:
     // serializable
-    std::string name;
+    std::string path;
     uint32_t id = 0;
 
     // non-serializable
@@ -91,7 +92,7 @@ using super = Node;
 public:
     static const Type node_type = Type::Xform;
 
-    XformNode(Node* parent = nullptr);
+    XformNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
@@ -118,7 +119,7 @@ using super = Node;
 public:
     static const Type node_type = Type::Blendshape;
 
-    BlendshapeNode(Node* parent = nullptr);
+    BlendshapeNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
@@ -142,7 +143,7 @@ using super = XformNode;
 public:
     static const Type node_type = Type::SkelRoot;
 
-    SkelRootNode(Node* parent = nullptr);
+    SkelRootNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
 
 public:
@@ -160,6 +161,8 @@ public:
     Joint(const std::string& path);
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+
+    std::string getName()const;
     std::tuple<float3, quatf, float3> getLocalTRS() const;
     std::tuple<float3, quatf, float3> getGlobalTRS() const;
     void setLocalTRS(const float3& t, const quatf& r, const float3& s);
@@ -167,7 +170,6 @@ public:
 
 public:
     // serializable
-    std::string name;
     std::string path;
     int index = 0;
     float4x4 bindpose = float4x4::identity(); // world space
@@ -189,7 +191,7 @@ using super = XformNode;
 public:
     static const Type node_type = Type::Skeleton;
 
-    SkeletonNode(Node* parent = nullptr);
+    SkeletonNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
@@ -199,7 +201,6 @@ public:
     Joint* addJoint(const std::string& path);
     void updateGlobalMatrices(const float4x4& base);
 
-    Joint* findJointByName(const std::string& name);
     Joint* findJointByPath(const std::string& path);
 
 public:
@@ -214,7 +215,7 @@ using super = XformNode;
 public:
     static const Type node_type = Type::Mesh;
 
-    MeshNode(Node* parent = nullptr);
+    MeshNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
@@ -258,7 +259,7 @@ using super = Node;
 public:
     static const Type node_type = Type::Material;
 
-    MaterialNode(Node* parent = nullptr);
+    MaterialNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;

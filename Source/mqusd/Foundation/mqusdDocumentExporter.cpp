@@ -3,6 +3,32 @@
 
 namespace mqusd {
 
+static std::string GetName(MQObject obj)
+{
+    char buf[256] = "";
+    obj->GetName(buf, sizeof(buf));
+    return buf;
+}
+static std::string GetPath(MQDocument doc, MQObject obj)
+{
+    std::string ret;
+    if (auto parent = doc->GetParentObject(obj))
+        ret += GetPath(doc, parent);
+    ret += '/';
+
+    char buf[256] = "";
+    obj->GetName(buf, sizeof(buf));
+    ret += buf;
+    return ret;
+}
+
+static std::string GetName(MQMaterial obj)
+{
+    char buf[256] = "";
+    obj->GetName(buf, sizeof(buf));
+    return buf;
+}
+
 DocumentExporter::DocumentExporter(MQBasePlugin* plugin, Scene* scene, const ExportOptions* options)
     : m_plugin(plugin)
     , m_scene(scene)
@@ -29,19 +55,6 @@ bool DocumentExporter::initialize(MQDocument doc)
     return true;
 }
 
-
-static inline std::string GetName(MQObject obj)
-{
-    char buf[256] = "";
-    obj->GetName(buf, sizeof(buf));
-    return buf;
-}
-static inline std::string GetName(MQMaterial obj)
-{
-    char buf[256] = "";
-    obj->GetName(buf, sizeof(buf));
-    return buf;
-}
 
 Node* DocumentExporter::findOrCreateNode(UINT mqid)
 {
@@ -191,7 +204,8 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     for (int mi = 0; mi < nmaterials; ++mi) {
         auto& rec = m_material_records[mi];
         rec.mqmaterial = doc->GetMaterial(mi);
-        extractMaterial(rec.mqmaterial, rec.material);
+        rec.material_data = (MaterialNode*)m_scene->createNode(m_root, GetName(rec.mqmaterial).c_str(), Node::Type::Material);
+        extractMaterial(rec.mqmaterial, *rec.material_data);
     }
 
     // skeleton
@@ -267,8 +281,6 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst)
     auto dst_mids = dst.material_ids.data();
     auto dst_counts = dst.counts.data();
     auto dst_indices = dst.indices.data();
-
-    dst.name = GetName(obj);
 
     // points
     obj->GetVertexArray((MQPoint*)dst_points);
@@ -431,7 +443,6 @@ bool DocumentExporter::extractSkeleton(MQDocument doc, SkeletonNode& dst)
 
 bool DocumentExporter::extractMaterial(MQMaterial mtl, MaterialNode& dst)
 {
-    dst.name = GetName(mtl);
     dst.shader = mtl->GetShader();
     dst.use_vertex_color = mtl->GetVertexColor() == MQMATERIAL_VERTEXCOLOR_DIFFUSE;
     dst.double_sided = mtl->GetDoubleSided();

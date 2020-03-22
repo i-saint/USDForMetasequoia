@@ -153,7 +153,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
             bool created;
             auto obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
             if (created) {
-                auto name = mu::ToWCS(rec.node->name);
+                auto name = mu::ToWCS(rec.node->getName());
                 obj->SetName(name.c_str());
             }
             updateMesh(doc, obj, *rec.node);
@@ -168,7 +168,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
                     auto bs = findOrCreateMQObject(doc, rec.blendshape_ids[bi], rec.mqid, created);
                     updateMesh(doc, bs, rec.tmp_mesh);
                     if (created) {
-                        auto name = mu::ToWCS(blendshape->name);
+                        auto name = mu::ToWCS(blendshape->getName());
                         bs->SetName(name.c_str());
                         bs->SetVisible(0);
 #if MQPLUGIN_VERSION >= 0x0470
@@ -324,7 +324,7 @@ bool DocumentImporter::updateSkeleton(MQDocument doc, const SkeletonNode& src)
 
         if (jrec.mqid == 0) {
             MQBoneManager::ADD_BONE_PARAM param;
-            param.name = mu::ToWCS(joint.name);
+            param.name = mu::ToWCS(joint.getName());
             param.pos = (MQPoint&)t;
             if (joint.parent)
                 param.parent_id = ((JointRecord*)joint.parent->userdata)->mqid;
@@ -351,11 +351,11 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
         MQMaterial mqmat = nullptr;
         if (mi < doc->GetMaterialCount()) {
             mqmat = doc->GetMaterial(mi);
-            mqmat->SetName(src.name.c_str());
+            mqmat->SetName(src.getName().c_str());
         }
         else {
             mqmat = MQ_CreateMaterial();
-            mqmat->SetName(src.name.c_str());
+            mqmat->SetName(src.getName().c_str());
             doc->AddMaterial(mqmat);
         }
         mqmat->SetShader(src.shader);

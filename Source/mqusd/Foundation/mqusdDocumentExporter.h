@@ -55,14 +55,14 @@ private:
 
     struct MaterialRecord
     {
-        MQMaterial mqmaterial;
-        MaterialNode material;
+        MQMaterial mqmaterial = nullptr;
+        MaterialNode* material_data = nullptr;
     };
 
     ObjectRecord* findRecord(UINT mqid);
     Node* findOrCreateNode(UINT mqid);
     bool extractMesh(MQObject obj, MeshNode& dst);
-    bool extractSkeleton(MQDocument obj, SkeletonNode& dst);
+    bool extractSkeleton(MQDocument doc, SkeletonNode& dst);
     bool extractMaterial(MQMaterial obj, MaterialNode& dst);
 
     void flush();

@@ -59,7 +59,7 @@ static uint32_t GenID()
 
 
 #define EachMember(F)\
-    F(name) F(id)
+    F(path) F(id)
 
 void Node::serialize(std::ostream& os) const
 {
@@ -106,12 +106,19 @@ NodePtr Node::create(std::istream& is)
     return ret;
 }
 
-Node::Node(Node* p)
+Node::Node(Node* p, const char* name)
     : parent(p)
 {
     id = GenID();
     if (parent)
         parent->children.push_back(this);
+    if (name) {
+        if (parent)
+            path = parent->path;
+        if (path != "/")
+            path += "/";
+        path += name;
+    }
 }
 
 Node::~Node()
@@ -127,16 +134,14 @@ void Node::convert(const ConvertOptions& opt)
 {
 }
 
-std::string Node::getPath() const
+std::string Node::getName() const
 {
-    std::string ret;
-    if (parent)
-        ret += parent->getPath();
-    if (ret.empty() || ret.back() != '/')
-        ret += "/";
-    if (name != "/")
-        ret += name;
-    return ret;
+    return GetLeafName(path);
+}
+
+const std::string& Node::getPath() const
+{
+    return path;
 }
 
 template<class NodeT>
@@ -151,7 +156,7 @@ NodeT* Node::findParent()
 
 
 RootNode::RootNode()
-    : super(nullptr)
+    : super(nullptr, nullptr)
 {
 }
 
@@ -181,8 +186,8 @@ void XformNode::deserialize(std::istream& is)
 }
 #undef EachMember
 
-XformNode::XformNode(Node* p)
-    : super(p)
+XformNode::XformNode(Node* p, const char *name)
+    : super(p, name)
 {
     parent_xform = findParent<XformNode>();
 }
@@ -234,7 +239,8 @@ void XformNode::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 
 
 #define EachMember(F)\
-    F(points) F(normals) F(uvs) F(colors) F(material_ids) F(counts) F(indices)
+    F(points) F(normals) F(uvs) F(colors) F(material_ids) F(counts) F(indices)\
+    F(joints) F(joints_per_vertex) F(joint_indices) F(joint_weights) F(bind_transform)
 
 void MeshNode::serialize(std::ostream& os) const
 {
@@ -253,8 +259,8 @@ void MeshNode::deserialize(std::istream& is)
 }
 #undef EachMember
 
-MeshNode::MeshNode(Node* p)
-    : super(p)
+MeshNode::MeshNode(Node* p, const char* name)
+    : super(p, name)
 {
 }
 
@@ -441,8 +447,8 @@ void BlendshapeNode::deserialize(std::istream& is)
 }
 #undef EachMember
 
-BlendshapeNode::BlendshapeNode(Node* p)
-    : super(p)
+BlendshapeNode::BlendshapeNode(Node* p, const char* name)
+    : super(p, name)
 {
 }
 
@@ -531,8 +537,8 @@ void BlendshapeNode::makeOffsets(const MeshNode& target, const MeshNode& base)
 
 
 
-SkelRootNode::SkelRootNode(Node* parent)
-    : super(parent)
+SkelRootNode::SkelRootNode(Node* parent, const char* name)
+    : super(parent, name)
 {
 }
 
@@ -544,7 +550,7 @@ Node::Type SkelRootNode::getType() const
 
 
 #define EachMember(F)\
-    F(name) F(path) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)
+    F(path) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)
 
 void Joint::serialize(std::ostream& os) const
 {
@@ -575,7 +581,11 @@ Joint::Joint()
 Joint::Joint(const std::string& p)
     : path(p)
 {
-    name = GetLeafName(p);
+}
+
+std::string Joint::getName() const
+{
+    return GetLeafName(path);
 }
 
 std::tuple<float3, quatf, float3> Joint::getLocalTRS() const
@@ -618,8 +628,8 @@ void SkeletonNode::deserialize(std::istream& is)
 }
 #undef EachMember
 
-SkeletonNode::SkeletonNode(Node* parent)
-    : super(parent)
+SkeletonNode::SkeletonNode(Node* parent, const char* name)
+    : super(parent, name)
 {
 }
 
@@ -704,13 +714,6 @@ void SkeletonNode::updateGlobalMatrices(const float4x4& base)
     }
 }
 
-Joint* SkeletonNode::findJointByName(const std::string& name)
-{
-    auto it = std::find_if(joints.begin(), joints.end(),
-        [&name](auto& joint) { return joint->name == name; });
-    return it == joints.end() ? nullptr : (*it).get();
-}
-
 Joint* SkeletonNode::findJointByPath(const std::string& path)
 {
     // rbegin() & rend() because in many cases this method is called to find last added joint
@@ -741,8 +744,8 @@ void MaterialNode::deserialize(std::istream& is)
 }
 #undef EachMember
 
-MaterialNode::MaterialNode(Node* p)
-    : super(p)
+MaterialNode::MaterialNode(Node* p, const char* name)
+    : super(p, name)
 {
 }
 

@@ -4,6 +4,15 @@
 
 namespace mqusd {
 
+template<class NodeT>
+NodeT* CreateNode(USDNode* parent, UsdPrim prim)
+{
+    auto pnode = parent ? parent->m_node : nullptr;
+    return new NodeT(
+        parent ? parent->m_node : nullptr,
+        prim.GetName().GetText());
+}
+
 USDNode::USDNode(USDNode* parent, UsdPrim prim, bool create_node)
     : m_prim(prim)
     , m_parent(parent)
@@ -12,7 +21,7 @@ USDNode::USDNode(USDNode* parent, UsdPrim prim, bool create_node)
     if (m_parent)
         m_parent->m_children.push_back(this);
     if (create_node)
-        setNode(new Node(parent ? parent->m_node : nullptr));
+        setNode(CreateNode<Node>(parent, prim));
 }
 
 USDNode::USDNode(Node* n, UsdPrim prim)
@@ -54,7 +63,6 @@ void USDNode::setNode(Node* node)
 {
     m_node = node;
     m_node->impl = this;
-    m_node->name = m_prim.GetPath().GetName();
 }
 
 std::string USDNode::getPath() const
@@ -76,7 +84,7 @@ USDXformNode::USDXformNode(USDNode* parent, UsdPrim prim, bool create_node)
 {
     m_xform = UsdGeomXformable(prim);
     if (create_node)
-        setNode(new XformNode(parent ? parent->m_node : nullptr));
+        setNode(CreateNode<XformNode>(parent, prim));
 }
 
 USDXformNode::USDXformNode(Node* n, UsdPrim prim)
@@ -129,7 +137,7 @@ USDMeshNode::USDMeshNode(USDNode* parent, UsdPrim prim)
     : super(parent, prim, false)
 {
     m_mesh = UsdGeomMesh(prim);
-    setNode(new MeshNode(parent ? parent->m_node : nullptr));
+    setNode(CreateNode<MeshNode>(parent, prim));
 
 //#ifdef mqusdDebug
 //    for (auto& attr : m_prim.GetAuthoredAttributes()) {
@@ -381,7 +389,7 @@ USDBlendshapeNode::USDBlendshapeNode(USDNode* parent, UsdPrim prim)
 {
     m_blendshape = UsdSkelBlendShape(prim);
 
-    setNode(new BlendshapeNode(parent ? parent->m_node : nullptr));
+    setNode(CreateNode<BlendshapeNode>(parent, prim));
 }
 
 USDBlendshapeNode::USDBlendshapeNode(Node* n, UsdPrim prim)
@@ -434,7 +442,7 @@ void USDBlendshapeNode::beforeWrite()
 USDSkelRootNode::USDSkelRootNode(USDNode* parent, UsdPrim prim)
     : super(parent, prim, false)
 {
-    setNode(new SkelRootNode(parent ? parent->m_node : nullptr));
+    setNode(CreateNode<SkelRootNode>(parent, prim));
 }
 
 USDSkelRootNode::USDSkelRootNode(Node* n, UsdPrim prim)
@@ -490,7 +498,7 @@ USDSkeletonNode::USDSkeletonNode(USDNode* parent, UsdPrim prim)
 {
     m_skel = UsdSkelSkeleton(prim);
 
-    setNode(new SkeletonNode(parent ? parent->m_node : nullptr));
+    setNode(CreateNode<SkeletonNode>(parent, prim));
 }
 
 USDSkeletonNode::USDSkeletonNode(Node* n, UsdPrim prim)
@@ -593,7 +601,7 @@ USDMaterialNode::USDMaterialNode(USDNode* parent, UsdPrim prim)
 {
     m_material = UsdShadeMaterial(prim);
 
-    setNode(new MaterialNode(parent ? parent->m_node : nullptr));
+    setNode(CreateNode<MaterialNode>(parent, prim));
 }
 
 USDMaterialNode::USDMaterialNode(Node* n, UsdPrim prim)
