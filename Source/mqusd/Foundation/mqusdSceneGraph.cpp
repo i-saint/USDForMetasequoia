@@ -29,8 +29,10 @@ std::string SanitizeNodePath(const std::string& path)
 std::string GetParentPath(const std::string& path)
 {
     auto pos = path.find_last_of('/');
-    if (pos == std::string::npos || pos == 0)
+    if (pos == std::string::npos)
         return "";
+    else if (pos == 0)
+        return "/";
     else
         return std::string(path.begin(), path.begin() + pos);
 }
@@ -61,7 +63,7 @@ static uint32_t GenID()
 #define EachMember(F)\
     F(path) F(id)
 
-void Node::serialize(std::ostream& os) const
+void Node::serialize(std::ostream& os)
 {
     auto type = getType();
     write(os, type);
@@ -78,8 +80,11 @@ void Node::deserialize(std::istream& is)
     EachMember(Body)
 #undef Body
 }
-void Node::resolve(Scene& scene)
+void Node::resolve()
 {
+    parent = scene->findNodeByPath(GetParentPath(path));
+    if (parent)
+        parent->children.push_back(this);
 }
 #undef EachMember
 
@@ -109,6 +114,7 @@ NodePtr Node::create(std::istream& is)
 Node::Node(Node* p, const char* name)
     : parent(p)
 {
+    scene = Scene::getCurrent();
     id = GenID();
     if (parent)
         parent->children.push_back(this);
@@ -148,8 +154,8 @@ template<class NodeT>
 NodeT* Node::findParent()
 {
     for (Node* p = parent; p != nullptr; p = p->parent) {
-        if (p->getType() == NodeT::node_type)
-            return (NodeT*)p;
+        if (auto tp = dynamic_cast<NodeT*>(p))
+            return tp;
     }
     return nullptr;
 }
@@ -169,7 +175,7 @@ Node::Type RootNode::getType() const
 #define EachMember(F)\
     F(local_matrix) F(global_matrix)
 
-void XformNode::serialize(std::ostream& os) const
+void XformNode::serialize(std::ostream& os)
 {
     super::serialize(os);
 #define Body(V) write(os, V);
@@ -183,6 +189,12 @@ void XformNode::deserialize(std::istream& is)
 #define Body(V) read(is, V);
     EachMember(Body)
 #undef Body
+}
+
+void XformNode::resolve()
+{
+    super::resolve();
+    parent_xform = findParent<XformNode>();
 }
 #undef EachMember
 
@@ -240,11 +252,20 @@ void XformNode::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 
 #define EachMember(F)\
     F(points) F(normals) F(uvs) F(colors) F(material_ids) F(counts) F(indices)\
-    F(joints) F(joints_per_vertex) F(joint_indices) F(joint_weights) F(bind_transform)
+    F(blendshape_paths) F(skeleton_path) F(joint_paths) F(joints_per_vertex) F(joint_indices) F(joint_weights) F(bind_transform)
 
-void MeshNode::serialize(std::ostream& os) const
+void MeshNode::serialize(std::ostream& os)
 {
     super::serialize(os);
+
+    // preserve paths of related nodes to resolve on deserialize
+    size_t nbs = blendshapes.size();
+    blendshape_paths.resize(nbs);
+    for (size_t bi = 0; bi < nbs; ++bi)
+        blendshape_paths[bi] = blendshapes[bi]->getPath();
+    if (skeleton)
+        skeleton_path = skeleton->getPath();
+
 #define Body(V) write(os, V);
     EachMember(Body)
 #undef Body
@@ -256,6 +277,21 @@ void MeshNode::deserialize(std::istream& is)
 #define Body(V) read(is, V);
     EachMember(Body)
 #undef Body
+}
+void MeshNode::resolve()
+{
+    super::resolve();
+
+    blendshapes.clear();
+    for (auto& path : blendshape_paths) {
+        if (auto bs = scene->findNodeByPath(path)) {
+            blendshapes.push_back(static_cast<BlendshapeNode*>(bs));
+        }
+        else {
+            mqusdDbgPrint("MeshNode::resolve(): node not found %s\n", path.c_str());
+        }
+    }
+    skeleton = static_cast<SkeletonNode*>(scene->findNodeByPath(skeleton_path));
 }
 #undef EachMember
 
@@ -359,10 +395,13 @@ void MeshNode::clear()
     counts.clear();
     indices.clear();
 
+    blendshape_paths.clear();
     blendshapes.clear();
 
     skeleton = nullptr;
-    joints.clear();
+    skeleton_path.clear();
+    joint_paths.clear();
+
     joints_per_vertex = 0;
     joint_indices.clear();
     joint_weights.clear();
@@ -430,7 +469,7 @@ MeshNode* MeshNode::findParentMesh() const
 #define EachMember(F)\
     F(indices) F(point_offsets) F(normal_offsets)
 
-void BlendshapeNode::serialize(std::ostream& os) const
+void BlendshapeNode::serialize(std::ostream& os)
 {
     super::serialize(os);
 #define Body(V) write(os, V);
@@ -537,6 +576,36 @@ void BlendshapeNode::makeOffsets(const MeshNode& target, const MeshNode& base)
 
 
 
+#define EachMember(F)\
+    F(skeleton_path)
+
+void SkelRootNode::serialize(std::ostream& os)
+{
+    super::serialize(os);
+
+    if (skeleton)
+        skeleton_path = skeleton->getPath();
+
+#define Body(V) write(os, V);
+    EachMember(Body)
+#undef Body
+}
+
+void SkelRootNode::deserialize(std::istream& is)
+{
+    super::deserialize(is);
+#define Body(V) read(is, V);
+    EachMember(Body)
+#undef Body
+}
+
+void SkelRootNode::resolve()
+{
+    super::resolve();
+    skeleton = static_cast<SkeletonNode*>(scene->findNodeByPath(skeleton_path));
+}
+#undef EachMember
+
 SkelRootNode::SkelRootNode(Node* parent, const char* name)
     : super(parent, name)
 {
@@ -552,7 +621,7 @@ Node::Type SkelRootNode::getType() const
 #define EachMember(F)\
     F(path) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)
 
-void Joint::serialize(std::ostream& os) const
+void Joint::serialize(std::ostream& os)
 {
 #define Body(V) write(os, V);
     EachMember(Body)
@@ -564,6 +633,14 @@ void Joint::deserialize(std::istream& is)
 #define Body(V) read(is, V);
     EachMember(Body)
 #undef Body
+}
+
+void Joint::resolve()
+{
+    if (auto v = skeleton->findJointByPath(GetParentPath(path))) {
+        parent = v;
+        parent->children.push_back(this);
+    }
 }
 #undef EachMember
 
@@ -578,9 +655,14 @@ Joint::Joint()
 {
 }
 
-Joint::Joint(const std::string& p)
-    : path(p)
+Joint::Joint(SkeletonNode* s, const std::string& p)
+    : skeleton(s)
+    , path(p)
 {
+    if (auto v = skeleton->findJointByPath(GetParentPath(path))) {
+        parent = v;
+        parent->children.push_back(this);
+    }
 }
 
 std::string Joint::getName() const
@@ -611,7 +693,7 @@ void Joint::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 #define EachMember(F)\
     F(joints)
 
-void SkeletonNode::serialize(std::ostream& os) const
+void SkeletonNode::serialize(std::ostream& os)
 {
     super::serialize(os);
 #define Body(V) write(os, V);
@@ -625,6 +707,14 @@ void SkeletonNode::deserialize(std::istream& is)
 #define Body(V) read(is, V);
     EachMember(Body)
 #undef Body
+}
+void SkeletonNode::resolve()
+{
+    super::resolve();
+    for (auto& joint : joints) {
+        joint->skeleton = this;
+        joint->resolve();
+    }
 }
 #undef EachMember
 
@@ -679,18 +769,9 @@ void SkeletonNode::clear()
 Joint* SkeletonNode::addJoint(const std::string& path_)
 {
     auto path = SanitizeNodePath(path_);
-    auto ret = new Joint(path);
+    auto ret = new Joint(this, path);
     ret->index = (int)joints.size();
     joints.push_back(JointPtr(ret));
-
-    // handle parenting
-    auto parent_path = GetParentPath(path);
-    if (!parent_path.empty()) {
-        if (auto parent = findJointByPath(parent_path)) {
-            ret->parent = parent;
-            parent->children.push_back(ret);
-        }
-    }
     return ret;
 }
 
@@ -716,10 +797,10 @@ void SkeletonNode::updateGlobalMatrices(const float4x4& base)
 
 Joint* SkeletonNode::findJointByPath(const std::string& path)
 {
-    // rbegin() & rend() because in many cases this method is called to find last added joint
+    // rbegin() & rend() because in many cases this method is used to find last added joint
     auto it = std::find_if(joints.rbegin(), joints.rend(),
         [&path](auto& joint) { return joint->path == path; });
-    return it == joints.rend() ? nullptr : (*it).get();
+    return it == joints.rend() ? nullptr : it->get();
 }
 
 
@@ -727,7 +808,7 @@ Joint* SkeletonNode::findJointByPath(const std::string& path)
 #define EachMember(F)\
     F(shader) F(use_vertex_color) F(double_sided) F(color) F(diffuse) F(alpha) F(ambient_color) F(specular_color) F(emission_color)
 
-void MaterialNode::serialize(std::ostream& os) const
+void MaterialNode::serialize(std::ostream& os)
 {
     super::serialize(os);
 #define Body(V) write(os, V);
@@ -760,10 +841,17 @@ bool MaterialNode::valid() const
 }
 
 
+static thread_local Scene* g_current_scene;
+
+Scene* Scene::getCurrent()
+{
+    return g_current_scene;
+}
+
 #define EachMember(F)\
     F(path) F(nodes) F(up_axis) F(time_start) F(time_end)
 
-void Scene::serialize(std::ostream& os) const
+void Scene::serialize(std::ostream& os)
 {
 #define Body(V) mqusd::write(os, V);
     EachMember(Body)
@@ -777,7 +865,7 @@ void Scene::deserialize(std::istream& is)
 #undef Body
 
     for (auto& n : nodes) {
-        n->resolve(*this);
+        n->resolve();
         classifyNode(n.get());
     }
     if (impl) {
@@ -822,6 +910,7 @@ void Scene::classifyNode(Node* node)
 
 bool Scene::open(const char* path_)
 {
+    g_current_scene = this;
     if (impl && impl->open(path_)) {
         path = path_;
         for (auto& n : nodes)
@@ -833,6 +922,7 @@ bool Scene::open(const char* path_)
 
 bool Scene::create(const char* path_)
 {
+    g_current_scene = this;
     if (impl && impl->create(path_)) {
         path = path_;
         return true;
@@ -862,18 +952,39 @@ void Scene::close()
 
 void Scene::read(double time)
 {
+    g_current_scene = this;
     if (impl)
         impl->read(time);
 }
 
 void Scene::write(double time) const
 {
+    g_current_scene = const_cast<Scene*>(this);
     if (impl)
         impl->write(time);
 }
 
+Node* Scene::findNodeByID(uint32_t id)
+{
+    if (id == 0)
+        return nullptr;
+
+    auto it = std::find_if(nodes.begin(), nodes.end(), [id](NodePtr& n) { return n->id == id; });
+    return it == nodes.end() ? nullptr : it->get();
+}
+
+Node* Scene::findNodeByPath(const std::string& path)
+{
+    if (path.empty())
+        return nullptr;
+
+    auto it = std::find_if(nodes.begin(), nodes.end(), [&path](NodePtr& n) { return n->path == path; });
+    return it == nodes.end() ? nullptr : it->get();
+}
+
 Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
 {
+    g_current_scene = this;
     if (impl) {
         auto ret = impl->createNode(parent, name, type);
         classifyNode(ret);

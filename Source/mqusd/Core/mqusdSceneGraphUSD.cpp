@@ -54,7 +54,7 @@ void USDNode::beforeWrite()
 {
 }
 
-void USDNode::write(double time) const
+void USDNode::write(double time)
 {
 
 }
@@ -111,7 +111,7 @@ void USDXformNode::read(double time)
         dst.global_matrix = dst.local_matrix;
 }
 
-void USDXformNode::write(double time) const
+void USDXformNode::write(double time)
 {
     super::write(time);
 
@@ -201,7 +201,7 @@ void USDMeshNode::beforeRead()
         VtArray<TfToken> data;
         m_attr_joints.Get(&data);
         for (auto& t : data)
-            dst.joints.push_back(t.GetString());
+            dst.joint_paths.push_back(t.GetString());
     }
     if (m_attr_joint_indices && m_attr_joint_weights) {
         TfToken interpolation;
@@ -350,7 +350,7 @@ void USDMeshNode::beforeWrite()
     }
 }
 
-void USDMeshNode::write(double time) const
+void USDMeshNode::write(double time)
 {
     super::write(time);
 
@@ -587,7 +587,7 @@ void USDSkeletonNode::beforeWrite()
     }
 }
 
-void USDSkeletonNode::write(double time) const
+void USDSkeletonNode::write(double time)
 {
     super::write(time);
 
@@ -616,7 +616,7 @@ void USDMaterialNode::read(double time)
     // todo
 }
 
-void USDMaterialNode::write(double time) const
+void USDMaterialNode::write(double time)
 {
     super::write(time);
     // todo
@@ -772,7 +772,7 @@ void USDScene::read(double time)
         n->read(time);
 }
 
-void USDScene::write(double time) const
+void USDScene::write(double time)
 {
     s_current_scene = const_cast<USDScene*>(this);
 

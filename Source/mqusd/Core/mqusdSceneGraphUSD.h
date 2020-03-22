@@ -24,7 +24,7 @@ public:
     virtual void read(double time);
 
     virtual void beforeWrite();
-    virtual void write(double time) const;
+    virtual void write(double time);
 
     void setNode(Node *node);
     std::string getPath() const;
@@ -65,11 +65,11 @@ public:
     USDXformNode(USDNode* parent, UsdPrim prim, bool create_node = true);
     USDXformNode(Node* n, UsdPrim prim);
     void read(double time) override;
-    void write(double time) const override;
+    void write(double time) override;
 
 private:
-    mutable UsdGeomXformable m_xform;
-    mutable std::vector<UsdGeomXformOp> m_xf_ops;
+    UsdGeomXformable m_xform;
+    std::vector<UsdGeomXformOp> m_xf_ops;
 };
 
 
@@ -84,10 +84,10 @@ public:
     void beforeRead() override;
     void read(double time) override;
     void beforeWrite() override;
-    void write(double time) const override;
+    void write(double time) override;
 
 private:
-    mutable UsdGeomMesh m_mesh;
+    UsdGeomMesh m_mesh;
 
     UsdAttribute m_attr_uv;
     UsdAttribute m_attr_uv_indices;
@@ -98,15 +98,15 @@ private:
     UsdAttribute m_attr_bind_transform;
 
     // sample holder
-    mutable VtArray<int> m_counts;
-    mutable VtArray<int> m_indices;
-    mutable VtArray<GfVec3f> m_points;
-    mutable VtArray<GfVec3f> m_normals;
-    mutable VtArray<GfVec2f> m_uvs;
-    mutable VtArray<int> m_uv_indices;
-    mutable VtArray<int> m_material_ids;
-    mutable VtArray<int> m_joint_indices;
-    mutable VtArray<float> m_joint_weights;
+    VtArray<int> m_counts;
+    VtArray<int> m_indices;
+    VtArray<GfVec3f> m_points;
+    VtArray<GfVec3f> m_normals;
+    VtArray<GfVec2f> m_uvs;
+    VtArray<int> m_uv_indices;
+    VtArray<int> m_material_ids;
+    VtArray<int> m_joint_indices;
+    VtArray<float> m_joint_weights;
 };
 
 
@@ -122,12 +122,12 @@ public:
     void beforeWrite() override;
 
 private:
-    mutable UsdSkelBlendShape m_blendshape;
+    UsdSkelBlendShape m_blendshape;
 
     // sample holder
-    mutable VtArray<int> m_point_indices;
-    mutable VtArray<GfVec3f> m_point_offsets;
-    mutable VtArray<GfVec3f> m_normal_offsets;
+    VtArray<int> m_point_indices;
+    VtArray<GfVec3f> m_point_offsets;
+    VtArray<GfVec3f> m_normal_offsets;
 };
 
 
@@ -158,10 +158,10 @@ public:
     void beforeRead() override;
     void read(double time) override;
     void beforeWrite() override;
-    void write(double time) const override;
+    void write(double time) override;
 
 private:
-    mutable UsdSkelSkeleton m_skel;
+    UsdSkelSkeleton m_skel;
     UsdSkelCache m_skel_cache;
 };
 
@@ -173,7 +173,7 @@ public:
     USDInstancerNode(USDNode* parent, UsdPrim prim);
     USDInstancerNode(Node* n, UsdPrim prim);
     void read(double time) override;
-    void write(double time) const override;
+    void write(double time) override;
 };
 
 
@@ -186,7 +186,7 @@ public:
     USDMaterialNode(USDNode* parent, UsdPrim prim);
     USDMaterialNode(Node* n, UsdPrim prim);
     void read(double time) override;
-    void write(double time) const override;
+    void write(double time) override;
 
 private:
     UsdShadeMaterial m_material;
@@ -206,7 +206,7 @@ public:
     bool save() override;
     void close() override;
     void read(double time) override;
-    void write(double time) const override;
+    void write(double time) override;
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
     bool wrapNode(Node* node) override;
 
@@ -223,8 +223,8 @@ private:
     USDRootNode* m_root = nullptr;
 
     Scene* m_scene = nullptr;
-    mutable int m_frame = 0;
-    mutable double m_max_time = 0.0;
+    int m_frame = 0;
+    double m_max_time = 0.0;
 };
 
 ScenePtr CreateUSDSceneInternal();

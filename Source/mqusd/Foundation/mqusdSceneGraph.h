@@ -51,9 +51,9 @@ public:
     Node(Node* parent, const char *name);
     virtual ~Node();
     virtual Type getType() const;
-    virtual void serialize(std::ostream& os) const;
+    virtual void serialize(std::ostream& os);
     virtual void deserialize(std::istream& is);
-    virtual void resolve(Scene& scene);
+    virtual void resolve();
     virtual void convert(const ConvertOptions& opt);
 
     std::string getName() const;
@@ -66,9 +66,11 @@ public:
     uint32_t id = 0;
 
     // non-serializable
-    void* impl = nullptr;
+    Scene* scene = nullptr;
     Node* parent = nullptr;
     std::vector<Node*> children;
+
+    void* impl = nullptr;
     void* userdata = nullptr;
 };
 mqusdSerializable(Node);
@@ -94,8 +96,9 @@ public:
 
     XformNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os) const override;
+    void serialize(std::ostream& os) override;
     void deserialize(std::istream& is) override;
+    void resolve() override;
     void convert(const ConvertOptions& opt) override;
 
     std::tuple<float3, quatf, float3> getLocalTRS() const;
@@ -121,7 +124,7 @@ public:
 
     BlendshapeNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os) const override;
+    void serialize(std::ostream& os) override;
     void deserialize(std::istream& is) override;
     void convert(const ConvertOptions& opt) override;
 
@@ -145,8 +148,14 @@ public:
 
     SkelRootNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
+    void serialize(std::ostream& os) override;
+    void deserialize(std::istream& is) override;
+    void resolve() override;
 
 public:
+    // serializable
+    std::string skeleton_path;
+
     // non-serializable
     SkeletonNode* skeleton = nullptr;
 };
@@ -158,9 +167,10 @@ public:
     static std::shared_ptr<Joint> create(std::istream& is);
 
     Joint();
-    Joint(const std::string& path);
-    void serialize(std::ostream& os) const;
+    Joint(SkeletonNode* skel, const std::string& path);
+    void serialize(std::ostream& os);
     void deserialize(std::istream& is);
+    void resolve();
 
     std::string getName()const;
     std::tuple<float3, quatf, float3> getLocalTRS() const;
@@ -178,6 +188,7 @@ public:
     float4x4 global_matrix = float4x4::identity(); // 
 
     // non-serializable
+    SkeletonNode* skeleton = nullptr;
     Joint* parent = nullptr;
     std::vector<Joint*> children;
     void* userdata = nullptr;
@@ -193,8 +204,9 @@ public:
 
     SkeletonNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os) const override;
+    void serialize(std::ostream& os) override;
     void deserialize(std::istream& is) override;
+    void resolve() override;
     void convert(const ConvertOptions& opt) override;
 
     void clear();
@@ -217,8 +229,9 @@ public:
 
     MeshNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os) const;
+    void serialize(std::ostream& os);
     void deserialize(std::istream& is);
+    void resolve() override;
     void convert(const ConvertOptions& opt) override;
     void applyTransform(const float4x4& v);
     void toWorldSpace();
@@ -241,7 +254,10 @@ public:
     SharedVector<int> counts;       // 
     SharedVector<int> indices;
 
-    std::vector<std::string> joints; // paths to joints in skeleton
+    std::vector<std::string> blendshape_paths;
+    std::string skeleton_path;
+    std::vector<std::string> joint_paths; // paths to joints in skeleton
+
     int joints_per_vertex = 0;
     SharedVector<int> joint_indices;   // size must be points.size() * joints_per_vertex
     SharedVector<float> joint_weights; // 
@@ -261,7 +277,7 @@ public:
 
     MaterialNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os) const override;
+    void serialize(std::ostream& os) override;
     void deserialize(std::istream& is) override;
     virtual bool valid() const;
 
@@ -290,10 +306,11 @@ class Scene
 {
 public:
     static std::shared_ptr<Scene> create(std::istream& is);
+    static Scene* getCurrent();
 
     Scene();
     ~Scene();
-    void serialize(std::ostream& os) const;
+    void serialize(std::ostream& os);
     void deserialize(std::istream& is);
 
     bool open(const char* path);
@@ -303,6 +320,8 @@ public:
     void read(double time);
     void write(double time) const;
 
+    Node* findNodeByID(uint32_t id);
+    Node* findNodeByPath(const std::string& path);
     Node* createNode(Node *parent, const char *name, Node::Type type);
 
 private:
@@ -340,7 +359,7 @@ public:
     virtual bool save() = 0;
     virtual void close() = 0;
     virtual void read(double time) = 0;
-    virtual void write(double time) const = 0;
+    virtual void write(double time) = 0;
 
     virtual Node* createNode(Node* parent, const char* name, Node::Type type) = 0;
     virtual bool wrapNode(Node* node) = 0;
