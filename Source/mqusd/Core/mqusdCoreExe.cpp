@@ -6,10 +6,10 @@
 #include <iostream>
 using namespace mqusd;
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 #ifdef _WIN32
-    // set stdin&stdout binary mode
+    // set stdin&out binary mode
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);
 #endif
@@ -18,14 +18,21 @@ int main(int argc, char *argv[])
     std::string file_path;
     double time = mqusd::default_time;
     bool mode_export = false;
-    bool version = false;
     bool mode_test = false;
+    bool mode_header= false;
+    bool version = false;
     for (int ai = 1; ai < argc;) {
         if (argv[ai][0] == '-') {
+#ifdef _WIN32
+            if (strcmp(argv[ai], "-hide") == 0)
+                ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+#endif
             if (strcmp(argv[ai], "-version") == 0)
                 version = true;
             if (strcmp(argv[ai], "-export") == 0)
                 mode_export = true;
+            if (strcmp(argv[ai], "-header") == 0)
+                mode_header = true;
             if (strcmp(argv[ai], "-test") == 0)
                 mode_test = true;
             if (strcmp(argv[ai], "-time") == 0)
@@ -47,7 +54,11 @@ int main(int argc, char *argv[])
             "usage: %s [options] path_to_usd.usd\n"
             "   options:\n"
             "    -version: output version info.\n"
+#ifdef _WIN32
+            "    -hide: hide console window.\n"
+#endif
             "    -export: export mode. default is import.\n"
+            "    -header: construct node tree but don't read data.\n"
             "    -test: test to open usd.\n"
             "    -time time_in_seconds\n"
             "    -file path_to_inout_file\n"
@@ -82,7 +93,7 @@ int main(int argc, char *argv[])
             else {
                 scene->deserialize(std::cin);
             }
-            scene->write(time);
+            scene->write(scene->time_current);
             scene->save();
         }
         catch (std::exception& e) {
@@ -93,7 +104,9 @@ int main(int argc, char *argv[])
         if (!scene->open(usd_path.c_str()))
             return 1;
 
-        scene->read(time);
+        if (!mode_header)
+            scene->read(time);
+
         if (!file_path.empty()) {
             std::fstream of(file_path.c_str(), std::ios::out | std::ios::binary);
             scene->serialize(of);

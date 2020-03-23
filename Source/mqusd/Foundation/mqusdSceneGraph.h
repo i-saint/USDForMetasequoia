@@ -30,6 +30,9 @@ struct ConvertOptions
     bool flip_x = false;
     bool flip_yz = false;
     bool flip_faces = false;
+
+    bool operator==(const ConvertOptions& v) const;
+    bool operator!=(const ConvertOptions& v) const;
 };
 
 

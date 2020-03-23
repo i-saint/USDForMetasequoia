@@ -3,6 +3,27 @@
 
 namespace mqusd {
 
+ImportOptions::ImportOptions()
+{
+    scale_factor = 20.0f;
+}
+
+bool ImportOptions::operator==(const ImportOptions& v) const
+{
+    return
+        ConvertOptions::operator==(v) &&
+        import_blendshapes == v.import_blendshapes &&
+        import_skeletons == v.import_skeletons &&
+        import_materials == v.import_materials &&
+        merge_meshes == v.merge_meshes;
+}
+
+bool ImportOptions::operator!=(const ImportOptions& v) const
+{
+    return !(*this == v);
+}
+
+
 DocumentImporter::DocumentImporter(MQBasePlugin* plugin, Scene* scene, const ImportOptions* options)
     : m_plugin(plugin)
     , m_scene(scene)
@@ -40,7 +61,7 @@ bool DocumentImporter::initialize(MQDocument doc)
     if (m_options->import_materials)
         updateMaterials(doc);
 
-    read(doc, 0.0);
+    read(doc, mqusd::default_time);
     return true;
 }
 

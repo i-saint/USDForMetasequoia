@@ -59,6 +59,9 @@ SceneInterface* CreateUSDSceneInterface(Scene* scene)
 
 ScenePtr CreateUSDScene()
 {
+#if defined(_WIN32) && defined(_M_IX86)
+    return CreateUSDScenePipe();
+#else
     LoadCoreModule();
     if (g_mqusdCreateUSDSceneInterface) {
         auto ret = new Scene();
@@ -67,6 +70,7 @@ ScenePtr CreateUSDScene()
     }
     else
         return nullptr;
+#endif
 }
 
 
@@ -89,7 +93,9 @@ public:
 private:
     Scene* m_scene = nullptr;
     std::string m_exe_path;
+    std::string m_usd_path;
     std::shared_ptr<mu::PipeStream> m_pipe;
+    RawVector<char> m_scene_buffer;
 };
 
 
@@ -105,33 +111,63 @@ USDScenePipe::~USDScenePipe()
 {
 }
 
+static void CopyStream(RawVector<char>& dst, std::iostream& src)
+{
+    const int len = 1024 * 1024;
+    if (dst.size() < len)
+        dst.resize_discard(len);
+
+    size_t pos = 0;
+    size_t space = dst.size();
+    for (;;) {
+        src.read(dst.data() + pos, space);
+        if (src.gcount() != space) {
+            dst.resize(pos + src.gcount());
+            break;
+        }
+        else {
+            pos = dst.size();
+            dst.resize(dst.size() * 2);
+            space = dst.size() - pos;
+        }
+    }
+}
+
 bool USDScenePipe::open(const char* path)
 {
     close();
 
-    std::string commnd = m_exe_path;
-    commnd += " \"";
-    commnd += path;
-    commnd += "\"";
-
+    m_usd_path = path;
     m_pipe.reset(new mu::PipeStream());
-    if (!m_pipe->open(commnd.c_str(), std::ios::in | std::ios::binary)) {
+    std::string commnd = m_exe_path;
+    commnd += " -hide -header \"";
+    commnd += m_usd_path;
+    commnd += "\"";
+    if (m_pipe->open(commnd.c_str(), std::ios::in | std::ios::binary)) {
+        CopyStream(m_scene_buffer, *m_pipe);
+        m_pipe.reset();
+
+        mu::MemoryStream stream(m_scene_buffer);
+        m_scene->deserialize(stream);
+        return true;
+    }
+    else {
+        m_pipe.reset();
         return false;
     }
-    return true;
 }
 
 bool USDScenePipe::create(const char* path)
 {
     close();
 
+    m_usd_path = path;
+    m_pipe.reset(new mu::PipeStream());
     std::string commnd = m_exe_path;
-    commnd += " -export \"";
+    commnd += " -hide -export \"";
     commnd += path;
     commnd += "\"";
-
-    m_pipe.reset(new mu::PipeStream());
-    if (!m_pipe->open(commnd.c_str(), std::ios::in | std::ios::binary)) {
+    if (!m_pipe->open(commnd.c_str(), std::ios::out | std::ios::binary)) {
         return false;
     }
     return true;
@@ -150,7 +186,23 @@ void USDScenePipe::close()
 
 void USDScenePipe::read()
 {
-    m_scene->deserialize(*m_pipe);
+    m_pipe.reset(new mu::PipeStream());
+    std::string commnd = m_exe_path;
+
+    if (!std::isnan(m_scene->time_current)) {
+        char buf[128];
+        sprintf(buf, " -time %lf", m_scene->time_current);
+        commnd += buf;
+    }
+    commnd += " -hide \"";
+    commnd += m_usd_path;
+    commnd += "\"";
+    if (m_pipe->open(commnd.c_str(), std::ios::in | std::ios::binary)) {
+        CopyStream(m_scene_buffer, *m_pipe);
+        mu::MemoryStream stream(m_scene_buffer);
+        m_scene->deserialize(stream);
+    }
+    m_pipe.reset();
 }
 
 void USDScenePipe::write()
@@ -170,15 +222,15 @@ bool USDScenePipe::wrapNode(Node* node)
 }
 
 
-SceneInterface* CreateUSDScenePipe(Scene* scene)
+SceneInterface* CreateUSDScenePipeInterface(Scene* scene)
 {
     return new USDScenePipe(scene);
 }
 
-ScenePtr CreateUSDRemoteScene()
+ScenePtr CreateUSDScenePipe()
 {
     auto ret = new Scene();
-    ret->impl.reset(CreateUSDScenePipe(ret));
+    ret->impl.reset(CreateUSDScenePipeInterface(ret));
     return ScenePtr(ret);
 }
 

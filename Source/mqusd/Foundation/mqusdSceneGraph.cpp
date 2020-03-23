@@ -60,6 +60,19 @@ static uint32_t GenID()
     return ++s_seed;
 }
 
+bool ConvertOptions::operator==(const ConvertOptions& v) const
+{
+    return
+        scale_factor == v.scale_factor &&
+        flip_x == v.flip_x &&
+        flip_yz == v.flip_yz &&
+        flip_faces == v.flip_faces;
+}
+
+bool ConvertOptions::operator!=(const ConvertOptions& v) const
+{
+    return !(*this == v);
+}
 
 
 #define EachMember(F)\
@@ -370,13 +383,13 @@ void MeshNode::convert(const ConvertOptions& opt)
 void MeshNode::applyTransform(const float4x4& v)
 {
     if (v != float4x4::identity()) {
-        mu::MulPoints(v, points.cdata(), points.data(), points.size());
-        mu::MulVectors(v, normals.cdata(), normals.data(), normals.size());
+        mu::MulPoints(v, points.data(), points.data(), points.size());
+        mu::MulVectors(v, normals.data(), normals.data(), normals.size());
         bind_transform *= v;
 
         for (auto bs : blendshapes) {
-            mu::MulVectors(v, bs->point_offsets.cdata(), bs->point_offsets.data(), bs->point_offsets.size());
-            mu::MulVectors(v, bs->normal_offsets.cdata(), bs->normal_offsets.data(), bs->normal_offsets.size());
+            mu::MulVectors(v, bs->point_offsets.data(), bs->point_offsets.data(), bs->point_offsets.size());
+            mu::MulVectors(v, bs->normal_offsets.data(), bs->normal_offsets.data(), bs->normal_offsets.size());
         }
     }
 }

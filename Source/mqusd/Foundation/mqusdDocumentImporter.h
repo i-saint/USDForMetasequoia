@@ -11,10 +11,9 @@ struct ImportOptions : public ConvertOptions
     bool import_materials = true;
     bool merge_meshes = false;
 
-    ImportOptions()
-    {
-        scale_factor = 20.0f;
-    }
+    ImportOptions();
+    bool operator==(const ImportOptions& v) const;
+    bool operator!=(const ImportOptions& v) const;
 };
 
 class DocumentImporter
@@ -65,6 +64,9 @@ private:
 
     UINT m_mqobj_id = 0;
     MeshNode m_mesh_merged;
+
+    double m_prev_time = mqusd::default_time;
+    ImportOptions m_prev_options;
 };
 using DocumentImporterPtr = std::shared_ptr<DocumentImporter>;
 

@@ -11,8 +11,7 @@ friend class MemoryStream;
 public:
     static const size_t default_bufsize = 1024 * 128;
 
-    MemoryStreamBuf();
-    MemoryStreamBuf(RawVector<char>&& buf);
+    MemoryStreamBuf(RawVector<char>& buf);
     void reset();
     void resize(size_t n);
     void swap(RawVector<char>& buf);
@@ -23,7 +22,7 @@ public:
     int underflow() override;
     int sync() override;
 
-    RawVector<char> buffer;
+    RawVector<char>& buffer;
     uint64_t wcount = 0;
     uint64_t rcount = 0;
 };
@@ -31,14 +30,10 @@ public:
 class MemoryStream : public std::iostream
 {
 public:
-    MemoryStream();
-    MemoryStream(RawVector<char>&& buf);
+    MemoryStream(RawVector<char>& buf);
     void reset();
     void resize(size_t n);
-    void swap(RawVector<char>& buf);
 
-    const RawVector<char>& getBuffer() const;
-    RawVector<char>&& moveBuffer();
     uint64_t getWCount() const;
     uint64_t getRCount() const;
 
