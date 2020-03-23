@@ -45,7 +45,7 @@ std::string GetLeafName(const std::string& path)
     if (pos == std::string::npos)
         return path;
     else
-        return std::string(path.begin() + 1, path.end());
+        return std::string(path.begin() + pos + 1, path.end());
 }
 
 
@@ -97,33 +97,34 @@ void Node::deserialize(std::istream& is)
 }
 void Node::resolve()
 {
+    children.clear();
     parent = scene->findNodeByPath(GetParentPath(path));
     if (parent)
         parent->children.push_back(this);
 }
 #undef EachMember
 
-NodePtr Node::create(std::istream& is)
+void Node::deserialize(std::istream& is, NodePtr& ret)
 {
     Type type;
     read(is, type);
 
-    NodePtr ret;
-    switch (type) {
-    case Type::Root: ret = std::make_shared<RootNode>(); break;
-    case Type::Xform: ret = std::make_shared<XformNode>(); break;
-    case Type::Mesh: ret = std::make_shared<MeshNode>(); break;
-    case Type::Blendshape: ret = std::make_shared<BlendshapeNode>(); break;
-    case Type::SkelRoot: ret = std::make_shared<SkelRootNode>(); break;
-    case Type::Skeleton: ret = std::make_shared<SkeletonNode>(); break;
-    case Type::Material: ret = std::make_shared<MaterialNode>(); break;
-    default:
-        throw std::runtime_error("Node::create() failed");
-        break;
+    if (!ret) {
+        switch (type) {
+        case Type::Root: ret = std::make_shared<RootNode>(); break;
+        case Type::Xform: ret = std::make_shared<XformNode>(); break;
+        case Type::Mesh: ret = std::make_shared<MeshNode>(); break;
+        case Type::Blendshape: ret = std::make_shared<BlendshapeNode>(); break;
+        case Type::SkelRoot: ret = std::make_shared<SkelRootNode>(); break;
+        case Type::Skeleton: ret = std::make_shared<SkeletonNode>(); break;
+        case Type::Material: ret = std::make_shared<MaterialNode>(); break;
+        default:
+            throw std::runtime_error("Node::create() failed");
+            break;
+        }
     }
     if (ret)
         ret->deserialize(is);
-    return ret;
 }
 
 Node::Node(Node* p, const char* name)
@@ -654,6 +655,7 @@ void Joint::deserialize(std::istream& is)
 
 void Joint::resolve()
 {
+    children.clear();
     if (auto v = skeleton->findJointByPath(GetParentPath(path))) {
         parent = v;
         parent->children.push_back(this);
@@ -661,11 +663,11 @@ void Joint::resolve()
 }
 #undef EachMember
 
-JointPtr Joint::create(std::istream& is)
+void Joint::deserialize(std::istream& is, JointPtr& ret)
 {
-    auto ret = std::make_shared<Joint>();
+    if (!ret)
+        ret = std::make_shared<Joint>();
     ret->deserialize(is);
-    return ret;
 }
 
 Joint::Joint()
@@ -881,10 +883,8 @@ void Scene::deserialize(std::istream& is)
     EachMember(Body)
 #undef Body
 
-    for (auto& n : nodes) {
+    for (auto& n : nodes)
         n->resolve();
-        classifyNode(n.get());
-    }
     if (impl) {
         for (auto& n : nodes)
             impl->wrapNode(n.get());
@@ -892,11 +892,11 @@ void Scene::deserialize(std::istream& is)
 }
 #undef EachMember
 
-ScenePtr Scene::create(std::istream& is)
+void Scene::deserialize(std::istream& is, std::shared_ptr<Scene>& ret)
 {
-    auto ret = std::shared_ptr<Scene>();
+    if (!ret)
+        ret = std::shared_ptr<Scene>();
     ret->deserialize(is);
-    return ret;
 }
 
 Scene::Scene()
@@ -908,30 +908,11 @@ Scene::~Scene()
     close();
 }
 
-void Scene::classifyNode(Node* node)
-{
-    switch (node->getType()) {
-    case Node::Type::Mesh:
-        mesh_nodes.push_back(static_cast<MeshNode*>(node));
-        break;
-    case Node::Type::Skeleton:
-        skeleton_nodes.push_back(static_cast<SkeletonNode*>(node));
-        break;
-    case Node::Type::Material:
-        material_nodes.push_back(static_cast<MaterialNode*>(node));
-        break;
-    default:
-        break;
-    }
-}
-
 bool Scene::open(const char* path_)
 {
     g_current_scene = this;
     if (impl && impl->open(path_)) {
         path = path_;
-        for (auto& n : nodes)
-            classifyNode(n.get());
         return true;
     }
     return false;
@@ -961,9 +942,6 @@ void Scene::close()
 
     path.clear();
     root_node = nullptr;
-    mesh_nodes.clear();
-    skeleton_nodes.clear();
-    material_nodes.clear();
     nodes.clear();
 }
 
@@ -1006,10 +984,8 @@ Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
     g_current_scene = this;
     if (impl) {
         auto ret = impl->createNode(parent, name, type);
-        if (ret) {
+        if (ret)
             nodes.push_back(NodePtr(ret));
-            classifyNode(ret);
-        }
         return ret;
     }
     else {

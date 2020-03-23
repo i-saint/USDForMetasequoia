@@ -33,20 +33,22 @@ DocumentImporter::DocumentImporter(MQBasePlugin* plugin, Scene* scene, const Imp
 
 bool DocumentImporter::initialize(MQDocument doc)
 {
-    size_t nobjs = m_scene->mesh_nodes.size();
+    auto mesh_nodes = m_scene->getNodes<MeshNode>();
+    size_t nobjs = mesh_nodes.size();
     m_obj_records.resize(nobjs);
     for (size_t oi = 0; oi < nobjs; ++oi) {
         auto& rec = m_obj_records[oi];
-        rec.node = m_scene->mesh_nodes[oi];
+        rec.node = mesh_nodes[oi];
         rec.node->userdata = &rec;
         rec.blendshape_ids.resize(rec.node->blendshapes.size());
     }
 
-    size_t nskels = m_scene->skeleton_nodes.size();
+    auto skel_nodes = m_scene->getNodes<SkeletonNode>();
+    size_t nskels = skel_nodes.size();
     m_skel_records.resize(nskels);
     for (size_t si = 0; si < nskels; ++si) {
         auto& rec = m_skel_records[si];
-        rec.node = m_scene->skeleton_nodes[si];
+        rec.node = skel_nodes[si];
         rec.node->userdata = &rec;
 
         size_t njoints = rec.node->joints.size();
@@ -102,7 +104,9 @@ bool DocumentImporter::read(MQDocument doc, double t)
 
     // read scene
     m_scene->read(t);
-    mu::parallel_for_each(m_scene->mesh_nodes.begin(), m_scene->mesh_nodes.end(), [this](MeshNode* n) {
+
+    auto mesh_nodes = m_scene->getNodes<MeshNode>();
+    mu::parallel_for_each(mesh_nodes.begin(), mesh_nodes.end(), [this](MeshNode* n) {
         n->toWorldSpace();
     });
     mu::parallel_for_each(m_scene->nodes.begin(), m_scene->nodes.end(), [this](NodePtr& n) {
@@ -112,7 +116,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
     // reserve materials
     {
         int nmaterials = 0;
-        for (auto n : m_scene->mesh_nodes)
+        for (auto n : mesh_nodes)
             nmaterials = std::max(nmaterials, n->getMaxMaterialID());
 
         int mi = 0;
@@ -151,7 +155,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
         // build merged mesh
         auto& mesh = m_mesh_merged;
         mesh.clear();
-        for (auto n : m_scene->mesh_nodes)
+        for (auto n : mesh_nodes)
             mesh.merge(*n);
         mesh.validate();
 
@@ -365,7 +369,7 @@ bool DocumentImporter::updateSkeleton(MQDocument doc, const SkeletonNode& src)
 
 bool DocumentImporter::updateMaterials(MQDocument doc)
 {
-    auto& material_nodes = m_scene->material_nodes;
+    auto material_nodes = m_scene->getNodes<MaterialNode>();
     int nmaterials = (int)material_nodes.size();
     for (int mi = 0; mi < nmaterials; ++mi) {
         auto& src = *material_nodes[mi];

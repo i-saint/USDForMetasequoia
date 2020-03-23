@@ -51,7 +51,7 @@ public:
         Material,
         Scope,
     };
-    static std::shared_ptr<Node> create(std::istream& is);
+    static void deserialize(std::istream& is, std::shared_ptr<Node>& v);
 
     Node(Node* parent, const char *name);
     virtual ~Node();
@@ -169,7 +169,7 @@ public:
 class Joint
 {
 public:
-    static std::shared_ptr<Joint> create(std::istream& is);
+    static void deserialize(std::istream& is, std::shared_ptr<Joint>& v);
 
     Joint();
     Joint(SkeletonNode* skel, const std::string& path);
@@ -310,7 +310,7 @@ enum class UpAxis
 class Scene
 {
 public:
-    static std::shared_ptr<Scene> create(std::istream& is);
+    static void deserialize(std::istream& is, std::shared_ptr<Scene>& v);
     static Scene* getCurrent();
 
     Scene();
@@ -329,11 +329,32 @@ public:
     Node* findNodeByPath(const std::string& path);
     Node* createNode(Node *parent, const char *name, Node::Type type);
 
+    template<class Body>
+    void eachNode(const Body& body)
+    {
+        for (auto& n : nodes)
+            body(n.get());
+    }
+
+    template<class NodeT, class Body>
+    void eachNode(const Body& body)
+    {
+        for (auto& n : nodes) {
+            if (auto tn = dynamic_cast<NodeT*>(n.get()))
+                body(tn);
+        }
+    }
+
+    template<class NodeT>
+    std::vector<NodeT*> getNodes()
+    {
+        std::vector<NodeT*> ret;
+        eachNode<NodeT>([&ret](auto n) { ret.push_back(n); });
+        return ret;
+    }
+
     // internal
     Node* createNodeImpl(Node* parent, const char* name, Node::Type type);
-
-private:
-    void classifyNode(Node *node);
 
 public:
     // serializable
@@ -347,9 +368,6 @@ public:
     // non-serializable
     SceneInterfacePtr impl;
     RootNode* root_node = nullptr;
-    std::vector<MeshNode*> mesh_nodes;
-    std::vector<SkeletonNode*> skeleton_nodes;
-    std::vector<MaterialNode*> material_nodes;
 };
 mqusdSerializable(Scene);
 mqusdDeclPtr(Scene);

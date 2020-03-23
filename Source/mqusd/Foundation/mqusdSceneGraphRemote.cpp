@@ -122,7 +122,7 @@ static void CopyStream(RawVector<char>& dst, std::iostream& src)
     for (;;) {
         src.read(dst.data() + pos, space);
         if (src.gcount() != space) {
-            dst.resize(pos + src.gcount());
+            dst.resize(pos + (size_t)src.gcount());
             break;
         }
         else {

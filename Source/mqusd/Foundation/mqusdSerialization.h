@@ -180,7 +180,7 @@ struct read_impl<std::shared_ptr<T>>
 {
     void operator()(std::istream& is, std::shared_ptr<T>& v) const
     {
-        v = T::create(is);
+        T::deserialize(is, v);
     }
 };
 template<class T>
