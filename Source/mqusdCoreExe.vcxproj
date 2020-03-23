@@ -13,11 +13,14 @@
   <ItemGroup>
     <ClCompile Include="mqusd\Core\mqusdCoreExe.cpp" />
     <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp" />
+    <ClCompile Include="mqusd\Foundation\mqusdSceneGraphRemote.cpp" />
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h" />
+    <ClInclude Include="mqusd\Foundation\mqusdSceneGraphRemote.h" />
     <ClInclude Include="mqusd\pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -38,19 +41,15 @@
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Debug'">
+  <PropertyGroup>
     <PlatformToolset>v142</PlatformToolset>
+    <TargetName>mqusdCore</TargetName>
     <ConfigurationType>Application</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Release'">
-    <PlatformToolset>v142</PlatformToolset>
-    <ConfigurationType>Application</ConfigurationType>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-  </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <IncludePath>$(SolutionDir);$(SolutionDir)mqusd;$(MQ_SDK_DIR);$(SolutionDir)Externals\$(Platform)\include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(MQ_VERSION)\</OutDir>

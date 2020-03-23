@@ -8,6 +8,8 @@ class UsdPrim;
 
 namespace mqusd {
 
+extern double default_time;
+
 class Node;
 class RootNode;
 class XformNode;
@@ -318,11 +320,14 @@ public:
     bool save();
     void close();
     void read(double time);
-    void write(double time) const;
+    void write(double time);
 
     Node* findNodeByID(uint32_t id);
     Node* findNodeByPath(const std::string& path);
     Node* createNode(Node *parent, const char *name, Node::Type type);
+
+    // internal
+    Node* createNodeImpl(Node* parent, const char* name, Node::Type type);
 
 private:
     void classifyNode(Node *node);
@@ -334,6 +339,7 @@ public:
     UpAxis up_axis = UpAxis::Unknown;
     double time_start = 0.0;
     double time_end = 0.0;
+    double time_current = default_time;
 
     // non-serializable
     SceneInterfacePtr impl;
@@ -345,9 +351,6 @@ public:
 mqusdSerializable(Scene);
 mqusdDeclPtr(Scene);
 
-void SetModuleDir(const std::string& v);
-void SetPluginPath(const std::string& v);
-ScenePtr CreateUSDScene();
 
 
 class SceneInterface
@@ -358,8 +361,8 @@ public:
     virtual bool create(const char* path) = 0;
     virtual bool save() = 0;
     virtual void close() = 0;
-    virtual void read(double time) = 0;
-    virtual void write(double time) = 0;
+    virtual void read() = 0;
+    virtual void write() = 0;
 
     virtual Node* createNode(Node* parent, const char* name, Node::Type type) = 0;
     virtual bool wrapNode(Node* node) = 0;

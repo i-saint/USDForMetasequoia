@@ -328,6 +328,7 @@ bool mqusdRecorderPlugin::OpenUSD(MQDocument doc, const std::string& path)
     CloseUSD();
 
     m_scene = CreateUSDScene();
+    //m_scene = CreateUSDRemoteScene();
     if (!m_scene)
         return false;
 

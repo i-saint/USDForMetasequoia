@@ -83,7 +83,7 @@ public:
     ~PipeStreamBufBase();
 
     virtual bool open(const char* path, std::ios::openmode mode);
-    virtual void close();
+    virtual int close();
 
 protected:
     FILE* m_pipe = nullptr;
@@ -106,7 +106,7 @@ public:
 
     PipeStreamBufBuffered();
     bool open(const char* path, std::ios::openmode mode) override;
-    void close() override;
+    int close() override;
     int overflow(int c) override;
     int underflow() override;
     int sync() override;
@@ -123,7 +123,7 @@ public:
     PipeStream(const char* path, std::ios::openmode mode);
     ~PipeStream();
     bool open(const char* path, std::ios::openmode mode);
-    void close();
+    int close();
 
 private:
     std::unique_ptr<PipeStreamBufBase> m_buf;

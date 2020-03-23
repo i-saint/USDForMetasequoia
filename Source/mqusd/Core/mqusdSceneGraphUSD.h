@@ -206,8 +206,8 @@ public:
     bool create(const char* path) override;
     bool save() override;
     void close() override;
-    void read(double time) override;
-    void write(double time) override;
+    void read() override;
+    void write() override;
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
     bool wrapNode(Node* node) override;
 

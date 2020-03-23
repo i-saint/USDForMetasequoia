@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="mqusd\Foundation\mqusdSceneGraphRemote.cpp" />
     <ClCompile Include="mqusd\mqusd.cpp" />
     <ClCompile Include="mqusd\Foundation\mqusdDocumentExporter.cpp" />
     <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp" />
@@ -29,6 +30,7 @@
     <ClCompile Include="mqusd\Recorder\mqusdRecorderWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mqusd\Foundation\mqusdSceneGraphRemote.h" />
     <ClInclude Include="mqusd\mqusd.h" />
     <ClInclude Include="mqusd\Foundation\mqusdDocumentExporter.h" />
     <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h" />

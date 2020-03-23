@@ -101,7 +101,7 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     // handle time & frame
     auto t = mu::Now();
     if (one_shot) {
-        m_time = std::numeric_limits<double>::quiet_NaN();
+        m_time = default_time;
     }
     else {
         auto diff = mu::NS2Sd(t - m_last_write);

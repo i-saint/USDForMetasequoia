@@ -769,16 +769,19 @@ void USDScene::close()
     m_stage = {};
 }
 
-void USDScene::read(double time)
+void USDScene::read()
 {
     s_current_scene = this;
+    double time = m_scene->time_current;
+
     for (auto& n : m_nodes)
         n->read(time);
 }
 
-void USDScene::write(double time)
+void USDScene::write()
 {
     s_current_scene = const_cast<USDScene*>(this);
+    double time = m_scene->time_current;
 
     if (m_frame == 0) {
         for (auto& n : m_nodes)
@@ -834,7 +837,6 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
 
     if (ret) {
         m_nodes.push_back(USDNodePtr(ret));
-        m_scene->nodes.push_back(NodePtr(ret->m_node));
     }
     return ret ? ret->m_node : nullptr;
 }

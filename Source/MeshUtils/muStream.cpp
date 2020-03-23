@@ -182,12 +182,14 @@ bool PipeStreamBufBase::open(const char* path, std::ios::openmode mode)
     return m_pipe != nullptr;
 }
 
-void PipeStreamBufBase::close()
+int PipeStreamBufBase::close()
 {
+    int ret = 0;
     if (m_pipe) {
-        ::pclose(m_pipe);
+        ret = ::pclose(m_pipe);
         m_pipe = nullptr;
     }
+    return ret;
 }
 
 std::streamsize PipeStreamBuf::xsputn(const char_type* s, std::streamsize n)
@@ -225,11 +227,12 @@ bool PipeStreamBufBuffered::open(const char* path, std::ios::openmode mode)
     return ret;
 }
 
-void PipeStreamBufBuffered::close()
+int PipeStreamBufBuffered::close()
 {
-    super::close();
+    int ret = super::close();
     m_gbuf.clear();
     m_pbuf.clear();
+    return ret;
 }
 
 int PipeStreamBufBuffered::overflow(int c)
@@ -293,11 +296,17 @@ bool PipeStream::open(const char* path, std::ios::openmode mode)
     return ret;
 }
 
-void PipeStream::close()
+int PipeStream::close()
 {
     flush();
-    m_buf.reset();
+
+    int ret = 0;
+    if (m_buf) {
+        ret = m_buf->close();
+        m_buf.reset();
+    }
     this->clear();
+    return ret;
 }
 
 } // namespace mu

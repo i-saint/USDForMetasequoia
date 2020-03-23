@@ -12,6 +12,12 @@
     <ClInclude Include="mqusd\pch.h">
       <Filter>mqusd</Filter>
     </ClInclude>
+    <ClInclude Include="mqusd\Foundation\mqusdSceneGraphRemote.h">
+      <Filter>mqusd</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h">
+      <Filter>mqusd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\pch.cpp">
@@ -21,6 +27,9 @@
       <Filter>mqusd</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp">
+      <Filter>mqusd</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\Foundation\mqusdSceneGraphRemote.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
   </ItemGroup>

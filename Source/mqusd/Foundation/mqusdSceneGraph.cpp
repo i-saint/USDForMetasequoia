@@ -4,6 +4,8 @@
 
 namespace mqusd {
 
+double default_time = std::numeric_limits<double>::quiet_NaN();
+
 std::string SanitizeNodeName(const std::string& name)
 {
     std::string ret = name;
@@ -851,7 +853,7 @@ Scene* Scene::getCurrent()
 }
 
 #define EachMember(F)\
-    F(path) F(nodes) F(up_axis) F(time_start) F(time_end)
+    F(path) F(nodes) F(up_axis) F(time_start) F(time_end) F(time_current)
 
 void Scene::serialize(std::ostream& os)
 {
@@ -955,15 +957,17 @@ void Scene::close()
 void Scene::read(double time)
 {
     g_current_scene = this;
+    time_current = time;
     if (impl)
-        impl->read(time);
+        impl->read();
 }
 
-void Scene::write(double time) const
+void Scene::write(double time)
 {
     g_current_scene = const_cast<Scene*>(this);
+    time_current = time;
     if (impl)
-        impl->write(time);
+        impl->write();
 }
 
 Node* Scene::findNodeByID(uint32_t id)
@@ -989,72 +993,37 @@ Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
     g_current_scene = this;
     if (impl) {
         auto ret = impl->createNode(parent, name, type);
-        classifyNode(ret);
+        if (ret) {
+            nodes.push_back(NodePtr(ret));
+            classifyNode(ret);
+        }
         return ret;
+    }
+    else {
+        return createNodeImpl(parent, name, type);
     }
     return nullptr;
 }
 
+Node* Scene::createNodeImpl(Node* parent, const char* name, Node::Type type)
+{
+    Node* ret = nullptr;
+    switch (type) {
+#define Case(E, T) case Node::Type::E: ret = new T(parent, name); break;
+        Case(Mesh, MeshNode);
+        Case(Blendshape, BlendshapeNode);
+        Case(SkelRoot, SkelRootNode);
+        Case(Skeleton, SkeletonNode);
+        Case(Material, MaterialNode);
+        Case(Xform, XformNode);
+#undef Case
+    default: break;
+    }
+    return ret;
+}
+
 SceneInterface::~SceneInterface()
 {
-}
-
-
-#define mqusdTBBDll muDLLPrefix "tbb" muDLLSuffix
-#define mqusdUSDDll muDLLPrefix "usd_ms" muDLLSuffix
-#define mqusdCoreDll muDLLPrefix "mqusdCore" muDLLSuffix
-
-static std::string g_module_dir;
-static std::string g_plugin_path;
-static void* g_core_module;
-static SceneInterface* (*g_mqusdCreateUSDSceneInterface)(Scene* scene);
-
-static std::string GetDefaultModulePath()
-{
-    std::string dir = mu::GetCurrentModuleDirectory();
-#ifdef _WIN32
-    return dir + "/mqusdCore";
-#else
-    return dir;
-#endif
-}
-
-void SetModuleDir(const std::string& v) { g_module_dir = v; }
-void SetPluginPath(const std::string& v) { g_plugin_path = v; }
-
-static void LoadCoreModule()
-{
-    static std::once_flag s_flag;
-    std::call_once(s_flag, []() {
-        g_core_module = mu::GetModule(mqusdCoreDll);
-        if (!g_core_module) {
-            std::string core_dir = g_module_dir.empty() ? GetDefaultModulePath() : g_module_dir;
-            std::string plugin_path = g_plugin_path.empty() ? core_dir + "/usd/plugInfo.json" : g_plugin_path;
-            mu::SetEnv("PXR_PLUGINPATH_NAME", plugin_path.c_str());
-
-            std::string tbb_dll = core_dir + "/" mqusdTBBDll;
-            std::string usd_dll = core_dir + "/" mqusdUSDDll;
-            std::string core_dll = core_dir + "/" mqusdCoreDll;
-            mu::LoadModule(tbb_dll.c_str());
-            mu::LoadModule(usd_dll.c_str());
-            g_core_module = mu::LoadModule(core_dll.c_str());
-        }
-        if (g_core_module) {
-            (void*&)g_mqusdCreateUSDSceneInterface = mu::GetSymbol(g_core_module, "mqusdCreateUSDSceneInterface");
-        }
-    });
-}
-
-ScenePtr CreateUSDScene()
-{
-    LoadCoreModule();
-    if (g_mqusdCreateUSDSceneInterface) {
-        auto ret = new Scene();
-        ret->impl.reset(g_mqusdCreateUSDSceneInterface(ret));
-        return ScenePtr(ret);
-    }
-    else
-        return nullptr;
 }
 
 } // namespace mqusd

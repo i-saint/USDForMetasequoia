@@ -12,6 +12,11 @@ exit /B 0
         pause
         exit /B 1
     )
+    msbuild mqusdCoreExe.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
+    IF %ERRORLEVEL% NEQ 0 (
+        pause
+        exit /B 1
+    )
     msbuild mqusdPlayer.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
     IF %ERRORLEVEL% NEQ 0 (
         pause
@@ -29,6 +34,7 @@ exit /B 0
     copy _out\x64_Release\%MQ_VERSION%\mqusdPlayer.dll "%DIST_DIR64%"
     copy _out\x64_Release\%MQ_VERSION%\mqusdRecorder.dll "%DIST_DIR64%"
     copy _out\x64_Release\%MQ_VERSION%\mqusdCore.dll "%CORE_DIR64%"
+    copy _out\x64_Release\%MQ_VERSION%\mqusdCore.exe "%CORE_DIR64%"
     copy Externals\x64\lib\tbb.dll "%CORE_DIR64%"
     copy Externals\x64\lib\usd_ms.dll "%CORE_DIR64%"
     xcopy /EIY Externals\x64\lib\usd "%CORE_DIR64%\usd"

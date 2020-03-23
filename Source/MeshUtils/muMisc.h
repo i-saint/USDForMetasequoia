@@ -3,12 +3,15 @@
 #if defined(_WIN32)
     #define muDLLPrefix 
     #define muDLLSuffix ".dll"
+    #define muEXESuffix ".exe"
 #elif defined(__APPLE__)
     #define muDLLPrefix "lib"
     #define muDLLSuffix ".dylib"
+    #define muEXESuffix 
 #else
     #define muDLLPrefix "lib"
     #define muDLLSuffix ".so"
+    #define muEXESuffix 
 #endif
 
 namespace mu {
