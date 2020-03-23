@@ -234,8 +234,8 @@ public:
 
     MeshNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os);
-    void deserialize(std::istream& is);
+    void serialize(std::ostream& os) override;
+    void deserialize(std::istream& is) override;
     void resolve() override;
     void convert(const ConvertOptions& opt) override;
     void applyTransform(const float4x4& v);
