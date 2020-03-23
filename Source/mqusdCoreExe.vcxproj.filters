@@ -7,15 +7,12 @@
     <Filter Include="mqusd">
       <UniqueIdentifier>{d83e2cdf-c30e-4d27-9651-2f531b7a074f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mqusd\Core">
+      <UniqueIdentifier>{d6b5170e-1921-4b88-bd0a-7de0fcfaff97}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mqusd\pch.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
-    <ClInclude Include="mqusd\Foundation\mqusdSceneGraphRemote.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
-    <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h">
       <Filter>mqusd</Filter>
     </ClInclude>
   </ItemGroup>
@@ -24,13 +21,7 @@
       <Filter>mqusd</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\Core\mqusdCoreExe.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Foundation\mqusdSceneGraphRemote.cpp">
-      <Filter>mqusd</Filter>
+      <Filter>mqusd\Core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

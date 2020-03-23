@@ -7,6 +7,9 @@
     <Filter Include="mqusd">
       <UniqueIdentifier>{d83e2cdf-c30e-4d27-9651-2f531b7a074f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mqusd\Core">
+      <UniqueIdentifier>{6daec82e-4e28-4df5-8147-e984c93d041d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mqusd\pch.h">
@@ -15,34 +18,19 @@
     <ClInclude Include="mqusd\mqusd.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
     <ClInclude Include="mqusd\Core\mqusdCore.h">
-      <Filter>mqusd</Filter>
+      <Filter>mqusd\Core</Filter>
     </ClInclude>
     <ClInclude Include="mqusd\Core\mqusdSceneGraphUSD.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
-    <ClInclude Include="mqusd\Foundation\mqusdSerialization.h">
-      <Filter>mqusd</Filter>
+      <Filter>mqusd\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\pch.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\mqusd.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Core\mqusdCore.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
     <ClCompile Include="mqusd\Core\mqusdSceneGraphUSD.cpp">
-      <Filter>mqusd</Filter>
+      <Filter>mqusd\Core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

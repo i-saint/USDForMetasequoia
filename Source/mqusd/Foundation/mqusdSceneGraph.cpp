@@ -153,7 +153,7 @@ Node::Type Node::getType() const
     return Type::Unknown;
 }
 
-void Node::convert(const ConvertOptions& opt)
+void Node::convert(const ConvertOptions& /*opt*/)
 {
 }
 
@@ -301,12 +301,12 @@ void MeshNode::resolve()
     super::resolve();
 
     blendshapes.clear();
-    for (auto& path : blendshape_paths) {
-        if (auto bs = scene->findNodeByPath(path)) {
+    for (auto& bp : blendshape_paths) {
+        if (auto bs = scene->findNodeByPath(bp)) {
             blendshapes.push_back(static_cast<BlendshapeNode*>(bs));
         }
         else {
-            mqusdDbgPrint("MeshNode::resolve(): node not found %s\n", path.c_str());
+            mqusdDbgPrint("MeshNode::resolve(): node not found %s\n", bp.c_str());
         }
     }
     skeleton = static_cast<SkeletonNode*>(scene->findNodeByPath(skeleton_path));
@@ -785,10 +785,10 @@ void SkeletonNode::clear()
     joints.clear();
 }
 
-Joint* SkeletonNode::addJoint(const std::string& path_)
+Joint* SkeletonNode::addJoint(const std::string& jpath_)
 {
-    auto path = SanitizeNodePath(path_);
-    auto ret = new Joint(this, path);
+    auto jpath = SanitizeNodePath(jpath_);
+    auto ret = new Joint(this, jpath);
     ret->index = (int)joints.size();
     joints.push_back(JointPtr(ret));
     return ret;
@@ -814,11 +814,11 @@ void SkeletonNode::updateGlobalMatrices(const float4x4& base)
     }
 }
 
-Joint* SkeletonNode::findJointByPath(const std::string& path)
+Joint* SkeletonNode::findJointByPath(const std::string& jpath)
 {
     // rbegin() & rend() because in many cases this method is used to find last added joint
     auto it = std::find_if(joints.rbegin(), joints.rend(),
-        [&path](auto& joint) { return joint->path == path; });
+        [&jpath](auto& joint) { return joint->path == jpath; });
     return it == joints.rend() ? nullptr : it->get();
 }
 
@@ -970,12 +970,12 @@ Node* Scene::findNodeByID(uint32_t id)
     return it == nodes.end() ? nullptr : it->get();
 }
 
-Node* Scene::findNodeByPath(const std::string& path)
+Node* Scene::findNodeByPath(const std::string& npath)
 {
-    if (path.empty())
+    if (npath.empty())
         return nullptr;
 
-    auto it = std::find_if(nodes.begin(), nodes.end(), [&path](NodePtr& n) { return n->path == path; });
+    auto it = std::find_if(nodes.begin(), nodes.end(), [&npath](NodePtr& n) { return n->path == npath; });
     return it == nodes.end() ? nullptr : it->get();
 }
 
@@ -991,7 +991,6 @@ Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
     else {
         return createNodeImpl(parent, name, type);
     }
-    return nullptr;
 }
 
 Node* Scene::createNodeImpl(Node* parent, const char* name, Node::Type type)

@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="mqusd">
+      <UniqueIdentifier>{28a874e9-e5d6-47f8-8993-4b515aac48cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mqusd\Foundation">
+      <UniqueIdentifier>{343888b5-80b6-469e-9831-d7ed1a4e7d29}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="mqusd\pch.h">
+      <Filter>mqusd</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\mqusd.h">
+      <Filter>mqusd</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\Foundation\mqusdDocumentExporter.h">
+      <Filter>mqusd\Foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\Foundation\mqusdDocumentImporter.h">
+      <Filter>mqusd\Foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h">
+      <Filter>mqusd\Foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\Foundation\mqusdSceneGraphRemote.h">
+      <Filter>mqusd\Foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\Foundation\mqusdSerialization.h">
+      <Filter>mqusd\Foundation</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="mqusd\pch.cpp">
+      <Filter>mqusd</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\Foundation\mqusdDocumentExporter.cpp">
+      <Filter>mqusd\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\Foundation\mqusdDocumentImporter.cpp">
+      <Filter>mqusd\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp">
+      <Filter>mqusd\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\Foundation\mqusdSceneGraphRemote.cpp">
+      <Filter>mqusd\Foundation</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

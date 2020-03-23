@@ -19,10 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqusd\Foundation\mqusdSceneGraphRemote.cpp" />
-    <ClCompile Include="mqusd\mqusd.cpp" />
-    <ClCompile Include="mqusd\Foundation\mqusdDocumentExporter.cpp" />
-    <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp" />
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -30,10 +26,7 @@
     <ClCompile Include="mqusd\Recorder\mqusdRecorderWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mqusd\Foundation\mqusdSceneGraphRemote.h" />
     <ClInclude Include="mqusd\mqusd.h" />
-    <ClInclude Include="mqusd\Foundation\mqusdDocumentExporter.h" />
-    <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h" />
     <ClInclude Include="mqusd\pch.h" />
     <ClInclude Include="mqusd\Recorder\mqusdRecorderPlugin.h" />
     <ClInclude Include="mqusd\Recorder\mqusdRecorderWindow.h" />
@@ -45,6 +38,9 @@
     <ProjectReference Include="mqsdk.vcxproj">
       <Project>{d28511e8-4687-434e-8c18-c23fe683af2f}</Project>
     </ProjectReference>
+    <ProjectReference Include="mqusdFoundation.vcxproj">
+      <Project>{b970a73a-2b06-41ad-8870-266153e82d21}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="NatvisFile.natvis" />
@@ -52,22 +48,16 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{66397903-6FF2-46C6-B51E-B323FD248FAD}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>mqusdRecorder</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Debug'">
+  <PropertyGroup Label="Configuration">
     <PlatformToolset>v142</PlatformToolset>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Release'">
-    <PlatformToolset>v142</PlatformToolset>
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-  </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <IncludePath>$(SolutionDir);$(SolutionDir)mqusd;$(MQ_SDK_DIR);$(SolutionDir)Externals\$(Platform)\include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(MQ_VERSION)\</OutDir>

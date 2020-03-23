@@ -12,15 +12,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\Core\mqusdCoreExe.cpp" />
-    <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp" />
-    <ClCompile Include="mqusd\Foundation\mqusdSceneGraphRemote.cpp" />
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h" />
-    <ClInclude Include="mqusd\Foundation\mqusdSceneGraphRemote.h" />
     <ClInclude Include="mqusd\pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -30,20 +26,18 @@
     <ProjectReference Include="MeshUtils.vcxproj">
       <Project>{fd3fe1ff-abe5-40db-b867-144e9dd9b23c}</Project>
     </ProjectReference>
-    <ProjectReference Include="mqusdCore.vcxproj">
-      <Project>{1268fd59-3699-4e3a-9d67-a0a6a213b8fa}</Project>
+    <ProjectReference Include="mqusdFoundation.vcxproj">
+      <Project>{b970a73a-2b06-41ad-8870-266153e82d21}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C632D2A6-8D87-4688-8C46-FE76D8289490}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>mqusdCoreExe</ProjectName>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup>
+  <PropertyGroup Label="Configuration">
     <PlatformToolset>v142</PlatformToolset>
-    <TargetName>mqusdCore</TargetName>
     <ConfigurationType>Application</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Release'">
@@ -70,6 +64,13 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <CustomBuildStep>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </Command>
+    </CustomBuildStep>
+    <PostBuildEvent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy $(TargetPath) $(TargetDir)mqusdCore.exe</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
@@ -94,6 +95,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
+    <PostBuildEvent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy $(TargetPath) $(TargetDir)mqusdCore.exe</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

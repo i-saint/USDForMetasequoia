@@ -49,7 +49,7 @@ DocumentExporter::~DocumentExporter()
     m_scene->save();
 }
 
-bool DocumentExporter::initialize(MQDocument doc)
+bool DocumentExporter::initialize(MQDocument /*doc*/)
 {
     m_scene->up_axis = UpAxis::Y;
     return true;
@@ -404,7 +404,7 @@ std::wstring DocumentExporter::getBonePath(UINT bone_id)
     return ret;
 }
 
-bool DocumentExporter::extractSkeleton(MQDocument doc, SkeletonNode& dst)
+bool DocumentExporter::extractSkeleton(MQDocument /*doc*/, SkeletonNode& dst)
 {
 #if MQPLUGIN_VERSION >= 0x0470
     // get global joint matrices

@@ -7,6 +7,9 @@
     <Filter Include="mqusd">
       <UniqueIdentifier>{d83e2cdf-c30e-4d27-9651-2f531b7a074f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mqusd\Player">
+      <UniqueIdentifier>{26d2234f-5be0-4ef6-a6d6-c3aa30e0201b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mqusd\pch.h">
@@ -16,42 +19,21 @@
       <Filter>mqusd</Filter>
     </ClInclude>
     <ClInclude Include="mqusd\Player\mqusdPlayerPlugin.h">
-      <Filter>mqusd</Filter>
+      <Filter>mqusd\Player</Filter>
     </ClInclude>
     <ClInclude Include="mqusd\Player\mqusdPlayerWindow.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
-    <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
-    <ClInclude Include="mqusd\Foundation\mqusdDocumentImporter.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
-    <ClInclude Include="mqusd\Foundation\mqusdSceneGraphRemote.h">
-      <Filter>mqusd</Filter>
+      <Filter>mqusd\Player</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\pch.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\mqusd.cpp">
-      <Filter>mqusd</Filter>
+    <ClCompile Include="mqusd\Player\mqusdPlayerPlugin.cpp">
+      <Filter>mqusd\Player</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\Player\mqusdPlayerWindow.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Player\mqusdPlayerPlugin.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Foundation\mqusdDocumentImporter.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Foundation\mqusdSceneGraphRemote.cpp">
-      <Filter>mqusd</Filter>
+      <Filter>mqusd\Player</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

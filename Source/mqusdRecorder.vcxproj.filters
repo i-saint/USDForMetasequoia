@@ -7,6 +7,9 @@
     <Filter Include="mqusd">
       <UniqueIdentifier>{d83e2cdf-c30e-4d27-9651-2f531b7a074f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mqusd\Recorder">
+      <UniqueIdentifier>{72a7454e-eba1-4219-9126-166863ed9a90}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mqusd\pch.h">
@@ -16,42 +19,21 @@
       <Filter>mqusd</Filter>
     </ClInclude>
     <ClInclude Include="mqusd\Recorder\mqusdRecorderPlugin.h">
-      <Filter>mqusd</Filter>
+      <Filter>mqusd\Recorder</Filter>
     </ClInclude>
     <ClInclude Include="mqusd\Recorder\mqusdRecorderWindow.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
-    <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
-    <ClInclude Include="mqusd\Foundation\mqusdDocumentExporter.h">
-      <Filter>mqusd</Filter>
-    </ClInclude>
-    <ClInclude Include="mqusd\Foundation\mqusdSceneGraphRemote.h">
-      <Filter>mqusd</Filter>
+      <Filter>mqusd\Recorder</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\pch.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\mqusd.cpp">
-      <Filter>mqusd</Filter>
+    <ClCompile Include="mqusd\Recorder\mqusdRecorderPlugin.cpp">
+      <Filter>mqusd\Recorder</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\Recorder\mqusdRecorderWindow.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Recorder\mqusdRecorderPlugin.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Foundation\mqusdDocumentExporter.cpp">
-      <Filter>mqusd</Filter>
-    </ClCompile>
-    <ClCompile Include="mqusd\Foundation\mqusdSceneGraphRemote.cpp">
-      <Filter>mqusd</Filter>
+      <Filter>mqusd\Recorder</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

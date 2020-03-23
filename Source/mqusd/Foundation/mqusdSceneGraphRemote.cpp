@@ -121,7 +121,7 @@ static void CopyStream(RawVector<char>& dst, std::iostream& src)
     size_t space = dst.size();
     for (;;) {
         src.read(dst.data() + pos, space);
-        if (src.gcount() != space) {
+        if ((size_t)src.gcount() != space) {
             dst.resize(pos + (size_t)src.gcount());
             break;
         }
@@ -215,7 +215,7 @@ Node* USDScenePipe::createNode(Node* parent, const char* name, Node::Type type)
     return m_scene->createNodeImpl(parent, name, type);
 }
 
-bool USDScenePipe::wrapNode(Node* node)
+bool USDScenePipe::wrapNode(Node* /*node*/)
 {
     // nothing to do here
     return true;

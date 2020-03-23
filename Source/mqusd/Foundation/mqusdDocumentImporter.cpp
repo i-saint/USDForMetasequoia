@@ -214,7 +214,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
     return true;
 }
 
-bool DocumentImporter::updateMesh(MQDocument doc, MQObject obj, const MeshNode& src)
+bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNode& src)
 {
     obj->Clear();
 
@@ -229,7 +229,6 @@ bool DocumentImporter::updateMesh(MQDocument doc, MQObject obj, const MeshNode& 
 
     // faces
     {
-        int ii = 0;
         auto* data = (int*)src.indices.cdata();
         for (auto c : src.counts) {
             obj->AddFace(c, data);
