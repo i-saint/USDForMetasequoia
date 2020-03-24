@@ -18,10 +18,10 @@
     <ClInclude Include="mqusd\mqusd.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\Recorder\mqusdRecorderPlugin.h">
+    <ClInclude Include="mqusd\USDRecorder\mqusdRecorderPlugin.h">
       <Filter>mqusd\Recorder</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\Recorder\mqusdRecorderWindow.h">
+    <ClInclude Include="mqusd\USDRecorder\mqusdRecorderWindow.h">
       <Filter>mqusd\Recorder</Filter>
     </ClInclude>
   </ItemGroup>
@@ -29,10 +29,10 @@
     <ClCompile Include="mqusd\pch.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\Recorder\mqusdRecorderPlugin.cpp">
+    <ClCompile Include="mqusd\USDRecorder\mqusdRecorderPlugin.cpp">
       <Filter>mqusd\Recorder</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\Recorder\mqusdRecorderWindow.cpp">
+    <ClCompile Include="mqusd\USDRecorder\mqusdRecorderWindow.cpp">
       <Filter>mqusd\Recorder</Filter>
     </ClCompile>
   </ItemGroup>

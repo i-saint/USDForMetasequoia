@@ -140,7 +140,7 @@ bool USDScenePipe::open(const char* path)
     m_usd_path = path;
     m_pipe.reset(new mu::PipeStream());
     std::string commnd = m_exe_path;
-    commnd += " -hide -header \"";
+    commnd += " -hide -tree \"";
     commnd += m_usd_path;
     commnd += "\"";
     if (m_pipe->open(commnd.c_str(), std::ios::in | std::ios::binary)) {
@@ -149,7 +149,7 @@ bool USDScenePipe::open(const char* path)
 
         mu::MemoryStream stream(m_scene_buffer);
         m_scene->deserialize(stream);
-        return true;
+        return !m_scene->nodes.empty();
     }
     else {
         m_pipe.reset();

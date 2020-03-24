@@ -11,14 +11,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqusd\Core\mqusdSceneGraphUSD.cpp" />
+    <ClCompile Include="mqusd\USDCore\mqusdSceneGraphUSD.cpp" />
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mqusd\Core\mqusdCore.h" />
-    <ClInclude Include="mqusd\Core\mqusdSceneGraphUSD.h" />
+    <ClInclude Include="mqusd\USDCore\mqusdCore.h" />
+    <ClInclude Include="mqusd\USDCore\mqusdSceneGraphUSD.h" />
     <ClInclude Include="mqusd\mqusd.h" />
     <ClInclude Include="mqusd\pch.h" />
   </ItemGroup>

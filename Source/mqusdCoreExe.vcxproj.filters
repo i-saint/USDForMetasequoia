@@ -7,7 +7,7 @@
     <Filter Include="mqusd">
       <UniqueIdentifier>{d83e2cdf-c30e-4d27-9651-2f531b7a074f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mqusd\Core">
+    <Filter Include="mqusd\USDCore">
       <UniqueIdentifier>{d6b5170e-1921-4b88-bd0a-7de0fcfaff97}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -20,8 +20,8 @@
     <ClCompile Include="mqusd\pch.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\Core\mqusdCoreExe.cpp">
-      <Filter>mqusd\Core</Filter>
+    <ClCompile Include="mqusd\USDCore\mqusdCoreExe.cpp">
+      <Filter>mqusd\USDCore</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

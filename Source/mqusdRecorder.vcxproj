@@ -22,14 +22,14 @@
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="mqusd\Recorder\mqusdRecorderPlugin.cpp" />
-    <ClCompile Include="mqusd\Recorder\mqusdRecorderWindow.cpp" />
+    <ClCompile Include="mqusd\USDRecorder\mqusdRecorderPlugin.cpp" />
+    <ClCompile Include="mqusd\USDRecorder\mqusdRecorderWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mqusd\mqusd.h" />
     <ClInclude Include="mqusd\pch.h" />
-    <ClInclude Include="mqusd\Recorder\mqusdRecorderPlugin.h" />
-    <ClInclude Include="mqusd\Recorder\mqusdRecorderWindow.h" />
+    <ClInclude Include="mqusd\USDRecorder\mqusdRecorderPlugin.h" />
+    <ClInclude Include="mqusd\USDRecorder\mqusdRecorderWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshUtils.vcxproj">

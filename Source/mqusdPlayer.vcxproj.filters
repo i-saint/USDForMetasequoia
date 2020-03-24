@@ -18,10 +18,10 @@
     <ClInclude Include="mqusd\mqusd.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\Player\mqusdPlayerPlugin.h">
+    <ClInclude Include="mqusd\USDPlayer\mqusdPlayerPlugin.h">
       <Filter>mqusd\Player</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\Player\mqusdPlayerWindow.h">
+    <ClInclude Include="mqusd\USDPlayer\mqusdPlayerWindow.h">
       <Filter>mqusd\Player</Filter>
     </ClInclude>
   </ItemGroup>
@@ -29,10 +29,10 @@
     <ClCompile Include="mqusd\pch.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\Player\mqusdPlayerPlugin.cpp">
+    <ClCompile Include="mqusd\USDPlayer\mqusdPlayerPlugin.cpp">
       <Filter>mqusd\Player</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\Player\mqusdPlayerWindow.cpp">
+    <ClCompile Include="mqusd\USDPlayer\mqusdPlayerWindow.cpp">
       <Filter>mqusd\Player</Filter>
     </ClCompile>
   </ItemGroup>

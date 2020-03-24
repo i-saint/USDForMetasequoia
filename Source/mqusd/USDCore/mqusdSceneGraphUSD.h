@@ -193,6 +193,8 @@ private:
     UsdShadeMaterial m_material;
 };
 
+#undef DefSchemaTraits
+
 
 class USDScene : public SceneInterface
 {

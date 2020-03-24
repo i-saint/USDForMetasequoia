@@ -22,14 +22,14 @@
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="mqusd\Player\mqusdPlayerPlugin.cpp" />
-    <ClCompile Include="mqusd\Player\mqusdPlayerWindow.cpp" />
+    <ClCompile Include="mqusd\USDPlayer\mqusdPlayerPlugin.cpp" />
+    <ClCompile Include="mqusd\USDPlayer\mqusdPlayerWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mqusd\mqusd.h" />
     <ClInclude Include="mqusd\pch.h" />
-    <ClInclude Include="mqusd\Player\mqusdPlayerPlugin.h" />
-    <ClInclude Include="mqusd\Player\mqusdPlayerWindow.h" />
+    <ClInclude Include="mqusd\USDPlayer\mqusdPlayerPlugin.h" />
+    <ClInclude Include="mqusd\USDPlayer\mqusdPlayerWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshUtils.vcxproj">

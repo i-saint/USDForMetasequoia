@@ -23,15 +23,11 @@ int main(int argc, char* argv[])
     bool version = false;
     for (int ai = 1; ai < argc;) {
         if (argv[ai][0] == '-') {
-#ifdef _WIN32
-            if (strcmp(argv[ai], "-hide") == 0)
-                ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
-#endif
             if (strcmp(argv[ai], "-version") == 0)
                 version = true;
             if (strcmp(argv[ai], "-export") == 0)
                 mode_export = true;
-            if (strcmp(argv[ai], "-header") == 0)
+            if (strcmp(argv[ai], "-tree") == 0)
                 mode_header = true;
             if (strcmp(argv[ai], "-test") == 0)
                 mode_test = true;
@@ -39,6 +35,10 @@ int main(int argc, char* argv[])
                 sscanf(argv[++ai], "%lf", &time);
             if (strcmp(argv[ai], "-file") == 0)
                 file_path = argv[++ai];
+#ifdef _WIN32
+            if (strcmp(argv[ai], "-hide") == 0)
+                ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+#endif
         }
         else
             usd_path = argv[ai];
@@ -54,14 +54,14 @@ int main(int argc, char* argv[])
             "usage: %s [options] path_to_usd.usd\n"
             "   options:\n"
             "    -version: output version info.\n"
-#ifdef _WIN32
-            "    -hide: hide console window.\n"
-#endif
             "    -export: export mode. default is import.\n"
-            "    -header: construct node tree but don't read data.\n"
+            "    -tree: construct node tree but don't read data.\n"
             "    -test: test to open usd.\n"
             "    -time time_in_seconds\n"
             "    -file path_to_inout_file\n"
+#ifdef _WIN32
+            "    -hide: hide console window.\n"
+#endif
             , argv[0]);
         return 0;
     }

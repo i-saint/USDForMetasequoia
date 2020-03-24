@@ -19,6 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mqusd\ABCCore\mqabc.h" />
+    <ClInclude Include="mqusd\ABCCore\mqabcISceneGraph.h" />
+    <ClInclude Include="mqusd\ABCCore\mqabcOSceneGraph.h" />
     <ClInclude Include="mqusd\Foundation\mqusdDocumentExporter.h" />
     <ClInclude Include="mqusd\Foundation\mqusdDocumentImporter.h" />
     <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h" />
@@ -29,6 +32,8 @@
     <ClInclude Include="mqusd\pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="mqusd\ABCCore\mqabcISceneGraph.cpp" />
+    <ClCompile Include="mqusd\ABCCore\mqabcOSceneGraph.cpp" />
     <ClCompile Include="mqusd\Foundation\mqusdDocumentExporter.cpp" />
     <ClCompile Include="mqusd\Foundation\mqusdDocumentImporter.cpp" />
     <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp" />
@@ -57,7 +62,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)mqusd;$(MQ_SDK_DIR);$(SolutionDir)Externals\$(Platform)\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)mqusd;$(MQ_SDK_DIR);$(SolutionDir)Externals\$(Platform)\include;$(SolutionDir)Externals\$(Platform)\include\OpenEXR;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(MQ_VERSION)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(Platform)_$(Configuration)\$(ProjectName)$(MQ_VERSION)\</IntDir>
   </PropertyGroup>

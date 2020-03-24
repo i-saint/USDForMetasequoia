@@ -7,6 +7,9 @@
     <Filter Include="mqusd\Foundation">
       <UniqueIdentifier>{343888b5-80b6-469e-9831-d7ed1a4e7d29}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mqusd\ABCCore">
+      <UniqueIdentifier>{6ca83a03-f8fa-4daf-ac7d-415ba0663f84}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mqusd\pch.h">
@@ -33,6 +36,15 @@
     <ClInclude Include="mqusd\Foundation\mqusdUtils.h">
       <Filter>mqusd\Foundation</Filter>
     </ClInclude>
+    <ClInclude Include="mqusd\ABCCore\mqabcISceneGraph.h">
+      <Filter>mqusd\ABCCore</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\ABCCore\mqabcOSceneGraph.h">
+      <Filter>mqusd\ABCCore</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\ABCCore\mqabc.h">
+      <Filter>mqusd\ABCCore</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\pch.cpp">
@@ -52,6 +64,12 @@
     </ClCompile>
     <ClCompile Include="mqusd\Foundation\mqusdUtils.cpp">
       <Filter>mqusd\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\ABCCore\mqabcISceneGraph.cpp">
+      <Filter>mqusd\ABCCore</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\ABCCore\mqabcOSceneGraph.cpp">
+      <Filter>mqusd\ABCCore</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
