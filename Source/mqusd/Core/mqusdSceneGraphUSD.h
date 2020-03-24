@@ -16,7 +16,7 @@ class USDNode
 public:
     DefSchemaTraits(UsdSchemaBase, "");
 
-    USDNode(USDNode* parent, UsdPrim prim, bool create_node);
+    USDNode(USDNode* parent, UsdPrim prim, bool create_node = true);
     USDNode(Node* n, UsdPrim prim);
     virtual ~USDNode();
 

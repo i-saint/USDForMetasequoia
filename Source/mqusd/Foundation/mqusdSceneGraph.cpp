@@ -68,6 +68,7 @@ void Node::deserialize(std::istream& is, NodePtr& ret)
 
     if (!ret) {
         switch (type) {
+        case Type::Unknown: ret = std::make_shared<Node>(); break;
         case Type::Root: ret = std::make_shared<RootNode>(); break;
         case Type::Xform: ret = std::make_shared<XformNode>(); break;
         case Type::Mesh: ret = std::make_shared<MeshNode>(); break;

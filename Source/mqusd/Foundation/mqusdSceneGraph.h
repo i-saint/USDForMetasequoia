@@ -49,7 +49,7 @@ public:
     };
     static void deserialize(std::istream& is, std::shared_ptr<Node>& v);
 
-    Node(Node* parent, const char *name);
+    Node(Node* parent = nullptr, const char *name = nullptr);
     virtual ~Node();
     virtual Type getType() const;
     virtual void serialize(std::ostream& os);

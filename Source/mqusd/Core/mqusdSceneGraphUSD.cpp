@@ -446,6 +446,7 @@ void USDBlendshapeNode::beforeWrite()
 
     auto& src = *static_cast<const BlendshapeNode*>(m_node);
 
+    // assume not time sampled. write once.
     if (!src.indices.empty()) {
         m_point_indices.assign(src.indices.begin(), src.indices.end());
         m_blendshape.GetPointIndicesAttr().Set(m_point_indices);
@@ -822,6 +823,9 @@ USDNode* USDScene::createNodeImpl(USDNode* parent, std::string path)
 {
     auto prim = m_stage->DefinePrim(SdfPath(path), TfToken(NodeT::getUsdTypeName()));
     if (prim) {
+#ifdef mqusdDebug
+        PrintPrim(prim);
+#endif
         auto ret = new NodeT(parent, prim);
         m_node_table[path] = ret;
         return ret;
@@ -851,6 +855,7 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
         Case(Skeleton, USDSkeletonNode);
         Case(Material, USDMaterialNode);
         Case(Xform, USDXformNode);
+        Case(Unknown, USDNode);
 #undef Case
     default: break;
     }
@@ -896,6 +901,7 @@ bool USDScene::wrapNode(Node* node)
         Case(Skeleton, USDSkeletonNode);
         Case(Material, USDMaterialNode);
         Case(Xform, USDXformNode);
+        Case(Unknown, USDNode);
 #undef Case
     default: break;
     }
