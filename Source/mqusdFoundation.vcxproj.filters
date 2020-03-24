@@ -30,6 +30,9 @@
     <ClInclude Include="mqusd\Foundation\mqusdSerialization.h">
       <Filter>mqusd\Foundation</Filter>
     </ClInclude>
+    <ClInclude Include="mqusd\Foundation\mqusdUtils.h">
+      <Filter>mqusd\Foundation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\pch.cpp">
@@ -45,6 +48,9 @@
       <Filter>mqusd\Foundation</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\Foundation\mqusdSceneGraphRemote.cpp">
+      <Filter>mqusd\Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\Foundation\mqusdUtils.cpp">
       <Filter>mqusd\Foundation</Filter>
     </ClCompile>
   </ItemGroup>

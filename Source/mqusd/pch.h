@@ -18,6 +18,7 @@
 #include <map>
 #include <functional>
 #include <memory>
+#include <sstream>
 #include <fstream>
 #include <future>
 #include <random>

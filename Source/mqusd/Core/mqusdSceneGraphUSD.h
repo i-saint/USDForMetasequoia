@@ -119,7 +119,7 @@ public:
 
     USDBlendshapeNode(USDNode* parent, UsdPrim prim);
     USDBlendshapeNode(Node* n, UsdPrim prim);
-    void beforeRead() override;
+    void read(double time) override;
     void beforeWrite() override;
 
 private:
@@ -224,7 +224,8 @@ private:
     USDRootNode* m_root = nullptr;
 
     Scene* m_scene = nullptr;
-    int m_frame = 0;
+    int m_read_count = 0;
+    int m_write_count = 0;
     double m_max_time = 0.0;
 };
 

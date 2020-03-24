@@ -102,6 +102,9 @@ bool DocumentImporter::read(MQDocument doc, double t)
     if (!m_scene)
         return false;
 
+    m_prev_time = t;
+    m_prev_options = *m_options;
+
     // read scene
     m_scene->read(t);
 
@@ -278,6 +281,7 @@ bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNo
     }
 
 #if MQPLUGIN_VERSION >= 0x0470
+    // bone weights
     if (m_options->import_skeletons && src.skeleton) {
         m_bone_manager->AddSkinObject(obj);
 
@@ -331,11 +335,10 @@ bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNo
     return true;
 }
 
-bool DocumentImporter::updateSkeleton(MQDocument doc, const SkeletonNode& src)
+bool DocumentImporter::updateSkeleton(MQDocument /*doc*/, const SkeletonNode& src)
 {
 #if MQPLUGIN_VERSION >= 0x0470
-    MQBoneManager bone_manager(m_plugin, doc);
-    bone_manager.BeginImport();
+    m_bone_manager->BeginImport();
 
     auto& rec = *(SkeletonRecord*)src.userdata;
     size_t njoints = rec.joints.size();
@@ -352,14 +355,14 @@ bool DocumentImporter::updateSkeleton(MQDocument doc, const SkeletonNode& src)
             param.pos = (MQPoint&)t;
             if (joint.parent)
                 param.parent_id = ((JointRecord*)joint.parent->userdata)->mqid;
-            jrec.mqid = bone_manager.AddBone(param);
+            jrec.mqid = m_bone_manager->AddBone(param);
         }
         else {
-            bone_manager.SetBasePos(jrec.mqid, (MQPoint&)t);
+            m_bone_manager->SetBasePos(jrec.mqid, (MQPoint&)t);
         }
     }
 
-    bone_manager.EndImport();
+    m_bone_manager->EndImport();
     return true;
 #else
     return false;

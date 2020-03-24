@@ -24,6 +24,7 @@
     <ClInclude Include="mqusd\Foundation\mqusdSceneGraph.h" />
     <ClInclude Include="mqusd\Foundation\mqusdSceneGraphRemote.h" />
     <ClInclude Include="mqusd\Foundation\mqusdSerialization.h" />
+    <ClInclude Include="mqusd\Foundation\mqusdUtils.h" />
     <ClInclude Include="mqusd\mqusd.h" />
     <ClInclude Include="mqusd\pch.h" />
   </ItemGroup>
@@ -32,6 +33,7 @@
     <ClCompile Include="mqusd\Foundation\mqusdDocumentImporter.cpp" />
     <ClCompile Include="mqusd\Foundation\mqusdSceneGraph.cpp" />
     <ClCompile Include="mqusd\Foundation\mqusdSceneGraphRemote.cpp" />
+    <ClCompile Include="mqusd\Foundation\mqusdUtils.cpp" />
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

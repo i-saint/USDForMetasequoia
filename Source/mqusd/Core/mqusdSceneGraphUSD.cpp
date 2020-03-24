@@ -8,6 +8,28 @@
 
 namespace mqusd {
 
+static void PrintPrim(UsdPrim prim)
+{
+    std::stringstream ss;
+    mu::Print("prim %s (%s)\n", prim.GetPath().GetText(), prim.GetTypeName().GetText());
+    for (auto& attr : prim.GetAuthoredAttributes()) {
+        mu::Print("  attr %s (%s)\n", attr.GetName().GetText(), attr.GetTypeName().GetAsToken().GetText());
+        //for (auto& kvp : prim.GetAllAuthoredMetadata()) {
+        //    ss << kvp.second;
+        //    mu::Print("    meta %s (%s) - %s\n", kvp.first.GetText(), kvp.second.GetTypeName().c_str(), ss.str().c_str());
+        //    ss.str({});
+        //}
+    }
+    for (auto& rel : prim.GetAuthoredRelationships()) {
+        SdfPathVector paths;
+        rel.GetTargets(&paths);
+        for (auto& path : paths) {
+            mu::Print("  rel %s %s\n", rel.GetName().GetText(), path.GetText());
+        }
+    }
+}
+
+
 template<class NodeT>
 NodeT* CreateNode(USDNode* parent, UsdPrim prim)
 {
@@ -146,19 +168,6 @@ USDMeshNode::USDMeshNode(USDNode* parent, UsdPrim prim)
 {
     m_mesh = UsdGeomMesh(prim);
     setNode(CreateNode<MeshNode>(parent, prim));
-
-//#ifdef mqusdDebug
-//    for (auto& attr : m_prim.GetAuthoredAttributes()) {
-//        mqusdDbgPrint("  attr %s (%s)\n", attr.GetName().GetText(), attr.GetTypeName().GetAsToken().GetText());
-//    }
-//    for (auto& rel : m_prim.GetAuthoredRelationships()) {
-//        SdfPathVector paths;
-//        rel.GetTargets(&paths);
-//        for (auto& path : paths) {
-//            mqusdDbgPrint("  rel %s %s\n", rel.GetName().GetText(), path.GetText());
-//        }
-//    }
-//#endif
 }
 
 USDMeshNode::USDMeshNode(Node* n, UsdPrim prim)
@@ -169,6 +178,10 @@ USDMeshNode::USDMeshNode(Node* n, UsdPrim prim)
 
 void USDMeshNode::beforeRead()
 {
+    super::beforeRead();
+
+    auto& dst = static_cast<MeshNode&>(*m_node);
+
     // find attributes
     m_attr_mids = m_prim.GetAttribute(mqusdAttrMaterialIDs);
     m_attr_uv = m_prim.GetAttribute(mqusdAttrUV);
@@ -178,14 +191,12 @@ void USDMeshNode::beforeRead()
     m_attr_joint_weights = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelJointWeights);
     m_attr_bind_transform = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelGeomBindTransform);
 
-
-    auto& dst = static_cast<MeshNode&>(*m_node);
-
     // resolve blendshapes
     auto rel_blendshapes = m_prim.GetRelationship(UsdSkelTokens->skelBlendShapeTargets);
     if (rel_blendshapes) {
         SdfPathVector paths;
         rel_blendshapes.GetTargets(&paths);
+        dst.blendshapes.clear();
         for (auto& path : paths) {
             if (auto n = m_scene->findNode(path.GetString()))
                 dst.blendshapes.push_back(static_cast<BlendshapeNode*>(n->m_node));
@@ -204,28 +215,13 @@ void USDMeshNode::beforeRead()
         }
     }
 
-    // skinning data can be assumed not time sampled. so, read it at this point.
+    // resolve joints
     if (m_attr_joints) {
         VtArray<TfToken> data;
         m_attr_joints.Get(&data);
+        dst.joint_paths.clear();
         for (auto& t : data)
             dst.joint_paths.push_back(t.GetString());
-    }
-    if (m_attr_joint_indices && m_attr_joint_weights) {
-        TfToken interpolation;
-        m_attr_joint_indices.GetMetadata(UsdGeomTokens->elementSize, &dst.joints_per_vertex);
-        m_attr_joint_indices.GetMetadata(UsdGeomTokens->interpolation, &interpolation);
-
-        m_attr_joint_indices.Get(&m_joint_indices);
-        dst.joint_indices.share(m_joint_indices.cdata(), m_joint_indices.size());
-
-        m_attr_joint_weights.Get(&m_joint_weights);
-        dst.joint_weights.share(m_joint_weights.cdata(), m_joint_weights.size());
-    }
-    if (m_attr_bind_transform) {
-        GfMatrix4d data;
-        m_attr_bind_transform.Get(&data);
-        dst.bind_transform.assign((float4x4&)data);
     }
 }
 
@@ -298,6 +294,25 @@ void USDMeshNode::read(double time)
     if (m_attr_mids) {
         m_attr_mids.Get(&m_material_ids, t);
         dst.material_ids.share(m_material_ids.cdata(), m_material_ids.size());
+    }
+
+    // skel
+    if (m_attr_joint_indices && m_attr_joint_weights) {
+        TfToken interpolation;
+        m_attr_joint_indices.GetMetadata(UsdGeomTokens->elementSize, &dst.joints_per_vertex);
+        m_attr_joint_indices.GetMetadata(UsdGeomTokens->interpolation, &interpolation);
+
+        m_attr_joint_indices.Get(&m_joint_indices);
+        dst.joint_indices.share(m_joint_indices.cdata(), m_joint_indices.size());
+
+        m_attr_joint_weights.Get(&m_joint_weights);
+        dst.joint_weights.share(m_joint_weights.cdata(), m_joint_weights.size());
+
+        if (m_attr_bind_transform) {
+            GfMatrix4d data;
+            m_attr_bind_transform.Get(&data);
+            dst.bind_transform.assign((float4x4&)data);
+        }
     }
 
     // validate
@@ -406,10 +421,9 @@ USDBlendshapeNode::USDBlendshapeNode(Node* n, UsdPrim prim)
     m_blendshape = UsdSkelBlendShape(prim);
 }
 
-void USDBlendshapeNode::beforeRead()
+void USDBlendshapeNode::read(double time)
 {
-    super::beforeRead();
-
+    super::read(time);
     auto& dst = *static_cast<BlendshapeNode*>(m_node);
 
     {
@@ -461,9 +475,9 @@ USDSkelRootNode::USDSkelRootNode(Node* n, UsdPrim prim)
 void USDSkelRootNode::beforeRead()
 {
     super::beforeRead();
+    auto& dst = *static_cast<SkelRootNode*>(m_node);
 
     // resolve skeleton
-    auto& dst = *static_cast<SkelRootNode*>(m_node);
     auto rel_skel = m_prim.GetRelationship(UsdSkelTokens->skelSkeleton);
     if (rel_skel) {
         SdfPathVector paths;
@@ -474,7 +488,7 @@ void USDSkelRootNode::beforeRead()
                 dst.skeleton = skel;
 
                 // update child meshes
-                eachChildR([skel](USDNode *n) {
+                eachChildR([skel](USDNode* n) {
                     if (n->m_node->getType() == Node::Type::Mesh) {
                         auto mesh_node = static_cast<MeshNode*>(n->m_node);
                         if (!mesh_node->skeleton)
@@ -517,6 +531,7 @@ USDSkeletonNode::USDSkeletonNode(Node* n, UsdPrim prim)
 
 void USDSkeletonNode::beforeRead()
 {
+    super::beforeRead();
     auto& dst = *static_cast<SkeletonNode*>(m_node);
 
     // build joints
@@ -524,6 +539,14 @@ void USDSkeletonNode::beforeRead()
     m_skel.GetJointsAttr().Get(&data);
     for (auto& token : data)
         dst.addJoint(token.GetString());
+}
+
+void USDSkeletonNode::read(double time)
+{
+    super::read(time);
+
+    auto t = UsdTimeCode(time);
+    auto& dst = *static_cast<SkeletonNode*>(m_node);
 
     // bindpose
     {
@@ -544,14 +567,6 @@ void USDSkeletonNode::beforeRead()
                 dst.joints[i]->restpose.assign((double4x4&)data[i]);
         }
     }
-}
-
-void USDSkeletonNode::read(double time)
-{
-    super::read(time);
-
-    auto t = UsdTimeCode(time);
-    auto& dst = *static_cast<SkeletonNode*>(m_node);
 
     // update joint matrices
     if (auto query = m_skel_cache.GetSkelQuery(m_skel)) {
@@ -708,7 +723,7 @@ bool USDScene::save()
 void USDScene::constructTree(USDNode* n)
 {
 #ifdef mqusdDebug
-    mqusdDbgPrint("%s (%s)\n", n->getPath().c_str(), n->m_prim.GetTypeName().GetText());
+    PrintPrim(n->m_prim);
 #endif
 
     m_nodes.push_back(USDNodePtr(n));
@@ -780,6 +795,7 @@ void USDScene::read()
 
     for (auto& n : m_nodes)
         n->read(time);
+    ++m_read_count;
 }
 
 void USDScene::write()
@@ -787,13 +803,13 @@ void USDScene::write()
     s_current_scene = const_cast<USDScene*>(this);
     double time = m_scene->time_current;
 
-    if (m_frame == 0) {
+    if (m_write_count == 0) {
         for (auto& n : m_nodes)
             n->beforeWrite();
     }
     for (auto& n : m_nodes)
         n->write(time);
-    ++m_frame;
+    ++m_write_count;
 
     if (!std::isnan(time) && time > m_max_time) {
         m_stage->SetEndTimeCode(time);
