@@ -317,6 +317,10 @@ void MeshNode::convert(const ConvertOptions& opt)
         }
     }
 
+    if (opt.flip_v) {
+        mu::InvertV(uvs.data(), uvs.size());
+    }
+
     if (opt.flip_faces) {
         size_t nfaces = counts.size();
         auto* cdata = counts.cdata();

@@ -9,12 +9,13 @@ class ABCINode
 public:
     ABCINode(ABCINode* parent, Abc::IObject obj, bool create_node);
     virtual ~ABCINode();
+    virtual void beforeRead();
     virtual void read(double time);
 
     void setNode(Node* node);
     std::string getPath() const;
 
-protected:
+public:
     Abc::IObject m_obj;
     ABCIScene* m_scene = nullptr;
     Node* m_node = nullptr;
@@ -26,8 +27,9 @@ mqusdDeclPtr(ABCINode);
 
 class ABCIRootNode : public ABCINode
 {
+using super = ABCINode;
 public:
-    ABCIRootNode(ABCINode* parent, Abc::IObject obj);
+    ABCIRootNode(Abc::IObject obj);
 
 protected:
 };
@@ -35,6 +37,7 @@ protected:
 
 class ABCIXformNode : public ABCINode
 {
+using super = ABCINode;
 public:
     ABCIXformNode(ABCINode* parent, Abc::IObject obj);
     void read(double time) override;
@@ -47,8 +50,10 @@ protected:
 
 class ABCIMeshNode : public ABCINode
 {
+using super = ABCINode;
 public:
     ABCIMeshNode(ABCINode* parent, Abc::IObject obj);
+    void beforeRead() override;
     void read(double time) override;
 
 protected:
@@ -56,12 +61,20 @@ protected:
     AbcGeom::IC3fGeomParam m_rgb_param;
     AbcGeom::IC4fGeomParam m_rgba_param;
     AbcGeom::IInt32ArrayProperty m_mids_prop;
+
     AbcGeom::IPolyMeshSchema::Sample m_sample;
+    AbcGeom::IN3fGeomParam::Sample m_normals;
+    AbcGeom::IV2fGeomParam::Sample m_uvs;
+    AbcGeom::IC3fGeomParam::Sample m_rgb;
+    AbcGeom::IC4fGeomParam::Sample m_rgba;
+    Abc::Int32ArraySamplePtr m_material_ids;
+    SharedVector<float3> m_tmp_rgb;
 };
 
 
 class ABCIMaterialNode : public ABCINode
 {
+using super = ABCINode;
 public:
     ABCIMaterialNode(ABCINode* parent, Abc::IObject obj);
     void read(double time) override;
@@ -80,7 +93,7 @@ protected:
 
 
 
-class ABCIScene : SceneInterface
+class ABCIScene : public SceneInterface
 {
 public:
     static ABCIScene* getCurrent();
@@ -101,8 +114,6 @@ public:
 
 private:
     void constructTree(ABCINode* n);
-    template<class NodeT> ABCINode* createNodeImpl(ABCINode* parent, std::string path);
-    template<class NodeT> ABCINode* wrapNodeImpl(Node* node);
 
     std::string m_abc_path;
     std::shared_ptr<std::fstream> m_stream;
@@ -115,5 +126,7 @@ private:
     int m_read_count = 0;
     double m_max_time = 0.0;
 };
+
+SceneInterface* CreateABCIScene(Scene* scene);
 
 } // namespace mqusd

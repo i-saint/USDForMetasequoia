@@ -35,7 +35,7 @@ template<class DstContainer, class SrcContainer, class Convert>
 inline void transform_container(DstContainer& dst, const SrcContainer& src, const Convert& c)
 {
     size_t n = src.size();
-    dst.resize(src.size());
+    dst.resize(n);
     for (size_t i = 0; i < n; ++i)
         c(dst[i], src[i]);
 }

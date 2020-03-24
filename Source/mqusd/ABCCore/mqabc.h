@@ -2,6 +2,9 @@
 
 #define mqabcEnableHDF5
 
+#define mqabcAttrMaterialIDs    "materialIds"
+
+
 #pragma warning(push)
 #pragma warning(disable:4244 4245 4100)
 #include <Alembic/AbcCoreAbstract/All.h>
@@ -27,4 +30,5 @@ using abcBox = Imath::Box3f;
 using abcBoxd = Imath::Box3d;
 using abcChrono = Abc::chrono_t;
 
+#include "mqusd.h"
 #include "Foundation/mqusdSceneGraph.h"

@@ -14,7 +14,7 @@ public:
     void setNode(Node* node);
     std::string getPath() const;
 
-protected:
+public:
     Abc::OObject m_obj;
     ABCOScene* m_scene = nullptr;
     Node* m_node = nullptr;
@@ -26,6 +26,7 @@ mqusdDeclPtr(ABCONode);
 
 class ABCORootNode : public ABCONode
 {
+using super = ABCONode;
 public:
     ABCORootNode(ABCONode* parent, Abc::OObject obj);
 
@@ -35,6 +36,7 @@ protected:
 
 class ABCOXformNode : public ABCONode
 {
+using super = ABCONode;
 public:
     ABCOXformNode(ABCONode* parent, Abc::OObject obj);
     void write() override;
@@ -47,6 +49,7 @@ protected:
 
 class ABCOMeshNode : public ABCONode
 {
+using super = ABCONode;
 public:
     ABCOMeshNode(ABCONode* parent, Abc::OObject obj);
     void write() override;
@@ -62,6 +65,7 @@ protected:
 
 class ABCOMaterialNode : public ABCONode
 {
+using super = ABCONode;
 public:
     ABCOMaterialNode(ABCONode* parent, Abc::OObject obj);
     void write() override;

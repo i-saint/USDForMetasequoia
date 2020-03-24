@@ -31,9 +31,8 @@ static void PrintPrim(UsdPrim prim)
 
 
 template<class NodeT>
-NodeT* CreateNode(USDNode* parent, UsdPrim prim)
+static inline NodeT* CreateNode(USDNode* parent, UsdPrim prim)
 {
-    auto pnode = parent ? parent->m_node : nullptr;
     return new NodeT(
         parent ? parent->m_node : nullptr,
         prim.GetName().GetText());
@@ -41,9 +40,9 @@ NodeT* CreateNode(USDNode* parent, UsdPrim prim)
 
 USDNode::USDNode(USDNode* parent, UsdPrim prim, bool create_node)
     : m_prim(prim)
+    , m_scene(USDScene::getCurrent())
     , m_parent(parent)
 {
-    m_scene = USDScene::getCurrent();
     if (m_parent)
         m_parent->m_children.push_back(this);
     if (create_node)
@@ -52,12 +51,9 @@ USDNode::USDNode(USDNode* parent, UsdPrim prim, bool create_node)
 
 USDNode::USDNode(Node* n, UsdPrim prim)
     : m_prim(prim)
-    , m_node(n)
+    , m_scene(USDScene::getCurrent())
 {
-
-    m_scene = USDScene::getCurrent();
-
-    m_node->impl = this;
+    setNode(n);
     if (m_node->parent) {
         m_parent = (USDNode*)m_node->parent->impl;
         m_parent->m_children.push_back(this);
@@ -916,13 +912,6 @@ USDNode* USDScene::findNode(const std::string& path)
 {
     auto it = m_node_table.find(path);
     return it == m_node_table.end() ? nullptr : it->second;
-}
-
-ScenePtr CreateUSDSceneInternal()
-{
-    auto ret = new Scene();
-    ret->impl.reset(new mqusd::USDScene(ret));
-    return ScenePtr(ret);
 }
 
 } // namespace mqusd
