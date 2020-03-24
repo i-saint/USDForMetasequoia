@@ -3,12 +3,12 @@
 
 namespace mqusd {
 
-class mqusdRecorderPlugin;
+class mqabcRecorderPlugin;
 
-class mqusdRecorderWindow : public MQWindow
+class mqabcRecorderWindow : public MQWindow
 {
 public:
-    mqusdRecorderWindow(mqusdRecorderPlugin* plugin, MQWindowBase& parent);
+    mqabcRecorderWindow(mqabcRecorderPlugin* plugin, MQWindowBase& parent);
 
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
@@ -19,7 +19,7 @@ public:
     void LogInfo(const char *message);
 
 private:
-    mqusdRecorderPlugin* m_plugin = nullptr;
+    mqabcRecorderPlugin* m_plugin = nullptr;
 
     MQFrame* m_frame_settings = nullptr;
     MQEdit* m_edit_interval = nullptr;
@@ -32,8 +32,6 @@ private:
     MQCheckBox* m_check_normals = nullptr;
     MQCheckBox* m_check_colors = nullptr;
     MQCheckBox* m_check_mids = nullptr;
-    MQCheckBox* m_check_blendshapes = nullptr;
-    MQCheckBox* m_check_skeletons = nullptr;
 
     MQCheckBox* m_check_flip_faces = nullptr;
     MQCheckBox* m_check_flip_x = nullptr;

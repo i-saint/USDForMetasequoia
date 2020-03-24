@@ -1,4 +1,4 @@
-file(GLOB sources *.h *.cpp ../*.h)
+file(GLOB sources *.h *.cpp)
 add_library(${MQABC_CORE} STATIC ${sources})
 set_target_properties(${MQABC_CORE} PROPERTIES OUTPUT_NAME "mqabcCore")
 

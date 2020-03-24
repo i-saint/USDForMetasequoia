@@ -8,6 +8,10 @@
 #define mqusdRecorderPluginID   0xB1CC99A0
 #define mqusdPlayerPluginID     0xB1CC99A1
 
+#define mqabcPluginProduct      mqusdPluginProduct
+#define mqabcRecorderPluginID   0xB1CC99B0
+#define mqabcPlayerPluginID     0xB1CC99B1
+
 #ifdef _WIN32
     #define mqusdAPI extern "C" __declspec(dllexport)
 #else

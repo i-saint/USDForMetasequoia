@@ -7,7 +7,7 @@
     <Filter Include="mqusd">
       <UniqueIdentifier>{d83e2cdf-c30e-4d27-9651-2f531b7a074f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mqusd\Player">
+    <Filter Include="mqusd\USDPlayer">
       <UniqueIdentifier>{26d2234f-5be0-4ef6-a6d6-c3aa30e0201b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -19,10 +19,10 @@
       <Filter>mqusd</Filter>
     </ClInclude>
     <ClInclude Include="mqusd\USDPlayer\mqusdPlayerPlugin.h">
-      <Filter>mqusd\Player</Filter>
+      <Filter>mqusd\USDPlayer</Filter>
     </ClInclude>
     <ClInclude Include="mqusd\USDPlayer\mqusdPlayerWindow.h">
-      <Filter>mqusd\Player</Filter>
+      <Filter>mqusd\USDPlayer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -30,10 +30,10 @@
       <Filter>mqusd</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\USDPlayer\mqusdPlayerPlugin.cpp">
-      <Filter>mqusd\Player</Filter>
+      <Filter>mqusd\USDPlayer</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\USDPlayer\mqusdPlayerWindow.cpp">
-      <Filter>mqusd\Player</Filter>
+      <Filter>mqusd\USDPlayer</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -7,7 +7,7 @@
     <Filter Include="mqusd">
       <UniqueIdentifier>{d83e2cdf-c30e-4d27-9651-2f531b7a074f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mqusd\USDRecorder">
+    <Filter Include="mqusd\ABCRecorder">
       <UniqueIdentifier>{72a7454e-eba1-4219-9126-166863ed9a90}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -18,22 +18,22 @@
     <ClInclude Include="mqusd\mqusd.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\USDRecorder\mqusdRecorderPlugin.h">
-      <Filter>mqusd\USDRecorder</Filter>
+    <ClInclude Include="mqusd\ABCRecorder\mqabcRecorderPlugin.h">
+      <Filter>mqusd\ABCRecorder</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\USDRecorder\mqusdRecorderWindow.h">
-      <Filter>mqusd\USDRecorder</Filter>
+    <ClInclude Include="mqusd\ABCRecorder\mqabcRecorderWindow.h">
+      <Filter>mqusd\ABCRecorder</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\pch.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\USDRecorder\mqusdRecorderPlugin.cpp">
-      <Filter>mqusd\USDRecorder</Filter>
+    <ClCompile Include="mqusd\ABCRecorder\mqabcRecorderPlugin.cpp">
+      <Filter>mqusd\ABCRecorder</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\USDRecorder\mqusdRecorderWindow.cpp">
-      <Filter>mqusd\USDRecorder</Filter>
+    <ClCompile Include="mqusd\ABCRecorder\mqabcRecorderWindow.cpp">
+      <Filter>mqusd\ABCRecorder</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

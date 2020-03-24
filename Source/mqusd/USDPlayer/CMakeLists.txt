@@ -1,4 +1,4 @@
-file(GLOB sources ../Foundation/*.cpp ../Foundation/*.h ../*.cpp ../*.h *.cpp *.h)
+file(GLOB sources *.cpp *.h)
 add_library(${MQUSD_PLAYER} MODULE ${sources})
 set_target_properties(${MQUSD_PLAYER} PROPERTIES BUNDLE ON)
 set_target_properties(${MQUSD_PLAYER} PROPERTIES BUNDLE_EXTENSION "plugin")
