@@ -1,14 +1,20 @@
-#include "mqabc.h"
+#include "mqabcCore.h"
 
 namespace mqusd {
 
 class ABCOScene;
 
+#define DefSchemaTraits(Type)\
+    using AbcType = Type;
+
 class ABCONode
 {
 public:
-    ABCONode(ABCONode* parent, Abc::OObject obj, bool create_node);
+    DefSchemaTraits(AbcGeom::OObject);
+
+    ABCONode(ABCONode* parent, Abc::OObject obj, bool create_node = true);
     virtual ~ABCONode();
+    virtual void beforeWrite();
     virtual void write();
 
     void setNode(Node* node);
@@ -28,7 +34,7 @@ class ABCORootNode : public ABCONode
 {
 using super = ABCONode;
 public:
-    ABCORootNode(ABCONode* parent, Abc::OObject obj);
+    ABCORootNode(Abc::OObject obj);
 
 protected:
 };
@@ -38,6 +44,8 @@ class ABCOXformNode : public ABCONode
 {
 using super = ABCONode;
 public:
+    DefSchemaTraits(AbcGeom::OXform);
+
     ABCOXformNode(ABCONode* parent, Abc::OObject obj);
     void write() override;
 
@@ -51,15 +59,22 @@ class ABCOMeshNode : public ABCONode
 {
 using super = ABCONode;
 public:
+    DefSchemaTraits(AbcGeom::OPolyMesh);
+
     ABCOMeshNode(ABCONode* parent, Abc::OObject obj);
+    void beforeWrite() override;
     void write() override;
 
 protected:
     AbcGeom::OPolyMeshSchema m_schema;
-    AbcGeom::OC3fGeomParam m_rgb_param;
     AbcGeom::OC4fGeomParam m_rgba_param;
     AbcGeom::OInt32ArrayProperty m_mids_prop;
+
     AbcGeom::OPolyMeshSchema::Sample m_sample;
+    AbcGeom::ON3fGeomParam::Sample m_normals;
+    AbcGeom::OV2fGeomParam::Sample m_uvs;
+    AbcGeom::OC4fGeomParam::Sample m_rgba;
+    Abc::Int32ArraySamplePtr m_material_ids;
 };
 
 
@@ -67,7 +82,10 @@ class ABCOMaterialNode : public ABCONode
 {
 using super = ABCONode;
 public:
+    DefSchemaTraits(AbcMaterial::OMaterial);
+
     ABCOMaterialNode(ABCONode* parent, Abc::OObject obj);
+    void beforeWrite() override;
     void write() override;
 
 protected:
@@ -82,9 +100,10 @@ protected:
     Abc::OC3fProperty m_emission_prop;
 };
 
+#undef DefSchemaTraits
 
 
-class ABCOScene : SceneInterface
+class ABCOScene : public SceneInterface
 {
 public:
     static ABCOScene* getCurrent();
@@ -104,12 +123,10 @@ public:
     ABCONode* findNode(const std::string& path);
 
 private:
-    void constructTree(ABCONode* n);
-    template<class NodeT> ABCONode* createNodeImpl(ABCONode* parent, std::string path);
-    template<class NodeT> ABCONode* wrapNodeImpl(Node* node);
+    void registerNode(ABCONode* n);
+    template<class NodeT> ABCONode* createNodeImpl(ABCONode* parent, const char* name);
 
     std::string m_abc_path;
-    std::shared_ptr<std::fstream> m_stream;
     Abc::OArchive m_archive;
     std::vector<ABCONodePtr> m_nodes;
     std::map<std::string, ABCONode*> m_node_table;

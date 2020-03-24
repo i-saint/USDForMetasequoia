@@ -106,7 +106,7 @@ BOOL mqabcRecorderWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqabcRecorderWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
-    m_plugin->CloseUSD();
+    m_plugin->CloseABC();
     m_plugin->WindowClose();
     return 0;
 }
@@ -162,13 +162,13 @@ BOOL mqabcRecorderWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument do
 
         if (dlg.Execute()) {
             auto path = dlg.GetFileName();
-            if (m_plugin->OpenUSD(doc, mu::ToMBS(path))) {
+            if (m_plugin->OpenABC(doc, mu::ToMBS(path))) {
                 m_plugin->CaptureFrame(doc);
             }
         }
     }
     else {
-        if (m_plugin->CloseUSD()) {
+        if (m_plugin->CloseABC()) {
         }
     }
     SyncSettings();

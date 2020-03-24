@@ -8,7 +8,4 @@ void SetUSDPluginPath(const std::string& v);
 ScenePtr CreateUSDScene();
 ScenePtr CreateUSDScenePipe();
 
-SceneInterface* CreateUSDSceneInterface(Scene* scene);
-SceneInterface* CreateUSDScenePipeInterface(Scene* scene);
-
 } // namespace mqusd

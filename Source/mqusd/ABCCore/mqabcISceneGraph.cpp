@@ -15,7 +15,7 @@ template<class NodeT>
 static inline NodeT* FindParent(ABCINode *n)
 {
     for (auto* p = n->m_parent; p != nullptr; p = p->m_parent) {
-        if (auto tp=dynamic_cast<NodeT*>(p))
+        if (auto tp = dynamic_cast<NodeT*>(p))
             return tp;
     }
     return nullptr;
@@ -36,7 +36,6 @@ ABCINode::ABCINode(ABCINode* parent, Abc::IObject obj, bool create_node)
     , m_scene(ABCIScene::getCurrent())
     , m_parent(parent)
 {
-    ;
     if (m_parent)
         m_parent->m_children.push_back(this);
     if (create_node)
@@ -219,11 +218,11 @@ void ABCIMaterialNode::read(double time)
 
 
 
-static thread_local ABCIScene* s_current_scene;
+static thread_local ABCIScene* g_current_scene;
 
 ABCIScene* ABCIScene::getCurrent()
 {
-    return s_current_scene;
+    return g_current_scene;
 }
 
 ABCIScene::ABCIScene(Scene* scene)
@@ -285,8 +284,10 @@ bool ABCIScene::open(const char* path)
 
     if (m_archive.valid()) {
         try {
+            g_current_scene = this;
             m_abc_path = path;
             m_root = new ABCIRootNode(m_archive.getTop());
+            m_scene->root_node = static_cast<RootNode*>(m_root->m_node);
             constructTree(m_root);
         }
         catch (Alembic::Util::Exception e3) {
@@ -313,12 +314,13 @@ bool ABCIScene::create(const char* /*path*/)
 bool ABCIScene::save()
 {
     // not supported
-    return false;
+    return true;
 }
 
 void ABCIScene::close()
 {
     m_root = nullptr;
+    m_node_table.clear();
     m_nodes.clear();
 
     m_archive.reset();
@@ -328,7 +330,7 @@ void ABCIScene::close()
 
 void ABCIScene::read()
 {
-    s_current_scene = this;
+    g_current_scene = this;
     double time = m_scene->time_current;
 
     for (auto& n : m_nodes)
@@ -385,9 +387,11 @@ void ABCIScene::constructTree(ABCINode* n)
     }
 }
 
-SceneInterface* CreateABCIScene(Scene* scene)
+ScenePtr CreateABCIScene()
 {
-    return new ABCIScene(scene);
+    auto ret = new Scene();
+    ret->impl.reset(new ABCIScene(ret));
+    return ScenePtr(ret);
 }
 
 } // namespace mqusd

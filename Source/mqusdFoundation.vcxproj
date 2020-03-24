@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mqusd\ABCCore\mqabc.h" />
+    <ClInclude Include="mqusd\ABCCore\mqabcCore.h" />
     <ClInclude Include="mqusd\ABCCore\mqabcISceneGraph.h" />
     <ClInclude Include="mqusd\ABCCore\mqabcOSceneGraph.h" />
     <ClInclude Include="mqusd\Foundation\mqusdDocumentExporter.h" />

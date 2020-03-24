@@ -94,7 +94,7 @@ BOOL mqabcPlayerWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqabcPlayerWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
-    m_plugin->CloseUSD();
+    m_plugin->CloseABC();
     m_plugin->WindowClose();
 
     m_frame_open->SetVisible(true);
@@ -111,7 +111,7 @@ BOOL mqabcPlayerWindow::OnOpenClicked(MQWidgetBase* sender, MQDocument doc)
         dlg.SetDefaultExt(L"usd");
         if (dlg.Execute()) {
             auto path = dlg.GetFileName();
-            if (m_plugin->OpenUSD(doc, mu::ToMBS(path))) {
+            if (m_plugin->OpenABC(doc, mu::ToMBS(path))) {
                 m_slider_time->SetMin(m_plugin->GetTimeStart());
                 m_slider_time->SetMax(m_plugin->GetTimeEnd());
                 m_slider_time->SetPosition(m_plugin->GetTimeStart());

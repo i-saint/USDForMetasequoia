@@ -2,6 +2,18 @@
 #include "mqusd.h"
 #include "mqabcPlayerPlugin.h"
 #include "mqabcPlayerWindow.h"
+#include "ABCCore/mqabc.h"
+
+#ifdef _WIN32
+    #pragma comment(lib, "Half-2_4.lib")
+    #pragma comment(lib, "Iex-2_4.lib")
+    #pragma comment(lib, "IexMath-2_4.lib")
+    #pragma comment(lib, "Imath-2_4.lib")
+    #pragma comment(lib, "Alembic.lib")
+    #pragma comment(lib, "libhdf5.lib")
+    #pragma comment(lib, "libszip.lib")
+    #pragma comment(lib, "zlib.lib")
+#endif // _WIN32
 
 namespace mqusd {
 
@@ -111,7 +123,7 @@ void mqabcPlayerPlugin::Exit()
         delete m_window;
         m_window = nullptr;
     }
-    CloseUSD();
+    CloseABC();
 }
 
 //---------------------------------------------------------------------------
@@ -191,7 +203,7 @@ void mqabcPlayerPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_
 //---------------------------------------------------------------------------
 void mqabcPlayerPlugin::OnEndDocument(MQDocument doc)
 {
-    CloseUSD();
+    CloseABC();
 }
 
 //---------------------------------------------------------------------------
@@ -315,11 +327,11 @@ void mqusdLog(const char* fmt, ...)
 
 // impl
 
-bool mqabcPlayerPlugin::OpenUSD(MQDocument doc, const std::string& path)
+bool mqabcPlayerPlugin::OpenABC(MQDocument doc, const std::string& path)
 {
-    CloseUSD();
+    CloseABC();
 
-    m_scene = CreateUSDScene();
+    m_scene = CreateABCIScene();
     if (!m_scene)
         return false;
 
@@ -338,7 +350,7 @@ bool mqabcPlayerPlugin::OpenUSD(MQDocument doc, const std::string& path)
     return true;
 }
 
-bool mqabcPlayerPlugin::CloseUSD()
+bool mqabcPlayerPlugin::CloseABC()
 {
     m_importer = {};
     m_scene = {};

@@ -90,12 +90,12 @@ public:
 
 
 public:
-    bool OpenUSD(MQDocument doc, const std::string& v);
-    bool CloseUSD();
+    bool OpenABC(MQDocument doc, const std::string& v);
+    bool CloseABC();
     void CaptureFrame(MQDocument doc);
 
     const std::string& GetMQOPath() const;
-    const std::string& GetUSDPath() const;
+    const std::string& GetABCPath() const;
     bool IsArchiveOpened() const;
     bool IsRecording() const;
     void SetRecording(bool v);

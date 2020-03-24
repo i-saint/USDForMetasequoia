@@ -216,6 +216,7 @@ public:
     USDNode* findNode(const std::string& path);
 
 private:
+    void registerNode(USDNode* n);
     void constructTree(USDNode* n);
     template<class NodeT> USDNode* createNodeImpl(USDNode* parent, std::string path);
     template<class NodeT> USDNode* wrapNodeImpl(Node* node);

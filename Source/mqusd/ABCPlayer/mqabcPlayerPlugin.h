@@ -90,8 +90,8 @@ public:
 
 
 public:
-    bool OpenUSD(MQDocument doc, const std::string& v);
-    bool CloseUSD();
+    bool OpenABC(MQDocument doc, const std::string& v);
+    bool CloseABC();
     void Seek(MQDocument doc, double t);
     void Refresh(MQDocument doc);
 

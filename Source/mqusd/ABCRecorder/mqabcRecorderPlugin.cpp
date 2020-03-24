@@ -2,6 +2,18 @@
 #include "mqusd.h"
 #include "mqabcRecorderPlugin.h"
 #include "mqabcRecorderWindow.h"
+#include "ABCCore/mqabc.h"
+
+#ifdef _WIN32
+    #pragma comment(lib, "Half-2_4.lib")
+    #pragma comment(lib, "Iex-2_4.lib")
+    #pragma comment(lib, "IexMath-2_4.lib")
+    #pragma comment(lib, "Imath-2_4.lib")
+    #pragma comment(lib, "Alembic.lib")
+    #pragma comment(lib, "libhdf5.lib")
+    #pragma comment(lib, "libszip.lib")
+    #pragma comment(lib, "zlib.lib")
+#endif // _WIN32
 
 namespace mqusd {
 
@@ -113,7 +125,7 @@ void mqabcRecorderPlugin::Exit()
         delete m_window;
         m_window = nullptr;
     }
-    CloseUSD();
+    CloseABC();
 }
 
 //---------------------------------------------------------------------------
@@ -197,7 +209,7 @@ void mqabcRecorderPlugin::OnNewDocument(MQDocument doc, const char *filename, NE
 void mqabcRecorderPlugin::OnEndDocument(MQDocument doc)
 {
     m_mqo_path.clear();
-    CloseUSD();
+    CloseABC();
 }
 
 //---------------------------------------------------------------------------
@@ -325,11 +337,11 @@ void mqusdLog(const char* fmt, ...)
 
 // impl
 
-bool mqabcRecorderPlugin::OpenUSD(MQDocument doc, const std::string& path)
+bool mqabcRecorderPlugin::OpenABC(MQDocument doc, const std::string& path)
 {
-    CloseUSD();
+    CloseABC();
 
-    m_scene = CreateUSDScene();
+    m_scene = CreateABCOScene();
     if (!m_scene)
         return false;
 
@@ -348,7 +360,7 @@ bool mqabcRecorderPlugin::OpenUSD(MQDocument doc, const std::string& path)
     return true;
 }
 
-bool mqabcRecorderPlugin::CloseUSD()
+bool mqabcRecorderPlugin::CloseABC()
 {
     if (m_recording) {
         m_exporter = {};
@@ -374,7 +386,7 @@ const std::string& mqabcRecorderPlugin::GetMQOPath() const
 {
     return m_mqo_path;
 }
-const std::string& mqabcRecorderPlugin::GetUSDPath() const
+const std::string& mqabcRecorderPlugin::GetABCPath() const
 {
     return m_scene->path;
 }

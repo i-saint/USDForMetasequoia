@@ -643,11 +643,11 @@ void USDMaterialNode::write(double time)
 }
 
 
-static thread_local USDScene* s_current_scene;
+static thread_local USDScene* g_current_scene;
 
 USDScene* USDScene::getCurrent()
 {
-    return s_current_scene;
+    return g_current_scene;
 }
 
 USDScene::USDScene(Scene* scene)
@@ -667,7 +667,7 @@ bool USDScene::open(const char* path_)
     if (!m_stage)
         return false;
 
-    s_current_scene = this;
+    g_current_scene = this;
 
     m_scene->time_start = m_stage->GetStartTimeCode();
     m_scene->time_end = m_stage->GetEndTimeCode();
@@ -697,7 +697,7 @@ bool USDScene::create(const char* path_)
     m_scene->path = path_;
     m_stage = UsdStage::CreateNew(m_scene->path);
     if (m_stage) {
-        s_current_scene = this;
+        g_current_scene = this;
 
         auto root = m_stage->GetPseudoRoot();
         if (root.IsValid()) {
@@ -717,15 +717,21 @@ bool USDScene::save()
     return false;
 }
 
+void USDScene::registerNode(USDNode* n)
+{
+    if (n) {
+        m_nodes.push_back(USDNodePtr(n));
+        m_node_table[n->getPath()] = n;
+        m_scene->nodes.push_back(NodePtr(n->m_node));
+    }
+}
+
 void USDScene::constructTree(USDNode* n)
 {
 #ifdef mqusdDebug
     PrintPrim(n->m_prim);
 #endif
-
-    m_nodes.push_back(USDNodePtr(n));
-    m_node_table[n->getPath()] = n;
-    m_scene->nodes.push_back(NodePtr(n->m_node));
+    registerNode(n);
 
     auto& prim = n->m_prim;
     auto children = prim.GetChildren();
@@ -787,7 +793,7 @@ void USDScene::close()
 
 void USDScene::read()
 {
-    s_current_scene = this;
+    g_current_scene = this;
     double time = m_scene->time_current;
 
     for (auto& n : m_nodes)
@@ -797,7 +803,7 @@ void USDScene::read()
 
 void USDScene::write()
 {
-    s_current_scene = const_cast<USDScene*>(this);
+    g_current_scene = this;
     double time = m_scene->time_current;
 
     if (m_write_count == 0) {
@@ -823,7 +829,6 @@ USDNode* USDScene::createNodeImpl(USDNode* parent, std::string path)
         PrintPrim(prim);
 #endif
         auto ret = new NodeT(parent, prim);
-        m_node_table[path] = ret;
         return ret;
     }
     return nullptr;
@@ -831,7 +836,7 @@ USDNode* USDScene::createNodeImpl(USDNode* parent, std::string path)
 
 Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
 {
-    s_current_scene = this;
+    g_current_scene = this;
 
     std::string path;
     if (parent) {
@@ -856,9 +861,7 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
     default: break;
     }
 
-    if (ret) {
-        m_nodes.push_back(USDNodePtr(ret));
-    }
+    registerNode(ret);
     return ret ? ret->m_node : nullptr;
 }
 

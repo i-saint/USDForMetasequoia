@@ -49,14 +49,6 @@ static void LoadCoreModule()
     });
 }
 
-SceneInterface* CreateUSDSceneInterface(Scene* scene)
-{
-    LoadCoreModule();
-    if (g_mqusdCreateUSDSceneInterface)
-        return g_mqusdCreateUSDSceneInterface(scene);
-    return nullptr;
-}
-
 ScenePtr CreateUSDScene()
 {
 #if defined(_WIN32) && defined(_M_IX86)
@@ -222,15 +214,10 @@ bool USDScenePipe::wrapNode(Node* /*node*/)
 }
 
 
-SceneInterface* CreateUSDScenePipeInterface(Scene* scene)
-{
-    return new USDScenePipe(scene);
-}
-
 ScenePtr CreateUSDScenePipe()
 {
     auto ret = new Scene();
-    ret->impl.reset(CreateUSDScenePipeInterface(ret));
+    ret->impl.reset(new USDScenePipe(ret));
     return ScenePtr(ret);
 }
 

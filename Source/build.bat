@@ -37,6 +37,26 @@ exit /B 0
         pause
         exit /B 1
     )
+    msbuild mqabcPlayer.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
+    IF %ERRORLEVEL% NEQ 0 (
+        pause
+        exit /B 1
+    )
+    msbuild mqabcPlayer.vcxproj /t:Build /p:Configuration=Release /p:Platform=Win32 /m /nologo
+    IF %ERRORLEVEL% NEQ 0 (
+        pause
+        exit /B 1
+    )
+    msbuild mqabcRecorder.vcxproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
+    IF %ERRORLEVEL% NEQ 0 (
+        pause
+        exit /B 1
+    )
+    msbuild mqabcRecorder.vcxproj /t:Build /p:Configuration=Release /p:Platform=Win32 /m /nologo
+    IF %ERRORLEVEL% NEQ 0 (
+        pause
+        exit /B 1
+    )
 
     set DIST_DIR32="_dist\mqusd_Windows_32bit"
     set CORE_DIR32="%DIST_DIR32%\mqusdCore"
@@ -49,6 +69,8 @@ exit /B 0
     copy Externals\x64\lib\tbb.dll "%CORE_DIR32%"
     copy Externals\x64\lib\usd_ms.dll "%CORE_DIR32%"
     xcopy /EIY Externals\x64\lib\usd "%CORE_DIR32%\usd"
+    copy _out\Win32_Release\%MQ_VERSION%\mqabcPlayer.dll "%DIST_DIR32%"
+    copy _out\Win32_Release\%MQ_VERSION%\mqabcRecorder.dll "%DIST_DIR32%"
 
     set DIST_DIR64="_dist\mqusd_Windows_64bit"
     set CORE_DIR64="%DIST_DIR64%\mqusdCore"
@@ -61,4 +83,6 @@ exit /B 0
     copy Externals\x64\lib\tbb.dll "%CORE_DIR64%"
     copy Externals\x64\lib\usd_ms.dll "%CORE_DIR64%"
     xcopy /EIY Externals\x64\lib\usd "%CORE_DIR64%\usd"
+    copy _out\x64_Release\%MQ_VERSION%\mqabcPlayer.dll "%DIST_DIR64%"
+    copy _out\x64_Release\%MQ_VERSION%\mqabcRecorder.dll "%DIST_DIR64%"
     exit /B 0
