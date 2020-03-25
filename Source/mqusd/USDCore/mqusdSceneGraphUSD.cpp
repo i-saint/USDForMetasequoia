@@ -721,10 +721,7 @@ void USDScene::registerNode(USDNode* n)
     if (n) {
         m_nodes.push_back(USDNodePtr(n));
         m_node_table[n->getPath()] = n;
-
-        m_scene->nodes.push_back(NodePtr(n->m_node));
-        if (n->m_node->getType() == Node::Type::Root)
-            m_scene->root_node = static_cast<RootNode*>(n->m_node);
+        m_scene->registerNode(n->m_node);
     }
 }
 

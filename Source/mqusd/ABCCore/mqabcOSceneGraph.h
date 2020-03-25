@@ -135,6 +135,9 @@ private:
     Scene* m_scene = nullptr;
     int m_write_count = 0;
     double m_max_time = 0.0;
+
+    bool m_keep_time = false;
+    std::vector<abcChrono> m_timeline;
 };
 
 } // namespace mqusd

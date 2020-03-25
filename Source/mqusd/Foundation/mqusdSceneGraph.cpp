@@ -951,13 +951,18 @@ Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
     }
     else {
         ret = createNodeImpl(parent, name, type);
-        if (ret) {
-            nodes.push_back(NodePtr(ret));
-            if (ret->getType() == Node::Type::Root)
-                root_node = static_cast<RootNode*>(ret);
-        }
+        registerNode(ret);
     }
     return ret;
+}
+
+void Scene::registerNode(Node* n)
+{
+    if (n) {
+        nodes.push_back(NodePtr(n));
+        if (n->getType() == Node::Type::Root)
+            root_node = static_cast<RootNode*>(n);
+    }
 }
 
 Node* Scene::createNodeImpl(Node* parent, const char* name, Node::Type type)

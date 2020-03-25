@@ -113,7 +113,9 @@ public:
     ABCINode* findNode(const std::string& path);
 
 private:
+    void registerNode(ABCINode* n);
     void constructTree(ABCINode* n);
+    void setupTimeRange();
 
     std::string m_abc_path;
     std::shared_ptr<std::fstream> m_stream;

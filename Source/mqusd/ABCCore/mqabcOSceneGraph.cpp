@@ -197,12 +197,18 @@ bool ABCOScene::save()
 
 void ABCOScene::close()
 {
+    if (m_keep_time) {
+        auto ts = Abc::TimeSampling(Abc::TimeSamplingType(Abc::TimeSamplingType::kAcyclic), m_timeline);
+        *m_archive.getTimeSampling(1) = ts;
+    }
+
     m_root = nullptr;
     m_node_table.clear();
     m_nodes.clear();
     m_objects.clear();
     m_archive.reset();
     m_abc_path.clear();
+    m_timeline.clear();
 }
 
 void ABCOScene::read()
@@ -214,6 +220,8 @@ void ABCOScene::write()
 {
     g_current_scene = this;
     double time = m_scene->time_current;
+    if (m_keep_time)
+        m_timeline.push_back(time);
 
     if (m_write_count == 0) {
         for (auto& n : m_nodes)
@@ -233,10 +241,7 @@ void ABCOScene::registerNode(ABCONode* n)
     if (n) {
         m_nodes.push_back(ABCONodePtr(n));
         m_node_table[n->getPath()] = n;
-
-        m_scene->nodes.push_back(NodePtr(n->m_node));
-        if (n->m_node->getType() == Node::Type::Root)
-            m_scene->root_node = static_cast<RootNode*>(n->m_node);
+        m_scene->registerNode(n->m_node);
     }
 }
 

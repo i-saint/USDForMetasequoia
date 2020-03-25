@@ -305,6 +305,7 @@ bool ABCIScene::open(const char* path)
     if (!m_archive.valid())
         return false;
 
+    setupTimeRange();
     return true;
 }
 
@@ -364,10 +365,69 @@ ABCINode* ABCIScene::findNode(const std::string& path)
     return it == m_node_table.end() ? nullptr : it->second;
 }
 
+void ABCIScene::setupTimeRange()
+{
+    bool first = true;
+    uint32_t nt = m_archive.getNumTimeSamplings();
+    for (uint32_t ti = 1; ti < nt; ++ti) {
+        double time_start = -1.0;
+        double time_end = -1.0;
+
+        auto ts = m_archive.getTimeSampling(ti);
+        auto tst = ts->getTimeSamplingType();
+        if (tst.isUniform() || tst.isCyclic()) {
+            auto start = ts->getStoredTimes()[0];
+            auto max_num_samples = m_archive.getMaxNumSamplesForTimeSamplingIndex(ti);
+            auto samples_per_cycle = tst.getNumSamplesPerCycle();
+            auto time_per_cycle = tst.getTimePerCycle();
+            size_t num_cycles = int(max_num_samples / samples_per_cycle);
+
+            if (tst.isUniform()) {
+                time_start = start;
+                time_end = num_cycles > 0 ? start + time_per_cycle * (num_cycles - 1) : start;
+            }
+            else if (tst.isCyclic()) {
+                auto& s = ts->getStoredTimes();
+                if (!s.empty()) {
+                    time_start = start + (s.front() - time_per_cycle);
+                    time_end = start + time_per_cycle * num_cycles + (s.back() - time_per_cycle);
+                }
+            }
+        }
+        else if (tst.isAcyclic()) {
+            auto& s = ts->getStoredTimes();
+            if (!s.empty()) {
+                time_start = s.front();
+                time_end = s.back();
+            }
+        }
+
+        if (time_start != -1.0) {
+            if (first) {
+                first = false;
+                m_scene->time_start = time_start;
+                m_scene->time_end = time_end;
+            }
+            else {
+                m_scene->time_start = std::min(m_scene->time_start, time_start);
+                m_scene->time_end = std::min(m_scene->time_end, time_end);
+            }
+        }
+    }
+}
+
+void ABCIScene::registerNode(ABCINode* n)
+{
+    if (n) {
+        m_nodes.push_back(ABCINodePtr(n));
+        m_node_table[n->getPath()] = n;
+        m_scene->registerNode(n->m_node);
+    }
+}
+
 void ABCIScene::constructTree(ABCINode* n)
 {
-    m_nodes.push_back(ABCINodePtr(n));
-    m_node_table[n->getPath()] = n;
+    registerNode(n);
 
     auto& obj = n->m_obj;
     size_t nchildren = obj.getNumChildren();

@@ -340,7 +340,8 @@ public:
 
     Node* findNodeByID(uint32_t id);
     Node* findNodeByPath(const std::string& path);
-    Node* createNode(Node *parent, const char *name, Node::Type type);
+    Node* createNode(Node* parent, const char* name, Node::Type type);
+    void registerNode(Node* n);
 
     template<class Body>
     void eachNode(const Body& body)
