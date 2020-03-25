@@ -1,5 +1,9 @@
 #include "pch.h"
 #include "Test.h"
+
+#include "mqsdk/sdk_Include.h"
+#include "mqusd/Foundation/mqusdUtils.h"
+
 using namespace mu;
 
 TestCase(Test_PipeStream)
@@ -39,4 +43,12 @@ TestCase(Test_GetCurrentModuleDirectory)
 {
     auto dir = GetCurrentModuleDirectory();
     std::cout << dir << std::endl;
+}
+
+TestCase(Test_Angle)
+{
+    auto q = mu::rotate_zxy(float3{ 15.0f, 30.0f, 45.0f });
+    auto a = mqusd::to_angle(q);
+    auto q2 = mqusd::to_quat(a);
+    Expect(mu::near_equal(q, q2) || mu::near_equal(q, -q2));
 }

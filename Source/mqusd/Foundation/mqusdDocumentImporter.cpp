@@ -108,6 +108,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
     // read scene
     m_scene->read(t);
 
+    // convert
     auto mesh_nodes = m_scene->getNodes<MeshNode>();
     mu::parallel_for_each(mesh_nodes.begin(), mesh_nodes.end(), [this](MeshNode* n) {
         n->toWorldSpace();
@@ -220,6 +221,16 @@ bool DocumentImporter::read(MQDocument doc, double t)
 bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNode& src)
 {
     obj->Clear();
+
+    // transform
+    {
+        float3 t; quatf r; float3 s;
+        mu::extract_trs(src.global_matrix, t, r, s);
+        obj->SetTranslation(to_point(t));
+        obj->SetRotation(to_angle(r));
+        obj->SetScaling(to_point(s));
+    }
+
 
     int nfaces = (int)src.counts.size();
     int npoints = (int)src.points.size();

@@ -346,6 +346,7 @@ template<class T> inline tvec4<T>& operator/=(tvec4<T>& l, T r) { l.x /= r; l.y 
 template<class T> inline tmat3x3<T> operator-(const tmat3x3<T>& v) { return{ -v[0], -v[1], -v[2] }; }
 template<class T> inline tmat4x4<T> operator-(const tmat4x4<T>& v) { return{ -v[0], -v[1], -v[2], -v[3] }; }
 
+template<class T> inline tquat<T> operator-(const tquat<T>& v) { return{ -v.x, -v.y, -v.z, -v.w }; }
 template<class T> inline tquat<T> operator*(const tquat<T>& l, T r) { return{ l.x*r, l.y*r, l.z*r, l.w*r }; }
 template<class T> inline tquat<T> operator*(const tquat<T>& l, const tquat<T>& r)
 {

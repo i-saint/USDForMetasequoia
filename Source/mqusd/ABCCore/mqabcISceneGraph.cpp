@@ -380,17 +380,17 @@ void ABCIScene::setupTimeRange()
             auto max_num_samples = m_archive.getMaxNumSamplesForTimeSamplingIndex(ti);
             auto samples_per_cycle = tst.getNumSamplesPerCycle();
             auto time_per_cycle = tst.getTimePerCycle();
-            size_t num_cycles = int(max_num_samples / samples_per_cycle);
+            auto num_cycles = max_num_samples / samples_per_cycle;
 
             if (tst.isUniform()) {
                 time_start = start;
-                time_end = num_cycles > 0 ? start + time_per_cycle * (num_cycles - 1) : start;
+                time_end = num_cycles > 0 ? start + (time_per_cycle * (num_cycles - 1)) : start;
             }
             else if (tst.isCyclic()) {
                 auto& s = ts->getStoredTimes();
                 if (!s.empty()) {
                     time_start = start + (s.front() - time_per_cycle);
-                    time_end = start + time_per_cycle * num_cycles + (s.back() - time_per_cycle);
+                    time_end = start + (s.back() - time_per_cycle) + (time_per_cycle * num_cycles);
                 }
             }
         }
@@ -410,7 +410,7 @@ void ABCIScene::setupTimeRange()
             }
             else {
                 m_scene->time_start = std::min(m_scene->time_start, time_start);
-                m_scene->time_end = std::min(m_scene->time_end, time_end);
+                m_scene->time_end = std::max(m_scene->time_end, time_end);
             }
         }
     }

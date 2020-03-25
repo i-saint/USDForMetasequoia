@@ -220,8 +220,6 @@ void ABCOScene::write()
 {
     g_current_scene = this;
     double time = m_scene->time_current;
-    if (m_keep_time)
-        m_timeline.push_back(time);
 
     if (m_write_count == 0) {
         for (auto& n : m_nodes)
@@ -231,8 +229,11 @@ void ABCOScene::write()
         n->write();
     ++m_write_count;
 
-    if (!std::isnan(time) && time > m_max_time) {
-        m_max_time = time;
+    if (!std::isnan(time)) {
+        if (m_keep_time)
+            m_timeline.push_back(time);
+        if (time > m_max_time)
+            m_max_time = time;
     }
 }
 
