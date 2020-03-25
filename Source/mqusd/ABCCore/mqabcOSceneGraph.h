@@ -74,7 +74,6 @@ protected:
     AbcGeom::ON3fGeomParam::Sample m_normals;
     AbcGeom::OV2fGeomParam::Sample m_uvs;
     AbcGeom::OC4fGeomParam::Sample m_rgba;
-    Abc::Int32ArraySamplePtr m_material_ids;
 };
 
 
@@ -89,7 +88,7 @@ public:
     void write() override;
 
 protected:
-    AbcMaterial::IMaterialSchema m_schema;
+    AbcMaterial::OMaterialSchema m_schema;
     Abc::OBoolProperty m_use_vertex_color_prop;
     Abc::OBoolProperty m_double_sided_prop;
     Abc::OC3fProperty m_color_prop;

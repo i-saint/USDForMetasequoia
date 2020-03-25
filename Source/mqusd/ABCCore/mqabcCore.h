@@ -2,7 +2,8 @@
 
 #define mqabcEnableHDF5
 
-#define mqabcAttrMaterialIDs    "materialIds"
+#define mqabcAttrVertexColor    "C"
+#define mqabcAttrMaterialID     "MID"
 
 
 #pragma warning(push)

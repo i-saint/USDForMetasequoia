@@ -76,6 +76,7 @@ ABCIRootNode::ABCIRootNode(Abc::IObject obj)
 ABCIXformNode::ABCIXformNode(ABCINode* parent, Abc::IObject obj)
     : super(parent, obj, false)
 {
+    m_schema = AbcGeom::IXform(m_obj).getSchema();
     setNode(CreateNode<XformNode>(parent, obj));
 }
 
@@ -98,6 +99,7 @@ void ABCIXformNode::read(double time)
 ABCIMeshNode::ABCIMeshNode(ABCINode* parent, Abc::IObject obj)
     : super(parent, obj, false)
 {
+    m_schema = AbcGeom::IPolyMesh(m_obj).getSchema();
     setNode(CreateNode<MeshNode>(parent, obj));
 }
 
@@ -119,7 +121,7 @@ void ABCIMeshNode::beforeRead()
                 m_rgb_param = AbcGeom::IC3fGeomParam(params, header.getName());
 
             // material ids
-            if (AbcGeom::IInt32ArrayProperty::matches(header) && header.getName() == mqabcAttrMaterialIDs)
+            if (AbcGeom::IInt32ArrayProperty::matches(header) && header.getName() == mqabcAttrMaterialID)
                 m_mids_prop = AbcGeom::IInt32ArrayProperty(params, header.getName());
         }
     }
@@ -205,6 +207,7 @@ void ABCIMeshNode::read(double time)
 ABCIMaterialNode::ABCIMaterialNode(ABCINode* parent, Abc::IObject obj)
     : super(parent, obj, false)
 {
+    m_schema = AbcMaterial::IMaterial(m_obj).getSchema();
     setNode(CreateNode<MaterialNode>(parent, obj));
 }
 

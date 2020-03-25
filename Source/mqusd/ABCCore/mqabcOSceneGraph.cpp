@@ -58,39 +58,84 @@ ABCORootNode::ABCORootNode(Abc::OObject obj)
 ABCOXformNode::ABCOXformNode(ABCONode* parent, Abc::OObject obj)
     : super(parent, obj, false)
 {
+    m_schema = dynamic_cast<AbcGeom::OXform&>(m_obj).getSchema();
     setNode(CreateNode<XformNode>(nullptr, obj));
 }
 
 void ABCOXformNode::write()
 {
+    super::write();
+    const auto& src = *static_cast<XformNode*>(m_node);
+
+    double4x4 mat;
+    mat.assign(src.local_matrix);
+    m_sample.setMatrix((abcM44d&)mat);
+    m_schema.set(m_sample);
 }
+
 
 ABCOMeshNode::ABCOMeshNode(ABCONode* parent, Abc::OObject obj)
     : super(parent, obj, false)
 {
+    m_schema = dynamic_cast<AbcGeom::OPolyMesh&>(m_obj).getSchema();
     setNode(CreateNode<MeshNode>(nullptr, obj));
 }
 
 void ABCOMeshNode::beforeWrite()
 {
+    super::beforeWrite();
 }
 
 void ABCOMeshNode::write()
 {
+    super::write();
+    const auto& src = *static_cast<MeshNode*>(m_node);
+
+    m_sample.reset();
+    m_sample.setFaceIndices(Abc::Int32ArraySample(src.indices.cdata(), src.indices.size()));
+    m_sample.setFaceCounts(Abc::Int32ArraySample(src.counts.cdata(), src.counts.size()));
+    m_sample.setPositions(Abc::P3fArraySample((const abcV3*)src.points.cdata(), src.points.size()));
+    if (src.normals.size() == src.indices.size()) {
+        m_normals.setVals(Abc::V3fArraySample((const abcV3*)src.normals.cdata(), src.normals.size()));
+        m_sample.setNormals(m_normals);
+    }
+    if (src.uvs.size() == src.indices.size()) {
+        m_uvs.setVals(Abc::V2fArraySample((const abcV2*)src.uvs.cdata(), src.uvs.size()));
+        m_sample.setUVs(m_uvs);
+    }
+    m_schema.set(m_sample);
+
+    if (src.colors.size() == src.indices.size()) {
+        if (!m_rgba_param.valid())
+            m_rgba_param = AbcGeom::OC4fGeomParam(m_schema.getArbGeomParams(), mqabcAttrVertexColor, false, AbcGeom::GeometryScope::kFacevaryingScope, 1, 1);
+
+        m_rgba.setVals(Abc::C4fArraySample((const abcC4*)src.colors.cdata(), src.colors.size()));
+        m_rgba_param.set(m_rgba);
+    }
+    if (src.material_ids.size() == src.counts.size()) {
+        if (!m_mids_prop.valid())
+            m_mids_prop = AbcGeom::OInt32ArrayProperty(m_schema.getArbGeomParams(), mqabcAttrMaterialID, 1);
+
+        m_mids_prop.set(Abc::Int32ArraySample(src.material_ids.cdata(), src.material_ids.size()));
+    }
 }
+
 
 ABCOMaterialNode::ABCOMaterialNode(ABCONode* parent, Abc::OObject obj)
     : super(parent, obj, false)
 {
+    m_schema = dynamic_cast<AbcMaterial::OMaterial&>(m_obj).getSchema();
     setNode(CreateNode<MaterialNode>(nullptr, obj));
 }
 
 void ABCOMaterialNode::beforeWrite()
 {
+    super::beforeWrite();
 }
 
 void ABCOMaterialNode::write()
 {
+    super::write();
 }
 
 
