@@ -3,9 +3,13 @@
 
 namespace mqusd {
 
+#ifdef  MQPluginH
+
 inline float3 to_float3(const MQColor& v) { return (float3&)v; }
 inline float3 to_float3(const MQPoint& v) { return (float3&)v; }
 inline float4x4 to_float4x4(const MQMatrix& v) { return (float4x4&)v; }
+inline MQColor to_color(const float3& v) { return (MQColor&)v; }
+inline MQPoint to_point(const float3& v) { return (MQPoint&)v; }
 
 inline float3 to_eular(const MQAngle& ang, bool flip_head = false)
 {
@@ -18,15 +22,15 @@ inline quatf to_quat(const MQAngle& ang)
 {
     return mu::rotate_zxy(to_eular(ang));
 }
-
-inline MQPoint to_point(const float3& v) { return (MQPoint&)v; }
-
 inline MQAngle to_angle(const quatf& q)
 {
     auto r = mu::to_euler_zxy(q);
     r = float3{ r.y, r.x, r.z } * mu::RadToDeg;
     return (MQAngle&)r;
 }
+
+#endif // MQPluginH
+
 
 template<class T>
 inline bool is_uniform(const T* data, size_t data_size, size_t element_size)
@@ -64,7 +68,7 @@ inline void transform_container(DstContainer& dst, const SrcContainer& src, cons
 std::string SanitizeNodeName(const std::string& name);
 std::string SanitizeNodePath(const std::string& path);
 std::string GetParentPath(const std::string& path);
-std::string GetLeafName(const std::string& path);
+const char* GetLeafName(const std::string& path);
 
 
 } // namespace mqusd

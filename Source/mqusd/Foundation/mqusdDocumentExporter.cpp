@@ -223,7 +223,7 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     mu::parallel_for(0, nobjects, [this](int oi) {
         auto& rec = m_obj_records[oi];
         if (rec.mesh)
-            extractMesh(rec.mqobj, *rec.mesh);
+            extractMesh(rec.mqobj, *rec.mesh, *rec.xform);
     });
 
     // make blendshape offsets
@@ -233,6 +233,23 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
             rec.blendshape->makeOffsets(*rec.mesh, *rec.bs_base->mesh);
     });
 
+    // calculate local matrices
+    auto update_local_matrix = [](XformNode* xform) {
+        xform->local_matrix = xform->global_matrix;
+        if (xform->parent_xform)
+            xform->local_matrix *= mu::invert(xform->parent_xform->global_matrix);
+    };
+    if (m_options->separate_xform)
+        m_scene->eachNode<XformNode>(Node::Type::Xform, update_local_matrix);
+    else
+        m_scene->eachNode<XformNode>(update_local_matrix);
+
+    // to local space
+    mu::parallel_for(0, nobjects, [this](int oi) {
+        auto& rec = m_obj_records[oi];
+        if (rec.mesh && !rec.blendshape)
+            rec.mesh->toLocalSpace();
+    });
 
     // flush async
     m_task_write = std::async(std::launch::async, [this]() { flush(); });
@@ -265,8 +282,22 @@ DocumentExporter::ObjectRecord* DocumentExporter::findRecord(UINT mqid)
     return it == m_obj_records.end() ? nullptr : &(*it);
 }
 
-bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst)
+bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst, XformNode& xf)
 {
+    // will be called in parallel
+
+    // transform
+    // local matrix will be updated later on write()
+    xf.global_matrix = mu::transform(
+        to_float3(obj->GetTranslation()),
+        to_quat(obj->GetRotation()),
+        to_float3(obj->GetScaling()));
+    if (m_options->separate_xform) {
+        dst.local_matrix = float4x4::identity();
+        dst.global_matrix = xf.global_matrix;
+    }
+
+
     int nfaces = obj->GetFaceCount();
     int npoints = obj->GetVertexCount();
     int nindices = 0;

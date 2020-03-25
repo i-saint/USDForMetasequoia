@@ -36,13 +36,13 @@ std::string GetParentPath(const std::string& path)
         return std::string(path.begin(), path.begin() + pos);
 }
 
-std::string GetLeafName(const std::string& path)
+const char* GetLeafName(const std::string& path)
 {
     auto pos = path.find_last_of('/');
     if (pos == std::string::npos)
-        return path;
+        return path.c_str();
     else
-        return std::string(path.begin() + pos + 1, path.end());
+        return path.c_str() + (pos + 1);
 }
 
 } // namespace mqusd

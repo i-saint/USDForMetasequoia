@@ -138,7 +138,12 @@ void ABCIMeshNode::read(double time)
     UpdateGlobalMatrix(dst);
 
     Abc::ISampleSelector iss(time);
-    m_schema.get(m_sample, iss);
+    try {
+        m_schema.get(m_sample, iss);
+    }
+    catch (...) {
+        return;
+    }
 
     {
         auto counts = m_sample.getFaceCounts();
@@ -427,6 +432,9 @@ void ABCIScene::registerNode(ABCINode* n)
 
 void ABCIScene::constructTree(ABCINode* n)
 {
+#ifdef mqusdDebug
+    mqusdDbgPrint("%s\n", n->getPath().c_str());
+#endif
     registerNode(n);
 
     auto& obj = n->m_obj;

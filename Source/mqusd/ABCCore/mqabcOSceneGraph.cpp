@@ -249,7 +249,7 @@ void ABCOScene::registerNode(ABCONode* n)
 template<class NodeT>
 inline ABCONode* ABCOScene::createNodeImpl(ABCONode* parent, const char* name)
 {
-    auto abc = std::make_shared<NodeT::AbcType>(*parent->m_obj, SanitizeNodeName(name));
+    auto abc = std::make_shared<NodeT::AbcType>(*parent->m_obj, parent->m_node->makeUniqueName(name));
     if (abc->valid()) {
         m_objects.push_back(abc);
         return new NodeT(parent, abc.get());
@@ -268,6 +268,9 @@ Node* ABCOScene::createNode(Node* parent_, const char* name, Node::Type type)
     default: ret = createNodeImpl<ABCONode>(parent, name); break;
     }
 
+#ifdef mqusdDebug
+    mqusdDbgPrint("%s\n", ret->getPath().c_str());
+#endif
     registerNode(ret);
     return ret ? ret->m_node : nullptr;
 }

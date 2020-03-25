@@ -64,7 +64,7 @@ private:
 
     ObjectRecord* findRecord(UINT mqid);
     Node* findOrCreateNode(UINT mqid);
-    bool extractMesh(MQObject obj, MeshNode& dst);
+    bool extractMesh(MQObject obj, MeshNode& dst, XformNode& xf);
     bool extractSkeleton(MQDocument doc, SkeletonNode& dst);
     bool extractMaterial(MQMaterial obj, MaterialNode& dst);
 

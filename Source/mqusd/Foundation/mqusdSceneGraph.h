@@ -61,6 +61,7 @@ public:
     std::string getName() const;
     const std::string& getPath() const;
     template<class NodeT> NodeT* findParent();
+    std::string makeUniqueName(const char *name);
 
 public:
     // serializable
@@ -356,6 +357,17 @@ public:
         for (auto& n : nodes) {
             if (auto tn = dynamic_cast<NodeT*>(n.get()))
                 body(tn);
+        }
+    }
+
+    template<class NodeT, class Body>
+    void eachNode(Node::Type type, const Body& body)
+    {
+        for (auto& n : nodes) {
+            if (auto tn = dynamic_cast<NodeT*>(n.get())) {
+                if (tn->getType() == type)
+                    body(tn);
+            }
         }
     }
 
