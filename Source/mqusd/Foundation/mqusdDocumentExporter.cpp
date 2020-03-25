@@ -66,29 +66,36 @@ Node* DocumentExporter::findOrCreateNode(UINT mqid)
     if (m_options->merge_meshes) {
         if (!rec->bs_base) {
             rec->mesh_data = std::make_shared<MeshNode>();
-            rec->mesh = rec->mesh_data.get();
+            rec->xform = rec->mesh = rec->mesh_data.get();
         }
-        ret = rec->mesh;
+        ret = rec->xform;
     }
     else {
         if (rec->bs_base) {
-            if (!rec->blendshape) {
+            if (m_options->export_blendshapes && !rec->blendshape) {
                 auto base_mesh = rec->bs_base->mesh;
                 rec->mesh_data = std::make_shared<MeshNode>();
-                rec->mesh = rec->mesh_data.get();
+                rec->xform = rec->mesh = rec->mesh_data.get();
                 rec->blendshape = (BlendshapeNode*)m_scene->createNode(base_mesh, rec->name.c_str(), Node::Type::Blendshape);
                 base_mesh->blendshapes.push_back(rec->blendshape);
             }
             ret = rec->blendshape;
         }
         else {
-            if (!rec->mesh) {
+            if (!rec->xform) {
                 auto parent = findOrCreateNode(rec->mqparentid);
                 if (!parent)
                     parent = m_root;
-                rec->mesh = (MeshNode*)m_scene->createNode(parent, rec->name.c_str(), Node::Type::Mesh);
+
+                if (m_options->separate_xform) {
+                    rec->xform = (XformNode*)m_scene->createNode(parent, rec->name.c_str(), Node::Type::Xform);
+                    rec->mesh = (MeshNode*)m_scene->createNode(rec->xform, (rec->name + "_Mesh").c_str(), Node::Type::Mesh);
+                }
+                else {
+                    rec->xform = rec->mesh = (MeshNode*)m_scene->createNode(parent, rec->name.c_str(), Node::Type::Mesh);
+                }
             }
-            ret = rec->mesh;
+            ret = rec->xform;
         }
     }
     return ret;

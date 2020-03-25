@@ -12,7 +12,7 @@ class ABCONode
 public:
     DefSchemaTraits(AbcGeom::OObject);
 
-    ABCONode(ABCONode* parent, Abc::OObject obj, bool create_node = true);
+    ABCONode(ABCONode* parent, Abc::OObject* obj, bool create_node = true);
     virtual ~ABCONode();
     virtual void beforeWrite();
     virtual void write();
@@ -21,7 +21,7 @@ public:
     std::string getPath() const;
 
 public:
-    Abc::OObject m_obj;
+    Abc::OObject* m_obj;
     ABCOScene* m_scene = nullptr;
     Node* m_node = nullptr;
     ABCONode* m_parent = nullptr;
@@ -34,7 +34,7 @@ class ABCORootNode : public ABCONode
 {
 using super = ABCONode;
 public:
-    ABCORootNode(Abc::OObject obj);
+    ABCORootNode(Abc::OObject* obj);
 
 protected:
 };
@@ -46,7 +46,7 @@ using super = ABCONode;
 public:
     DefSchemaTraits(AbcGeom::OXform);
 
-    ABCOXformNode(ABCONode* parent, Abc::OObject obj);
+    ABCOXformNode(ABCONode* parent, Abc::OObject* obj);
     void write() override;
 
 protected:
@@ -61,7 +61,7 @@ using super = ABCONode;
 public:
     DefSchemaTraits(AbcGeom::OPolyMesh);
 
-    ABCOMeshNode(ABCONode* parent, Abc::OObject obj);
+    ABCOMeshNode(ABCONode* parent, Abc::OObject* obj);
     void beforeWrite() override;
     void write() override;
 
@@ -83,7 +83,7 @@ using super = ABCONode;
 public:
     DefSchemaTraits(AbcMaterial::OMaterial);
 
-    ABCOMaterialNode(ABCONode* parent, Abc::OObject obj);
+    ABCOMaterialNode(ABCONode* parent, Abc::OObject* obj);
     void beforeWrite() override;
     void write() override;
 
@@ -127,6 +127,7 @@ private:
 
     std::string m_abc_path;
     Abc::OArchive m_archive;
+    std::vector<std::shared_ptr<Abc::OObject>> m_objects;
     std::vector<ABCONodePtr> m_nodes;
     std::map<std::string, ABCONode*> m_node_table;
     ABCORootNode* m_root = nullptr;

@@ -944,15 +944,20 @@ Node* Scene::findNodeByPath(const std::string& npath)
 Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
 {
     g_current_scene = this;
+
+    Node* ret = nullptr;
     if (impl) {
-        auto ret = impl->createNode(parent, name, type);
-        if (ret)
-            nodes.push_back(NodePtr(ret));
-        return ret;
+        ret = impl->createNode(parent, name, type);
     }
     else {
-        return createNodeImpl(parent, name, type);
+        ret = createNodeImpl(parent, name, type);
+        if (ret) {
+            nodes.push_back(NodePtr(ret));
+            if (ret->getType() == Node::Type::Root)
+                root_node = static_cast<RootNode*>(ret);
+        }
     }
+    return ret;
 }
 
 Node* Scene::createNodeImpl(Node* parent, const char* name, Node::Type type)

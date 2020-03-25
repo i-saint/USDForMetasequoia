@@ -702,7 +702,6 @@ bool USDScene::create(const char* path_)
         auto root = m_stage->GetPseudoRoot();
         if (root.IsValid()) {
             m_root = new USDRootNode(root);
-            m_scene->root_node = static_cast<RootNode*>(m_root->m_node);
             constructTree(m_root);
         }
     }
@@ -722,7 +721,10 @@ void USDScene::registerNode(USDNode* n)
     if (n) {
         m_nodes.push_back(USDNodePtr(n));
         m_node_table[n->getPath()] = n;
+
         m_scene->nodes.push_back(NodePtr(n->m_node));
+        if (n->m_node->getType() == Node::Type::Root)
+            m_scene->root_node = static_cast<RootNode*>(n->m_node);
     }
 }
 

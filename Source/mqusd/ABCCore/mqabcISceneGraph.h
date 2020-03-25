@@ -7,7 +7,7 @@ class ABCIScene;
 class ABCINode
 {
 public:
-    ABCINode(ABCINode* parent, Abc::IObject obj, bool create_node);
+    ABCINode(ABCINode* parent, Abc::IObject& obj, bool create_node);
     virtual ~ABCINode();
     virtual void beforeRead();
     virtual void read(double time);
@@ -39,7 +39,7 @@ class ABCIXformNode : public ABCINode
 {
 using super = ABCINode;
 public:
-    ABCIXformNode(ABCINode* parent, Abc::IObject obj);
+    ABCIXformNode(ABCINode* parent, Abc::IObject& obj);
     void read(double time) override;
 
 protected:
@@ -52,7 +52,7 @@ class ABCIMeshNode : public ABCINode
 {
 using super = ABCINode;
 public:
-    ABCIMeshNode(ABCINode* parent, Abc::IObject obj);
+    ABCIMeshNode(ABCINode* parent, Abc::IObject& obj);
     void beforeRead() override;
     void read(double time) override;
 
@@ -76,7 +76,7 @@ class ABCIMaterialNode : public ABCINode
 {
 using super = ABCINode;
 public:
-    ABCIMaterialNode(ABCINode* parent, Abc::IObject obj);
+    ABCIMaterialNode(ABCINode* parent, Abc::IObject& obj);
     void read(double time) override;
 
 protected:

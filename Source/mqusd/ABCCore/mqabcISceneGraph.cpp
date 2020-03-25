@@ -31,7 +31,7 @@ static void UpdateGlobalMatrix(XformNode& n)
 
 
 
-ABCINode::ABCINode(ABCINode* parent, Abc::IObject obj, bool create_node)
+ABCINode::ABCINode(ABCINode* parent, Abc::IObject& obj, bool create_node)
     : m_obj(obj)
     , m_scene(ABCIScene::getCurrent())
     , m_parent(parent)
@@ -73,7 +73,7 @@ ABCIRootNode::ABCIRootNode(Abc::IObject obj)
 }
 
 
-ABCIXformNode::ABCIXformNode(ABCINode* parent, Abc::IObject obj)
+ABCIXformNode::ABCIXformNode(ABCINode* parent, Abc::IObject& obj)
     : super(parent, obj, false)
 {
     m_schema = AbcGeom::IXform(m_obj).getSchema();
@@ -96,7 +96,7 @@ void ABCIXformNode::read(double time)
 }
 
 
-ABCIMeshNode::ABCIMeshNode(ABCINode* parent, Abc::IObject obj)
+ABCIMeshNode::ABCIMeshNode(ABCINode* parent, Abc::IObject& obj)
     : super(parent, obj, false)
 {
     m_schema = AbcGeom::IPolyMesh(m_obj).getSchema();
@@ -204,7 +204,7 @@ void ABCIMeshNode::read(double time)
 }
 
 
-ABCIMaterialNode::ABCIMaterialNode(ABCINode* parent, Abc::IObject obj)
+ABCIMaterialNode::ABCIMaterialNode(ABCINode* parent, Abc::IObject& obj)
     : super(parent, obj, false)
 {
     m_schema = AbcMaterial::IMaterial(m_obj).getSchema();
@@ -368,7 +368,6 @@ void ABCIScene::constructTree(ABCINode* n)
 {
     m_nodes.push_back(ABCINodePtr(n));
     m_node_table[n->getPath()] = n;
-    m_scene->nodes.push_back(NodePtr(n->m_node));
 
     auto& obj = n->m_obj;
     size_t nchildren = obj.getNumChildren();

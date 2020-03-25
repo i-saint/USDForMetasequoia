@@ -4,15 +4,15 @@
 namespace mqusd {
 
 template<class NodeT>
-static inline NodeT* CreateNode(ABCONode* parent, Abc::OObject obj)
+static inline NodeT* CreateNode(ABCONode* parent, Abc::OObject* obj)
 {
     return new NodeT(
         parent ? parent->m_node : nullptr,
-        obj.getName().c_str());
+        obj->getName().c_str());
 }
 
 
-ABCONode::ABCONode(ABCONode* parent, Abc::OObject obj, bool create_node)
+ABCONode::ABCONode(ABCONode* parent, Abc::OObject* obj, bool create_node)
     : m_obj(obj)
     , m_scene(ABCOScene::getCurrent())
     , m_parent(parent)
@@ -43,23 +43,23 @@ void ABCONode::setNode(Node* node)
 
 std::string ABCONode::getPath() const
 {
-    return m_obj.getFullName();
+    return m_obj->getFullName();
 }
 
 
 
-ABCORootNode::ABCORootNode(Abc::OObject obj)
+ABCORootNode::ABCORootNode(Abc::OObject* obj)
     : super(nullptr, obj, false)
 {
     setNode(new RootNode());
 }
 
 
-ABCOXformNode::ABCOXformNode(ABCONode* parent, Abc::OObject obj)
+ABCOXformNode::ABCOXformNode(ABCONode* parent, Abc::OObject* obj)
     : super(parent, obj, false)
 {
-    m_schema = dynamic_cast<AbcGeom::OXform&>(m_obj).getSchema();
-    setNode(CreateNode<XformNode>(nullptr, obj));
+    m_schema = dynamic_cast<AbcGeom::OXform*>(m_obj)->getSchema();
+    setNode(CreateNode<XformNode>(parent, obj));
 }
 
 void ABCOXformNode::write()
@@ -74,11 +74,11 @@ void ABCOXformNode::write()
 }
 
 
-ABCOMeshNode::ABCOMeshNode(ABCONode* parent, Abc::OObject obj)
+ABCOMeshNode::ABCOMeshNode(ABCONode* parent, Abc::OObject* obj)
     : super(parent, obj, false)
 {
-    m_schema = dynamic_cast<AbcGeom::OPolyMesh&>(m_obj).getSchema();
-    setNode(CreateNode<MeshNode>(nullptr, obj));
+    m_schema = dynamic_cast<AbcGeom::OPolyMesh*>(m_obj)->getSchema();
+    setNode(CreateNode<MeshNode>(parent, obj));
 }
 
 void ABCOMeshNode::beforeWrite()
@@ -121,11 +121,11 @@ void ABCOMeshNode::write()
 }
 
 
-ABCOMaterialNode::ABCOMaterialNode(ABCONode* parent, Abc::OObject obj)
+ABCOMaterialNode::ABCOMaterialNode(ABCONode* parent, Abc::OObject* obj)
     : super(parent, obj, false)
 {
-    m_schema = dynamic_cast<AbcMaterial::OMaterial&>(m_obj).getSchema();
-    setNode(CreateNode<MaterialNode>(nullptr, obj));
+    m_schema = dynamic_cast<AbcMaterial::OMaterial*>(m_obj)->getSchema();
+    setNode(CreateNode<MaterialNode>(parent, obj));
 }
 
 void ABCOMaterialNode::beforeWrite()
@@ -180,7 +180,9 @@ bool ABCOScene::create(const char* path)
     auto tsi = m_archive.addTimeSampling(ts);
 
     g_current_scene = this;
-    m_root = new ABCORootNode(AbcGeom::OObject(m_archive, AbcGeom::kTop, tsi));
+    auto top = std::make_shared<AbcGeom::OObject>(m_archive, AbcGeom::kTop, tsi);
+    m_objects.push_back(top);
+    m_root = new ABCORootNode(top.get());
     registerNode(m_root);
 
     mqusdDbgPrint("succeeded to open %s\nrecording started", m_abc_path.c_str());
@@ -198,6 +200,7 @@ void ABCOScene::close()
     m_root = nullptr;
     m_node_table.clear();
     m_nodes.clear();
+    m_objects.clear();
     m_archive.reset();
     m_abc_path.clear();
 }
@@ -228,25 +231,29 @@ void ABCOScene::write()
 void ABCOScene::registerNode(ABCONode* n)
 {
     if (n) {
-        m_scene->nodes.push_back(NodePtr(n->m_node));
         m_nodes.push_back(ABCONodePtr(n));
         m_node_table[n->getPath()] = n;
+
+        m_scene->nodes.push_back(NodePtr(n->m_node));
+        if (n->m_node->getType() == Node::Type::Root)
+            m_scene->root_node = static_cast<RootNode*>(n->m_node);
     }
 }
 
 template<class NodeT>
 inline ABCONode* ABCOScene::createNodeImpl(ABCONode* parent, const char* name)
 {
-    auto abc = typename NodeT::AbcType(parent->m_obj, SanitizeNodeName(name));
-    if (abc.valid()) {
-        return new NodeT(parent, abc);
+    auto abc = std::make_shared<NodeT::AbcType>(*parent->m_obj, SanitizeNodeName(name));
+    if (abc->valid()) {
+        m_objects.push_back(abc);
+        return new NodeT(parent, abc.get());
     }
     return nullptr;
 }
 
 Node* ABCOScene::createNode(Node* parent_, const char* name, Node::Type type)
 {
-    auto parent = (ABCONode*)parent_->impl;
+    auto parent = parent_ ? (ABCONode*)parent_->impl : nullptr;
     ABCONode* ret = nullptr;
     switch (type) {
     case Node::Type::Mesh: ret = createNodeImpl<ABCOMeshNode>(parent, name); break;

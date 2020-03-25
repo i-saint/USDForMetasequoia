@@ -19,6 +19,7 @@ struct ExportOptions : public ConvertOptions
     bool freeze_subdiv = false;
     bool merge_meshes = false;
     bool keep_time = false;
+    bool separate_xform = false;
     float frame_rate = 30.0f; // relevant only when keep_time is false
     float time_scale = 1.0f; // relevant only when keep_time is true
     double capture_interval = 5.0; // in seconds
@@ -47,6 +48,7 @@ private:
         MQObject mqobj_orig = nullptr;
         bool need_release = false;
 
+        XformNode* xform = nullptr;
         MeshNode* mesh = nullptr;
         BlendshapeNode* blendshape = nullptr;
         std::shared_ptr<MeshNode> mesh_data;

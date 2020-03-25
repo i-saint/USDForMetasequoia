@@ -25,6 +25,7 @@ mqabcRecorderPlugin::mqabcRecorderPlugin()
 {
     m_options.export_skeletons = false;
     m_options.export_blendshapes = false;
+    m_options.separate_xform = true;;
 }
 
 // Destructor
