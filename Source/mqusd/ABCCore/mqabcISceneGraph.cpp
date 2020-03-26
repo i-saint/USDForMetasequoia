@@ -139,6 +139,7 @@ void ABCIMeshNode::read(double time)
 
     Abc::ISampleSelector iss(time);
     try {
+        // this may throw exception
         m_schema.get(m_sample, iss);
     }
     catch (...) {
@@ -254,7 +255,7 @@ bool ABCIScene::open(const char* path)
         auto wpath = mu::ToWCS(path);
         m_stream->open(wpath.c_str(), std::ios::in | std::ios::binary);
 #else
-        m_stream->open(path.c_str(), std::ios::in | std::ios::binary);
+        m_stream->open(path, std::ios::in | std::ios::binary);
 #endif
         if (!m_stream->is_open()) {
             close();

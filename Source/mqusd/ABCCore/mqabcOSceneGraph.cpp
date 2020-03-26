@@ -249,7 +249,7 @@ void ABCOScene::registerNode(ABCONode* n)
 template<class NodeT>
 inline ABCONode* ABCOScene::createNodeImpl(ABCONode* parent, const char* name)
 {
-    auto abc = std::make_shared<NodeT::AbcType>(*parent->m_obj, parent->m_node->makeUniqueName(name));
+    auto abc = std::make_shared<typename NodeT::AbcType>(*parent->m_obj, parent->m_node->makeUniqueName(name));
     if (abc->valid()) {
         m_objects.push_back(abc);
         return new NodeT(parent, abc.get());

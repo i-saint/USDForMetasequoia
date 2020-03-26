@@ -5,6 +5,7 @@ find_path(OPENEXR_INCLUDE_DIR
         "/usr/include"
         "/usr/local/include"
 )
+mark_as_advanced(OPENEXR_INCLUDE_DIR)
 
 foreach(OPENEXR_LIB
     Half Iex IexMath Imath IlmImf IlmThread

@@ -11,8 +11,8 @@ endif()
 
 find_package(TBB REQUIRED)
 find_package(USD REQUIRED)
-find_package(Alembic REQUIRED)
 find_package(OpenEXR REQUIRED)
+find_package(Alembic REQUIRED)
 include(ISPC)
 
 

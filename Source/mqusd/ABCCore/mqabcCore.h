@@ -17,6 +17,9 @@
 #include <Alembic/AbcMaterial/All.h>
 #pragma warning(pop)
 
+#include "mqusd.h"
+#include "Foundation/mqusdSceneGraph.h"
+
 using namespace Alembic;
 using abcV2 = Imath::V2f;
 using abcV3 = Imath::V3f;
@@ -30,6 +33,3 @@ using abcM44d = Imath::M44d;
 using abcBox = Imath::Box3f;
 using abcBoxd = Imath::Box3d;
 using abcChrono = Abc::chrono_t;
-
-#include "mqusd.h"
-#include "Foundation/mqusdSceneGraph.h"
