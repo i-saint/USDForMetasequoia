@@ -175,7 +175,6 @@ USDMeshNode::USDMeshNode(Node* n, UsdPrim prim)
 void USDMeshNode::beforeRead()
 {
     super::beforeRead();
-
     auto& dst = static_cast<MeshNode&>(*m_node);
 
     // find attributes
@@ -439,7 +438,6 @@ void USDBlendshapeNode::read(double time)
 void USDBlendshapeNode::beforeWrite()
 {
     super::beforeWrite();
-
     auto& src = *static_cast<const BlendshapeNode*>(m_node);
 
     // assume not time sampled. write once.
@@ -616,6 +614,89 @@ void USDSkeletonNode::write(double time)
 }
 
 
+
+USDInstancerNode::USDInstancerNode(USDNode* parent, UsdPrim prim)
+    : super(parent, prim)
+{
+    m_instancer = UsdGeomPointInstancer(prim);
+    setNode(CreateNode<InstancerNode>(parent, prim));
+}
+
+USDInstancerNode::USDInstancerNode(Node* n, UsdPrim prim)
+    : super(n, prim)
+{
+    m_instancer = UsdGeomPointInstancer(prim);
+}
+
+void USDInstancerNode::beforeRead()
+{
+    super::beforeRead();
+    auto& dst = *static_cast<InstancerNode*>(m_node);
+
+    auto rel = m_instancer.GetPrototypesRel();
+    if (rel) {
+        SdfPathVector paths;
+        rel.GetTargets(&paths);
+        for (auto& path : paths) {
+            if (auto proto = m_scene->findNode(path.GetString()))
+                dst.protos.push_back(proto->m_node);
+        }
+    }
+}
+
+void USDInstancerNode::read(double time)
+{
+    super::read(time);
+
+    auto t = UsdTimeCode(time);
+    auto& dst = *static_cast<InstancerNode*>(m_node);
+
+    m_instancer.ComputeInstanceTransformsAtTime(&m_matrices, t, t);
+    transform_container(dst.matrices, m_matrices, [](float4x4& d, const GfMatrix4d& s) {
+        d.assign((double4x4&)s);
+    });
+}
+
+void USDInstancerNode::beforeWrite()
+{
+    super::beforeWrite();
+    auto& src = *static_cast<InstancerNode*>(m_node);
+
+    auto rel = m_instancer.CreatePrototypesRel();
+    if (rel) {
+        SdfPathVector paths;
+        for (auto& proto : src.protos)
+            paths.push_back(SdfPath(proto->getPath()));
+        rel.SetTargets(paths);
+    }
+}
+
+void USDInstancerNode::write(double time)
+{
+    super::write(time);
+
+    auto t = UsdTimeCode(time);
+    auto& src = *static_cast<InstancerNode*>(m_node);
+
+    size_t n = src.matrices.size();
+    m_positions.resize(n);
+    m_orientations.resize(n);
+    m_scales.resize(n);
+    for (size_t i = 0; i < n; ++i) {
+        float3 t; quatf r; float3 s;
+        mu::extract_trs(src.matrices[i], t, r, s);
+        m_positions[i] = { t.x, t.y, t.z };
+        m_orientations[i] = { r.w, r.x, r.y, r.z };
+        m_positions[i] = { s.x, s.y, s.z };
+    }
+
+    m_instancer.GetPositionsAttr().Set(m_positions, t);
+    m_instancer.GetOrientationsAttr().Set(m_orientations, t);
+    m_instancer.GetScalesAttr().Set(m_scales, t);
+}
+
+
+
 USDMaterialNode::USDMaterialNode(USDNode* parent, UsdPrim prim)
     : super(parent, prim, false)
 {
@@ -758,25 +839,24 @@ void USDScene::constructTree(USDNode* n)
                 c = new USDSkeletonNode(n, cprim);
         }
         if (!c) {
-            UsdShadeMaterial schema(cprim);
+            UsdGeomPointInstancer schema(cprim);
             if (schema)
-                c = new USDMaterialNode(n, cprim);
+                c = new USDInstancerNode(n, cprim);
         }
-
-        // todo
-        //if (!c) {
-        //    UsdGeomPointInstancer schema(cprim);
-        //    if (schema) {
-        //    }
-        //}
-
-        // xform must be last because Mesh is also Xformable
         if (!c) {
+            // xform must be later because Mesh/Skeleton/PointInstancer is also Xformable
             UsdGeomXformable schema(cprim);
             if (schema) {
                 c = new USDXformNode(n, cprim, true);
             }
         }
+
+        if (!c) {
+            UsdShadeMaterial schema(cprim);
+            if (schema)
+                c = new USDMaterialNode(n, cprim);
+        }
+
         if (!c) {
             c = new USDNode(n, cprim, true);
         }
@@ -853,8 +933,9 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
         Case(Blendshape, USDBlendshapeNode);
         Case(SkelRoot, USDSkelRootNode);
         Case(Skeleton, USDSkeletonNode);
-        Case(Material, USDMaterialNode);
+        Case(Instancer, USDInstancerNode);
         Case(Xform, USDXformNode);
+        Case(Material, USDMaterialNode);
         Case(Unknown, USDNode);
 #undef Case
     default: break;
@@ -897,8 +978,9 @@ bool USDScene::wrapNode(Node* node)
         Case(Blendshape, USDBlendshapeNode);
         Case(SkelRoot, USDSkelRootNode);
         Case(Skeleton, USDSkeletonNode);
-        Case(Material, USDMaterialNode);
+        Case(Instancer, USDInstancerNode);
         Case(Xform, USDXformNode);
+        Case(Material, USDMaterialNode);
         Case(Unknown, USDNode);
 #undef Case
     default: break;

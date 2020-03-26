@@ -814,11 +814,17 @@ Joint* SkeletonNode::findJointByPath(const std::string& jpath)
 
 
 #define EachMember(F)\
-    F(instanced_path) F(matrices)
+    F(proto_paths) F(matrices)
 
 void InstancerNode::serialize(std::ostream& os)
 {
     super::serialize(os);
+
+    transform_container(proto_paths, protos, [](std::string& d, const Node* s) {
+        if (s)
+            d = s->getPath();
+    });
+
 #define Body(V) write(os, V);
     EachMember(Body)
 #undef Body
@@ -835,7 +841,12 @@ void InstancerNode::deserialize(std::istream& is)
 void InstancerNode::resolve()
 {
     super::resolve();
-    instanced = scene->findNodeByPath(instanced_path);
+
+    protos.clear();
+    for (auto& pp : proto_paths) {
+        if (auto proto = scene->findNodeByPath(pp))
+            protos.push_back(proto);
+    }
 }
 
 #undef EachMember
@@ -896,13 +907,15 @@ void InstancerNode::gatherMeshes(Node* n, float4x4 m)
 
 void InstancerNode::makeMesh(MeshNode& dst)
 {
-    if (!instanced)
+    if (protos.empty())
         return;
 
     mesh_records.clear();
-    instanced->eachChild([this](Node* n) {
-        gatherMeshes(n, float4x4::identity());
-    });
+    for (auto* proto : protos) {
+        proto->eachChild([this](Node* n) {
+            gatherMeshes(n, float4x4::identity());
+        });
+    }
 
     merged_meshes.clear();
     for (auto& rec : mesh_records) {

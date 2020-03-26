@@ -167,14 +167,26 @@ private:
 };
 
 
-class USDInstancerNode : USDXformNode
+class USDInstancerNode : public USDXformNode
 {
 using super = USDXformNode;
 public:
+    DefSchemaTraits(UsdGeomPointInstancer, "PointInstancer");
+
     USDInstancerNode(USDNode* parent, UsdPrim prim);
     USDInstancerNode(Node* n, UsdPrim prim);
+    void beforeRead() override;
     void read(double time) override;
+    void beforeWrite() override;
     void write(double time) override;
+
+private:
+    UsdGeomPointInstancer m_instancer;
+    VtArray<GfMatrix4d> m_matrices;
+
+    VtArray<GfVec3f> m_positions;
+    VtArray<GfQuath> m_orientations;
+    VtArray<GfVec3f> m_scales;
 };
 
 

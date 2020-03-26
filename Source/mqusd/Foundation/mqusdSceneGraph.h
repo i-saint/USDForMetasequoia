@@ -316,11 +316,11 @@ public:
 
 public:
     // serializable
-    std::string instanced_path;
+    std::vector<std::string> proto_paths;
     SharedVector<float4x4> matrices;
 
     // non-serializable
-    Node* instanced = nullptr;
+    std::vector<Node*> protos;
     std::vector<MeshRecord> mesh_records;
     MeshNode merged_meshes;
     MeshNode tmp_mesh;
