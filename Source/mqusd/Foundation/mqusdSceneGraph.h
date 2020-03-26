@@ -45,6 +45,7 @@ public:
         Blendshape,
         SkelRoot,
         Skeleton,
+        Instancer,
         Material,
         Scope,
     };
@@ -62,6 +63,22 @@ public:
     const std::string& getPath() const;
     template<class NodeT> NodeT* findParent();
     std::string makeUniqueName(const char *name);
+
+    template<class Body>
+    void eachChild(const Body& body)
+    {
+        for (auto c : children)
+            body(c);
+    }
+
+    template<class Body>
+    void eachChildR(const Body& body)
+    {
+        for (auto c : children) {
+            body(c);
+            c->eachChildR(body);
+        }
+    }
 
 public:
     // serializable
@@ -241,7 +258,7 @@ public:
     void toLocalSpace();
 
     void clear();
-    void merge(const MeshNode& other);
+    void merge(const MeshNode& other, const float4x4& trans = float4x4::identity());
     void validate();
 
     int getMaxMaterialID() const;
@@ -270,7 +287,44 @@ public:
     std::vector<BlendshapeNode*> blendshapes;
     SkeletonNode* skeleton = nullptr;
 };
+mqusdDeclPtr(MeshNode);
 
+
+class InstancerNode : public XformNode
+{
+using super = XformNode;
+public:
+    static const Type node_type = Type::Instancer;
+
+    InstancerNode(Node* parent = nullptr, const char* name = nullptr);
+    Type getType() const override;
+    void serialize(std::ostream& os) override;
+    void deserialize(std::istream& is) override;
+    void resolve() override;
+    void convert(const ConvertOptions& opt) override;
+
+    void makeMesh(MeshNode& dst);
+
+public:
+    struct MeshRecord
+    {
+        MeshNode* mesh = nullptr;
+        InstancerNode* instancer = nullptr;
+        float4x4 matrix = float4x4::identity();
+    };
+    void gatherMeshes(Node* n, float4x4 m);
+
+public:
+    // serializable
+    std::string instanced_path;
+    SharedVector<float4x4> matrices;
+
+    // non-serializable
+    Node* instanced = nullptr;
+    std::vector<MeshRecord> mesh_records;
+    MeshNode merged_meshes;
+    MeshNode tmp_mesh;
+};
 
 class MaterialNode : public Node
 {

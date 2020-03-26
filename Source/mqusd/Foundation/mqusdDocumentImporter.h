@@ -47,7 +47,7 @@ private:
     ObjectRecord* findRecord(UINT mqid);
     MQObject findOrCreateMQObject(MQDocument doc, UINT& id, UINT parent_id, bool& created);
     bool updateMesh(MQDocument doc, MQObject obj, const MeshNode& src);
-    bool updateSkeleton(MQDocument obj, const SkeletonNode& src);
+    bool updateSkeleton(MQDocument doc, const SkeletonNode& src);
     bool updateMaterials(MQDocument doc);
 
 private:

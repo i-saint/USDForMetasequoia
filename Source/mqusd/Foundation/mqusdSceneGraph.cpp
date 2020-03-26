@@ -75,6 +75,7 @@ void Node::deserialize(std::istream& is, NodePtr& ret)
         case Type::Blendshape: ret = std::make_shared<BlendshapeNode>(); break;
         case Type::SkelRoot: ret = std::make_shared<SkelRootNode>(); break;
         case Type::Skeleton: ret = std::make_shared<SkeletonNode>(); break;
+        case Type::Instancer: ret = std::make_shared<InstancerNode>(); break;
         case Type::Material: ret = std::make_shared<MaterialNode>(); break;
         default:
             throw std::runtime_error("Node::create() failed");
@@ -410,7 +411,7 @@ void MeshNode::clear()
     bind_transform = float4x4::identity();
 }
 
-void MeshNode::merge(const MeshNode& v)
+void MeshNode::merge(const MeshNode& v, const float4x4& trans)
 {
     auto append = [](auto& dst, const auto& src) {
         dst.insert(dst.end(), src.cdata(), src.cdata() + src.size());
@@ -431,6 +432,11 @@ void MeshNode::merge(const MeshNode& v)
         int index_end = index_offset + (int)v.indices.size();
         for (int ii = index_offset; ii < index_end; ++ii)
             indices[ii] += vertex_offset;
+    }
+
+    if (trans != float4x4::identity()) {
+        mu::MulPoints(trans, points.data() + vertex_offset, points.data() + vertex_offset, v.points.size());
+        mu::MulVectors(trans, normals.data() + index_offset, normals.data() + index_offset, v.normals.size());
     }
 }
 
@@ -807,6 +813,114 @@ Joint* SkeletonNode::findJointByPath(const std::string& jpath)
 }
 
 
+#define EachMember(F)\
+    F(instanced_path) F(matrices)
+
+void InstancerNode::serialize(std::ostream& os)
+{
+    super::serialize(os);
+#define Body(V) write(os, V);
+    EachMember(Body)
+#undef Body
+}
+
+void InstancerNode::deserialize(std::istream& is)
+{
+    super::deserialize(is);
+#define Body(V) read(is, V);
+    EachMember(Body)
+#undef Body
+}
+
+void InstancerNode::resolve()
+{
+    super::resolve();
+    instanced = scene->findNodeByPath(instanced_path);
+}
+
+#undef EachMember
+
+InstancerNode::InstancerNode(Node* parent, const char* name)
+    : super(parent, name)
+{
+}
+
+Node::Type InstancerNode::getType() const
+{
+    return Type::Instancer;
+}
+
+void InstancerNode::convert(const ConvertOptions& opt)
+{
+    super::convert(opt);
+
+    if (opt.scale_factor != 1.0f) {
+        auto convert = [&opt](float4x4& m) { (float3&)m[3] *= opt.scale_factor; };
+        for (auto& m : matrices)
+            convert(m);
+    }
+    if (opt.flip_x) {
+        auto convert = [](float4x4& m) { m = flip_x(m); };
+        for (auto& m : matrices)
+            convert(m);
+    }
+    if (opt.flip_yz) {
+        auto convert = [](float4x4& m) { m = flip_z(swap_yz(m)); };
+        for (auto& m : matrices)
+            convert(m);
+    }
+}
+
+void InstancerNode::gatherMeshes(Node* n, float4x4 m)
+{
+    if (auto xform = dynamic_cast<XformNode*>(n))
+        m = xform->local_matrix * m;
+
+    if (auto mesh = dynamic_cast<MeshNode*>(n)) {
+        MeshRecord tmp;
+        tmp.mesh = mesh;
+        tmp.matrix = m;
+        mesh_records.push_back(tmp);
+    }
+    else if (auto inst = dynamic_cast<InstancerNode*>(n)) {
+        MeshRecord tmp;
+        tmp.instancer = inst;
+        tmp.matrix = m;
+        mesh_records.push_back(tmp);
+    }
+
+    n->eachChild([this, &m](Node* c) {
+        gatherMeshes(c, m);
+    });
+}
+
+void InstancerNode::makeMesh(MeshNode& dst)
+{
+    if (!instanced)
+        return;
+
+    mesh_records.clear();
+    instanced->eachChild([this](Node* n) {
+        gatherMeshes(n, float4x4::identity());
+    });
+
+    merged_meshes.clear();
+    for (auto& rec : mesh_records) {
+        if (rec.mesh) {
+            merged_meshes.merge(*rec.mesh, rec.matrix);
+        }
+        if (rec.instancer) {
+            tmp_mesh.clear();
+            rec.instancer->makeMesh(tmp_mesh);
+            merged_meshes.merge(tmp_mesh, rec.matrix);
+        }
+    }
+
+    dst.clear();
+    for (auto& m : matrices)
+        dst.merge(merged_meshes, m);
+}
+
 
 #define EachMember(F)\
     F(shader) F(use_vertex_color) F(double_sided) F(color) F(diffuse) F(alpha) F(ambient_color) F(specular_color) F(emission_color)
@@ -992,12 +1106,13 @@ Node* Scene::createNodeImpl(Node* parent, const char* name, Node::Type type)
     Node* ret = nullptr;
     switch (type) {
 #define Case(E, T) case Node::Type::E: ret = new T(parent, name); break;
+        Case(Xform, XformNode);
         Case(Mesh, MeshNode);
         Case(Blendshape, BlendshapeNode);
         Case(SkelRoot, SkelRootNode);
         Case(Skeleton, SkeletonNode);
+        Case(Instancer, InstancerNode);
         Case(Material, MaterialNode);
-        Case(Xform, XformNode);
 #undef Case
     default: break;
     }
