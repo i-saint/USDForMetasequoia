@@ -32,6 +32,13 @@ private:
         MeshNode tmp_mesh;
     };
 
+    struct InstancerRecord
+    {
+        InstancerNode* node = nullptr;
+        UINT mqid = 0;
+        MeshNode tmp_mesh;
+    };
+
     struct JointRecord
     {
         Joint* joint = nullptr;
@@ -60,6 +67,7 @@ private:
 
     Scene* m_scene = nullptr;
     std::vector<ObjectRecord> m_obj_records;
+    std::vector<InstancerRecord> m_inst_records;
     std::vector<SkeletonRecord> m_skel_records;
 
     UINT m_mqobj_id = 0;

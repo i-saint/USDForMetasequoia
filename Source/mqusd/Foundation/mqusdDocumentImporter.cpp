@@ -33,30 +33,43 @@ DocumentImporter::DocumentImporter(MQBasePlugin* plugin, Scene* scene, const Imp
 
 bool DocumentImporter::initialize(MQDocument doc)
 {
-    auto mesh_nodes = m_scene->getNodes<MeshNode>();
-    size_t nobjs = mesh_nodes.size();
-    m_obj_records.resize(nobjs);
-    for (size_t oi = 0; oi < nobjs; ++oi) {
-        auto& rec = m_obj_records[oi];
-        rec.node = mesh_nodes[oi];
-        rec.node->userdata = &rec;
-        rec.blendshape_ids.resize(rec.node->blendshapes.size());
+    {
+        auto mesh_nodes = m_scene->getNodes<MeshNode>();
+        size_t nobjs = mesh_nodes.size();
+        m_obj_records.resize(nobjs);
+        for (size_t oi = 0; oi < nobjs; ++oi) {
+            auto& rec = m_obj_records[oi];
+            rec.node = mesh_nodes[oi];
+            rec.node->userdata = &rec;
+            rec.blendshape_ids.resize(rec.node->blendshapes.size());
+        }
     }
+    {
+        auto inst_nodes = m_scene->getNodes<InstancerNode>();
+        size_t ninsts = inst_nodes.size();
+        m_inst_records.resize(ninsts);
+        for (size_t oi = 0; oi < ninsts; ++oi) {
+            auto& rec = m_inst_records[oi];
+            rec.node = inst_nodes[oi];
+            rec.node->userdata = &rec;
+        }
+    }
+    {
+        auto skel_nodes = m_scene->getNodes<SkeletonNode>();
+        size_t nskels = skel_nodes.size();
+        m_skel_records.resize(nskels);
+        for (size_t si = 0; si < nskels; ++si) {
+            auto& rec = m_skel_records[si];
+            rec.node = skel_nodes[si];
+            rec.node->userdata = &rec;
 
-    auto skel_nodes = m_scene->getNodes<SkeletonNode>();
-    size_t nskels = skel_nodes.size();
-    m_skel_records.resize(nskels);
-    for (size_t si = 0; si < nskels; ++si) {
-        auto& rec = m_skel_records[si];
-        rec.node = skel_nodes[si];
-        rec.node->userdata = &rec;
-
-        size_t njoints = rec.node->joints.size();
-        rec.joints.resize(njoints);
-        for (size_t ji = 0; ji < njoints; ++ji) {
-            auto& jrec = rec.joints[ji];
-            jrec.joint = rec.node->joints[ji].get();
-            jrec.joint->userdata = &jrec;
+            size_t njoints = rec.node->joints.size();
+            rec.joints.resize(njoints);
+            for (size_t ji = 0; ji < njoints; ++ji) {
+                auto& jrec = rec.joints[ji];
+                jrec.joint = rec.node->joints[ji].get();
+                jrec.joint->userdata = &jrec;
+            }
         }
     }
 
@@ -109,12 +122,13 @@ bool DocumentImporter::read(MQDocument doc, double t)
     m_scene->read(t);
 
     // convert
+    mu::parallel_for_each(m_scene->nodes.begin(), m_scene->nodes.end(), [this](NodePtr& n) {
+        n->convert(*m_options);
+    });
+
     auto mesh_nodes = m_scene->getNodes<MeshNode>();
     mu::parallel_for_each(mesh_nodes.begin(), mesh_nodes.end(), [this](MeshNode* n) {
         n->toWorldSpace();
-    });
-    mu::parallel_for_each(m_scene->nodes.begin(), m_scene->nodes.end(), [this](NodePtr& n) {
-        n->convert(*m_options);
     });
 
     // reserve materials
@@ -174,6 +188,25 @@ bool DocumentImporter::read(MQDocument doc, double t)
         updateMesh(doc, obj, mesh);
     }
     else {
+        auto handle_blendshape = [this, doc](ObjectRecord& rec, MQObject obj) {
+            size_t nbs = rec.node->blendshapes.size();
+            for (size_t bi = 0; bi < nbs; ++bi) {
+                auto blendshape = rec.node->blendshapes[bi];
+                blendshape->makeMesh(rec.tmp_mesh, *rec.node);
+
+                bool created;
+                auto bs = findOrCreateMQObject(doc, rec.blendshape_ids[bi], rec.mqid, created);
+                updateMesh(doc, bs, rec.tmp_mesh);
+                if (created) {
+                    bs->SetName(blendshape->getName().c_str());
+                    bs->SetVisible(0);
+#if MQPLUGIN_VERSION >= 0x0470
+                    m_morph_manager->BindTargetObject(obj, bs);
+#endif
+                }
+            }
+        };
+
         for (auto& rec : m_obj_records) {
             UINT parent_id = 0;
             if (auto pmesh = rec.node->findParentMesh())
@@ -181,31 +214,26 @@ bool DocumentImporter::read(MQDocument doc, double t)
 
             bool created;
             auto obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
-            if (created) {
-                auto name = mu::ToWCS(rec.node->getName());
-                obj->SetName(name.c_str());
-            }
+            if (created)
+                obj->SetName(rec.node->getName().c_str());
             updateMesh(doc, obj, *rec.node);
 
             // blendshapes
-            if (m_options->import_blendshapes) {
-                size_t nbs = rec.node->blendshapes.size();
-                for (size_t bi = 0; bi < nbs; ++bi) {
-                    auto blendshape = rec.node->blendshapes[bi];
-                    blendshape->makeMesh(rec.tmp_mesh, *rec.node);
+            if (m_options->import_blendshapes)
+                handle_blendshape(rec, obj);
+        }
 
-                    auto bs = findOrCreateMQObject(doc, rec.blendshape_ids[bi], rec.mqid, created);
-                    updateMesh(doc, bs, rec.tmp_mesh);
-                    if (created) {
-                        auto name = mu::ToWCS(blendshape->getName());
-                        bs->SetName(name.c_str());
-                        bs->SetVisible(0);
-#if MQPLUGIN_VERSION >= 0x0470
-                        m_morph_manager->BindTargetObject(obj, bs);
-#endif
-                    }
-                }
-            }
+        for (auto& rec : m_inst_records) {
+            UINT parent_id = 0;
+            if (auto pmesh = rec.node->findParent<MeshNode>())
+                parent_id = ((ObjectRecord*)pmesh->userdata)->mqid;
+
+            bool created;
+            auto obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
+            if (created)
+                obj->SetName(rec.node->getName().c_str());
+            rec.node->makeMesh(rec.tmp_mesh);
+            updateMesh(doc, obj, rec.tmp_mesh);
         }
     }
 

@@ -182,6 +182,7 @@ public:
 
 private:
     UsdGeomPointInstancer m_instancer;
+    VtArray<int> m_proto_indices;
     VtArray<GfMatrix4d> m_matrices;
 
     VtArray<GfVec3f> m_positions;

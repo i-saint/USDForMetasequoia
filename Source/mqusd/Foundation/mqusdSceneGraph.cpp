@@ -148,16 +148,6 @@ std::string Node::makeUniqueName(const char* name)
     return ret;
 }
 
-template<class NodeT>
-NodeT* Node::findParent()
-{
-    for (Node* p = parent; p != nullptr; p = p->parent) {
-        if (auto tp = dynamic_cast<NodeT*>(p))
-            return tp;
-    }
-    return nullptr;
-}
-
 
 RootNode::RootNode()
     : super(nullptr, "/")
@@ -435,8 +425,14 @@ void MeshNode::merge(const MeshNode& v, const float4x4& trans)
     }
 
     if (trans != float4x4::identity()) {
-        mu::MulPoints(trans, points.data() + vertex_offset, points.data() + vertex_offset, v.points.size());
-        mu::MulVectors(trans, normals.data() + index_offset, normals.data() + index_offset, v.normals.size());
+        auto p = points.data() + vertex_offset;
+        auto n = normals.data() + index_offset;
+        mu::MulPoints_Generic(trans, p, p, v.points.size());
+        mu::MulVectors_Generic(trans, n, n, v.normals.size());
+
+        // todo: SIMD version may cause alignment error. fix it
+        //mu::MulPoints(trans, p, p, v.points.size());
+        //mu::MulVectors(trans, n, n, v.normals.size());
     }
 }
 
@@ -882,7 +878,7 @@ void InstancerNode::convert(const ConvertOptions& opt)
     }
 }
 
-void InstancerNode::gatherMeshes(Node* n, float4x4 m)
+void InstancerNode::gatherMeshes(ProtoRecord& prec, Node* n, float4x4 m)
 {
     if (auto xform = dynamic_cast<XformNode*>(n))
         m = xform->local_matrix * m;
@@ -891,17 +887,17 @@ void InstancerNode::gatherMeshes(Node* n, float4x4 m)
         MeshRecord tmp;
         tmp.mesh = mesh;
         tmp.matrix = m;
-        mesh_records.push_back(tmp);
+        prec.mesh_records.push_back(tmp);
     }
     else if (auto inst = dynamic_cast<InstancerNode*>(n)) {
         MeshRecord tmp;
         tmp.instancer = inst;
         tmp.matrix = m;
-        mesh_records.push_back(tmp);
+        prec.mesh_records.push_back(tmp);
     }
 
-    n->eachChild([this, &m](Node* c) {
-        gatherMeshes(c, m);
+    n->eachChild([this, &prec, &m](Node* c) {
+        gatherMeshes(prec, c, m);
     });
 }
 
@@ -910,28 +906,39 @@ void InstancerNode::makeMesh(MeshNode& dst)
     if (protos.empty())
         return;
 
-    mesh_records.clear();
-    for (auto* proto : protos) {
-        proto->eachChild([this](Node* n) {
-            gatherMeshes(n, float4x4::identity());
+    size_t nprotos = protos.size();
+    proto_records.clear();
+    proto_records.resize(nprotos);
+    for (size_t i = 0; i < nprotos; ++i) {
+        auto& prec = proto_records[i];
+        prec.mesh_records.clear();
+        prec.merged_mesh.clear();
+
+        protos[i]->eachChild([this, &prec](Node* n) {
+            gatherMeshes(prec, n, float4x4::identity());
         });
     }
 
-    merged_meshes.clear();
-    for (auto& rec : mesh_records) {
-        if (rec.mesh) {
-            merged_meshes.merge(*rec.mesh, rec.matrix);
-        }
-        if (rec.instancer) {
-            tmp_mesh.clear();
-            rec.instancer->makeMesh(tmp_mesh);
-            merged_meshes.merge(tmp_mesh, rec.matrix);
+    for (auto& prec : proto_records) {
+        prec.merged_mesh.clear();
+        for (auto& mrec : prec.mesh_records) {
+            if (mrec.mesh) {
+                prec.merged_mesh.merge(*mrec.mesh, mrec.matrix);
+            }
+            if (mrec.instancer) {
+                prec.tmp_mesh.clear();
+                mrec.instancer->makeMesh(prec.tmp_mesh);
+                prec.merged_mesh.merge(prec.tmp_mesh, mrec.matrix);
+            }
         }
     }
 
     dst.clear();
-    for (auto& m : matrices)
-        dst.merge(merged_meshes, m);
+    size_t ninstances = proto_indices.size();
+    if (matrices.size() == ninstances) {
+        for (size_t i = 0; i < ninstances; ++i)
+            dst.merge(proto_records[proto_indices[i]].merged_mesh, matrices[i]);
+    }
 }
 
 

@@ -61,7 +61,6 @@ public:
 
     std::string getName() const;
     const std::string& getPath() const;
-    template<class NodeT> NodeT* findParent();
     std::string makeUniqueName(const char *name);
 
     template<class Body>
@@ -78,6 +77,16 @@ public:
             body(c);
             c->eachChildR(body);
         }
+    }
+
+    template<class NodeT>
+    NodeT* findParent()
+    {
+        for (Node* p = parent; p != nullptr; p = p->parent) {
+            if (auto tp = dynamic_cast<NodeT*>(p))
+                return tp;
+        }
+        return nullptr;
     }
 
 public:
@@ -312,18 +321,23 @@ public:
         InstancerNode* instancer = nullptr;
         float4x4 matrix = float4x4::identity();
     };
-    void gatherMeshes(Node* n, float4x4 m);
+    struct ProtoRecord
+    {
+        std::vector<MeshRecord> mesh_records;
+        MeshNode merged_mesh;
+        MeshNode tmp_mesh;
+    };
+    void gatherMeshes(ProtoRecord& prec, Node* n, float4x4 m);
 
 public:
     // serializable
     std::vector<std::string> proto_paths;
+    SharedVector<int> proto_indices;
     SharedVector<float4x4> matrices;
 
     // non-serializable
     std::vector<Node*> protos;
-    std::vector<MeshRecord> mesh_records;
-    MeshNode merged_meshes;
-    MeshNode tmp_mesh;
+    std::vector<ProtoRecord> proto_records;
 };
 
 class MaterialNode : public Node

@@ -651,6 +651,9 @@ void USDInstancerNode::read(double time)
     auto t = UsdTimeCode(time);
     auto& dst = *static_cast<InstancerNode*>(m_node);
 
+    m_instancer.GetProtoIndicesAttr().Get(&m_proto_indices, t);
+    dst.proto_indices.share(m_proto_indices.cdata(), m_proto_indices.size());
+
     m_instancer.ComputeInstanceTransformsAtTime(&m_matrices, t, t);
     transform_container(dst.matrices, m_matrices, [](float4x4& d, const GfMatrix4d& s) {
         d.assign((double4x4&)s);
@@ -677,6 +680,9 @@ void USDInstancerNode::write(double time)
 
     auto t = UsdTimeCode(time);
     auto& src = *static_cast<InstancerNode*>(m_node);
+
+    m_proto_indices.assign(src.proto_indices.begin(), src.proto_indices.end());
+    m_instancer.GetProtoIndicesAttr().Set(m_proto_indices, t);
 
     size_t n = src.matrices.size();
     m_positions.resize(n);
