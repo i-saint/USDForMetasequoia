@@ -271,7 +271,6 @@ public:
     void validate();
 
     int getMaxMaterialID() const;
-    MeshNode* findParentMesh() const;
 
 public:
     // serializable

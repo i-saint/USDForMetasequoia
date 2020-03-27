@@ -598,3 +598,8 @@ static inline void zeroclear(uniform float dst[], uniform int size)
     //int size = size + (C -1) & ~(C - 1);
     //for (uniform int bi = 0; bi < size; bi += C) { dst[bi+I] = 0.0f; }
 }
+
+static inline bool is_aligned(void* p)
+{
+    return (((uintptr_t)p / 4) & (C - 1)) == 0;
+}

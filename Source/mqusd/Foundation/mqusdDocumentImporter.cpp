@@ -207,23 +207,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
             }
         };
 
-        for (auto& rec : m_obj_records) {
-            UINT parent_id = 0;
-            if (auto pmesh = rec.node->findParentMesh())
-                parent_id = ((ObjectRecord*)pmesh->userdata)->mqid;
-
-            bool created;
-            auto obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
-            if (created)
-                obj->SetName(rec.node->getName().c_str());
-            updateMesh(doc, obj, *rec.node);
-
-            // blendshapes
-            if (m_options->import_blendshapes)
-                handle_blendshape(rec, obj);
-        }
-
-        for (auto& rec : m_inst_records) {
+        auto handle_mqobject = [this, doc](auto& rec) {
             UINT parent_id = 0;
             if (auto pmesh = rec.node->findParent<MeshNode>())
                 parent_id = ((ObjectRecord*)pmesh->userdata)->mqid;
@@ -232,7 +216,22 @@ bool DocumentImporter::read(MQDocument doc, double t)
             auto obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
             if (created)
                 obj->SetName(rec.node->getName().c_str());
+            return obj;
+        };
+
+        for (auto& rec : m_obj_records) {
+            auto obj = handle_mqobject(rec);
+            updateMesh(doc, obj, *rec.node);
+
+            // blendshapes
+            if (m_options->import_blendshapes)
+                handle_blendshape(rec, obj);
+        }
+
+        for (auto& rec : m_inst_records) {
+            auto obj = handle_mqobject(rec);
             rec.node->makeMesh(rec.tmp_mesh);
+            rec.tmp_mesh.applyTransform(rec.node->global_matrix);
             updateMesh(doc, obj, rec.tmp_mesh);
         }
     }

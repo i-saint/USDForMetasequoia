@@ -455,15 +455,6 @@ int MeshNode::getMaxMaterialID() const
     return mid_max;
 }
 
-MeshNode* MeshNode::findParentMesh() const
-{
-    for (auto p = parent; p; p = p->parent) {
-        if (p->getType() == Node::Type::Mesh)
-            return static_cast<MeshNode*>(p);
-    }
-    return nullptr;
-}
-
 
 
 #define EachMember(F)\

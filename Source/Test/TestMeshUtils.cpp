@@ -67,12 +67,14 @@ TestCase(Test_MulPoints)
         num_data,
         num_try);
 
+    int offset = 1;
+
     TestScope("MulPoints C++", [&]() {
-        MulPoints_Generic(matrix, src.data(), dst1.data(), num_data);
+        MulPoints_Generic(matrix, src.data() + offset, dst1.data() + offset, num_data - offset);
     }, num_try);
 #ifdef muSIMD_MulPoints3
     TestScope("MulPoints ISPC", [&]() {
-        MulPoints_ISPC(matrix, src.data(), dst2.data(), num_data);
+        MulPoints_ISPC(matrix, src.data() + offset, dst2.data() + offset, num_data - offset);
     }, num_try);
     if (!NearEqual(dst1.data(), dst2.data(), num_data, 1e-3f)) {
         Print("    *** validation failed ***\n");
@@ -80,13 +82,13 @@ TestCase(Test_MulPoints)
 #endif
 
     TestScope("MulVectors C++", [&]() {
-        MulVectors_Generic(matrix, src.data(), dst1.data(), num_data);
+        MulVectors_Generic(matrix, src.data() + offset, dst1.data() + offset, num_data - offset);
     }, num_try);
 #ifdef muSIMD_MulVectors3
     TestScope("MulVectors ISPC", [&]() {
-        MulVectors_ISPC(matrix, src.data(), dst2.data(), num_data);
+        MulVectors_ISPC(matrix, src.data() + offset, dst2.data() + offset, num_data - offset);
     }, num_try);
-    if (!NearEqual(dst1.data(), dst2.data(), num_data)) {
+    if (!NearEqual(dst1.data() + offset, dst2.data() + offset, num_data - offset)) {
         Print("    *** validation failed ***\n");
     }
 #endif

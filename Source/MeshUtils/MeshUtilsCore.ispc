@@ -166,10 +166,7 @@ export void MulVectors3(uniform const float4x4& m_, uniform const float3 src[], 
     // note: 
     //  soa_to_aos3() seems assume dst to be aligned and may cause alignment error.
     //  so, feed some data until dst will be aligned address.
-    while (num_data > 0) {
-        if (((uintptr_t)dst / 4) & ~(C - 1) == 0)
-            break;
-
+    while (num_data > 0 && !is_aligned(dst)) {
         uniform float3 v = *src;
         uniform float3 r = {
             m.m[0].x * v.x + m.m[1].x * v.y + m.m[2].x * v.z,
@@ -210,12 +207,8 @@ export void MulPoints3(uniform const float4x4& m_, uniform const float3 src[], u
 {
     uniform float4x4 m = m_;
 
-    // note: 
     //  see MulVectors3()
-    while (num_data > 0) {
-        if (((uintptr_t)dst / 4) & ~(C - 1) == 0)
-            break;
-
+    while (num_data > 0 && !is_aligned(dst)) {
         uniform float3 v = *src;
         uniform float3 r = {
             m.m[0].x * v.x + m.m[1].x * v.y + m.m[2].x * v.z + m.m[3].x,
@@ -256,25 +249,26 @@ export void MinMax1I(
     uniform const int src[], uniform const int num,
     uniform int& dst_min, uniform int& dst_max)
 {
-    if(num == 0) { return; }
+    if (num == 0)
+        return;
 
     uniform int rmin = src[0];
     uniform int rmax = src[0];
 
     const uniform int block_size = C;
     const uniform int num_loops = num / block_size;
-    if(num_loops > 0) {
+    if (num_loops > 0) {
         int tmin, tmax;
         tmin = tmax = src[I];
-        for(uniform int i=1; i < num_loops; ++i) {
-            tmin = min(tmin, src[C*i + I]);
-            tmax = max(tmax, src[C*i + I]);
+        for (uniform int i = 1; i < num_loops; ++i) {
+            tmin = min(tmin, src[C * i + I]);
+            tmax = max(tmax, src[C * i + I]);
         }
         rmin = reduce_min(tmin);
         rmax = reduce_max(tmax);
     }
 
-    for(uniform int i=num_loops*block_size; i < num; ++i) {
+    for (uniform int i = num_loops * block_size; i < num; ++i) {
         uniform int t = src[i];
         rmin = min(rmin, t);
         rmax = max(rmax, t);
