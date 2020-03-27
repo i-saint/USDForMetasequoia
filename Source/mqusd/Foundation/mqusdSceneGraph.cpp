@@ -248,12 +248,16 @@ void MeshNode::serialize(std::ostream& os)
     super::serialize(os);
 
     // preserve paths of related nodes to resolve on deserialize
-    size_t nbs = blendshapes.size();
-    blendshape_paths.resize(nbs);
-    for (size_t bi = 0; bi < nbs; ++bi)
-        blendshape_paths[bi] = blendshapes[bi]->getPath();
-    if (skeleton)
+
+    transform_container(blendshape_paths, blendshapes, [](auto& d, auto* s) {
+        d = s->getPath();
+    });
+    if (skeleton) {
         skeleton_path = skeleton->getPath();
+        transform_container(joint_paths, joints, [](auto& d, auto* s) {
+            d = s->path;
+        });
+    }
 
 #define Body(V) write(os, V);
     EachMember(Body)
@@ -430,6 +434,102 @@ void MeshNode::merge(const MeshNode& v, const float4x4& trans)
         mu::MulPoints(trans, p, p, v.points.size());
         mu::MulVectors(trans, n, n, v.normals.size());
     }
+}
+
+bool MeshNode::isDeformable() const
+{
+    return skeleton || !blendshapes.empty();
+}
+
+void MeshNode::bake(MeshNode& dst)
+{
+    // setup
+    int npoints = (int)points.size();
+    const float3* src_points = points.cdata();
+    const float3* src_normals = normals.cdata();
+    float3* dst_points = nullptr;
+    float3* dst_normals = nullptr;
+    {
+        size_t pos = dst.points.size();
+        dst.points.resize(dst.points.size() + npoints);
+        dst_points = &dst.points[pos];
+    }
+    if (!normals.empty()) {
+        size_t pos = dst.normals.size();
+        dst.normals.resize(dst.normals.size() + normals.size());
+        dst_normals = &dst.normals[pos];
+    }
+
+    // blendshape
+    if (!blendshapes.empty() && blendshapes.size() == blendshape_weights.size()) {
+        points.copy_to(dst_points);
+        src_points = dst_points;
+
+        normals.copy_to(dst_normals);
+        src_normals = dst_normals;
+
+        for (auto bs : blendshapes) {
+            auto point_offsets = bs->point_offsets.cdata();
+            auto normal_offsets = bs->normal_offsets.cdata();
+            if (bs->indices.empty()) {
+                size_t nbsi = bs->indices.size();
+                const auto* i = bs->indices.cdata();
+                {
+                    for (size_t oi = 0; oi < nbsi; ++oi)
+                        dst_points[i[oi]] += point_offsets[oi];
+                }
+                if (dst_normals && normal_offsets) {
+                    for (size_t oi = 0; oi < nbsi; ++oi)
+                        dst_normals[i[oi]] += normal_offsets[oi];
+                }
+            }
+            else if (bs->point_offsets.size() == npoints) {
+                {
+                    for (size_t oi = 0; oi < npoints; ++oi)
+                        dst_points[oi] += point_offsets[oi];
+                }
+                if (dst_normals && normal_offsets) {
+                    for (size_t oi = 0; oi < npoints; ++oi)
+                        dst_normals[oi] += normal_offsets[oi];
+                }
+            }
+        }
+    }
+
+    // skeleton
+    if (skeleton) {
+        transform_container(joint_matrices, joints, [](auto& m, auto j) {
+            m = j->global_matrix;
+        });
+
+        for (int pi = 0; pi < npoints; ++pi) {
+            auto* i = joint_indices.cdata() + joints_per_vertex * pi;
+            auto* w = joint_weights.cdata() + joints_per_vertex * pi;
+            {
+                const auto p = src_points[pi];
+                auto r = float3::zero();
+                for (int ji = 0; ji < joints_per_vertex; ++ji)
+                    r += mu::mul_p(joint_matrices[i[ji]], p) * w[ji];
+                dst_points[pi] = r;
+            }
+            if (dst_normals) {
+                const auto n = src_normals[pi];
+                auto r = float3::zero();
+                for (int ji = 0; ji < joints_per_vertex; ++ji)
+                    r += mu::mul_v(joint_matrices[i[ji]], n) * w[ji];
+                dst_normals[pi] = r;
+            }
+        }
+    }
+
+    auto append = [](auto& dst, const auto& src) {
+        dst.insert(dst.end(), src.cdata(), src.cdata() + src.size());
+    };
+    append(dst.uvs, uvs);
+    append(dst.colors, colors);
+    append(dst.material_ids, material_ids);
+    append(dst.counts, counts);
+    append(dst.indices, indices);
 }
 
 void MeshNode::validate()
@@ -888,7 +988,7 @@ void InstancerNode::gatherMeshes(ProtoRecord& prec, Node* n, float4x4 m)
     });
 }
 
-void InstancerNode::makeMesh(MeshNode& dst)
+void InstancerNode::bake(MeshNode& dst)
 {
     if (protos.empty())
         return;
@@ -914,7 +1014,7 @@ void InstancerNode::makeMesh(MeshNode& dst)
             }
             if (mrec.instancer) {
                 prec.tmp_mesh.clear();
-                mrec.instancer->makeMesh(prec.tmp_mesh);
+                mrec.instancer->bake(prec.tmp_mesh);
                 prec.merged_mesh.merge(prec.tmp_mesh, mrec.matrix);
             }
         }

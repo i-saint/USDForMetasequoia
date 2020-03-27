@@ -262,12 +262,15 @@ public:
     void deserialize(std::istream& is) override;
     void resolve() override;
     void convert(const ConvertOptions& opt) override;
+
     void applyTransform(const float4x4& v);
     void toWorldSpace();
     void toLocalSpace();
 
     void clear();
     void merge(const MeshNode& other, const float4x4& trans = float4x4::identity());
+    bool isDeformable() const; // has blendshape or skeleton
+    void bake(MeshNode& dst);
     void validate();
 
     int getMaxMaterialID() const;
@@ -293,7 +296,11 @@ public:
 
     // non-serializable
     std::vector<BlendshapeNode*> blendshapes;
+    RawVector<float> blendshape_weights;
+
     SkeletonNode* skeleton = nullptr;
+    std::vector<Joint*> joints;
+    RawVector<float4x4> joint_matrices;
 };
 mqusdDeclPtr(MeshNode);
 
@@ -311,7 +318,7 @@ public:
     void resolve() override;
     void convert(const ConvertOptions& opt) override;
 
-    void makeMesh(MeshNode& dst);
+    void bake(MeshNode& dst);
 
 public:
     struct MeshRecord

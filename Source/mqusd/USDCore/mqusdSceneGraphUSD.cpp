@@ -209,14 +209,25 @@ void USDMeshNode::beforeRead()
                 dst.skeleton = static_cast<SkeletonNode*>(n->m_node);
         }
     }
-
-    // resolve joints
-    if (m_attr_joints) {
-        VtArray<TfToken> data;
-        m_attr_joints.Get(&data);
-        dst.joint_paths.clear();
-        for (auto& t : data)
-            dst.joint_paths.push_back(t.GetString());
+    if (dst.skeleton) {
+        // resolve joints
+        dst.joints.clear();
+        if (m_attr_joints) {
+            VtArray<TfToken> data;
+            m_attr_joints.Get(&data);
+            transform_container(dst.joints, data, [&dst](auto*& d, auto& s) {
+                d = dst.skeleton->findJointByPath(s.GetString());
+                if (!d) {
+                    // should not be here
+                    mqusdDbgPrint("joint not found %s\n", j.GetText());
+                }
+            });
+        }
+        if (dst.joints.empty()) {
+            transform_container(dst.joints, dst.skeleton->joints, [](auto*& d, auto& s) {
+                d = s.get();
+            });
+        }
     }
 }
 
@@ -514,8 +525,14 @@ USDSkeletonNode::USDSkeletonNode(USDNode* parent, UsdPrim prim)
     : super(parent, prim, false)
 {
     m_skel = UsdSkelSkeleton(prim);
-
     setNode(CreateNode<SkeletonNode>(parent, prim));
+
+    // build joints
+    auto& dst = *static_cast<SkeletonNode*>(m_node);
+    VtArray<TfToken> data;
+    m_skel.GetJointsAttr().Get(&data);
+    for (auto& token : data)
+        dst.addJoint(token.GetString());
 }
 
 USDSkeletonNode::USDSkeletonNode(Node* n, UsdPrim prim)
@@ -527,13 +544,6 @@ USDSkeletonNode::USDSkeletonNode(Node* n, UsdPrim prim)
 void USDSkeletonNode::beforeRead()
 {
     super::beforeRead();
-    auto& dst = *static_cast<SkeletonNode*>(m_node);
-
-    // build joints
-    VtArray<TfToken> data;
-    m_skel.GetJointsAttr().Get(&data);
-    for (auto& token : data)
-        dst.addJoint(token.GetString());
 }
 
 void USDSkeletonNode::read(double time)
