@@ -163,6 +163,23 @@ export void MulVectors3(uniform const float4x4& m_, uniform const float3 src[], 
 {
     uniform float4x4 m = m_;
 
+    // note: 
+    //  soa_to_aos3() seems assume dst to be aligned and may cause alignment error.
+    //  so, feed some data until dst will be aligned address.
+    while (num_data > 0) {
+        if (((uintptr_t)dst / 4) & ~(C - 1) == 0)
+            break;
+
+        uniform float3 v = *src;
+        uniform float3 r = {
+            m.m[0].x * v.x + m.m[1].x * v.y + m.m[2].x * v.z,
+            m.m[0].y * v.x + m.m[1].y * v.y + m.m[2].y * v.z,
+            m.m[0].z * v.x + m.m[1].z * v.y + m.m[2].z * v.z,
+        };
+        *dst = r;
+        ++src; ++dst; --num_data;
+    }
+
     uniform int num_data_simd = num_data & ~(C - 1);
     for (uniform int bi = 0; bi < num_data_simd; bi += C) {
         float3 v;
@@ -192,6 +209,22 @@ export void MulVectors3(uniform const float4x4& m_, uniform const float3 src[], 
 export void MulPoints3(uniform const float4x4& m_, uniform const float3 src[], uniform float3 dst[], uniform int num_data)
 {
     uniform float4x4 m = m_;
+
+    // note: 
+    //  see MulVectors3()
+    while (num_data > 0) {
+        if (((uintptr_t)dst / 4) & ~(C - 1) == 0)
+            break;
+
+        uniform float3 v = *src;
+        uniform float3 r = {
+            m.m[0].x * v.x + m.m[1].x * v.y + m.m[2].x * v.z + m.m[3].x,
+            m.m[0].y * v.x + m.m[1].y * v.y + m.m[2].y * v.z + m.m[3].y,
+            m.m[0].z * v.x + m.m[1].z * v.y + m.m[2].z * v.z + m.m[3].z,
+        };
+        *dst = r;
+        ++src; ++dst; --num_data;
+    }
 
     uniform int num_data_simd = num_data & ~(C - 1);
     for (uniform int bi = 0; bi < num_data_simd; bi += C) {

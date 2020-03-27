@@ -427,12 +427,8 @@ void MeshNode::merge(const MeshNode& v, const float4x4& trans)
     if (trans != float4x4::identity()) {
         auto p = points.data() + vertex_offset;
         auto n = normals.data() + index_offset;
-        mu::MulPoints_Generic(trans, p, p, v.points.size());
-        mu::MulVectors_Generic(trans, n, n, v.normals.size());
-
-        // todo: SIMD version may cause alignment error. fix it
-        //mu::MulPoints(trans, p, p, v.points.size());
-        //mu::MulVectors(trans, n, n, v.normals.size());
+        mu::MulPoints(trans, p, p, v.points.size());
+        mu::MulVectors(trans, n, n, v.normals.size());
     }
 }
 
