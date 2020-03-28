@@ -503,12 +503,7 @@ void MeshNode::bake(MeshNode& dst)
         auto* w = joint_weights.cdata();
         for (int pi = 0; pi < npoints; ++pi) {
             {
-                auto p = src_points[pi];
-                // todo:
-                // according to https://graphics.pixar.com/usd/docs/api/_usd_skel__schema_overview.html#UsdSkel_SchemaOverview_GeomBindTransform
-                // bind transform should be used like this. but the result is broken.
-                //p = mu::mul_p(bind_transform, p);
-
+                auto p = mu::mul_p(bind_transform, src_points[pi]);
                 auto r = float3::zero();
                 for (int ji = 0; ji < joints_per_vertex; ++ji)
                     r += mu::mul_p(joint_matrices[i[ji]], p) * w[ji];

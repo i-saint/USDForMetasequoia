@@ -127,9 +127,6 @@ bool DocumentImporter::read(MQDocument doc, double t)
     });
 
     auto mesh_nodes = m_scene->getNodes<MeshNode>();
-    mu::parallel_for_each(mesh_nodes.begin(), mesh_nodes.end(), [this](MeshNode* n) {
-        n->toWorldSpace();
-    });
 
     // reserve materials
     {
@@ -168,14 +165,19 @@ bool DocumentImporter::read(MQDocument doc, double t)
             updateSkeleton(doc, *rec.node);
     }
 
+    auto bake_mesh = [](MeshNode& dst, MeshNode* n) {
+        if (!n->skeleton)
+            n->toWorldSpace();
+        n->bake(dst);
+    };
+
     // update mq object
     if (m_options->merge_meshes) {
         // build merged mesh
-        auto& mesh = m_mesh_merged;
-        mesh.clear();
+        m_mesh_merged.clear();
         for (auto n : mesh_nodes)
-            mesh.merge(*n);
-        mesh.validate();
+            bake_mesh(m_mesh_merged, n);
+        m_mesh_merged.validate();
 
         bool created;
         auto obj = findOrCreateMQObject(doc, m_mqobj_id, 0, created);
@@ -185,7 +187,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
         }
         obj->Clear();
 
-        updateMesh(doc, obj, mesh);
+        updateMesh(doc, obj, m_mesh_merged);
     }
     else {
         auto handle_blendshape = [this, doc](ObjectRecord& rec, MQObject obj) {
@@ -223,10 +225,11 @@ bool DocumentImporter::read(MQDocument doc, double t)
             auto obj = handle_mqobject(rec);
             if (m_options->bake_meshes) {
                 rec.tmp_mesh.clear();
-                rec.node->bake(rec.tmp_mesh);
+                bake_mesh(rec.tmp_mesh, rec.node);
                 updateMesh(doc, obj, rec.tmp_mesh);
             }
             else {
+                rec.node->toWorldSpace();
                 updateMesh(doc, obj, *rec.node);
                 // blendshapes
                 if (m_options->import_blendshapes)
