@@ -309,10 +309,18 @@ void USDMeshNode::read(double time)
         m_attr_joint_indices.GetMetadata(UsdGeomTokens->interpolation, &interpolation);
 
         m_attr_joint_indices.Get(&m_joint_indices);
-        dst.joint_indices.share(m_joint_indices.cdata(), m_joint_indices.size());
-
         m_attr_joint_weights.Get(&m_joint_weights);
-        dst.joint_weights.share(m_joint_weights.cdata(), m_joint_weights.size());
+        if (m_joint_indices.size() == dst.joints_per_vertex) {
+            dst.joint_indices.resize_discard(dst.points.size() * dst.joints_per_vertex);
+            dst.joint_weights.resize_discard(dst.points.size() * dst.joints_per_vertex);
+            expand_uniform(dst.joint_indices.data(), dst.joint_indices.size(), m_joint_indices.cdata(), m_joint_indices.size());
+            expand_uniform(dst.joint_weights.data(), dst.joint_weights.size(), m_joint_weights.cdata(), m_joint_weights.size());
+        }
+        else {
+            dst.joint_indices.share(m_joint_indices.cdata(), m_joint_indices.size());
+            dst.joint_weights.share(m_joint_weights.cdata(), m_joint_weights.size());
+        }
+
 
         if (m_attr_bind_transform) {
             GfMatrix4d data;

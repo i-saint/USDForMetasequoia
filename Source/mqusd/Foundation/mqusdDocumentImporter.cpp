@@ -163,7 +163,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
 #endif
 
     // skeleton
-    if (m_options->import_skeletons) {
+    if (!m_options->bake_meshes && m_options->import_skeletons) {
         for (auto& rec : m_skel_records)
             updateSkeleton(doc, *rec.node);
     }
@@ -221,11 +221,17 @@ bool DocumentImporter::read(MQDocument doc, double t)
 
         for (auto& rec : m_obj_records) {
             auto obj = handle_mqobject(rec);
-            updateMesh(doc, obj, *rec.node);
-
-            // blendshapes
-            if (m_options->import_blendshapes)
-                handle_blendshape(rec, obj);
+            if (m_options->bake_meshes) {
+                rec.tmp_mesh.clear();
+                rec.node->bake(rec.tmp_mesh);
+                updateMesh(doc, obj, rec.tmp_mesh);
+            }
+            else {
+                updateMesh(doc, obj, *rec.node);
+                // blendshapes
+                if (m_options->import_blendshapes)
+                    handle_blendshape(rec, obj);
+            }
         }
 
         for (auto& rec : m_inst_records) {
@@ -320,7 +326,7 @@ bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNo
 
 #if MQPLUGIN_VERSION >= 0x0470
     // bone weights
-    if (m_options->import_skeletons && src.skeleton) {
+    if (!m_options->bake_meshes && m_options->import_skeletons && src.skeleton) {
         m_bone_manager->AddSkinObject(obj);
 
         std::vector<UINT> joint_ids;

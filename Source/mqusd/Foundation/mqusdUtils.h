@@ -55,6 +55,16 @@ inline bool is_uniform(const Container& container, const Body& body)
     }
     return true;
 }
+template<class T>
+inline void expand_uniform(T* dst, size_t data_size, const T* src, size_t element_size)
+{
+    size_t n = data_size / element_size;
+    for (size_t di = 0; di < n; ++di) {
+        for (size_t ei = 0; ei < element_size; ++ei)
+            dst[ei] = src[ei];
+        dst += element_size;
+    }
+}
 
 template<class DstContainer, class SrcContainer, class Convert>
 inline void transform_container(DstContainer& dst, const SrcContainer& src, const Convert& c)

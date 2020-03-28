@@ -10,6 +10,7 @@ struct ImportOptions : public ConvertOptions
     bool import_skeletons = true;
     bool import_materials = true;
     bool merge_meshes = false;
+    bool bake_meshes = false;
 
     ImportOptions();
     bool operator==(const ImportOptions& v) const;
