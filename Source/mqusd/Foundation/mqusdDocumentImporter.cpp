@@ -239,8 +239,8 @@ bool DocumentImporter::read(MQDocument doc, double t)
 
         for (auto& rec : m_inst_records) {
             auto obj = handle_mqobject(rec);
-            rec.node->bake(rec.tmp_mesh);
-            rec.tmp_mesh.applyTransform(rec.node->global_matrix);
+            rec.tmp_mesh.clear();
+            rec.node->bake(rec.tmp_mesh, rec.node->global_matrix);
             updateMesh(doc, obj, rec.tmp_mesh);
         }
     }

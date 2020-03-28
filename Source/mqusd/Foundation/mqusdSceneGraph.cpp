@@ -457,12 +457,7 @@ void MeshNode::merge(const MeshNode& v, const float4x4& trans)
     }
 }
 
-bool MeshNode::isDeformable() const
-{
-    return skeleton || !blendshapes.empty();
-}
-
-void MeshNode::bake(MeshNode& dst)
+void MeshNode::bake(MeshNode& dst, const float4x4& trans)
 {
     dst.merge(*this);
 
@@ -499,26 +494,31 @@ void MeshNode::bake(MeshNode& dst)
             m = mu::invert(j->bindpose) * j->global_matrix;
         });
 
-        auto* i = joint_indices.cdata();
-        auto* w = joint_weights.cdata();
+        auto* iv = joint_indices.cdata();
+        auto* wv = joint_weights.cdata();
         for (int pi = 0; pi < npoints; ++pi) {
             {
                 auto p = mu::mul_p(bind_transform, src_points[pi]);
                 auto r = float3::zero();
                 for (int ji = 0; ji < joints_per_vertex; ++ji)
-                    r += mu::mul_p(joint_matrices[i[ji]], p) * w[ji];
+                    r += mu::mul_p(joint_matrices[iv[ji]], p) * wv[ji];
                 dst_points[pi] = r;
             }
             if (dst_normals) {
-                const auto n = src_normals[pi];
+                auto n = mu::mul_v(bind_transform, src_normals[pi]);
                 auto r = float3::zero();
                 for (int ji = 0; ji < joints_per_vertex; ++ji)
-                    r += mu::mul_v(joint_matrices[i[ji]], n) * w[ji];
+                    r += mu::mul_v(joint_matrices[iv[ji]], n) * wv[ji];
                 dst_normals[pi] = r;
             }
-            i += joints_per_vertex;
-            w += joints_per_vertex;
+            iv += joints_per_vertex;
+            wv += joints_per_vertex;
         }
+    }
+
+    if (trans != float4x4::identity()) {
+        mu::MulPoints(trans, dst_points, dst_points, npoints);
+        mu::MulVectors(trans, dst_normals, dst_normals, normals.size());
     }
 }
 
@@ -978,9 +978,9 @@ void InstancerNode::gatherMeshes(ProtoRecord& prec, Node* n, float4x4 m)
     });
 }
 
-void InstancerNode::bake(MeshNode& dst)
+void InstancerNode::gatherMeshes()
 {
-    if (protos.empty())
+    if (!proto_records.empty())
         return;
 
     size_t nprotos = protos.size();
@@ -995,26 +995,55 @@ void InstancerNode::bake(MeshNode& dst)
             gatherMeshes(prec, n, float4x4::identity());
         });
     }
+}
+
+void InstancerNode::bake(MeshNode& dst, const float4x4& trans)
+{
+    gatherMeshes();
 
     for (auto& prec : proto_records) {
         prec.merged_mesh.clear();
         for (auto& mrec : prec.mesh_records) {
-            if (mrec.mesh) {
-                prec.merged_mesh.merge(*mrec.mesh, mrec.matrix);
-            }
-            if (mrec.instancer) {
-                prec.tmp_mesh.clear();
-                mrec.instancer->bake(prec.tmp_mesh);
-                prec.merged_mesh.merge(prec.tmp_mesh, mrec.matrix);
-            }
+            if (mrec.mesh)
+                mrec.mesh->bake(prec.merged_mesh, mrec.matrix);
+            if (mrec.instancer)
+                mrec.instancer->bake(prec.merged_mesh, mrec.matrix);
         }
     }
 
-    dst.clear();
+    size_t vertex_offset = dst.points.size();
+    size_t normal_offset = dst.normals.size();
+
     size_t ninstances = proto_indices.size();
     if (matrices.size() == ninstances) {
+        // reserve space
+        size_t npoints = 0;
+        size_t nindices = 0;
+        size_t nfaces = 0;
+        for (size_t i = 0; i < ninstances; ++i) {
+            auto& mesh = proto_records[proto_indices[i]].merged_mesh;
+            npoints += mesh.points.size();
+            nindices += mesh.indices.size();
+            nfaces += mesh.counts.size();
+        }
+        dst.points.reserve(npoints);
+        dst.indices.reserve(nindices);
+        dst.counts.reserve(nfaces);
+        dst.normals.reserve(nindices);
+        dst.uvs.reserve(nindices);
+        dst.colors.reserve(nindices);
+        dst.material_ids.reserve(nfaces);
+
+        // do merge
         for (size_t i = 0; i < ninstances; ++i)
             dst.merge(proto_records[proto_indices[i]].merged_mesh, matrices[i]);
+    }
+
+    if (trans != float4x4::identity()) {
+        auto p = dst.points.data() + vertex_offset;
+        auto n = dst.normals.data() + normal_offset;
+        mu::MulPoints(trans, p, p, dst.points.size() - vertex_offset);
+        mu::MulVectors(trans, n, n, dst.normals.size() - normal_offset);
     }
 }
 

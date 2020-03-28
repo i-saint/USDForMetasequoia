@@ -269,8 +269,7 @@ public:
 
     void clear();
     void merge(const MeshNode& other, const float4x4& trans = float4x4::identity());
-    bool isDeformable() const; // has blendshape or skeleton
-    void bake(MeshNode& dst);
+    void bake(MeshNode& dst, const float4x4& trans = float4x4::identity());
     void validate();
 
     int getMaxMaterialID() const;
@@ -318,7 +317,7 @@ public:
     void resolve() override;
     void convert(const ConvertOptions& opt) override;
 
-    void bake(MeshNode& dst);
+    void bake(MeshNode& dst, const float4x4& trans = float4x4::identity());
 
 public:
     struct MeshRecord
@@ -331,8 +330,8 @@ public:
     {
         std::vector<MeshRecord> mesh_records;
         MeshNode merged_mesh;
-        MeshNode tmp_mesh;
     };
+    void gatherMeshes();
     void gatherMeshes(ProtoRecord& prec, Node* n, float4x4 m);
 
 public:
