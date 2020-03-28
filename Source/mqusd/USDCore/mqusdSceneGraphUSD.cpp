@@ -219,7 +219,7 @@ void USDMeshNode::beforeRead()
                 d = dst.skeleton->findJointByPath(s.GetString());
                 if (!d) {
                     // should not be here
-                    mqusdDbgPrint("joint not found %s\n", j.GetText());
+                    mqusdDbgPrint("joint not found %s\n", s.GetText());
                 }
             });
         }

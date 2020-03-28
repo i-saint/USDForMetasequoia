@@ -211,7 +211,7 @@ public:
     // serializable
     std::string path;
     int index = 0;
-    float4x4 bindpose = float4x4::identity(); // world space
+    float4x4 bindpose = float4x4::identity(); // world space. *not* inverted
     float4x4 restpose = float4x4::identity(); // default pose. local space
     float4x4 local_matrix = float4x4::identity();  // for animation
     float4x4 global_matrix = float4x4::identity(); // 

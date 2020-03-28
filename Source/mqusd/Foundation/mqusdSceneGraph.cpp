@@ -275,16 +275,22 @@ void MeshNode::resolve()
 {
     super::resolve();
 
-    blendshapes.clear();
-    for (auto& bp : blendshape_paths) {
-        if (auto bs = scene->findNodeByPath(bp)) {
-            blendshapes.push_back(static_cast<BlendshapeNode*>(bs));
+    transform_container(blendshapes, blendshape_paths, [this](auto& d, auto& s) {
+        d = static_cast<BlendshapeNode*>(scene->findNodeByPath(s));
+        if (!d) {
+            mqusdDbgPrint("blendshape not found %s\n", s.c_str());
         }
-        else {
-            mqusdDbgPrint("MeshNode::resolve(): node not found %s\n", bp.c_str());
-        }
-    }
+    });
+
     skeleton = static_cast<SkeletonNode*>(scene->findNodeByPath(skeleton_path));
+    if (skeleton) {
+        transform_container(joints, joint_paths, [this](auto& d, auto& s) {
+            d = skeleton->findJointByPath(s);
+            if (!d) {
+                mqusdDbgPrint("joint not found %s\n", s.c_str());
+            }
+        });
+    }
 }
 #undef EachMember
 
@@ -392,12 +398,14 @@ void MeshNode::clear()
     counts.clear();
     indices.clear();
 
-    blendshape_paths.clear();
     blendshapes.clear();
+    blendshape_paths.clear();
 
     skeleton = nullptr;
     skeleton_path.clear();
+    joints.clear();
     joint_paths.clear();
+    joint_matrices.clear();
 
     joints_per_vertex = 0;
     joint_indices.clear();
@@ -410,17 +418,30 @@ void MeshNode::merge(const MeshNode& v, const float4x4& trans)
     auto append = [](auto& dst, const auto& src) {
         dst.insert(dst.end(), src.cdata(), src.cdata() + src.size());
     };
+    auto append_padded = [](auto& dst, const auto& src, int base_size, const auto default_value) {
+        if (!dst.empty() && src.empty())
+            dst.insert(dst.end(), src.cdata(), src.cdata() + src.size());
+        else if (!dst.empty() && src.empty())
+            dst.resize(dst.size() + src.size(), default_value);
+        else if (dst.empty() && !src.empty())
+            dst.resize(base_size + src.size(), default_value);
+    };
 
     int vertex_offset = (int)points.size();
     int index_offset = (int)indices.size();
 
     append(points, v.points);
-    append(normals, v.normals);
-    append(uvs, v.uvs);
-    append(colors, v.colors);
-    append(material_ids, v.material_ids);
     append(counts, v.counts);
     append(indices, v.indices);
+    append_padded(normals,      v.normals,      index_offset, float3::zero());
+    append_padded(uvs,          v.uvs,          index_offset, float2::zero());
+    append_padded(colors,       v.colors,       index_offset, float4::zero());
+    append_padded(material_ids, v.material_ids, index_offset, 0);
+
+    joints_per_vertex = 0;
+    joint_indices.clear();
+    joint_weights.clear();
+    bind_transform = float4x4::identity();
 
     if (vertex_offset > 0) {
         int index_end = index_offset + (int)v.indices.size();
@@ -443,68 +464,53 @@ bool MeshNode::isDeformable() const
 
 void MeshNode::bake(MeshNode& dst)
 {
+    dst.merge(*this);
+
     // setup
     int npoints = (int)points.size();
     const float3* src_points = points.cdata();
     const float3* src_normals = normals.cdata();
-    float3* dst_points = nullptr;
-    float3* dst_normals = nullptr;
-    {
-        size_t pos = dst.points.size();
-        dst.points.resize(dst.points.size() + npoints);
-        dst_points = &dst.points[pos];
-    }
-    if (!normals.empty()) {
-        size_t pos = dst.normals.size();
-        dst.normals.resize(dst.normals.size() + normals.size());
-        dst_normals = &dst.normals[pos];
-    }
+    float3* dst_points = dst.points.end() - npoints;
+    float3* dst_normals = normals.empty() ? nullptr : dst.normals.end() - normals.size();
 
     // blendshape
     if (!blendshapes.empty() && blendshapes.size() == blendshape_weights.size()) {
-        points.copy_to(dst_points);
-        src_points = dst_points;
-
-        normals.copy_to(dst_normals);
-        src_normals = dst_normals;
-
         for (auto bs : blendshapes) {
             auto point_offsets = bs->point_offsets.cdata();
             auto normal_offsets = bs->normal_offsets.cdata();
             if (bs->indices.empty()) {
                 size_t nbsi = bs->indices.size();
                 const auto* i = bs->indices.cdata();
-                {
-                    for (size_t oi = 0; oi < nbsi; ++oi)
-                        dst_points[i[oi]] += point_offsets[oi];
-                }
-                if (dst_normals && normal_offsets) {
-                    for (size_t oi = 0; oi < nbsi; ++oi)
-                        dst_normals[i[oi]] += normal_offsets[oi];
-                }
+                for (size_t oi = 0; oi < nbsi; ++oi)
+                    dst_points[i[oi]] += point_offsets[oi];
+
+                //if (dst_normals && normal_offsets) {
+                //    for (size_t oi = 0; oi < nbsi; ++oi)
+                //        dst_normals[i[oi]] += normal_offsets[oi];
+                //}
             }
             else if (bs->point_offsets.size() == npoints) {
-                {
-                    for (size_t oi = 0; oi < npoints; ++oi)
-                        dst_points[oi] += point_offsets[oi];
-                }
-                if (dst_normals && normal_offsets) {
-                    for (size_t oi = 0; oi < npoints; ++oi)
-                        dst_normals[oi] += normal_offsets[oi];
-                }
+                for (size_t oi = 0; oi < npoints; ++oi)
+                    dst_points[oi] += point_offsets[oi];
+
+                //if (dst_normals && normal_offsets) {
+                //    for (size_t oi = 0; oi < npoints; ++oi)
+                //        dst_normals[oi] += normal_offsets[oi];
+                //}
             }
         }
     }
 
     // skeleton
     if (skeleton) {
-        transform_container(joint_matrices, joints, [](auto& m, auto j) {
-            m = j->global_matrix;
+        auto iroot = mu::invert(global_matrix);
+        transform_container(joint_matrices, joints, [&iroot](auto& m, auto j) {
+            m = mu::invert(j->bindpose) * j->global_matrix * iroot;
         });
 
+        auto* i = joint_indices.cdata();
+        auto* w = joint_weights.cdata();
         for (int pi = 0; pi < npoints; ++pi) {
-            auto* i = joint_indices.cdata() + joints_per_vertex * pi;
-            auto* w = joint_weights.cdata() + joints_per_vertex * pi;
             {
                 const auto p = src_points[pi];
                 auto r = float3::zero();
@@ -519,17 +525,10 @@ void MeshNode::bake(MeshNode& dst)
                     r += mu::mul_v(joint_matrices[i[ji]], n) * w[ji];
                 dst_normals[pi] = r;
             }
+            i += joints_per_vertex;
+            w += joints_per_vertex;
         }
     }
-
-    auto append = [](auto& dst, const auto& src) {
-        dst.insert(dst.end(), src.cdata(), src.cdata() + src.size());
-    };
-    append(dst.uvs, uvs);
-    append(dst.colors, colors);
-    append(dst.material_ids, material_ids);
-    append(dst.counts, counts);
-    append(dst.indices, indices);
 }
 
 void MeshNode::validate()
