@@ -71,6 +71,9 @@ mqusdPlayerWindow::mqusdPlayerWindow(mqusdPlayerPlugin* plugin, MQWindowBase& pa
         m_check_skeletons = CreateCheckBox(vf, L"Import Skeletons");
         m_check_skeletons->AddChangedEvent(this, &mqusdPlayerWindow::OnSettingsUpdate);
 
+        m_check_bake = CreateCheckBox(vf, L"Bake Meshes");
+        m_check_bake->AddChangedEvent(this, &mqusdPlayerWindow::OnSettingsUpdate);
+
         m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
         m_check_merge->AddChangedEvent(this, &mqusdPlayerWindow::OnSettingsUpdate);
     }
@@ -157,6 +160,8 @@ BOOL mqusdPlayerWindow::OnSampleSlide(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqusdPlayerWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
 {
+    UpdateRelations();
+
     auto& settings = m_plugin->GetSettings();
 
     {
@@ -173,10 +178,23 @@ BOOL mqusdPlayerWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     settings.flip_faces = m_check_flip_faces->GetChecked();
     settings.import_blendshapes = m_check_blendshapes->GetChecked();
     settings.import_skeletons = m_check_skeletons->GetChecked();
+    settings.bake_meshes = m_check_bake->GetChecked();
     settings.merge_meshes = m_check_merge->GetChecked();
 
     m_plugin->Refresh(doc);
     return 0;
+}
+
+void mqusdPlayerWindow::UpdateRelations()
+{
+    if (m_check_bake->GetChecked() || m_check_merge->GetChecked()) {
+        m_check_blendshapes->SetEnabled(false);
+        m_check_skeletons->SetEnabled(false);
+    }
+    else {
+        m_check_blendshapes->SetEnabled(true);
+        m_check_skeletons->SetEnabled(true);
+    }
 }
 
 void mqusdPlayerWindow::SyncSettings()
@@ -193,7 +211,10 @@ void mqusdPlayerWindow::SyncSettings()
     m_check_flip_faces->SetChecked(settings.flip_faces);
     m_check_blendshapes->SetChecked(settings.import_blendshapes);
     m_check_skeletons->SetChecked(settings.import_skeletons);
+    m_check_bake->SetChecked(settings.bake_meshes);
     m_check_merge->SetChecked(settings.merge_meshes);
+
+    UpdateRelations();
 }
 
 void mqusdPlayerWindow::LogInfo(const char* message)

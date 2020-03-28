@@ -477,42 +477,38 @@ void MeshNode::bake(MeshNode& dst)
     if (!blendshapes.empty() && blendshapes.size() == blendshape_weights.size()) {
         for (auto bs : blendshapes) {
             auto point_offsets = bs->point_offsets.cdata();
-            auto normal_offsets = bs->normal_offsets.cdata();
             if (bs->indices.empty()) {
                 size_t nbsi = bs->indices.size();
                 const auto* i = bs->indices.cdata();
                 for (size_t oi = 0; oi < nbsi; ++oi)
                     dst_points[i[oi]] += point_offsets[oi];
-
-                //if (dst_normals && normal_offsets) {
-                //    for (size_t oi = 0; oi < nbsi; ++oi)
-                //        dst_normals[i[oi]] += normal_offsets[oi];
-                //}
             }
             else if (bs->point_offsets.size() == npoints) {
                 for (size_t oi = 0; oi < npoints; ++oi)
                     dst_points[oi] += point_offsets[oi];
-
-                //if (dst_normals && normal_offsets) {
-                //    for (size_t oi = 0; oi < npoints; ++oi)
-                //        dst_normals[oi] += normal_offsets[oi];
-                //}
             }
+
+            // todo: handle normal offsets
+            //auto normal_offsets = bs->normal_offsets.cdata();
         }
     }
 
     // skeleton
     if (skeleton) {
-        auto iroot = mu::invert(global_matrix);
-        transform_container(joint_matrices, joints, [&iroot](auto& m, auto j) {
-            m = mu::invert(j->bindpose) * j->global_matrix * iroot;
+        transform_container(joint_matrices, joints, [this](auto& m, auto j) {
+            m = mu::invert(j->bindpose) * j->global_matrix;
         });
 
         auto* i = joint_indices.cdata();
         auto* w = joint_weights.cdata();
         for (int pi = 0; pi < npoints; ++pi) {
             {
-                const auto p = src_points[pi];
+                auto p = src_points[pi];
+                // todo:
+                // according to https://graphics.pixar.com/usd/docs/api/_usd_skel__schema_overview.html#UsdSkel_SchemaOverview_GeomBindTransform
+                // bind transform should be used like this. but the result is broken.
+                //p = mu::mul_p(bind_transform, p);
+
                 auto r = float3::zero();
                 for (int ji = 0; ji < joints_per_vertex; ++ji)
                     r += mu::mul_p(joint_matrices[i[ji]], p) * w[ji];

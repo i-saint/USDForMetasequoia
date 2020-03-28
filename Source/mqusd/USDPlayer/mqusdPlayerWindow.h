@@ -17,6 +17,7 @@ public:
     BOOL OnSampleSlide(MQWidgetBase* sender, MQDocument doc);
     BOOL OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc);
 
+    void UpdateRelations();
     void SyncSettings();
     void LogInfo(const char *message);
 
@@ -36,6 +37,7 @@ private:
     MQCheckBox* m_check_flip_yz = nullptr;
     MQCheckBox* m_check_blendshapes = nullptr;
     MQCheckBox* m_check_skeletons = nullptr;
+    MQCheckBox* m_check_bake = nullptr;
     MQCheckBox* m_check_merge = nullptr;
 
     MQMemo* m_log = nullptr;

@@ -325,7 +325,7 @@ void USDMeshNode::read(double time)
         if (m_attr_bind_transform) {
             GfMatrix4d data;
             m_attr_bind_transform.Get(&data);
-            dst.bind_transform.assign((float4x4&)data);
+            dst.bind_transform.assign((double4x4&)data);
         }
     }
 
