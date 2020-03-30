@@ -463,8 +463,6 @@ void MeshNode::bake(MeshNode& dst, const float4x4& trans)
 
     // setup
     int npoints = (int)points.size();
-    const float3* src_points = points.cdata();
-    const float3* src_normals = normals.cdata();
     float3* dst_points = dst.points.end() - npoints;
     float3* dst_normals = normals.empty() ? nullptr : dst.normals.end() - normals.size();
 
@@ -472,12 +470,15 @@ void MeshNode::bake(MeshNode& dst, const float4x4& trans)
     if (!blendshapes.empty() && blendshapes.size() == blendshape_weights.size()) {
         size_t nbs = blendshapes.size();
         for (size_t bsi = 0; bsi < nbs; ++bsi) {
-            auto bs = blendshapes[bsi];
-            auto weight = blendshape_weights[bsi];
-            auto point_offsets = bs->point_offsets.cdata();
+            float weight = blendshape_weights[bsi];
+            if (weight == 0.0f)
+                continue;
+
+            const auto* bs = blendshapes[bsi];
+            const float3* point_offsets = bs->point_offsets.cdata();
             if (!bs->indices.empty()) {
                 size_t nbsi = bs->indices.size();
-                const auto* i = bs->indices.cdata();
+                const int* i = bs->indices.cdata();
                 for (size_t oi = 0; oi < nbsi; ++oi)
                     dst_points[i[oi]] += point_offsets[oi] * weight;
             }
@@ -501,14 +502,14 @@ void MeshNode::bake(MeshNode& dst, const float4x4& trans)
         auto* wv = joint_weights.cdata();
         for (int pi = 0; pi < npoints; ++pi) {
             {
-                auto p = mu::mul_p(bind_transform, src_points[pi]);
+                auto p = mu::mul_p(bind_transform, dst_points[pi]);
                 auto r = float3::zero();
                 for (int ji = 0; ji < joints_per_vertex; ++ji)
                     r += mu::mul_p(joint_matrices[iv[ji]], p) * wv[ji];
                 dst_points[pi] = r;
             }
             if (dst_normals) {
-                auto n = mu::mul_v(bind_transform, src_normals[pi]);
+                auto n = mu::mul_v(bind_transform, dst_normals[pi]);
                 auto r = float3::zero();
                 for (int ji = 0; ji < joints_per_vertex; ++ji)
                     r += mu::mul_v(joint_matrices[iv[ji]], n) * wv[ji];
