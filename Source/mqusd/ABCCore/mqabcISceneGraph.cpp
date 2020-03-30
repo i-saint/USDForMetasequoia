@@ -374,10 +374,12 @@ ABCINode* ABCIScene::findNode(const std::string& path)
 void ABCIScene::setupTimeRange()
 {
     bool first = true;
+
     uint32_t nt = m_archive.getNumTimeSamplings();
     for (uint32_t ti = 1; ti < nt; ++ti) {
         double time_start = -1.0;
         double time_end = -1.0;
+        double frame_rate = 1.0;
 
         auto ts = m_archive.getTimeSampling(ti);
         auto tst = ts->getTimeSamplingType();
@@ -391,12 +393,14 @@ void ABCIScene::setupTimeRange()
             if (tst.isUniform()) {
                 time_start = start;
                 time_end = num_cycles > 0 ? start + (time_per_cycle * (num_cycles - 1)) : start;
+                frame_rate = 1.0 / time_per_cycle;
             }
             else if (tst.isCyclic()) {
                 auto& s = ts->getStoredTimes();
                 if (!s.empty()) {
                     time_start = start + (s.front() - time_per_cycle);
                     time_end = start + (s.back() - time_per_cycle) + (time_per_cycle * num_cycles);
+                    frame_rate = (double)(s.size() * num_cycles) / (time_end - time_start);
                 }
             }
         }
@@ -405,6 +409,7 @@ void ABCIScene::setupTimeRange()
             if (!s.empty()) {
                 time_start = s.front();
                 time_end = s.back();
+                frame_rate = (double)s.size() / (time_end - time_start);
             }
         }
 
@@ -413,10 +418,12 @@ void ABCIScene::setupTimeRange()
                 first = false;
                 m_scene->time_start = time_start;
                 m_scene->time_end = time_end;
+                m_scene->frame_rate = frame_rate;
             }
             else {
                 m_scene->time_start = std::min(m_scene->time_start, time_start);
                 m_scene->time_end = std::max(m_scene->time_end, time_end);
+                m_scene->frame_rate = std::max(m_scene->frame_rate, frame_rate);
             }
         }
     }
