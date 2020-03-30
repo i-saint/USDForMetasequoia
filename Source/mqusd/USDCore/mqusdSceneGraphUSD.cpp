@@ -321,6 +321,20 @@ void USDMeshNode::read(double time)
         dst.material_ids.share(m_material_ids.cdata(), m_material_ids.size());
     }
 
+    // blendshape weights
+    if (m_animation && m_blendshapes.size() == m_blendshape_ids.size()) {
+        auto& data = m_animation->getBlendshapeData(time);
+        auto get_weight = [&data](const std::string& id) {
+            auto it = std::lower_bound(data.begin(), data.end(), id, [](auto* a, auto& b) {
+                return a->id < b;
+            });
+            return it != data.end() && (*it)->id == id ? (*it)->weight : 0.0f;
+        };
+        transform_container(dst.blendshape_weights, m_blendshape_ids, [&get_weight](auto& d, auto& s) {
+            d = get_weight(s);
+        });
+    }
+
     // skel
     if (m_attr_joint_indices && m_attr_joint_weights) {
         TfToken interpolation;
@@ -510,9 +524,25 @@ void USDSkelRootNode::beforeRead()
     super::beforeRead();
     auto& dst = *static_cast<SkelRootNode*>(m_node);
 
+    // resolve animation
+    if (auto rel_anim = m_prim.GetRelationship(UsdSkelTokens->skelAnimationSource)) {
+        SdfPathVector paths;
+        rel_anim.GetTargets(&paths);
+        if (!paths.empty()) {
+            if (auto anim_node = m_scene->findNodeT<USDSkelAnimationNode>(paths.front().GetString())) {
+                // update child meshes
+                eachChildR([anim_node](USDNode* n) {
+                    if (auto mesh = dynamic_cast<USDMeshNode*>(n)) {
+                        if (!mesh->m_animation)
+                            mesh->m_animation = anim_node;
+                    }
+                });
+            }
+        }
+    }
+
     // resolve skeleton
-    auto rel_skel = m_prim.GetRelationship(UsdSkelTokens->skelSkeleton);
-    if (rel_skel) {
+    if (auto rel_skel = m_prim.GetRelationship(UsdSkelTokens->skelSkeleton)) {
         SdfPathVector paths;
         rel_skel.GetTargets(&paths);
         if (!paths.empty()) {
@@ -522,8 +552,8 @@ void USDSkelRootNode::beforeRead()
 
                 // update child meshes
                 eachChildR([skel](USDNode* n) {
-                    if (n->m_node->getType() == Node::Type::Mesh) {
-                        auto mesh_node = static_cast<MeshNode*>(n->m_node);
+                    if (auto mesh = dynamic_cast<USDMeshNode*>(n)) {
+                        auto mesh_node = static_cast<MeshNode*>(mesh->m_node);
                         if (!mesh_node->skeleton)
                             mesh_node->skeleton = skel;
                     }
@@ -671,12 +701,19 @@ void USDSkelAnimationNode::beforeRead()
 
     VtArray<TfToken> bs_ids;
     if (m_anim.GetBlendShapesAttr().Get(&bs_ids)) {
-        for (auto& id : bs_ids)
-            m_blendshapes.push_back({ id.GetString(), 0.0f });
+        transform_container(m_blendshapes, bs_ids, [](auto& d, auto& s) {
+            d = { s.GetString(), 0.0f };
+        });
+
+        // make sorted
+        transform_container(m_blendshapes_sorted, m_blendshapes, [](auto*& d, auto& s) {
+            d = &s;
+        });
+        std::sort(m_blendshapes_sorted.begin(), m_blendshapes_sorted.end(), [](auto* a, auto* b) { return a->id < b->id; });
     }
 }
 
-std::vector<USDSkelAnimationNode::BlendshapeData>& USDSkelAnimationNode::getBlendshapeData(double time)
+std::vector<const USDSkelAnimationNode::BlendshapeData*>& USDSkelAnimationNode::getBlendshapeData(double time)
 {
     if (time != m_prev_read) {
         m_prev_read = time;
@@ -689,7 +726,7 @@ std::vector<USDSkelAnimationNode::BlendshapeData>& USDSkelAnimationNode::getBlen
             });
         }
     }
-    return m_blendshapes;
+    return m_blendshapes_sorted;
 }
 
 
@@ -915,6 +952,13 @@ void USDScene::constructTree(USDNode* n)
     for (auto cprim : children) {
         USDNode* c = nullptr;
 
+        // note: SkelAnimation is hidden on mqusdSceneGraph.h side
+        if (!c) {
+            UsdSkelAnimation schema(cprim);
+            if (schema)
+                c = new USDSkelAnimationNode(n, cprim);
+        }
+
 #define Case(E, T)\
         if (!c) {\
             T::UsdType schema(cprim);\
@@ -923,13 +967,6 @@ void USDScene::constructTree(USDNode* n)
         }
         EachNodeType(Case)
 #undef Case
-
-        // note: SkelAnimation is hidden on mqusdSceneGraph.h side
-        if (!c) {
-            UsdSkelAnimation schema(cprim);
-            if (schema)
-                c = new USDSkelAnimationNode(n, cprim);
-        }
 
         if (!c) {
             c = new USDNode(n, cprim, true);

@@ -470,17 +470,20 @@ void MeshNode::bake(MeshNode& dst, const float4x4& trans)
 
     // blendshape
     if (!blendshapes.empty() && blendshapes.size() == blendshape_weights.size()) {
-        for (auto bs : blendshapes) {
+        size_t nbs = blendshapes.size();
+        for (size_t bsi = 0; bsi < nbs; ++bsi) {
+            auto bs = blendshapes[bsi];
+            auto weight = blendshape_weights[bsi];
             auto point_offsets = bs->point_offsets.cdata();
-            if (bs->indices.empty()) {
+            if (!bs->indices.empty()) {
                 size_t nbsi = bs->indices.size();
                 const auto* i = bs->indices.cdata();
                 for (size_t oi = 0; oi < nbsi; ++oi)
-                    dst_points[i[oi]] += point_offsets[oi];
+                    dst_points[i[oi]] += point_offsets[oi] * weight;
             }
             else if (bs->point_offsets.size() == npoints) {
                 for (size_t oi = 0; oi < npoints; ++oi)
-                    dst_points[oi] += point_offsets[oi];
+                    dst_points[oi] += point_offsets[oi] * weight;
             }
 
             // todo: handle normal offsets

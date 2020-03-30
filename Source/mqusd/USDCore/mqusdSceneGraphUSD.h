@@ -140,17 +140,22 @@ public:
     USDSkelAnimationNode(Node* n, UsdPrim prim);
     void beforeRead() override;
 
+
     struct BlendshapeData
     {
         std::string id;
         float weight;
     };
-    std::vector<BlendshapeData>& getBlendshapeData(double time);
+
+    // will be called from USDMeshNode. USDMeshNode's read() possibly be called before USDSkelAnimationNode's.
+    // so this method will do read data from USD on-demand.
+    std::vector<const BlendshapeData*>& getBlendshapeData(double time);
 
 private:
     UsdSkelAnimation m_anim;
     double m_prev_read = -1.0;
     std::vector<BlendshapeData> m_blendshapes;
+    std::vector<const BlendshapeData*> m_blendshapes_sorted;
     VtArray<float> m_bs_weights;
 };
 
@@ -168,7 +173,7 @@ public:
     void beforeWrite() override;
     void write(double time) override;
 
-private:
+public:
     UsdGeomMesh m_mesh;
 
     UsdAttribute m_attr_uv;
