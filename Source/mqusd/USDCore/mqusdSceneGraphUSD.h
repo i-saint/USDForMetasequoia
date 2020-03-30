@@ -263,13 +263,13 @@ public:
     bool wrapNode(Node* node) override;
 
     UsdTimeCode toTimeCode(double time) const;
-    USDNode* findNode(const std::string& path);
+    USDNode* findNodeImpl(const std::string& path);
 
-    template<class NodeT>
-    NodeT* findNodeT(const std::string& path)
-    {
-        return dynamic_cast<NodeT*>(findNode(path));
-    }
+    template<class NodeT = USDNode>
+    NodeT* findNode(const std::string& path) { return dynamic_cast<NodeT*>(findNodeImpl(path)); }
+
+    template<>
+    USDNode* findNode(const std::string& path) { return findNodeImpl(path); }
 
 private:
     void registerNode(USDNode* n);
@@ -285,6 +285,7 @@ private:
     Scene* m_scene = nullptr;
     int m_read_count = 0;
     int m_write_count = 0;
+    double m_frame_rate = 30.0;
     double m_max_time = 0.0;
 };
 

@@ -97,8 +97,7 @@ public:
 
     ImportOptions& GetSettings();
     bool IsArchiveOpened() const;
-    double GetTimeStart() const;
-    double GetTimeEnd() const;
+    double GetTimeRange() const;
 
 private:
     mqusdPlayerWindow* m_window = nullptr;

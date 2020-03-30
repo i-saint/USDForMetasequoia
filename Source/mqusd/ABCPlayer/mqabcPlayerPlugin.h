@@ -97,8 +97,7 @@ public:
 
     ImportOptions& GetSettings();
     bool IsArchiveOpened() const;
-    double GetTimeStart() const;
-    double GetTimeEnd() const;
+    double GetTimeRange() const;
 
 private:
     mqabcPlayerWindow* m_window = nullptr;

@@ -112,9 +112,8 @@ BOOL mqabcPlayerWindow::OnOpenClicked(MQWidgetBase* sender, MQDocument doc)
         if (dlg.Execute()) {
             auto path = dlg.GetFileName();
             if (m_plugin->OpenABC(doc, mu::ToMBS(path))) {
-                m_slider_time->SetMin(m_plugin->GetTimeStart());
-                m_slider_time->SetMax(m_plugin->GetTimeEnd());
-                m_slider_time->SetPosition(m_plugin->GetTimeStart());
+                m_slider_time->SetMin(0.0);
+                m_slider_time->SetMax(m_plugin->GetTimeRange());
 
                 m_frame_open->SetVisible(false);
                 m_frame_play->SetVisible(true);
@@ -132,6 +131,7 @@ BOOL mqabcPlayerWindow::OnSampleEdit(MQWidgetBase* sender, MQDocument doc)
     auto str = mu::ToMBS(m_edit_time->GetText());
     auto value = std::atof(str.c_str());
     m_slider_time->SetPosition(value);
+    Repaint(true);
 
     m_plugin->Seek(doc, value);
     return 0;
@@ -144,6 +144,7 @@ BOOL mqabcPlayerWindow::OnSampleSlide(MQWidgetBase* sender, MQDocument doc)
     auto value = m_slider_time->GetPosition();
     swprintf(buf, buf_len, L"%lf", value);
     m_edit_time->SetText(buf);
+    Repaint(true);
 
     m_plugin->Seek(doc, value);
     return 0;

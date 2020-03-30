@@ -460,6 +460,7 @@ public:
     std::string path;
     std::vector<NodePtr> nodes;
     UpAxis up_axis = UpAxis::Unknown;
+    double frame_rate = 30.0;
     double time_start = 0.0;
     double time_end = 0.0;
     double time_current = default_time;

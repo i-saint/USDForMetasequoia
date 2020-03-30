@@ -354,8 +354,8 @@ void mqusdPlayerPlugin::Seek(MQDocument doc, double t)
     if (!m_importer)
         return;
 
-    m_seek_time = t;
-    m_importer->read(doc, t);
+    m_seek_time = t + m_scene->time_start;
+    m_importer->read(doc, m_seek_time);
 
     // repaint
     MQ_RefreshView(nullptr);
@@ -376,13 +376,9 @@ bool mqusdPlayerPlugin::IsArchiveOpened() const
     return m_scene != nullptr;
 }
 
-double mqusdPlayerPlugin::GetTimeStart() const
+double mqusdPlayerPlugin::GetTimeRange() const
 {
-    return m_scene->time_start;
-}
-double mqusdPlayerPlugin::GetTimeEnd() const
-{
-    return m_scene->time_end;
+    return m_scene->time_end - m_scene->time_start;
 }
 
 } // namespace mqusd

@@ -201,7 +201,7 @@ void USDMeshNode::beforeRead()
         rel_bs_targets.GetTargets(&paths);
 
         transform_container(m_blendshapes, paths, [this, &dst](auto*& d, auto& s) {
-            d = m_scene->findNodeT<USDBlendshapeNode>(s.GetString());
+            d = m_scene->findNode<USDBlendshapeNode>(s.GetString());
             if (d) {
                 dst.blendshapes.push_back(static_cast<BlendshapeNode*>(d->m_node));
             }
@@ -212,11 +212,12 @@ void USDMeshNode::beforeRead()
     }
 
     // resolve blendshape animation
+    // note: skelanimation may be related to SkelRoot and be resolved by USDSkelRoot::beforeRead()
     if (auto rel_anim = m_prim.GetRelationship(UsdSkelTokens->skelAnimationSource)) {
         SdfPathVector paths;
         rel_anim.GetTargets(&paths);
         if (!paths.empty())
-            m_animation = m_scene->findNodeT<USDSkelAnimationNode>(paths.front().GetString());
+            m_animation = m_scene->findNode<USDSkelAnimationNode>(paths.front().GetString());
     }
 
     // resolve skeleton
@@ -225,7 +226,7 @@ void USDMeshNode::beforeRead()
         SdfPathVector paths;
         rel_skel.GetTargets(&paths);
         if (!paths.empty()) {
-            m_skeleton = m_scene->findNodeT<USDSkeletonNode>(paths.front().GetString());
+            m_skeleton = m_scene->findNode<USDSkeletonNode>(paths.front().GetString());
             if (m_skeleton)
                 dst.skeleton = static_cast<SkeletonNode*>(m_skeleton->m_node);
         }
@@ -529,13 +530,11 @@ void USDSkelRootNode::beforeRead()
         SdfPathVector paths;
         rel_anim.GetTargets(&paths);
         if (!paths.empty()) {
-            if (auto anim_node = m_scene->findNodeT<USDSkelAnimationNode>(paths.front().GetString())) {
+            if (auto usd_anim = m_scene->findNode<USDSkelAnimationNode>(paths.front().GetString())) {
                 // update child meshes
-                eachChildR([anim_node](USDNode* n) {
-                    if (auto mesh = dynamic_cast<USDMeshNode*>(n)) {
-                        if (!mesh->m_animation)
-                            mesh->m_animation = anim_node;
-                    }
+                eachChildR([usd_anim](USDNode* n) {
+                    if (auto usd_mesh = dynamic_cast<USDMeshNode*>(n))
+                        usd_mesh->m_animation = usd_anim;
                 });
             }
         }
@@ -546,16 +545,15 @@ void USDSkelRootNode::beforeRead()
         SdfPathVector paths;
         rel_skel.GetTargets(&paths);
         if (!paths.empty()) {
-            if (auto skel_node = m_scene->findNodeT<USDSkeletonNode>(paths.front().GetString())) {
-                auto skel = static_cast<SkeletonNode*>(skel_node->m_node);
+            if (auto usd_skel = m_scene->findNode<USDSkeletonNode>(paths.front().GetString())) {
+                auto skel = static_cast<SkeletonNode*>(usd_skel->m_node);
                 dst.skeleton = skel;
 
                 // update child meshes
-                eachChildR([skel](USDNode* n) {
-                    if (auto mesh = dynamic_cast<USDMeshNode*>(n)) {
-                        auto mesh_node = static_cast<MeshNode*>(mesh->m_node);
-                        if (!mesh_node->skeleton)
-                            mesh_node->skeleton = skel;
+                eachChildR([usd_skel, skel](USDNode* n) {
+                    if (auto usd_mesh = dynamic_cast<USDMeshNode*>(n)) {
+                        usd_mesh->m_skeleton = usd_skel;
+                        static_cast<MeshNode*>(usd_mesh->m_node)->skeleton = skel;
                     }
                 });
             }
@@ -633,7 +631,7 @@ void USDSkeletonNode::read(double time)
     // update joint matrices
     if (auto query = m_cache.GetSkelQuery(m_skel)) {
         VtArray<GfMatrix4d> data;
-        query.ComputeJointLocalTransforms(&data, time);
+        query.ComputeJointLocalTransforms(&data, t);
         size_t n = data.size();
         if (dst.joints.size() == n) {
             for (size_t i = 0; i < n; ++i)
@@ -884,8 +882,9 @@ bool USDScene::open(const char* path_)
 
     g_current_scene = this;
 
-    m_scene->time_start = m_stage->GetStartTimeCode();
-    m_scene->time_end = m_stage->GetEndTimeCode();
+    m_scene->frame_rate = m_frame_rate = m_stage->GetFramesPerSecond();
+    m_scene->time_start = m_stage->GetStartTimeCode() / m_frame_rate;
+    m_scene->time_end = m_stage->GetEndTimeCode() / m_frame_rate;
 
     //    auto masters = m_stage->GetMasters();
     //    for (auto& m : masters) {
@@ -913,6 +912,9 @@ bool USDScene::create(const char* path_)
     m_stage = UsdStage::CreateNew(m_scene->path);
     if (m_stage) {
         g_current_scene = this;
+
+        m_frame_rate = m_scene->frame_rate;
+        m_stage->SetFramesPerSecond(m_scene->frame_rate);
 
         auto root = m_stage->GetPseudoRoot();
         if (root.IsValid()) {
@@ -1005,7 +1007,7 @@ void USDScene::write()
     ++m_write_count;
 
     if (!std::isnan(time) && time > m_max_time) {
-        m_stage->SetEndTimeCode(time);
+        m_stage->SetEndTimeCode(time * m_frame_rate);
         m_max_time = time;
     }
 }
@@ -1090,10 +1092,10 @@ bool USDScene::wrapNode(Node* node)
 
 UsdTimeCode USDScene::toTimeCode(double time) const
 {
-    return UsdTimeCode(time);
+    return UsdTimeCode(time * m_frame_rate);
 }
 
-USDNode* USDScene::findNode(const std::string& path)
+USDNode* USDScene::findNodeImpl(const std::string& path)
 {
     auto it = m_node_table.find(path);
     return it == m_node_table.end() ? nullptr : it->second;

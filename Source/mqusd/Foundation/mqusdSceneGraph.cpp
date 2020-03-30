@@ -1096,7 +1096,7 @@ Scene* Scene::getCurrent()
 }
 
 #define EachMember(F)\
-    F(path) F(nodes) F(up_axis) F(time_start) F(time_end) F(time_current)
+    F(path) F(nodes) F(up_axis) F(frame_rate) F(time_start) F(time_end) F(time_current)
 
 void Scene::serialize(std::ostream& os)
 {
