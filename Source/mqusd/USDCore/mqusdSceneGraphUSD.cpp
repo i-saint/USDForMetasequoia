@@ -123,7 +123,7 @@ void USDXformNode::read(double time)
 {
     super::read(time);
 
-    auto t = UsdTimeCode(time);
+    auto t = m_scene->toTimeCode(time);
     auto& dst = static_cast<XformNode&>(*m_node);
 
     GfMatrix4d mat;
@@ -141,7 +141,7 @@ void USDXformNode::write(double time)
 {
     super::write(time);
 
-    auto t = UsdTimeCode(time);
+    auto t = m_scene->toTimeCode(time);
     auto& src = static_cast<XformNode&>(*m_node);
 
     if (src.local_matrix != float4x4::identity()) {
@@ -181,49 +181,68 @@ void USDMeshNode::beforeRead()
     m_attr_mids = m_prim.GetAttribute(mqusdAttrMaterialIDs);
     m_attr_uv = m_prim.GetAttribute(mqusdAttrUV);
     m_attr_uv_indices = m_prim.GetAttribute(mqusdAttrUVIndices);
+    m_attr_bs_ids = m_prim.GetAttribute(UsdSkelTokens->skelBlendShapes);
     m_attr_joints = m_prim.GetAttribute(UsdSkelTokens->skelJoints);
     m_attr_joint_indices = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelJointIndices);
     m_attr_joint_weights = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelJointWeights);
     m_attr_bind_transform = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelGeomBindTransform);
 
-    // resolve blendshapes
-    auto rel_blendshapes = m_prim.GetRelationship(UsdSkelTokens->skelBlendShapeTargets);
-    if (rel_blendshapes) {
+    // resolve blendshape/targets
+    if (m_attr_bs_ids) {
+        VtArray<TfToken> bs_ids;
+        m_attr_bs_ids.Get(&bs_ids);
+
+        transform_container(m_blendshape_ids, bs_ids, [](auto& d, auto& s) {
+            d = s.GetString();
+        });
+    }
+    if (auto rel_bs_targets = m_prim.GetRelationship(UsdSkelTokens->skelBlendShapeTargets)) {
         SdfPathVector paths;
-        rel_blendshapes.GetTargets(&paths);
-        dst.blendshapes.clear();
-        for (auto& path : paths) {
-            if (auto n = m_scene->findNode(path.GetString()))
-                dst.blendshapes.push_back(static_cast<BlendshapeNode*>(n->m_node));
-        }
+        rel_bs_targets.GetTargets(&paths);
+
+        transform_container(m_blendshapes, paths, [this, &dst](auto*& d, auto& s) {
+            d = m_scene->findNodeT<USDBlendshapeNode>(s.GetString());
+            if (d) {
+                dst.blendshapes.push_back(static_cast<BlendshapeNode*>(d->m_node));
+            }
+            else {
+                mqusdDbgPrint("not found %s\n", s.GetText());
+            }
+        });
+    }
+
+    // resolve blendshape animation
+    if (auto rel_anim = m_prim.GetRelationship(UsdSkelTokens->skelAnimationSource)) {
+        SdfPathVector paths;
+        rel_anim.GetTargets(&paths);
+        if (!paths.empty())
+            m_animation = m_scene->findNodeT<USDSkelAnimationNode>(paths.front().GetString());
     }
 
     // resolve skeleton
     // note: skeleton may be related to SkelRoot and be resolved by USDSkelRoot::beforeRead()
-    auto rel_skel = m_prim.GetRelationship(UsdSkelTokens->skelSkeleton);
-    if (rel_skel) {
+    if (auto rel_skel = m_prim.GetRelationship(UsdSkelTokens->skelSkeleton)) {
         SdfPathVector paths;
         rel_skel.GetTargets(&paths);
         if (!paths.empty()) {
-            if (auto n = m_scene->findNode(paths.front().GetString()))
-                dst.skeleton = static_cast<SkeletonNode*>(n->m_node);
+            m_skeleton = m_scene->findNodeT<USDSkeletonNode>(paths.front().GetString());
+            if (m_skeleton)
+                dst.skeleton = static_cast<SkeletonNode*>(m_skeleton->m_node);
         }
     }
     if (dst.skeleton) {
         // resolve joints
-        dst.joints.clear();
         if (m_attr_joints) {
             VtArray<TfToken> data;
             m_attr_joints.Get(&data);
             transform_container(dst.joints, data, [&dst](auto*& d, auto& s) {
                 d = dst.skeleton->findJointByPath(s.GetString());
                 if (!d) {
-                    // should not be here
-                    mqusdDbgPrint("joint not found %s\n", s.GetText());
+                    mqusdDbgPrint("not found %s\n", s.GetText());
                 }
             });
         }
-        if (dst.joints.empty()) {
+        else {
             transform_container(dst.joints, dst.skeleton->joints, [](auto*& d, auto& s) {
                 d = s.get();
             });
@@ -235,7 +254,7 @@ void USDMeshNode::read(double time)
 {
     super::read(time);
 
-    auto t = UsdTimeCode(time);
+    auto t = m_scene->toTimeCode(time);
     auto& dst = static_cast<MeshNode&>(*m_node);
 
     // counts, indices, points
@@ -391,7 +410,7 @@ void USDMeshNode::write(double time)
 {
     super::write(time);
 
-    auto t = UsdTimeCode(time);
+    auto t = m_scene->toTimeCode(time);
     auto& src = static_cast<MeshNode&>(*m_node);
     {
         m_counts.assign(src.counts.begin(), src.counts.end());
@@ -497,7 +516,7 @@ void USDSkelRootNode::beforeRead()
         SdfPathVector paths;
         rel_skel.GetTargets(&paths);
         if (!paths.empty()) {
-            if (auto skel_node = m_scene->findNode(paths.front().GetString())) {
+            if (auto skel_node = m_scene->findNodeT<USDSkeletonNode>(paths.front().GetString())) {
                 auto skel = static_cast<SkeletonNode*>(skel_node->m_node);
                 dst.skeleton = skel;
 
@@ -558,7 +577,7 @@ void USDSkeletonNode::read(double time)
 {
     super::read(time);
 
-    auto t = UsdTimeCode(time);
+    auto t = m_scene->toTimeCode(time);
     auto& dst = *static_cast<SkeletonNode*>(m_node);
 
     // bindpose
@@ -582,7 +601,7 @@ void USDSkeletonNode::read(double time)
     }
 
     // update joint matrices
-    if (auto query = m_skel_cache.GetSkelQuery(m_skel)) {
+    if (auto query = m_cache.GetSkelQuery(m_skel)) {
         VtArray<GfMatrix4d> data;
         query.ComputeJointLocalTransforms(&data, time);
         size_t n = data.size();
@@ -627,8 +646,50 @@ void USDSkeletonNode::write(double time)
 {
     super::write(time);
 
-    auto t = UsdTimeCode(time);
+    auto t = m_scene->toTimeCode(time);
     // todo
+}
+
+
+
+USDSkelAnimationNode::USDSkelAnimationNode(USDNode* parent, UsdPrim prim)
+    : super(parent, prim, false)
+{
+    m_anim = UsdSkelAnimation(prim);
+    setNode(CreateNode<Node>(parent, prim));
+}
+
+USDSkelAnimationNode::USDSkelAnimationNode(Node* n, UsdPrim prim)
+    : super(n, prim)
+{
+    m_anim = UsdSkelAnimation(prim);
+}
+
+void USDSkelAnimationNode::beforeRead()
+{
+    super::beforeRead();
+
+    VtArray<TfToken> bs_ids;
+    if (m_anim.GetBlendShapesAttr().Get(&bs_ids)) {
+        for (auto& id : bs_ids)
+            m_blendshapes.push_back({ id.GetString(), 0.0f });
+    }
+}
+
+std::vector<USDSkelAnimationNode::BlendshapeData>& USDSkelAnimationNode::getBlendshapeData(double time)
+{
+    if (time != m_prev_read) {
+        m_prev_read = time;
+
+        auto t = m_scene->toTimeCode(time);
+        m_anim.GetBlendShapeWeightsAttr().Get(&m_bs_weights, t);
+        if (m_bs_weights.size() == m_blendshapes.size()) {
+            transform_container(m_blendshapes, m_bs_weights, [](auto& d, float s) {
+                d.weight = s;
+            });
+        }
+    }
+    return m_blendshapes;
 }
 
 
@@ -666,7 +727,7 @@ void USDInstancerNode::read(double time)
 {
     super::read(time);
 
-    auto t = UsdTimeCode(time);
+    auto t = m_scene->toTimeCode(time);
     auto& dst = *static_cast<InstancerNode*>(m_node);
 
     m_instancer.GetProtoIndicesAttr().Get(&m_proto_indices, t);
@@ -696,7 +757,7 @@ void USDInstancerNode::write(double time)
 {
     super::write(time);
 
-    auto t = UsdTimeCode(time);
+    auto t = m_scene->toTimeCode(time);
     auto& src = *static_cast<InstancerNode*>(m_node);
 
     m_proto_indices.assign(src.proto_indices.begin(), src.proto_indices.end());
@@ -746,6 +807,18 @@ void USDMaterialNode::write(double time)
     super::write(time);
     // todo
 }
+
+
+
+#define EachNodeType(Body)\
+    Body(Mesh, USDMeshNode)\
+    Body(Blendshape, USDBlendshapeNode)\
+    Body(SkelRoot, USDSkelRootNode)\
+    Body(Skeleton, USDSkeletonNode)\
+    Body(Instancer, USDInstancerNode)\
+    Body(Xform, USDXformNode)\
+    Body(Material, USDMaterialNode)\
+    Body(Unknown, USDNode)
 
 
 static thread_local USDScene* g_current_scene;
@@ -842,43 +915,20 @@ void USDScene::constructTree(USDNode* n)
     for (auto cprim : children) {
         USDNode* c = nullptr;
 
-        if (!c) {
-            UsdGeomMesh schema(cprim);
-            if (schema)
-                c = new USDMeshNode(n, cprim);
+#define Case(E, T)\
+        if (!c) {\
+            T::UsdType schema(cprim);\
+            if (schema)\
+                c = new T(n, cprim);\
         }
-        if (!c) {
-            UsdSkelBlendShape schema(cprim);
-            if (schema)
-                c = new USDBlendshapeNode(n, cprim);
-        }
-        if (!c) {
-            UsdSkelRoot schema(cprim);
-            if (schema)
-                c = new USDSkelRootNode(n, cprim);
-        }
-        if (!c) {
-            UsdSkelSkeleton schema(cprim);
-            if (schema)
-                c = new USDSkeletonNode(n, cprim);
-        }
-        if (!c) {
-            UsdGeomPointInstancer schema(cprim);
-            if (schema)
-                c = new USDInstancerNode(n, cprim);
-        }
-        if (!c) {
-            // xform must be later because Mesh/Skeleton/PointInstancer is also Xformable
-            UsdGeomXformable schema(cprim);
-            if (schema) {
-                c = new USDXformNode(n, cprim, true);
-            }
-        }
+        EachNodeType(Case)
+#undef Case
 
+        // note: SkelAnimation is hidden on mqusdSceneGraph.h side
         if (!c) {
-            UsdShadeMaterial schema(cprim);
+            UsdSkelAnimation schema(cprim);
             if (schema)
-                c = new USDMaterialNode(n, cprim);
+                c = new USDSkelAnimationNode(n, cprim);
         }
 
         if (!c) {
@@ -953,14 +1003,7 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
     USDNode* usd_parent = parent ? (USDNode*)parent->impl : nullptr;
     switch (type) {
 #define Case(E, T) case Node::Type::E: ret = createNodeImpl<T>(usd_parent, path); break;
-        Case(Mesh, USDMeshNode);
-        Case(Blendshape, USDBlendshapeNode);
-        Case(SkelRoot, USDSkelRootNode);
-        Case(Skeleton, USDSkeletonNode);
-        Case(Instancer, USDInstancerNode);
-        Case(Xform, USDXformNode);
-        Case(Material, USDMaterialNode);
-        Case(Unknown, USDNode);
+        EachNodeType(Case);
 #undef Case
     default: break;
     }
@@ -997,15 +1040,7 @@ bool USDScene::wrapNode(Node* node)
     USDNode* ret = nullptr;
     switch (node->getType()) {
 #define Case(E, T) case Node::Type::E: ret = wrapNodeImpl<T>(node); break;
-        Case(Root, USDRootNode);
-        Case(Mesh, USDMeshNode);
-        Case(Blendshape, USDBlendshapeNode);
-        Case(SkelRoot, USDSkelRootNode);
-        Case(Skeleton, USDSkeletonNode);
-        Case(Instancer, USDInstancerNode);
-        Case(Xform, USDXformNode);
-        Case(Material, USDMaterialNode);
-        Case(Unknown, USDNode);
+        EachNodeType(Case);
 #undef Case
     default: break;
     }
@@ -1014,6 +1049,11 @@ bool USDScene::wrapNode(Node* node)
         m_nodes.push_back(USDNodePtr(ret));
     }
     return ret;
+}
+
+UsdTimeCode USDScene::toTimeCode(double time) const
+{
+    return UsdTimeCode(time);
 }
 
 USDNode* USDScene::findNode(const std::string& path)

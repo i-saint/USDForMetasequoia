@@ -74,43 +74,6 @@ private:
 };
 
 
-class USDMeshNode : public USDXformNode
-{
-using super = USDXformNode;
-public:
-    DefSchemaTraits(UsdGeomMesh, "Mesh");
-
-    USDMeshNode(USDNode* parent, UsdPrim prim);
-    USDMeshNode(Node* n, UsdPrim prim);
-    void beforeRead() override;
-    void read(double time) override;
-    void beforeWrite() override;
-    void write(double time) override;
-
-private:
-    UsdGeomMesh m_mesh;
-
-    UsdAttribute m_attr_uv;
-    UsdAttribute m_attr_uv_indices;
-    UsdAttribute m_attr_mids;
-    UsdAttribute m_attr_joints;
-    UsdAttribute m_attr_joint_indices;
-    UsdAttribute m_attr_joint_weights;
-    UsdAttribute m_attr_bind_transform;
-
-    // sample holder
-    VtArray<int> m_counts;
-    VtArray<int> m_indices;
-    VtArray<GfVec3f> m_points;
-    VtArray<GfVec3f> m_normals;
-    VtArray<GfVec2f> m_uvs;
-    VtArray<int> m_uv_indices;
-    VtArray<int> m_material_ids;
-    VtArray<int> m_joint_indices;
-    VtArray<float> m_joint_weights;
-};
-
-
 class USDBlendshapeNode : public USDNode
 {
 using super = USDNode;
@@ -163,7 +126,75 @@ public:
 
 private:
     UsdSkelSkeleton m_skel;
-    UsdSkelCache m_skel_cache;
+    UsdSkelCache m_cache;
+};
+
+
+class USDSkelAnimationNode : public USDNode
+{
+using super = USDNode;
+public:
+    DefSchemaTraits(UsdSkelAnimation, "SkelAnimation");
+
+    USDSkelAnimationNode(USDNode* parent, UsdPrim prim);
+    USDSkelAnimationNode(Node* n, UsdPrim prim);
+    void beforeRead() override;
+
+    struct BlendshapeData
+    {
+        std::string id;
+        float weight;
+    };
+    std::vector<BlendshapeData>& getBlendshapeData(double time);
+
+private:
+    UsdSkelAnimation m_anim;
+    double m_prev_read = -1.0;
+    std::vector<BlendshapeData> m_blendshapes;
+    VtArray<float> m_bs_weights;
+};
+
+
+class USDMeshNode : public USDXformNode
+{
+    using super = USDXformNode;
+public:
+    DefSchemaTraits(UsdGeomMesh, "Mesh");
+
+    USDMeshNode(USDNode* parent, UsdPrim prim);
+    USDMeshNode(Node* n, UsdPrim prim);
+    void beforeRead() override;
+    void read(double time) override;
+    void beforeWrite() override;
+    void write(double time) override;
+
+private:
+    UsdGeomMesh m_mesh;
+
+    UsdAttribute m_attr_uv;
+    UsdAttribute m_attr_uv_indices;
+    UsdAttribute m_attr_mids;
+    UsdAttribute m_attr_bs_ids;
+    UsdAttribute m_attr_joints;
+    UsdAttribute m_attr_joint_indices;
+    UsdAttribute m_attr_joint_weights;
+    UsdAttribute m_attr_bind_transform;
+
+    std::vector<USDBlendshapeNode*> m_blendshapes;
+    std::vector<std::string> m_blendshape_ids; // will be used to resolve animations
+    USDSkelAnimationNode* m_animation = nullptr;
+    USDSkeletonNode* m_skeleton = nullptr;
+
+    // sample holder
+    VtArray<int> m_counts;
+    VtArray<int> m_indices;
+    VtArray<GfVec3f> m_points;
+    VtArray<GfVec3f> m_normals;
+    VtArray<GfVec2f> m_uvs;
+    VtArray<int> m_uv_indices;
+    VtArray<int> m_material_ids;
+    VtArray<int> m_joint_indices;
+    VtArray<float> m_joint_weights;
 };
 
 
@@ -226,7 +257,14 @@ public:
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
     bool wrapNode(Node* node) override;
 
+    UsdTimeCode toTimeCode(double time) const;
     USDNode* findNode(const std::string& path);
+
+    template<class NodeT>
+    NodeT* findNodeT(const std::string& path)
+    {
+        return dynamic_cast<NodeT*>(findNode(path));
+    }
 
 private:
     void registerNode(USDNode* n);

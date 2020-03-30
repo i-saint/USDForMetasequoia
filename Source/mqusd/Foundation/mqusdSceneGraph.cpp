@@ -250,10 +250,10 @@ void MeshNode::serialize(std::ostream& os)
     // preserve paths of related nodes to resolve on deserialize
 
     transform_container(blendshape_paths, blendshapes, [](auto& d, auto* s) {
-        d = s->getPath();
+        d = s->path;
     });
     if (skeleton) {
-        skeleton_path = skeleton->getPath();
+        skeleton_path = skeleton->path;
         transform_container(joint_paths, joints, [](auto& d, auto* s) {
             d = s->path;
         });
@@ -665,7 +665,7 @@ void SkelRootNode::serialize(std::ostream& os)
     super::serialize(os);
 
     if (skeleton)
-        skeleton_path = skeleton->getPath();
+        skeleton_path = skeleton->path;
 
 #define Body(V) write(os, V);
     EachMember(Body)
@@ -894,8 +894,7 @@ void InstancerNode::serialize(std::ostream& os)
     super::serialize(os);
 
     transform_container(proto_paths, protos, [](std::string& d, const Node* s) {
-        if (s)
-            d = s->getPath();
+        d = s->path;
     });
 
 #define Body(V) write(os, V);
@@ -915,11 +914,12 @@ void InstancerNode::resolve()
 {
     super::resolve();
 
-    protos.clear();
-    for (auto& pp : proto_paths) {
-        if (auto proto = scene->findNodeByPath(pp))
-            protos.push_back(proto);
-    }
+    transform_container(protos, proto_paths, [this](auto& d, auto& s) {
+        d = scene->findNodeByPath(s);
+        if (!d) {
+            mqusdDbgPrint("not found %s\n", s.c_str());
+        }
+    });
 }
 
 #undef EachMember
