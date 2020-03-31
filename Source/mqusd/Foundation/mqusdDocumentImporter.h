@@ -79,6 +79,7 @@ private:
 
     double m_prev_time = mqusd::default_time;
     ImportOptions m_prev_options;
+    bool m_option_changed = false;
 };
 using DocumentImporterPtr = std::shared_ptr<DocumentImporter>;
 

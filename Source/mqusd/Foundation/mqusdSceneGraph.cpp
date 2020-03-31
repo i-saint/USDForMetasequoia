@@ -1120,10 +1120,10 @@ void Scene::deserialize(deserializer& d)
 }
 #undef EachMember
 
-void Scene::deserialize(deserializer& d, std::shared_ptr<Scene>& ret)
+void Scene::deserialize(deserializer& d, ScenePtr& ret)
 {
     if (!ret)
-        ret = std::shared_ptr<Scene>();
+        ret = std::make_shared<Scene>();
     ret->deserialize(d);
 }
 

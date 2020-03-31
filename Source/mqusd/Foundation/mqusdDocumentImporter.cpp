@@ -161,11 +161,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
     if (!m_scene)
         return false;
 
-    bool option_changed = m_options->mayChangeAffectsNodeStructure(m_prev_options);
-    m_prev_time = t;
-    m_prev_options = *m_options;
-
-    if (option_changed) {
+    if (m_options->mayChangeAffectsNodeStructure(m_prev_options)) {
         // clear existing objects when option changed
         for (auto& rec : m_obj_records) {
             deleteMQObject(doc, rec.mqid);
@@ -185,6 +181,9 @@ bool DocumentImporter::read(MQDocument doc, double t)
         }
         doc->Compact();
     }
+    m_option_changed = *m_options != m_prev_options;
+    m_prev_options = *m_options;
+    m_prev_time = t;
 
 
     // read scene
@@ -338,8 +337,6 @@ bool DocumentImporter::read(MQDocument doc, double t)
 
 bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNode& src)
 {
-    obj->Clear();
-
     // transform
     {
         float3 t; quatf r; float3 s;
@@ -353,23 +350,31 @@ bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNo
     int npoints = (int)src.points.size();
     int nfaces = (int)src.counts.size();
 
-    // reserve space
-    obj->ReserveVertex(npoints);
-    obj->ReserveFace(nfaces);
+    if (m_option_changed || obj->GetVertexCount() != npoints || obj->GetFaceCount() != nfaces) {
+        // option or topology changed. re-create mesh.
+        obj->Clear();
 
-    // points
-    {
+        // reserve space
+        obj->ReserveVertex(npoints);
+        obj->ReserveFace(nfaces);
+
+        // points
         for (auto& p : src.points)
             obj->AddVertex((MQPoint&)p);
-    }
 
-    // faces
-    {
-        auto* data = (int*)src.indices.cdata();
-        for (auto c : src.counts) {
-            obj->AddFace(c, data);
-            data += c;
+        // faces
+        {
+            auto* data = (int*)src.indices.cdata();
+            for (auto c : src.counts) {
+                obj->AddFace(c, data);
+                data += c;
+            }
         }
+    }
+    else {
+        // just update existing vertices.
+        for (int pi = 0; pi < npoints; ++pi)
+            obj->SetVertex(pi, (MQPoint&)src.points[pi]);
     }
 
     // uvs
