@@ -235,11 +235,27 @@ public:
 
     USDMaterialNode(USDNode* parent, UsdPrim prim);
     USDMaterialNode(Node* n, UsdPrim prim);
+    void beforeRead() override;
     void read(double time) override;
     void write(double time) override;
 
 private:
     UsdShadeMaterial m_material;
+};
+
+class USDShaderNode : public USDNode
+{
+using super = USDNode;
+public:
+    DefSchemaTraits(UsdShadeMaterial, "Shader");
+
+    USDShaderNode(USDNode* parent, UsdPrim prim);
+    USDShaderNode(Node* n, UsdPrim prim);
+    void beforeRead() override;
+    void read(double time) override;
+
+private:
+    UsdShadeShader m_shader;
 };
 
 #undef DefSchemaTraits

@@ -8,23 +8,55 @@
 
 namespace mqusd {
 
-static void PrintPrim(UsdPrim prim)
+enum PrintFlags
+{
+    PF_Path = 0x01,
+    PF_Attr = 0x02,
+    PF_Meta = 0x04,
+    PF_Rel  = 0x08,
+
+    PF_NonPath = 0x0e,
+    PF_Full = 0x0f,
+};
+
+static void PrintPrim(UsdPrim prim, PrintFlags flags = PF_Path)
 {
     std::stringstream ss;
-    mu::Print("prim %s (%s)\n", prim.GetPath().GetText(), prim.GetTypeName().GetText());
-    for (auto& attr : prim.GetAuthoredAttributes()) {
-        mu::Print("  attr %s (%s)\n", attr.GetName().GetText(), attr.GetTypeName().GetAsToken().GetText());
-        //for (auto& kvp : prim.GetAllAuthoredMetadata()) {
-        //    ss << kvp.second;
-        //    mu::Print("    meta %s (%s) - %s\n", kvp.first.GetText(), kvp.second.GetTypeName().c_str(), ss.str().c_str());
-        //    ss.str({});
-        //}
+    if (flags & PF_Path) {
+        mu::Print("prim %s (%s)\n",
+            prim.GetPath().GetText(),
+            prim.GetTypeName().GetText());
     }
-    for (auto& rel : prim.GetAuthoredRelationships()) {
-        SdfPathVector paths;
-        rel.GetTargets(&paths);
-        for (auto& path : paths) {
-            mu::Print("  rel %s %s\n", rel.GetName().GetText(), path.GetText());
+    if (flags & PF_Attr) {
+        for (auto& attr : prim.GetAuthoredAttributes()) {
+            VtValue tv;
+            attr.Get(&tv);
+            ss << tv;
+            mu::Print("  attr %s (%s): %s\n",
+                attr.GetName().GetText(),
+                attr.GetTypeName().GetAsToken().GetText(),
+                ss.str().c_str());
+            ss.str({});
+
+            if (flags & PF_Meta) {
+                for (auto& kvp : prim.GetAllAuthoredMetadata()) {
+                    ss << kvp.second;
+                    mu::Print("    meta %s (%s) - %s\n",
+                        kvp.first.GetText(),
+                        kvp.second.GetTypeName().c_str(),
+                        ss.str().c_str());
+                    ss.str({});
+                }
+            }
+        }
+    }
+    if(flags & PF_Rel) {
+        for (auto& rel : prim.GetAuthoredRelationships()) {
+            SdfPathVector paths;
+            rel.GetTargets(&paths);
+            for (auto& path : paths) {
+                mu::Print("  rel %s %s\n", rel.GetName().GetText(), path.GetText());
+            }
         }
     }
 }
@@ -821,14 +853,23 @@ USDMaterialNode::USDMaterialNode(USDNode* parent, UsdPrim prim)
     : super(parent, prim, false)
 {
     m_material = UsdShadeMaterial(prim);
-
     setNode(CreateNode<MaterialNode>(parent, prim));
+
+#ifdef mqusdDebug
+    //PrintPrim(m_prim, PF_Full);
+#endif
 }
 
 USDMaterialNode::USDMaterialNode(Node* n, UsdPrim prim)
     : super(n, prim)
 {
     m_material = UsdShadeMaterial(prim);
+}
+
+void USDMaterialNode::beforeRead()
+{
+    super::beforeRead();
+    // todo
 }
 
 void USDMaterialNode::read(double time)
@@ -840,6 +881,35 @@ void USDMaterialNode::read(double time)
 void USDMaterialNode::write(double time)
 {
     super::write(time);
+    // todo
+}
+
+
+USDShaderNode::USDShaderNode(USDNode* parent, UsdPrim prim)
+    : super(parent, prim, true)
+{
+    m_shader = UsdShadeShader(prim);
+
+#ifdef mqusdDebug
+    //PrintPrim(m_prim, PF_Full);
+#endif
+}
+
+USDShaderNode::USDShaderNode(Node* n, UsdPrim prim)
+    : super(n, prim)
+{
+    m_shader = UsdShadeShader(prim);
+}
+
+void USDShaderNode::beforeRead()
+{
+    super::beforeRead();
+    // todo
+}
+
+void USDShaderNode::read(double time)
+{
+    super::read(time);
     // todo
 }
 
@@ -959,6 +1029,11 @@ void USDScene::constructTree(USDNode* n)
             UsdSkelAnimation schema(cprim);
             if (schema)
                 c = new USDSkelAnimationNode(n, cprim);
+        }
+        if (!c) {
+            UsdShadeShader schema(cprim);
+            if (schema)
+                c = new USDShaderNode(n, cprim);
         }
 
 #define Case(E, T)\
