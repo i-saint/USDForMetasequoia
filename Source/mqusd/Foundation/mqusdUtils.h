@@ -29,6 +29,41 @@ inline MQAngle to_angle(const quatf& q)
     return (MQAngle&)r;
 }
 
+
+namespace detail {
+
+template<class Body, class R>
+struct each_object
+{
+    void operator()(MQDocument doc, const Body& body)
+    {
+        int n = doc->GetObjectCount();
+        for (int i = 0; i < n; ++i)
+            body(doc->GetObject(i));
+    }
+};
+
+template<class Body>
+struct each_object<Body, bool>
+{
+    void operator()(MQDocument doc, const Body& body)
+    {
+        int n = doc->GetObjectCount();
+        for (int i = 0; i < n; ++i) {
+            if (!body(doc->GetObject(i)))
+                break;
+        }
+    }
+};
+
+} // namespace detail
+
+template<class Body>
+inline void each_object(MQDocument doc, const Body& body)
+{
+    detail::each_object<Body, decltype(body(nullptr))>()(doc, body);
+}
+
 #endif // MQPluginH
 
 

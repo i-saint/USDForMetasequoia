@@ -80,6 +80,31 @@ bool DocumentImporter::initialize(MQDocument doc)
     return true;
 }
 
+std::string DocumentImporter::makeUniqueName(MQDocument doc, const std::string& name)
+{
+    std::string base = name;
+    std::string ret = base;
+    for (int i = 1; ; ++i) {
+        bool ok = true;
+        each_object(doc, [&ret, &ok](MQObject obj) {
+            char buf[256];
+            obj->GetName(buf, sizeof(buf));
+            if (ret == buf) {
+                ok = false;
+                return false;
+            }
+            return true;
+        });
+        if (ok)
+            break;
+
+        char buf[16];
+        sprintf(buf, "_%d", i);
+        ret = base + buf;
+    }
+    return ret;
+}
+
 DocumentImporter::ObjectRecord* DocumentImporter::findRecord(UINT mqid)
 {
     if (mqid == 0)
@@ -183,7 +208,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
         auto obj = findOrCreateMQObject(doc, m_mqobj_id, 0, created);
         if (created) {
             auto name = mu::GetFilename_NoExtension(m_scene->path.c_str());
-            obj->SetName(name.c_str());
+            obj->SetName(makeUniqueName(doc, name).c_str());
         }
         obj->Clear();
 
@@ -200,7 +225,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
                 auto bs = findOrCreateMQObject(doc, rec.blendshape_ids[bi], rec.mqid, created);
                 updateMesh(doc, bs, rec.tmp_mesh);
                 if (created) {
-                    bs->SetName(blendshape->getName().c_str());
+                    bs->SetName(makeUniqueName(doc, blendshape->getName()).c_str());
                     bs->SetVisible(0);
 #if MQPLUGIN_VERSION >= 0x0470
                     m_morph_manager->BindTargetObject(obj, bs);
@@ -217,7 +242,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
             bool created;
             auto obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
             if (created)
-                obj->SetName(rec.node->getName().c_str());
+                obj->SetName(makeUniqueName(doc, rec.node->getName()).c_str());
             return obj;
         };
 

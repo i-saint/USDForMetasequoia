@@ -52,6 +52,7 @@ private:
         std::vector<JointRecord> joints;
     };
 
+    std::string makeUniqueName(MQDocument doc, const std::string& name);
     ObjectRecord* findRecord(UINT mqid);
     MQObject findOrCreateMQObject(MQDocument doc, UINT& id, UINT parent_id, bool& created);
     bool updateMesh(MQDocument doc, MQObject obj, const MeshNode& src);
