@@ -240,12 +240,26 @@ bool DocumentImporter::read(MQDocument doc, double t)
         n->bake(dst);
     };
 
+    auto merge_mesh = [](MeshNode& dst, MeshNode* n) {
+        n->toWorldSpace();
+        dst.merge(*n);
+    };
+
     // update mq object
     if (m_options->merge_meshes) {
         // build merged mesh
         m_merged_mesh.clear();
-        for (auto n : mesh_nodes)
-            bake_mesh(m_merged_mesh, n);
+        if (m_options->bake_meshes) {
+            for (auto n : mesh_nodes)
+                bake_mesh(m_merged_mesh, n);
+        }
+        else {
+            for (auto n : mesh_nodes)
+                m_merged_mesh.merge(*n);
+        }
+        for (auto& rec : m_inst_records) {
+            rec.node->bake(m_merged_mesh, rec.node->global_matrix);
+        }
         m_merged_mesh.validate();
 
         bool created;
@@ -254,7 +268,6 @@ bool DocumentImporter::read(MQDocument doc, double t)
             auto name = mu::GetFilename_NoExtension(m_scene->path.c_str());
             obj->SetName(makeUniqueName(doc, name).c_str());
         }
-        obj->Clear();
 
         updateMesh(doc, obj, m_merged_mesh);
     }
