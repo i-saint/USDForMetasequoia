@@ -49,13 +49,13 @@ public:
         Material,
         Scope,
     };
-    static void deserialize(std::istream& is, std::shared_ptr<Node>& v);
+    static void deserialize(deserializer& d, std::shared_ptr<Node>& v);
 
     Node(Node* parent = nullptr, const char *name = nullptr);
     virtual ~Node();
     virtual Type getType() const;
-    virtual void serialize(std::ostream& os);
-    virtual void deserialize(std::istream& is);
+    virtual void serialize(serializer& s);
+    virtual void deserialize(deserializer& d);
     virtual void resolve();
     virtual void convert(const ConvertOptions& opt);
 
@@ -125,8 +125,8 @@ public:
 
     XformNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os) override;
-    void deserialize(std::istream& is) override;
+    void serialize(serializer& s) override;
+    void deserialize(deserializer& d) override;
     void resolve() override;
     void convert(const ConvertOptions& opt) override;
 
@@ -153,8 +153,8 @@ public:
 
     BlendshapeNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os) override;
-    void deserialize(std::istream& is) override;
+    void serialize(serializer& s) override;
+    void deserialize(deserializer& d) override;
     void convert(const ConvertOptions& opt) override;
 
     void clear();
@@ -177,8 +177,8 @@ public:
 
     SkelRootNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os) override;
-    void deserialize(std::istream& is) override;
+    void serialize(serializer& s) override;
+    void deserialize(deserializer& d) override;
     void resolve() override;
 
 public:
@@ -193,12 +193,12 @@ public:
 class Joint
 {
 public:
-    static void deserialize(std::istream& is, std::shared_ptr<Joint>& v);
+    static void deserialize(deserializer& d, std::shared_ptr<Joint>& v);
 
     Joint();
     Joint(SkeletonNode* skel, const std::string& path);
-    void serialize(std::ostream& os);
-    void deserialize(std::istream& is);
+    void serialize(serializer& s);
+    void deserialize(deserializer& d);
     void resolve();
 
     std::string getName()const;
@@ -233,8 +233,8 @@ public:
 
     SkeletonNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os) override;
-    void deserialize(std::istream& is) override;
+    void serialize(serializer& s) override;
+    void deserialize(deserializer& d) override;
     void resolve() override;
     void convert(const ConvertOptions& opt) override;
 
@@ -258,8 +258,8 @@ public:
 
     MeshNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os) override;
-    void deserialize(std::istream& is) override;
+    void serialize(serializer& s) override;
+    void deserialize(deserializer& d) override;
     void resolve() override;
     void convert(const ConvertOptions& opt) override;
 
@@ -312,8 +312,8 @@ public:
 
     InstancerNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os) override;
-    void deserialize(std::istream& is) override;
+    void serialize(serializer& s) override;
+    void deserialize(deserializer& d) override;
     void resolve() override;
     void convert(const ConvertOptions& opt) override;
 
@@ -353,8 +353,8 @@ public:
 
     MaterialNode(Node* parent = nullptr, const char* name = nullptr);
     Type getType() const override;
-    void serialize(std::ostream& os) override;
-    void deserialize(std::istream& is) override;
+    void serialize(serializer& s) override;
+    void deserialize(deserializer& d) override;
     virtual bool valid() const;
 
 public:
@@ -397,13 +397,13 @@ mqusdDeclPtr(SceneInterface);
 class Scene
 {
 public:
-    static void deserialize(std::istream& is, std::shared_ptr<Scene>& v);
+    static void deserialize(deserializer& d, std::shared_ptr<Scene>& v);
     static Scene* getCurrent();
 
     Scene();
     ~Scene();
-    void serialize(std::ostream& os);
-    void deserialize(std::istream& is);
+    void serialize(serializer& s);
+    void deserialize(deserializer& d);
 
     bool open(const char* path);
     bool create(const char* path);

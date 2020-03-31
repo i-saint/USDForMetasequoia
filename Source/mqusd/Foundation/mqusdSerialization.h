@@ -2,16 +2,19 @@
 
 namespace mqusd {
 
+using serializer = std::ostream;
+using deserializer = std::istream;
+
 template<class T> struct serializable { static const bool value = false; };
 
 template<class T, bool hs = serializable<T>::value> struct write_impl2;
 template<class T> struct write_impl2<T, true>
 {
-    void operator()(std::ostream& os, const T& v) const { v.serialize(os); }
+    void operator()(serializer& os, const T& v) const { v.serialize(os); }
 };
 template<class T> struct write_impl2<T, false>
 {
-    void operator()(std::ostream& os, const T& v) const
+    void operator()(serializer& os, const T& v) const
     {
         static_assert(sizeof(T) % 4 == 0, "");
         os.write((const char*)&v, sizeof(T));
@@ -20,17 +23,17 @@ template<class T> struct write_impl2<T, false>
 
 template<class T, bool hs = serializable<T>::value> struct read_impl2;
 template<class T> struct read_impl2<T, true> {
-    void operator()(std::istream& is, T& v) const { v.deserialize(is); }
+    void operator()(deserializer& is, T& v) const { v.deserialize(is); }
 };
 template<class T> struct read_impl2<T, false> {
-    void operator()(std::istream& is, T& v) const { is.read((char*)&v, sizeof(T)); }
+    void operator()(deserializer& is, T& v) const { is.read((char*)&v, sizeof(T)); }
 };
 
 
 template<class T>
 struct write_impl
 {
-    void operator()(std::ostream& os, const T& v) const
+    void operator()(serializer& os, const T& v) const
     {
         write_impl2<T>()(os, v);
     }
@@ -38,14 +41,14 @@ struct write_impl
 template<class T>
 struct read_impl
 {
-    void operator()(std::istream& is, T& v) const
+    void operator()(deserializer& is, T& v) const
     {
         read_impl2<T>()(is, v);
     }
 };
 
 
-inline void write_align(std::ostream& os, size_t written_size)
+inline void write_align(serializer& os, size_t written_size)
 {
     const int zero = 0;
     if (written_size % 4 != 0)
@@ -55,16 +58,24 @@ inline void write_align(std::ostream& os, size_t written_size)
 template<>
 struct write_impl<bool>
 {
-    void operator()(std::ostream& os, const bool& v) const
+    void operator()(serializer& os, const bool& v) const
     {
         os.write((const char*)&v, sizeof(v));
         write_align(os, sizeof(v)); // keep 4 byte alignment
     }
 };
 template<class T>
+struct write_impl<std::shared_ptr<T>>
+{
+    void operator()(serializer& os, const std::shared_ptr<T>& v) const
+    {
+        v->serialize(os);
+    }
+};
+template<class T>
 struct write_impl<SharedVector<T>>
 {
-    void operator()(std::ostream& os, const SharedVector<T>& v) const
+    void operator()(serializer& os, const SharedVector<T>& v) const
     {
         auto size = (uint32_t)v.size();
         os.write((const char*)&size, sizeof(size));
@@ -75,7 +86,7 @@ struct write_impl<SharedVector<T>>
 template<>
 struct write_impl<std::string>
 {
-    void operator()(std::ostream& os, const std::string& v) const
+    void operator()(serializer& os, const std::string& v) const
     {
         auto size = (uint32_t)v.size();
         os.write((const char*)&size, 4);
@@ -86,7 +97,7 @@ struct write_impl<std::string>
 template<class T>
 struct write_impl<std::vector<T>>
 {
-    void operator()(std::ostream& os, const std::vector<T>& v) const
+    void operator()(serializer& os, const std::vector<T>& v) const
     {
         auto size = (uint32_t)v.size();
         os.write((const char*)&size, 4);
@@ -94,29 +105,10 @@ struct write_impl<std::vector<T>>
             write_impl<T>()(os, e);
     }
 };
-template<class T>
-struct write_impl<std::shared_ptr<T>>
-{
-    void operator()(std::ostream& os, const std::shared_ptr<T>& v) const
-    {
-        v->serialize(os);
-    }
-};
-template<class T>
-struct write_impl<std::vector<std::shared_ptr<T>>>
-{
-    void operator()(std::ostream& os, const std::vector<std::shared_ptr<T>>& v) const
-    {
-        auto size = (uint32_t)v.size();
-        os.write((const char*)&size, 4);
-        for (const auto& e : v)
-            e->serialize(os);
-    }
-};
 
 
 
-inline void read_align(std::istream& is, size_t read_size)
+inline void read_align(deserializer& is, size_t read_size)
 {
     int dummy = 0;
     if (read_size % 4 != 0)
@@ -126,16 +118,24 @@ inline void read_align(std::istream& is, size_t read_size)
 template<>
 struct read_impl<bool>
 {
-    void operator()(std::istream& is, bool& v) const
+    void operator()(deserializer& is, bool& v) const
     {
         is.read((char*)&v, sizeof(v));
         read_align(is, sizeof(v)); // align
     }
 };
 template<class T>
+struct read_impl<std::shared_ptr<T>>
+{
+    void operator()(deserializer& is, std::shared_ptr<T>& v) const
+    {
+        T::deserialize(is, v);
+    }
+};
+template<class T>
 struct read_impl<SharedVector<T>>
 {
-    void operator()(std::istream& is, SharedVector<T>& v) const
+    void operator()(deserializer& is, SharedVector<T>& v) const
     {
         uint32_t size = 0;
         is.read((char*)&size, sizeof(size));
@@ -154,7 +154,7 @@ struct read_impl<SharedVector<T>>
 template<>
 struct read_impl<std::string>
 {
-    void operator()(std::istream& is, std::string& v) const
+    void operator()(deserializer& is, std::string& v) const
     {
         uint32_t size = 0;
         is.read((char*)&size, 4);
@@ -166,7 +166,7 @@ struct read_impl<std::string>
 template<class T>
 struct read_impl<std::vector<T>>
 {
-    void operator()(std::istream& is, std::vector<T>& v) const
+    void operator()(deserializer& is, std::vector<T>& v) const
     {
         uint32_t size = 0;
         is.read((char*)&size, 4);
@@ -175,29 +175,9 @@ struct read_impl<std::vector<T>>
             read_impl<T>()(is, e);
     }
 };
-template<class T>
-struct read_impl<std::shared_ptr<T>>
-{
-    void operator()(std::istream& is, std::shared_ptr<T>& v) const
-    {
-        T::deserialize(is, v);
-    }
-};
-template<class T>
-struct read_impl<std::vector<std::shared_ptr<T>>>
-{
-    void operator()(std::istream& is, std::vector<std::shared_ptr<T>>& v) const
-    {
-        uint32_t size = 0;
-        is.read((char*)&size, 4);
-        v.resize(size);
-        for (auto& e : v)
-            read_impl<std::shared_ptr<T>>()(is, e);
-    }
-};
 
-template<class T> inline void write(std::ostream& os, const T& v) { return write_impl<T>()(os, v); }
-template<class T> inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
+template<class T> inline void write(serializer& os, const T& v) { return write_impl<T>()(os, v); }
+template<class T> inline void read(deserializer& is, T& v) { return read_impl<T>()(is, v); }
 
 } // namespace mqusd
 

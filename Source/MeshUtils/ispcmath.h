@@ -601,5 +601,5 @@ static inline void zeroclear(uniform float dst[], uniform int size)
 
 static inline bool is_aligned(void* p)
 {
-    return (((uintptr_t)p / 4) & (C - 1)) == 0;
+    return (((uintptr_t)p >> 2) & (C - 1)) == 0;
 }

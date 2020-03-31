@@ -35,20 +35,20 @@ bool ConvertOptions::operator!=(const ConvertOptions& v) const
 #define EachMember(F)\
     F(path) F(id)
 
-void Node::serialize(std::ostream& os)
+void Node::serialize(serializer& s)
 {
     auto type = getType();
-    write(os, type);
+    write(s, type);
 
-#define Body(V) write(os, V);
+#define Body(V) write(s, V);
     EachMember(Body)
 #undef Body
 }
 
-void Node::deserialize(std::istream& is)
+void Node::deserialize(deserializer& d)
 {
     // type will be consumed by create()
-#define Body(V) read(is, V);
+#define Body(V) read(d, V);
     EachMember(Body)
 #undef Body
 }
@@ -61,10 +61,10 @@ void Node::resolve()
 }
 #undef EachMember
 
-void Node::deserialize(std::istream& is, NodePtr& ret)
+void Node::deserialize(deserializer& d, NodePtr& ret)
 {
     Type type;
-    read(is, type);
+    read(d, type);
 
     if (!ret) {
         switch (type) {
@@ -83,7 +83,7 @@ void Node::deserialize(std::istream& is, NodePtr& ret)
         }
     }
     if (ret)
-        ret->deserialize(is);
+        ret->deserialize(d);
 }
 
 Node::Node(Node* p, const char* name)
@@ -163,18 +163,18 @@ Node::Type RootNode::getType() const
 #define EachMember(F)\
     F(local_matrix) F(global_matrix)
 
-void XformNode::serialize(std::ostream& os)
+void XformNode::serialize(serializer& s)
 {
-    super::serialize(os);
-#define Body(V) write(os, V);
+    super::serialize(s);
+#define Body(V) write(s, V);
     EachMember(Body)
 #undef Body
 }
 
-void XformNode::deserialize(std::istream& is)
+void XformNode::deserialize(deserializer& d)
 {
-    super::deserialize(is);
-#define Body(V) read(is, V);
+    super::deserialize(d);
+#define Body(V) read(d, V);
     EachMember(Body)
 #undef Body
 }
@@ -243,9 +243,9 @@ void XformNode::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
     F(joints_per_vertex) F(joint_indices) F(joint_weights) F(bind_transform)\
     F(blendshape_paths) F(skeleton_path) F(joint_paths)
 
-void MeshNode::serialize(std::ostream& os)
+void MeshNode::serialize(serializer& s)
 {
-    super::serialize(os);
+    super::serialize(s);
 
     // preserve paths of related nodes to resolve on deserialize
 
@@ -259,15 +259,15 @@ void MeshNode::serialize(std::ostream& os)
         });
     }
 
-#define Body(V) write(os, V);
+#define Body(V) write(s, V);
     EachMember(Body)
 #undef Body
 }
 
-void MeshNode::deserialize(std::istream& is)
+void MeshNode::deserialize(deserializer& d)
 {
-    super::deserialize(is);
-#define Body(V) read(is, V);
+    super::deserialize(d);
+#define Body(V) read(d, V);
     EachMember(Body)
 #undef Body
 }
@@ -554,18 +554,18 @@ int MeshNode::getMaxMaterialID() const
 #define EachMember(F)\
     F(indices) F(point_offsets) F(normal_offsets)
 
-void BlendshapeNode::serialize(std::ostream& os)
+void BlendshapeNode::serialize(serializer& s)
 {
-    super::serialize(os);
-#define Body(V) write(os, V);
+    super::serialize(s);
+#define Body(V) write(s, V);
     EachMember(Body)
 #undef Body
 }
 
-void BlendshapeNode::deserialize(std::istream& is)
+void BlendshapeNode::deserialize(deserializer& d)
 {
-    super::deserialize(is);
-#define Body(V) read(is, V);
+    super::deserialize(d);
+#define Body(V) read(d, V);
     EachMember(Body)
 #undef Body
 }
@@ -664,22 +664,22 @@ void BlendshapeNode::makeOffsets(const MeshNode& target, const MeshNode& base)
 #define EachMember(F)\
     F(skeleton_path)
 
-void SkelRootNode::serialize(std::ostream& os)
+void SkelRootNode::serialize(serializer& s)
 {
-    super::serialize(os);
+    super::serialize(s);
 
     if (skeleton)
         skeleton_path = skeleton->path;
 
-#define Body(V) write(os, V);
+#define Body(V) write(s, V);
     EachMember(Body)
 #undef Body
 }
 
-void SkelRootNode::deserialize(std::istream& is)
+void SkelRootNode::deserialize(deserializer& d)
 {
-    super::deserialize(is);
-#define Body(V) read(is, V);
+    super::deserialize(d);
+#define Body(V) read(d, V);
     EachMember(Body)
 #undef Body
 }
@@ -706,16 +706,16 @@ Node::Type SkelRootNode::getType() const
 #define EachMember(F)\
     F(path) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)
 
-void Joint::serialize(std::ostream& os)
+void Joint::serialize(serializer& s)
 {
-#define Body(V) write(os, V);
+#define Body(V) write(s, V);
     EachMember(Body)
 #undef Body
 }
 
-void Joint::deserialize(std::istream& is)
+void Joint::deserialize(deserializer& d)
 {
-#define Body(V) read(is, V);
+#define Body(V) read(d, V);
     EachMember(Body)
 #undef Body
 }
@@ -730,11 +730,11 @@ void Joint::resolve()
 }
 #undef EachMember
 
-void Joint::deserialize(std::istream& is, JointPtr& ret)
+void Joint::deserialize(deserializer& d, JointPtr& ret)
 {
     if (!ret)
         ret = std::make_shared<Joint>();
-    ret->deserialize(is);
+    ret->deserialize(d);
 }
 
 Joint::Joint()
@@ -779,7 +779,7 @@ void Joint::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 #define EachMember(F)\
     F(joints)
 
-void SkeletonNode::serialize(std::ostream& os)
+void SkeletonNode::serialize(serializer& os)
 {
     super::serialize(os);
 #define Body(V) write(os, V);
@@ -787,7 +787,7 @@ void SkeletonNode::serialize(std::ostream& os)
 #undef Body
 }
 
-void SkeletonNode::deserialize(std::istream& is)
+void SkeletonNode::deserialize(deserializer& is)
 {
     super::deserialize(is);
 #define Body(V) read(is, V);
@@ -893,23 +893,23 @@ Joint* SkeletonNode::findJointByPath(const std::string& jpath)
 #define EachMember(F)\
     F(proto_paths) F(matrices)
 
-void InstancerNode::serialize(std::ostream& os)
+void InstancerNode::serialize(serializer& s)
 {
-    super::serialize(os);
+    super::serialize(s);
 
     transform_container(proto_paths, protos, [](std::string& d, const Node* s) {
         d = s->path;
     });
 
-#define Body(V) write(os, V);
+#define Body(V) write(s, V);
     EachMember(Body)
 #undef Body
 }
 
-void InstancerNode::deserialize(std::istream& is)
+void InstancerNode::deserialize(deserializer& d)
 {
-    super::deserialize(is);
-#define Body(V) read(is, V);
+    super::deserialize(d);
+#define Body(V) read(d, V);
     EachMember(Body)
 #undef Body
 }
@@ -1055,18 +1055,18 @@ void InstancerNode::bake(MeshNode& dst, const float4x4& trans)
 #define EachMember(F)\
     F(shader) F(use_vertex_color) F(double_sided) F(color) F(diffuse) F(alpha) F(ambient_color) F(specular_color) F(emission_color)
 
-void MaterialNode::serialize(std::ostream& os)
+void MaterialNode::serialize(serializer& s)
 {
-    super::serialize(os);
-#define Body(V) write(os, V);
+    super::serialize(s);
+#define Body(V) write(s, V);
     EachMember(Body)
 #undef Body
 }
 
-void MaterialNode::deserialize(std::istream& is)
+void MaterialNode::deserialize(deserializer& d)
 {
-    super::deserialize(is);
-#define Body(V) read(is, V);
+    super::deserialize(d);
+#define Body(V) read(d, V);
     EachMember(Body)
 #undef Body
 }
@@ -1098,16 +1098,16 @@ Scene* Scene::getCurrent()
 #define EachMember(F)\
     F(path) F(nodes) F(up_axis) F(frame_rate) F(time_start) F(time_end) F(time_current)
 
-void Scene::serialize(std::ostream& os)
+void Scene::serialize(serializer& s)
 {
-#define Body(V) mqusd::write(os, V);
+#define Body(V) mqusd::write(s, V);
     EachMember(Body)
 #undef Body
 }
 
-void Scene::deserialize(std::istream& is)
+void Scene::deserialize(deserializer& d)
 {
-#define Body(V) mqusd::read(is, V);
+#define Body(V) mqusd::read(d, V);
     EachMember(Body)
 #undef Body
 
@@ -1120,11 +1120,11 @@ void Scene::deserialize(std::istream& is)
 }
 #undef EachMember
 
-void Scene::deserialize(std::istream& is, std::shared_ptr<Scene>& ret)
+void Scene::deserialize(deserializer& d, std::shared_ptr<Scene>& ret)
 {
     if (!ret)
         ret = std::shared_ptr<Scene>();
-    ret->deserialize(is);
+    ret->deserialize(d);
 }
 
 Scene::Scene()
