@@ -15,12 +15,23 @@ bool ImportOptions::operator==(const ImportOptions& v) const
         import_blendshapes == v.import_blendshapes &&
         import_skeletons == v.import_skeletons &&
         import_materials == v.import_materials &&
-        merge_meshes == v.merge_meshes;
+        merge_meshes == v.merge_meshes &&
+        bake_meshes == v.bake_meshes;
 }
 
 bool ImportOptions::operator!=(const ImportOptions& v) const
 {
     return !(*this == v);
+}
+
+bool ImportOptions::mayChangeAffectsNodeStructure(const ImportOptions& v) const
+{
+    return
+        import_blendshapes != v.import_blendshapes ||
+        import_skeletons != v.import_skeletons ||
+        import_materials != v.import_materials ||
+        merge_meshes != v.merge_meshes ||
+        bake_meshes != v.bake_meshes;
 }
 
 
@@ -135,13 +146,46 @@ MQObject DocumentImporter::findOrCreateMQObject(MQDocument doc, UINT& id, UINT p
     return mqo;
 }
 
+bool DocumentImporter::deleteMQObject(MQDocument doc, UINT id)
+{
+    MQObject mqo = id != 0 ? doc->GetObjectFromUniqueID(id) : nullptr;
+    if (mqo) {
+        doc->DeleteObject(doc->GetObjectIndex(mqo));
+        return true;
+    }
+    return false;
+}
+
 bool DocumentImporter::read(MQDocument doc, double t)
 {
     if (!m_scene)
         return false;
 
+    bool option_changed = m_options->mayChangeAffectsNodeStructure(m_prev_options);
     m_prev_time = t;
     m_prev_options = *m_options;
+
+    if (option_changed) {
+        // clear existing objects when option changed
+        for (auto& rec : m_obj_records) {
+            deleteMQObject(doc, rec.mqid);
+            rec.mqid = 0;
+            for (UINT& bsid : rec.blendshape_ids) {
+                deleteMQObject(doc, bsid);
+                bsid = 0;
+            }
+        }
+        for (auto& rec : m_inst_records) {
+            deleteMQObject(doc, rec.mqid);
+            rec.mqid = 0;
+        }
+        {
+            deleteMQObject(doc, m_merged_mqobj_id);
+            m_merged_mqobj_id = 0;
+        }
+        doc->Compact();
+    }
+
 
     // read scene
     m_scene->read(t);
@@ -199,20 +243,20 @@ bool DocumentImporter::read(MQDocument doc, double t)
     // update mq object
     if (m_options->merge_meshes) {
         // build merged mesh
-        m_mesh_merged.clear();
+        m_merged_mesh.clear();
         for (auto n : mesh_nodes)
-            bake_mesh(m_mesh_merged, n);
-        m_mesh_merged.validate();
+            bake_mesh(m_merged_mesh, n);
+        m_merged_mesh.validate();
 
         bool created;
-        auto obj = findOrCreateMQObject(doc, m_mqobj_id, 0, created);
+        auto obj = findOrCreateMQObject(doc, m_merged_mqobj_id, 0, created);
         if (created) {
             auto name = mu::GetFilename_NoExtension(m_scene->path.c_str());
             obj->SetName(makeUniqueName(doc, name).c_str());
         }
         obj->Clear();
 
-        updateMesh(doc, obj, m_mesh_merged);
+        updateMesh(doc, obj, m_merged_mesh);
     }
     else {
         auto handle_blendshape = [this, doc](ObjectRecord& rec, MQObject obj) {
@@ -293,8 +337,12 @@ bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNo
     }
 
 
-    int nfaces = (int)src.counts.size();
     int npoints = (int)src.points.size();
+    int nfaces = (int)src.counts.size();
+
+    // reserve space
+    obj->ReserveVertex(npoints);
+    obj->ReserveFace(nfaces);
 
     // points
     {

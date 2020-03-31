@@ -15,6 +15,7 @@ struct ImportOptions : public ConvertOptions
     ImportOptions();
     bool operator==(const ImportOptions& v) const;
     bool operator!=(const ImportOptions& v) const;
+    bool mayChangeAffectsNodeStructure(const ImportOptions& v) const;
 };
 
 class DocumentImporter
@@ -55,6 +56,7 @@ private:
     std::string makeUniqueName(MQDocument doc, const std::string& name);
     ObjectRecord* findRecord(UINT mqid);
     MQObject findOrCreateMQObject(MQDocument doc, UINT& id, UINT parent_id, bool& created);
+    bool deleteMQObject(MQDocument doc, UINT id);
     bool updateMesh(MQDocument doc, MQObject obj, const MeshNode& src);
     bool updateSkeleton(MQDocument doc, const SkeletonNode& src);
     bool updateMaterials(MQDocument doc);
@@ -72,8 +74,8 @@ private:
     std::vector<InstancerRecord> m_inst_records;
     std::vector<SkeletonRecord> m_skel_records;
 
-    UINT m_mqobj_id = 0;
-    MeshNode m_mesh_merged;
+    UINT m_merged_mqobj_id = 0;
+    MeshNode m_merged_mesh;
 
     double m_prev_time = mqusd::default_time;
     ImportOptions m_prev_options;

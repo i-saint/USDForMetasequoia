@@ -38,8 +38,10 @@ struct each_object
     void operator()(MQDocument doc, const Body& body)
     {
         int n = doc->GetObjectCount();
-        for (int i = 0; i < n; ++i)
-            body(doc->GetObject(i));
+        for (int i = 0; i < n; ++i) {
+            if (auto obj = doc->GetObject(i))
+                body(obj);
+        }
     }
 };
 
@@ -50,8 +52,10 @@ struct each_object<Body, bool>
     {
         int n = doc->GetObjectCount();
         for (int i = 0; i < n; ++i) {
-            if (!body(doc->GetObject(i)))
-                break;
+            if (auto obj = doc->GetObject(i)) {
+                if (!body(obj))
+                    break;
+            }
         }
     }
 };
