@@ -526,12 +526,11 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
         mqmat->SetShader(src.shader);
         mqmat->SetVertexColor(src.use_vertex_color ? MQMATERIAL_VERTEXCOLOR_DIFFUSE : MQMATERIAL_VERTEXCOLOR_DISABLE);
         mqmat->SetDoubleSided(src.double_sided);
-        mqmat->SetColor((MQColor&)src.color);
-        mqmat->SetDiffuse(src.diffuse);
-        mqmat->SetAlpha(src.alpha);
+        mqmat->SetColor((MQColor&)src.diffuse_color);
+        mqmat->SetAlpha(src.opacity);
         mqmat->SetAmbientColor((MQColor&)src.ambient_color);
         mqmat->SetSpecularColor((MQColor&)src.specular_color);
-        mqmat->SetEmissionColor((MQColor&)src.emission_color);
+        mqmat->SetEmissionColor((MQColor&)src.emissive_color);
     }
     return true;
 }

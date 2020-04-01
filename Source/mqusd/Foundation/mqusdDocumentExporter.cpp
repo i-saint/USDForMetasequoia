@@ -157,6 +157,9 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     for (int oi = 0; oi < nobjects; ++oi) {
         auto& rec = m_obj_records[oi];
         auto obj = doc->GetObject(oi);
+        if (!obj)
+            continue;
+
         rec.name = GetName(obj);
         rec.mqid = obj->GetUniqueID();
         if (auto parent = doc->GetParentObject(obj))
@@ -484,12 +487,11 @@ bool DocumentExporter::extractMaterial(MQMaterial mtl, MaterialNode& dst)
     dst.shader = mtl->GetShader();
     dst.use_vertex_color = mtl->GetVertexColor() == MQMATERIAL_VERTEXCOLOR_DIFFUSE;
     dst.double_sided = mtl->GetDoubleSided();
-    dst.color = to_float3(mtl->GetColor());
-    dst.diffuse = mtl->GetDiffuse();
-    dst.alpha = mtl->GetAlpha();
+    dst.diffuse_color = to_float3(mtl->GetColor()) * mtl->GetDiffuse();
+    dst.opacity = mtl->GetAlpha();
     dst.ambient_color = to_float3(mtl->GetAmbientColor());
     dst.specular_color = to_float3(mtl->GetSpecularColor());
-    dst.emission_color = to_float3(mtl->GetEmissionColor());
+    dst.emissive_color = to_float3(mtl->GetEmissionColor());
     return true;
 }
 

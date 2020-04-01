@@ -1053,7 +1053,7 @@ void InstancerNode::bake(MeshNode& dst, const float4x4& trans)
 
 
 #define EachMember(F)\
-    F(shader) F(use_vertex_color) F(double_sided) F(color) F(diffuse) F(alpha) F(ambient_color) F(specular_color) F(emission_color)
+    F(shader) F(use_vertex_color) F(double_sided) F(diffuse_color) F(opacity) F(roughness) F(ambient_color) F(specular_color) F(emissive_color)
 
 void MaterialNode::serialize(serializer& s)
 {

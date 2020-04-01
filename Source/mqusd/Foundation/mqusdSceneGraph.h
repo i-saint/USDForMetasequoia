@@ -362,12 +362,12 @@ public:
     int shader = MQMATERIAL_SHADER_CLASSIC;
     bool use_vertex_color = false;
     bool double_sided = false;
-    float3 color = float3::one();
-    float diffuse = 1.0f;
-    float alpha = 1.0f;
+    float3 diffuse_color = { 0.18f, 0.18f, 0.18f };
+    float opacity = 1.0f;
+    float roughness = 0.5f;
     float3 ambient_color = float3::zero();
-    float3 specular_color = float3::one();
-    float3 emission_color = float3::zero();
+    float3 specular_color = float3::zero();
+    float3 emissive_color = float3::zero();
 };
 
 

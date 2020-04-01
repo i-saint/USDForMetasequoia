@@ -5,21 +5,32 @@
 #define mqusdAttrUVIndices      TfToken("primvars:st:indices")
 
 #define mqusdMtlTarget          "metasequoia"
-#define mqusdMtlShaderClassic   "classic"
-#define mqusdMtlShaderConstant  "constant"
-#define mqusdMtlShaderLambert   "lambert"
-#define mqusdMtlShaderPhong     "phong"
-#define mqusdMtlShaderBlinn     "blinn"
-#define mqusdMtlShaderHLSL      "hlsl"
+#define mqusdShaderClassic      "classic"
+#define mqusdShaderConstant     "constant"
+#define mqusdShaderLambert      "lambert"
+#define mqusdShaderPhong        "phong"
+#define mqusdShaderBlinn        "blinn"
+#define mqusdShaderHLSL         "hlsl"
 
-#define mqusdMtlUseVertexColor  ".useVertexColor"
-#define mqusdMtlDoubleSided     ".doubleSided"
-#define mqusdMtlDiffuseColor    ".diffuseColor"
-#define mqusdMtlDiffuse         ".diffuse"
-#define mqusdMtlAlpha           ".alpha"
-#define mqusdMtlAmbientColor    ".ambientColor"
-#define mqusdMtlSpecularColor   ".specularColor"
-#define mqusdMtlEmissionColor   ".emissionColor"
+// Metasequoia-specific parameters
+#define mqusdMtlUseVertexColor  TfToken("useVertexColor")
+#define mqusdMtlDoubleSided     TfToken("doubleSided")
+#define mqusdMtlAmbientColor    TfToken("ambientColor")
+
+// parameters based on UsdPreviewSurface Proposal
+// https://graphics.pixar.com/usd/docs/UsdPreviewSurface-Proposal.html
+#define mqusdUsdPreviewSurface  TfToken("UsdPreviewSurface")
+#define mqusdUsdUVTexture       TfToken("UsdUVTexture")
+#define mqusdMtlDiffuseColor    TfToken("diffuseColor")
+#define mqusdMtlEmissiveColor   TfToken("emissiveColor")
+#define mqusdMtlSpecularColor   TfToken("specularColor")
+#define mqusdMtlRoughness       TfToken("roughness")
+#define mqusdMtlOpacity         TfToken("opacity")
+
+#define mqusdMtlDiffuseColorTexture     "diffuseColorTexture"
+#define mqusdMtlAmbientColorTexture     "ambientColorTexture"
+#define mqusdMtlSpecularColorTexture    "specularColorTexture"
+#define mqusdMtlEmissionColorTexture    "emissionColorTexture"
 
 #ifdef _WIN32
     #define mqusdCoreAPI extern "C" __declspec(dllexport)

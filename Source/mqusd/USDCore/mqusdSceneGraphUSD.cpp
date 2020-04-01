@@ -61,6 +61,12 @@ static void PrintPrim(UsdPrim prim, PrintFlags flags = PF_Path)
     }
 }
 
+template<class Body>
+static inline void EachChild(UsdPrim prim, const Body& body)
+{
+    for (auto child : prim.GetAllChildren())
+        body(child);
+}
 
 template<class NodeT>
 static inline NodeT* CreateNode(USDNode* parent, UsdPrim prim)
@@ -856,7 +862,7 @@ USDMaterialNode::USDMaterialNode(USDNode* parent, UsdPrim prim)
     setNode(CreateNode<MaterialNode>(parent, prim));
 
 #ifdef mqusdDebug
-    //PrintPrim(m_prim, PF_Full);
+    PrintPrim(m_prim, PF_Full);
 #endif
 }
 
@@ -866,22 +872,112 @@ USDMaterialNode::USDMaterialNode(Node* n, UsdPrim prim)
     m_material = UsdShadeMaterial(prim);
 }
 
+template<class T> static inline void GetValue(UsdShadeInput& in, T& v);
+template<> static inline void GetValue(UsdShadeInput& in, float& v)
+{
+    if (in)
+        in.Get(&v);
+}
+template<> static inline void GetValue(UsdShadeInput& in, float3& v)
+{
+    if (in)
+        in.Get((GfVec3f*)&v);
+}
+template<> static inline void GetValue(UsdShadeInput& in, bool& v)
+{
+    if (in) {
+        int t = 0;
+        if (in.Get(&t))
+            v = t != 0;
+    }
+}
+
+template<class T> static inline void SetValue(UsdShadeInput& in, T v);
+template<> static inline void SetValue(UsdShadeInput& in, float v)
+{
+    if (in)
+        in.Set(v);
+}
+template<> static inline void SetValue(UsdShadeInput& in, float3 v)
+{
+    if (in)
+        in.Set((GfVec3f&)v);
+}
+template<> static inline void SetValue(UsdShadeInput& in, bool v)
+{
+    if (in) {
+        int tmp = v ? 1 : 0;
+        in.Set(tmp);
+    }
+}
+
 void USDMaterialNode::beforeRead()
 {
-    super::beforeRead();
-    // todo
+    EachChild(m_prim, [this](UsdPrim& c) {
+        UsdShadeShader sh(c);
+        if (!sh)
+            return;
+
+        TfToken id;
+        if (sh.GetIdAttr().Get(&id)) {
+            if (id == mqusdUsdPreviewSurface)
+                m_surface = sh;
+        }
+    });
+    if (m_surface) {
+        m_in_use_vertex_color = m_surface.GetInput(mqusdMtlUseVertexColor);
+        m_in_double_sided   = m_surface.GetInput(mqusdMtlDoubleSided);
+        m_in_diffuse_color  = m_surface.GetInput(mqusdMtlDiffuseColor);
+        m_in_opacity        = m_surface.GetInput(mqusdMtlOpacity);
+        m_in_roughness      = m_surface.GetInput(mqusdMtlRoughness);
+        m_in_ambient_color  = m_surface.GetInput(mqusdMtlAmbientColor);
+        m_in_specular_color = m_surface.GetInput(mqusdMtlSpecularColor);
+        m_in_emissive_color = m_surface.GetInput(mqusdMtlEmissiveColor);
+    }
+
+    auto& dst = *static_cast<MaterialNode*>(m_node);
+    GetValue(m_in_use_vertex_color, dst.use_vertex_color);
+    GetValue(m_in_double_sided, dst.double_sided);
+    GetValue(m_in_diffuse_color, dst.diffuse_color);
+    GetValue(m_in_opacity, dst.opacity);
+    GetValue(m_in_roughness, dst.roughness);
+    GetValue(m_in_ambient_color, dst.ambient_color);
+    GetValue(m_in_specular_color, dst.specular_color);
+    GetValue(m_in_emissive_color, dst.emissive_color);
 }
 
 void USDMaterialNode::read(double time)
 {
     super::read(time);
-    // todo
 }
 
-void USDMaterialNode::write(double time)
+void USDMaterialNode::beforeWrite()
 {
-    super::write(time);
-    // todo
+    if (!m_surface) {
+        auto surf_path = m_prim.GetPath().GetString() + "/Surf";
+        auto surf_prim = m_scene->getStage()->DefinePrim(SdfPath(surf_path), TfToken(USDShaderNode::getUsdTypeName()));
+        m_surface = UsdShadeShader(surf_prim);
+        m_surface.SetShaderId(mqusdUsdPreviewSurface);
+
+        m_in_use_vertex_color = m_surface.CreateInput(mqusdMtlUseVertexColor, SdfValueTypeNames->Int);
+        m_in_double_sided   = m_surface.CreateInput(mqusdMtlDoubleSided, SdfValueTypeNames->Int);
+        m_in_diffuse_color  = m_surface.CreateInput(mqusdMtlDiffuseColor, SdfValueTypeNames->Float3);
+        m_in_opacity        = m_surface.CreateInput(mqusdMtlOpacity, SdfValueTypeNames->Float);
+        m_in_roughness      = m_surface.CreateInput(mqusdMtlRoughness, SdfValueTypeNames->Float);
+        m_in_ambient_color  = m_surface.CreateInput(mqusdMtlAmbientColor, SdfValueTypeNames->Float3);
+        m_in_specular_color = m_surface.CreateInput(mqusdMtlSpecularColor, SdfValueTypeNames->Float3);
+        m_in_emissive_color = m_surface.CreateInput(mqusdMtlEmissiveColor, SdfValueTypeNames->Float3);
+    }
+
+    auto& src = *static_cast<const MaterialNode*>(m_node);
+    SetValue(m_in_use_vertex_color, src.use_vertex_color);
+    SetValue(m_in_double_sided, src.double_sided);
+    SetValue(m_in_diffuse_color, src.diffuse_color);
+    SetValue(m_in_opacity, src.opacity);
+    SetValue(m_in_roughness, src.roughness);
+    SetValue(m_in_ambient_color, src.ambient_color);
+    SetValue(m_in_specular_color, src.specular_color);
+    SetValue(m_in_emissive_color, src.emissive_color);
 }
 
 
@@ -891,7 +987,7 @@ USDShaderNode::USDShaderNode(USDNode* parent, UsdPrim prim)
     m_shader = UsdShadeShader(prim);
 
 #ifdef mqusdDebug
-    //PrintPrim(m_prim, PF_Full);
+    PrintPrim(m_prim, PF_Full);
 #endif
 }
 
@@ -899,18 +995,6 @@ USDShaderNode::USDShaderNode(Node* n, UsdPrim prim)
     : super(n, prim)
 {
     m_shader = UsdShadeShader(prim);
-}
-
-void USDShaderNode::beforeRead()
-{
-    super::beforeRead();
-    // todo
-}
-
-void USDShaderNode::read(double time)
-{
-    super::read(time);
-    // todo
 }
 
 
@@ -1163,6 +1247,11 @@ bool USDScene::wrapNode(Node* node)
         m_nodes.push_back(USDNodePtr(ret));
     }
     return ret;
+}
+
+UsdStageRefPtr& USDScene::getStage()
+{
+    return m_stage;
 }
 
 UsdTimeCode USDScene::toTimeCode(double time) const

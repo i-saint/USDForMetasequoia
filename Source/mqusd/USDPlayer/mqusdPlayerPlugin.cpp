@@ -335,6 +335,9 @@ bool mqusdPlayerPlugin::OpenUSD(MQDocument doc, const std::string& path)
     m_importer.reset(new DocumentImporter(this, m_scene.get(), &m_options));
     m_importer->initialize(doc);
 
+    // repaint
+    MQ_RefreshView(nullptr);
+
     return true;
 }
 

@@ -237,22 +237,37 @@ public:
     USDMaterialNode(Node* n, UsdPrim prim);
     void beforeRead() override;
     void read(double time) override;
-    void write(double time) override;
+    void beforeWrite() override;
 
 private:
     UsdShadeMaterial m_material;
+
+    UsdShadeShader m_surface;
+    UsdShadeShader m_tex_diffuse;
+    UsdShadeShader m_tex_ambient;
+    UsdShadeShader m_tex_specular;
+    UsdShadeShader m_tex_emission;
+    UsdShadeShader m_tex_roughness;
+
+    UsdShadeInput m_in_use_vertex_color;
+    UsdShadeInput m_in_double_sided;
+    UsdShadeInput m_in_diffuse_color;
+    UsdShadeInput m_in_ambient_color;
+    UsdShadeInput m_in_specular_color;
+    UsdShadeInput m_in_emissive_color;
+    UsdShadeInput m_in_opacity;
+    UsdShadeInput m_in_roughness;
 };
+
 
 class USDShaderNode : public USDNode
 {
 using super = USDNode;
 public:
-    DefSchemaTraits(UsdShadeMaterial, "Shader");
+    DefSchemaTraits(UsdShadeShader, "Shader");
 
     USDShaderNode(USDNode* parent, UsdPrim prim);
     USDShaderNode(Node* n, UsdPrim prim);
-    void beforeRead() override;
-    void read(double time) override;
 
 private:
     UsdShadeShader m_shader;
@@ -278,6 +293,7 @@ public:
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
     bool wrapNode(Node* node) override;
 
+    UsdStageRefPtr& getStage();
     UsdTimeCode toTimeCode(double time) const;
     USDNode* findNodeImpl(const std::string& path);
 
