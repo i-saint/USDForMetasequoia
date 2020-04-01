@@ -345,6 +345,18 @@ public:
     std::vector<ProtoRecord> proto_records;
 };
 
+class Texture
+{
+public:
+    void serialize(serializer& s);
+    void deserialize(deserializer& d);
+    operator bool() const;
+
+    std::string file_path;
+};
+mqusdSerializable(Texture);
+mqusdDeclPtr(Texture);
+
 class MaterialNode : public Node
 {
 using super = Node;
@@ -368,6 +380,10 @@ public:
     float3 ambient_color = float3::zero();
     float3 specular_color = float3::zero();
     float3 emissive_color = float3::zero();
+
+    Texture diffuse_texture;
+    Texture alpha_texture;
+    Texture bump_texture;
 };
 
 

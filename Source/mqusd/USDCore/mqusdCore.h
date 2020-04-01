@@ -26,6 +26,15 @@
 #define mqusdMtlSpecularColor   TfToken("specularColor")
 #define mqusdMtlRoughness       TfToken("roughness")
 #define mqusdMtlOpacity         TfToken("opacity")
+#define mqusdMtlSurface         TfToken("surface")
+#define mqusdMtlSurfaceConnect  TfToken("surface.connect")
+
+#define mqusdMtlST              TfToken("st")
+#define mqusdMtlTangents        TfToken("tangents")
+#define mqusdMtlBinormals       TfToken("binormals")
+#define mqusdMtlFrameST         TfToken("frame:stPrimvarName")
+#define mqusdMtlFrameTangents   TfToken("frame:tangentsPrimvarName")
+#define mqusdMtlFrameBinormals  TfToken("frame:binormalsPrimvarName")
 
 #define mqusdMtlDiffuseColorTexture     "diffuseColorTexture"
 #define mqusdMtlAmbientColorTexture     "ambientColorTexture"

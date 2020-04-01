@@ -10,11 +10,11 @@ template<class T> struct serializable { static const bool value = false; };
 template<class T, bool hs = serializable<T>::value> struct write_impl2;
 template<class T> struct write_impl2<T, true>
 {
-    void operator()(serializer& os, const T& v) const { v.serialize(os); }
+    void operator()(serializer& os, T& v) const { v.serialize(os); }
 };
 template<class T> struct write_impl2<T, false>
 {
-    void operator()(serializer& os, const T& v) const
+    void operator()(serializer& os, T& v) const
     {
         static_assert(sizeof(T) % 4 == 0, "");
         os.write((const char*)&v, sizeof(T));
@@ -33,7 +33,7 @@ template<class T> struct read_impl2<T, false> {
 template<class T>
 struct write_impl
 {
-    void operator()(serializer& os, const T& v) const
+    void operator()(serializer& os, T& v) const
     {
         write_impl2<T>()(os, v);
     }
@@ -176,7 +176,7 @@ struct read_impl<std::vector<T>>
     }
 };
 
-template<class T> inline void write(serializer& os, const T& v) { return write_impl<T>()(os, v); }
+template<class T> inline void write(serializer& os, T& v) { return write_impl<T>()(os, v); }
 template<class T> inline void read(deserializer& is, T& v) { return read_impl<T>()(is, v); }
 
 } // namespace mqusd

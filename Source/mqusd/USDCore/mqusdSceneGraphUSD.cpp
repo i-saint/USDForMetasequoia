@@ -872,43 +872,47 @@ USDMaterialNode::USDMaterialNode(Node* n, UsdPrim prim)
     m_material = UsdShadeMaterial(prim);
 }
 
-template<class T> static inline void GetValue(UsdShadeInput& in, T& v);
-template<> static inline void GetValue(UsdShadeInput& in, float& v)
+
+template<class T> static inline void GetValue(T& src, float& v, UsdTimeCode t)
 {
-    if (in)
-        in.Get(&v);
+    if (src)
+        src.Get(&v, t);
 }
-template<> static inline void GetValue(UsdShadeInput& in, float3& v)
+template<class T> static inline void GetValue(T& src, float3& v, UsdTimeCode t)
 {
-    if (in)
-        in.Get((GfVec3f*)&v);
+    if (src)
+        src.Get((GfVec3f*)&v, t);
 }
-template<> static inline void GetValue(UsdShadeInput& in, bool& v)
+template<class T> static inline void GetValue(T& src, bool& v, UsdTimeCode t)
 {
-    if (in) {
-        int t = 0;
-        if (in.Get(&t))
-            v = t != 0;
+    if (src) {
+        int tmp = 0;
+        if (src.Get(&tmp, t))
+            v = tmp != 0;
     }
 }
 
-template<class T> static inline void SetValue(UsdShadeInput& in, T v);
-template<> static inline void SetValue(UsdShadeInput& in, float v)
+template<class T> static inline void SetValue(T& dst, float v)
 {
-    if (in)
-        in.Set(v);
+    if (dst)
+        dst.Set(v);
 }
-template<> static inline void SetValue(UsdShadeInput& in, float3 v)
+template<class T> static inline void SetValue(T& dst, float3 v)
 {
-    if (in)
-        in.Set((GfVec3f&)v);
+    if (dst)
+        dst.Set((GfVec3f&)v);
 }
-template<> static inline void SetValue(UsdShadeInput& in, bool v)
+template<class T> static inline void SetValue(T& dst, bool v)
 {
-    if (in) {
+    if (dst) {
         int tmp = v ? 1 : 0;
-        in.Set(tmp);
+        dst.Set(tmp);
     }
+}
+template<class T> static inline void SetValue(T& dst, const TfToken& v)
+{
+    if (dst)
+        dst.Set(v);
 }
 
 void USDMaterialNode::beforeRead()
@@ -920,8 +924,12 @@ void USDMaterialNode::beforeRead()
 
         TfToken id;
         if (sh.GetIdAttr().Get(&id)) {
-            if (id == mqusdUsdPreviewSurface)
+            if (id == mqusdUsdPreviewSurface) {
                 m_surface = sh;
+            }
+            else if (id == mqusdUsdUVTexture) {
+                // todo
+            }
         }
     });
     if (m_surface) {
@@ -934,27 +942,31 @@ void USDMaterialNode::beforeRead()
         m_in_specular_color = m_surface.GetInput(mqusdMtlSpecularColor);
         m_in_emissive_color = m_surface.GetInput(mqusdMtlEmissiveColor);
     }
-
-    auto& dst = *static_cast<MaterialNode*>(m_node);
-    GetValue(m_in_use_vertex_color, dst.use_vertex_color);
-    GetValue(m_in_double_sided, dst.double_sided);
-    GetValue(m_in_diffuse_color, dst.diffuse_color);
-    GetValue(m_in_opacity, dst.opacity);
-    GetValue(m_in_roughness, dst.roughness);
-    GetValue(m_in_ambient_color, dst.ambient_color);
-    GetValue(m_in_specular_color, dst.specular_color);
-    GetValue(m_in_emissive_color, dst.emissive_color);
+    read(default_time);
 }
 
 void USDMaterialNode::read(double time)
 {
     super::read(time);
+
+    auto t = m_scene->toTimeCode(time);
+    auto& dst = *static_cast<MaterialNode*>(m_node);
+    if (m_surface) {
+        GetValue(m_in_use_vertex_color, dst.use_vertex_color, t);
+        GetValue(m_in_double_sided, dst.double_sided, t);
+        GetValue(m_in_diffuse_color, dst.diffuse_color, t);
+        GetValue(m_in_opacity, dst.opacity, t);
+        GetValue(m_in_roughness, dst.roughness, t);
+        GetValue(m_in_ambient_color, dst.ambient_color, t);
+        GetValue(m_in_specular_color, dst.specular_color, t);
+        GetValue(m_in_emissive_color, dst.emissive_color, t);
+    }
 }
 
 void USDMaterialNode::beforeWrite()
 {
     if (!m_surface) {
-        auto surf_path = m_prim.GetPath().GetString() + "/Surf";
+        auto surf_path = m_prim.GetPath().GetString() + "/Surface";
         auto surf_prim = m_scene->getStage()->DefinePrim(SdfPath(surf_path), TfToken(USDShaderNode::getUsdTypeName()));
         m_surface = UsdShadeShader(surf_prim);
         m_surface.SetShaderId(mqusdUsdPreviewSurface);
@@ -967,17 +979,30 @@ void USDMaterialNode::beforeWrite()
         m_in_ambient_color  = m_surface.CreateInput(mqusdMtlAmbientColor, SdfValueTypeNames->Float3);
         m_in_specular_color = m_surface.CreateInput(mqusdMtlSpecularColor, SdfValueTypeNames->Float3);
         m_in_emissive_color = m_surface.CreateInput(mqusdMtlEmissiveColor, SdfValueTypeNames->Float3);
+
+        // follow the convention
+        auto sh_surf = m_surface.CreateOutput(mqusdMtlSurface, SdfValueTypeNames->Token);
+        auto mat_surf = m_material.CreateOutput(mqusdMtlSurface, SdfValueTypeNames->Token);
+        auto st = m_material.CreateInput(mqusdMtlFrameST, SdfValueTypeNames->Token);
+        auto tangents = m_material.CreateInput(mqusdMtlFrameTangents, SdfValueTypeNames->Token);
+        auto binormals = m_material.CreateInput(mqusdMtlFrameBinormals, SdfValueTypeNames->Token);
+        SetValue(st, mqusdMtlST);
+        SetValue(tangents, mqusdMtlTangents);
+        SetValue(binormals, mqusdMtlBinormals);
+        mat_surf.ConnectToSource(sh_surf);
     }
 
-    auto& src = *static_cast<const MaterialNode*>(m_node);
-    SetValue(m_in_use_vertex_color, src.use_vertex_color);
-    SetValue(m_in_double_sided, src.double_sided);
-    SetValue(m_in_diffuse_color, src.diffuse_color);
-    SetValue(m_in_opacity, src.opacity);
-    SetValue(m_in_roughness, src.roughness);
-    SetValue(m_in_ambient_color, src.ambient_color);
-    SetValue(m_in_specular_color, src.specular_color);
-    SetValue(m_in_emissive_color, src.emissive_color);
+    if (m_surface) {
+        auto& src = *static_cast<const MaterialNode*>(m_node);
+        SetValue(m_in_use_vertex_color, src.use_vertex_color);
+        SetValue(m_in_double_sided, src.double_sided);
+        SetValue(m_in_diffuse_color, src.diffuse_color);
+        SetValue(m_in_opacity, src.opacity);
+        SetValue(m_in_roughness, src.roughness);
+        SetValue(m_in_ambient_color, src.ambient_color);
+        SetValue(m_in_specular_color, src.specular_color);
+        SetValue(m_in_emissive_color, src.emissive_color);
+    }
 }
 
 

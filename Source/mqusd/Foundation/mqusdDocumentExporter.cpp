@@ -105,6 +105,8 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
 {
     waitFlush();
 
+    doc->Compact();
+
     // handle time & frame
     auto t = mu::Now();
     if (one_shot) {
@@ -267,8 +269,10 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     int total_vertices = 0;
     int total_faces = 0;
     for (auto& rec : m_obj_records) {
-        total_vertices += (int)rec.mesh->points.size();
-        total_faces += (int)rec.mesh->counts.size();
+        if (rec.mesh) {
+            total_vertices += (int)rec.mesh->points.size();
+            total_faces += (int)rec.mesh->counts.size();
+        }
     }
     mqusdLog("frame %d: %d vertices, %d faces",
         m_frame - 1, total_vertices, total_faces);

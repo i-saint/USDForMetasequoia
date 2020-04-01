@@ -1053,7 +1053,31 @@ void InstancerNode::bake(MeshNode& dst, const float4x4& trans)
 
 
 #define EachMember(F)\
-    F(shader) F(use_vertex_color) F(double_sided) F(diffuse_color) F(opacity) F(roughness) F(ambient_color) F(specular_color) F(emissive_color)
+    F(file_path)
+
+void Texture::serialize(serializer& s)
+{
+#define Body(V) write(s, V);
+    EachMember(Body)
+#undef Body
+}
+
+void Texture::deserialize(deserializer& d)
+{
+#define Body(V) read(d, V);
+    EachMember(Body)
+#undef Body
+}
+Texture::operator bool() const
+{
+    return !file_path.empty();
+}
+#undef EachMember
+
+
+#define EachMember(F)\
+    F(shader) F(use_vertex_color) F(double_sided) F(diffuse_color) F(opacity) F(roughness) F(ambient_color) F(specular_color) F(emissive_color)\
+    F(diffuse_texture) F(alpha_texture) F(bump_texture)
 
 void MaterialNode::serialize(serializer& s)
 {
