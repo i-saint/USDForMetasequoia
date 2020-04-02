@@ -39,18 +39,13 @@ void Node::serialize(serializer& s)
 {
     auto type = getType();
     write(s, type);
-
-#define Body(V) write(s, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdSerialize)
 }
 
 void Node::deserialize(deserializer& d)
 {
     // type will be consumed by create()
-#define Body(V) read(d, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdDeserialize)
 }
 void Node::resolve()
 {
@@ -166,17 +161,13 @@ Node::Type RootNode::getType() const
 void XformNode::serialize(serializer& s)
 {
     super::serialize(s);
-#define Body(V) write(s, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdSerialize)
 }
 
 void XformNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-#define Body(V) read(d, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdDeserialize)
 }
 
 void XformNode::resolve()
@@ -259,17 +250,13 @@ void MeshNode::serialize(serializer& s)
         });
     }
 
-#define Body(V) write(s, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdSerialize)
 }
 
 void MeshNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-#define Body(V) read(d, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdDeserialize)
 }
 void MeshNode::resolve()
 {
@@ -554,16 +541,12 @@ void BlendshapeTarget::deserialize(deserializer& d, BlendshapeTargetPtr& v)
 
 void BlendshapeTarget::serialize(serializer& s)
 {
-#define Body(V) write(s, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdSerialize)
 }
 
 void BlendshapeTarget::deserialize(deserializer& d)
 {
-#define Body(V) read(d, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdDeserialize)
 }
 #undef EachMember
 
@@ -574,17 +557,13 @@ void BlendshapeTarget::deserialize(deserializer& d)
 void BlendshapeNode::serialize(serializer& s)
 {
     super::serialize(s);
-#define Body(V) write(s, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdSerialize)
 }
 
 void BlendshapeNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-#define Body(V) read(d, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdDeserialize)
 }
 #undef EachMember
 
@@ -750,17 +729,13 @@ void SkelRootNode::serialize(serializer& s)
     if (skeleton)
         skeleton_path = skeleton->path;
 
-#define Body(V) write(s, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdSerialize)
 }
 
 void SkelRootNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-#define Body(V) read(d, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdDeserialize)
 }
 
 void SkelRootNode::resolve()
@@ -787,16 +762,12 @@ Node::Type SkelRootNode::getType() const
 
 void Joint::serialize(serializer& s)
 {
-#define Body(V) write(s, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdSerialize)
 }
 
 void Joint::deserialize(deserializer& d)
 {
-#define Body(V) read(d, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdDeserialize)
 }
 
 void Joint::resolve()
@@ -858,20 +829,16 @@ void Joint::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 #define EachMember(F)\
     F(joints)
 
-void SkeletonNode::serialize(serializer& os)
+void SkeletonNode::serialize(serializer& s)
 {
-    super::serialize(os);
-#define Body(V) write(os, V);
-    EachMember(Body)
-#undef Body
+    super::serialize(s);
+    EachMember(mqusdSerialize)
 }
 
-void SkeletonNode::deserialize(deserializer& is)
+void SkeletonNode::deserialize(deserializer& d)
 {
-    super::deserialize(is);
-#define Body(V) read(is, V);
-    EachMember(Body)
-#undef Body
+    super::deserialize(d);
+    EachMember(mqusdDeserialize)
 }
 void SkeletonNode::resolve()
 {
@@ -980,17 +947,13 @@ void InstancerNode::serialize(serializer& s)
         d = s->path;
     });
 
-#define Body(V) write(s, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdSerialize)
 }
 
 void InstancerNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-#define Body(V) read(d, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdDeserialize)
 }
 
 void InstancerNode::resolve()
@@ -1136,22 +1099,19 @@ void InstancerNode::bake(MeshNode& dst, const float4x4& trans)
 
 void Texture::serialize(serializer& s)
 {
-#define Body(V) write(s, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdSerialize)
 }
 
 void Texture::deserialize(deserializer& d)
 {
-#define Body(V) read(d, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdDeserialize)
 }
+#undef EachMember
+
 Texture::operator bool() const
 {
     return !file_path.empty();
 }
-#undef EachMember
 
 
 #define EachMember(F)\
@@ -1163,17 +1123,13 @@ Texture::operator bool() const
 void MaterialNode::serialize(serializer& s)
 {
     super::serialize(s);
-#define Body(V) write(s, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdSerialize)
 }
 
 void MaterialNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-#define Body(V) read(d, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdDeserialize)
 }
 #undef EachMember
 
@@ -1205,16 +1161,12 @@ Scene* Scene::getCurrent()
 
 void Scene::serialize(serializer& s)
 {
-#define Body(V) mqusd::write(s, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdSerialize)
 }
 
 void Scene::deserialize(deserializer& d)
 {
-#define Body(V) mqusd::read(d, V);
-    EachMember(Body)
-#undef Body
+    EachMember(mqusdDeserialize)
 
     for (auto& n : nodes)
         n->resolve();
