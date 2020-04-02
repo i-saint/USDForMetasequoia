@@ -181,8 +181,8 @@ public:
 public:
     UsdGeomMesh m_mesh;
 
-    UsdAttribute m_attr_uv;
-    UsdAttribute m_attr_uv_indices;
+    UsdGeomPrimvar m_pv_st;
+    UsdGeomPrimvar m_pv_colors;
     UsdAttribute m_attr_mids;
     UsdAttribute m_attr_bs_ids;
     UsdAttribute m_attr_joints;
@@ -201,6 +201,7 @@ public:
     VtArray<GfVec3f> m_points;
     VtArray<GfVec3f> m_normals;
     VtArray<GfVec2f> m_uvs;
+    VtArray<GfVec4f> m_colors;
     VtArray<int> m_uv_indices;
     VtArray<int> m_material_ids;
     VtArray<int> m_joint_indices;

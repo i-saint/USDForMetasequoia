@@ -216,14 +216,15 @@ void USDMeshNode::beforeRead()
     auto& dst = static_cast<MeshNode&>(*m_node);
 
     // find attributes
-    m_attr_mids = m_prim.GetAttribute(mqusdAttrMaterialIDs);
-    m_attr_uv = m_prim.GetAttribute(mqusdAttrUV);
-    m_attr_uv_indices = m_prim.GetAttribute(mqusdAttrUVIndices);
-    m_attr_bs_ids = m_prim.GetAttribute(UsdSkelTokens->skelBlendShapes);
-    m_attr_joints = m_prim.GetAttribute(UsdSkelTokens->skelJoints);
-    m_attr_joint_indices = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelJointIndices);
-    m_attr_joint_weights = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelJointWeights);
-    m_attr_bind_transform = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelGeomBindTransform);
+    auto pvapi = UsdGeomPrimvarsAPI(m_prim);
+    m_pv_st     = pvapi.GetPrimvar(mqusdAttrST);
+    m_pv_colors = pvapi.GetPrimvar(mqusdAttrColors);
+    m_attr_mids     = m_prim.GetAttribute(mqusdAttrMaterialIDs);
+    m_attr_bs_ids   = m_prim.GetAttribute(UsdSkelTokens->skelBlendShapes);
+    m_attr_joints   = m_prim.GetAttribute(UsdSkelTokens->skelJoints);
+    m_attr_joint_indices    = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelJointIndices);
+    m_attr_joint_weights    = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelJointWeights);
+    m_attr_bind_transform   = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelGeomBindTransform);
 
     // resolve blendshape/targets
     if (m_attr_bs_ids) {
@@ -310,48 +311,38 @@ void USDMeshNode::read(double time)
         dst.points.share((float3*)m_points.cdata(), m_points.size());
     }
 
-    // normals
-    {
-        m_mesh.GetNormalsAttr().Get(&m_normals, t);
 
-        if (m_normals.size() == dst.indices.size()) {
-            dst.normals.share((float3*)m_normals.cdata(), m_normals.size());
+    auto flatten_primvar = [this, &dst](auto& d, auto& s) {
+        using src_t = typename std::remove_reference_t<decltype(s)>::value_type;
+        using dst_t = typename std::remove_reference_t<decltype(d)>::value_type;
+        static_assert(sizeof(src_t) == sizeof(dst_t), "data size mismatch");
+
+        if (s.size() == dst.indices.size()) {
+            d.share((dst_t*)s.cdata(), s.size());
         }
-        else if (m_normals.size() == dst.points.size()) {
-            dst.normals.resize_discard(dst.indices.size());
-            mu::CopyWithIndices(dst.normals.data(), (float3*)m_normals.cdata(), dst.indices);
+        else if (s.size() == dst.points.size()) {
+            d.resize_discard(dst.indices.size());
+            mu::CopyWithIndices(d.data(), (dst_t*)s.cdata(), dst.indices);
         }
         else {
-            dst.normals.clear();
+            d.clear();
         }
-    }
+    };
+
+    // normals
+    m_mesh.GetNormalsAttr().Get(&m_normals, t);
+    flatten_primvar(dst.normals, m_normals);
 
     // uv
-    if (m_attr_uv) {
-        m_attr_uv.Get(&m_uvs, t);
+    if (m_pv_st) {
+        m_pv_st.ComputeFlattened(&m_uvs, t);
+        flatten_primvar(dst.uvs, m_uvs);
+    }
 
-        if (m_attr_uv_indices) {
-            m_attr_uv_indices.Get(&m_uv_indices, t);
-            if (m_uv_indices.size() == dst.indices.size()) {
-                dst.uvs.resize_discard(m_uv_indices.size());
-                mu::CopyWithIndices(dst.uvs.data(), (float2*)m_uvs.cdata(), m_uv_indices);
-            }
-            else {
-                dst.uvs.clear();
-            }
-        }
-        else {
-            if (m_uvs.size() == dst.indices.size()) {
-                dst.uvs.share((float2*)m_uvs.cdata(), m_uvs.size());
-            }
-            else if (m_uvs.size() == dst.points.size()) {
-                dst.uvs.resize_discard(dst.indices.size());
-                mu::CopyWithIndices(dst.uvs.data(), (float2*)m_uvs.cdata(), dst.indices);
-            }
-            else {
-                dst.uvs.clear();
-            }
-        }
+    // colors
+    if (m_pv_colors) {
+        m_pv_colors.ComputeFlattened(&m_colors, t);
+        flatten_primvar(dst.colors, m_colors);
     }
 
     // material ids
@@ -409,8 +400,10 @@ void USDMeshNode::read(double time)
 void USDMeshNode::beforeWrite()
 {
     // create attributes
+    auto pvapi = UsdGeomPrimvarsAPI(m_prim);
+    m_pv_st = pvapi.CreatePrimvar(mqusdAttrST, SdfValueTypeNames->TexCoord2fArray);
+    m_pv_colors = pvapi.CreatePrimvar(mqusdAttrColors, SdfValueTypeNames->Color4fArray);
     m_attr_mids = m_prim.CreateAttribute(mqusdAttrMaterialIDs, SdfValueTypeNames->IntArray, false);
-    m_attr_uv = m_prim.CreateAttribute(mqusdAttrUV, SdfValueTypeNames->Float2Array, false);
 
     auto& src = static_cast<MeshNode&>(*m_node);
 
@@ -481,9 +474,13 @@ void USDMeshNode::write(double time)
         m_normals.assign((GfVec3f*)src.normals.begin(), (GfVec3f*)src.normals.end());
         m_mesh.GetNormalsAttr().Set(m_normals, t);
     }
-    if (m_attr_uv && !src.uvs.empty()) {
+    if (m_pv_st && !src.uvs.empty()) {
         m_uvs.assign((GfVec2f*)src.uvs.begin(), (GfVec2f*)src.uvs.end());
-        m_attr_uv.Set(m_uvs, t);
+        m_pv_st.Set(m_uvs, t);
+    }
+    if (m_pv_colors && !src.colors.empty()) {
+        m_colors.assign((GfVec4f*)src.colors.begin(), (GfVec4f*)src.colors.end());
+        m_pv_colors.Set(m_colors, t);
     }
     if (m_attr_mids && !src.material_ids.empty()) {
         m_material_ids.assign(src.material_ids.begin(), src.material_ids.end());
@@ -1103,15 +1100,17 @@ void USDMaterialNode::beforeWrite()
         m_in_specular_color = m_surface.CreateInput(mqusdAttrSpecularColor, SdfValueTypeNames->Float3);
         m_in_emissive_color = m_surface.CreateInput(mqusdAttrEmissiveColor, SdfValueTypeNames->Float3);
 
-        auto sh_surf = m_surface.CreateOutput(mqusdAttrSurface, SdfValueTypeNames->Token);
-        auto mat_surf = m_material.CreateOutput(mqusdAttrSurface, SdfValueTypeNames->Token);
-        auto st = m_material.CreateInput(mqusdAttrSTName, SdfValueTypeNames->Token);
-        auto tangents = m_material.CreateInput(mqusdAttrTangentsName, SdfValueTypeNames->Token);
-        auto binormals = m_material.CreateInput(mqusdAttrBinormalsName, SdfValueTypeNames->Token);
+        auto sh_surf    = m_surface.CreateOutput(mqusdAttrSurface, SdfValueTypeNames->Token);
+        auto mat_surf   = m_material.CreateOutput(mqusdAttrSurface, SdfValueTypeNames->Token);
+        auto st         = m_material.CreateInput(mqusdAttrSTName, SdfValueTypeNames->Token);
+        auto tangents   = m_material.CreateInput(mqusdAttrTangentsName, SdfValueTypeNames->Token);
+        auto binormals  = m_material.CreateInput(mqusdAttrBinormalsName, SdfValueTypeNames->Token);
+        auto colors     = m_material.CreateInput(mqusdAttrColorsName, SdfValueTypeNames->Token);
+        mat_surf.ConnectToSource(sh_surf);
         SetValue(st, mqusdAttrST);
         SetValue(tangents, mqusdAttrTangents);
         SetValue(binormals, mqusdAttrBinormals);
-        mat_surf.ConnectToSource(sh_surf);
+        SetValue(colors, mqusdAttrColors);
 
         if (src.shader_type != ShaderType::Unknown)
             SetValue(m_surface.CreateInput(mqusdAttrShaderType, SdfValueTypeNames->Token), src.shader_type);

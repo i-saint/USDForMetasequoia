@@ -1,8 +1,7 @@
 #pragma once
 
 #define mqusdAttrMaterialIDs    TfToken("materialIds")
-#define mqusdAttrUV             TfToken("primvars:st")
-#define mqusdAttrUVIndices      TfToken("primvars:st:indices")
+#define mqusdAttrST             TfToken("st")
 
 #define mqusdShaderMQClassic    "mq:classic"
 #define mqusdShaderMQConstant   "mq:constant"
@@ -62,6 +61,7 @@
 #include <pxr/usd/usdGeom/mesh.h>
 #include <pxr/usd/usdGeom/points.h>
 #include <pxr/usd/usdGeom/pointInstancer.h>
+#include <pxr/usd/usdGeom/primvarsAPI.h>
 #include <pxr/usd/usdSkel/root.h>
 #include <pxr/usd/usdSkel/skeleton.h>
 #include <pxr/usd/usdSkel/skeletonQuery.h>
