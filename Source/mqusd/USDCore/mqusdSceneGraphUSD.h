@@ -90,8 +90,13 @@ private:
 
     // sample holder
     VtArray<int> m_point_indices;
-    VtArray<GfVec3f> m_point_offsets;
-    VtArray<GfVec3f> m_normal_offsets;
+
+    struct Target
+    {
+        VtArray<GfVec3f> point_offsets;
+        VtArray<GfVec3f> normal_offsets;
+    };
+    std::vector<Target> m_targets;
 };
 
 

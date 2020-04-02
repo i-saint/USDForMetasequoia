@@ -662,8 +662,10 @@ BlendshapeTarget* BlendshapeNode::addTarget(const MeshNode& target, const MeshNo
 
 void BlendshapeNode::apply(float3* dst_points, float3* dst_normals, float weight)
 {
-    if (weight == 0.0f)
+    if (weight == 0.0f || targets.empty())
         return;
+
+    // https://graphics.pixar.com/usd/docs/api/_usd_skel__schemas.html#UsdSkel_BlendShape
 
     BlendshapeTarget* prev = nullptr;
     BlendshapeTarget* next = nullptr;
@@ -675,6 +677,20 @@ void BlendshapeNode::apply(float3* dst_points, float3* dst_normals, float weight
         else {
             prev = t.get();
         }
+    }
+
+    // weight:0 is treated as 'implicit target'
+    if (weight > 0.0f) {
+        if (prev && prev->weight < 0.0f)
+            prev = nullptr;
+        if (next && next->weight < 0.0f)
+            next = nullptr;
+    }
+    else if (weight < 0.0f) {
+        if (prev && prev->weight > 0.0f)
+            prev = nullptr;
+        if (next && next->weight > 0.0f)
+            next = nullptr;
     }
 
     auto apply1 = [this, dst_points, dst_normals](BlendshapeTarget *t, float w) {

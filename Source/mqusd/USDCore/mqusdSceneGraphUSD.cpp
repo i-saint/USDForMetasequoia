@@ -515,12 +515,26 @@ void USDBlendshapeNode::read(double time)
     m_blendshape.GetPointIndicesAttr().Get(&m_point_indices);
     dst.indices.share(m_point_indices.cdata(), m_point_indices.size());
 
+    auto ibs = m_blendshape.GetInbetweens();
+    m_targets.resize(ibs.size() + 1);
+    auto* ibp = m_targets.data();
+    for (auto& ib : ibs) {
+        float w = 0.0f;
+        if (ib.GetWeight(&w)) {
+            auto t = dst.addTarget(w);
+            ib.GetOffsets(&ibp->point_offsets);
+            ib.GetNormalOffsets(&ibp->normal_offsets);
+            t->point_offsets.share((float3*)ibp->point_offsets.cdata(), ibp->point_offsets.size());
+            t->normal_offsets.share((float3*)ibp->normal_offsets.cdata(), ibp->normal_offsets.size());
+        }
+        ++ibp;
+    }
     {
         auto t = dst.addTarget(1.0f);
-        m_blendshape.GetOffsetsAttr().Get(&m_point_offsets);
-        m_blendshape.GetNormalOffsetsAttr().Get(&m_normal_offsets);
-        t->point_offsets.share((float3*)m_point_offsets.cdata(), m_point_offsets.size());
-        t->normal_offsets.share((float3*)m_normal_offsets.cdata(), m_normal_offsets.size());
+        m_blendshape.GetOffsetsAttr().Get(&ibp->point_offsets);
+        m_blendshape.GetNormalOffsetsAttr().Get(&ibp->normal_offsets);
+        t->point_offsets.share((float3*)ibp->point_offsets.cdata(), ibp->point_offsets.size());
+        t->normal_offsets.share((float3*)ibp->normal_offsets.cdata(), ibp->normal_offsets.size());
     }
 }
 
@@ -539,13 +553,15 @@ void USDBlendshapeNode::beforeWrite()
     }
     {
         auto t = src.targets.back().get();
+        m_targets.resize(src.targets.size());
+        auto* ibp = &m_targets.back();
         if (!t->point_offsets.empty()) {
-            m_point_offsets.assign((GfVec3f*)t->point_offsets.begin(), (GfVec3f*)t->point_offsets.end());
-            m_blendshape.GetOffsetsAttr().Set(m_point_offsets);
+            ibp->point_offsets.assign((GfVec3f*)t->point_offsets.begin(), (GfVec3f*)t->point_offsets.end());
+            m_blendshape.GetOffsetsAttr().Set(ibp->point_offsets);
         }
         if (!t->normal_offsets.empty()) {
-            m_normal_offsets.assign((GfVec3f*)t->normal_offsets.begin(), (GfVec3f*)t->normal_offsets.end());
-            m_blendshape.GetNormalOffsetsAttr().Set(m_normal_offsets);
+            ibp->normal_offsets.assign((GfVec3f*)t->normal_offsets.begin(), (GfVec3f*)t->normal_offsets.end());
+            m_blendshape.GetNormalOffsetsAttr().Set(ibp->normal_offsets);
         }
     }
 }
