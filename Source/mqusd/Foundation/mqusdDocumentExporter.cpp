@@ -3,31 +3,12 @@
 
 namespace mqusd {
 
-static std::string GetName(MQObject obj)
+ExportOptions::ExportOptions()
 {
-    char buf[256] = "";
-    obj->GetName(buf, sizeof(buf));
-    return buf;
-}
-static std::string GetPath(MQDocument doc, MQObject obj)
-{
-    std::string ret;
-    if (auto parent = doc->GetParentObject(obj))
-        ret += GetPath(doc, parent);
-    ret += '/';
-
-    char buf[256] = "";
-    obj->GetName(buf, sizeof(buf));
-    ret += buf;
-    return ret;
+    scale_factor = 0.05f;
+    flip_v = true;
 }
 
-static std::string GetName(MQMaterial obj)
-{
-    char buf[256] = "";
-    obj->GetName(buf, sizeof(buf));
-    return buf;
-}
 
 DocumentExporter::DocumentExporter(MQBasePlugin* plugin, Scene* scene, const ExportOptions* options)
     : m_plugin(plugin)
@@ -363,7 +344,6 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst, XformNode& xf)
 
         ++fc;
     }
-    mu::InvertV(dst.uvs.data(), dst.uvs.size());
 
     if (nfaces != fc) {
         // refit
@@ -488,14 +468,33 @@ bool DocumentExporter::extractSkeleton(MQDocument /*doc*/, SkeletonNode& dst)
 
 bool DocumentExporter::extractMaterial(MQMaterial mtl, MaterialNode& dst)
 {
-    dst.shader = mtl->GetShader();
+    switch (mtl->GetShader()) {
+    case MQMATERIAL_SHADER_CLASSIC: dst.shader_type = ShaderType::MQClassic; break;
+    case MQMATERIAL_SHADER_CONSTANT:dst.shader_type = ShaderType::MQConstant; break;
+    case MQMATERIAL_SHADER_LAMBERT: dst.shader_type = ShaderType::MQLambert; break;
+    case MQMATERIAL_SHADER_PHONG:   dst.shader_type = ShaderType::MQPhong; break;
+    case MQMATERIAL_SHADER_BLINN:   dst.shader_type = ShaderType::MQBlinn; break;
+    case MQMATERIAL_SHADER_HLSL:    dst.shader_type = ShaderType::MQHLSL; break;
+    default: break;
+    }
     dst.use_vertex_color = mtl->GetVertexColor() == MQMATERIAL_VERTEXCOLOR_DIFFUSE;
     dst.double_sided = mtl->GetDoubleSided();
-    dst.diffuse_color = to_float3(mtl->GetColor()) * mtl->GetDiffuse();
+    dst.diffuse_color = to_float3(mtl->GetColor());
+    dst.diffuse = mtl->GetDiffuse();
     dst.opacity = mtl->GetAlpha();
     dst.ambient_color = to_float3(mtl->GetAmbientColor());
     dst.specular_color = to_float3(mtl->GetSpecularColor());
     dst.emissive_color = to_float3(mtl->GetEmissionColor());
+
+    char buf[1024];
+    mtl->GetTextureName(buf, sizeof(buf));
+    dst.diffuse_texture.file_path = buf;
+
+    mtl->GetAlphaName(buf, sizeof(buf));
+    dst.opacity_texture.file_path = buf;
+
+    mtl->GetBumpName(buf, sizeof(buf));
+    dst.bump_texture.file_path = buf;
     return true;
 }
 

@@ -250,11 +250,12 @@ private:
     UsdShadeInput m_in_use_vertex_color;
     UsdShadeInput m_in_double_sided;
     UsdShadeInput m_in_diffuse_color;
+    UsdShadeInput m_in_diffuse;
+    UsdShadeInput m_in_opacity;
+    UsdShadeInput m_in_roughness;
     UsdShadeInput m_in_ambient_color;
     UsdShadeInput m_in_specular_color;
     UsdShadeInput m_in_emissive_color;
-    UsdShadeInput m_in_opacity;
-    UsdShadeInput m_in_roughness;
 };
 
 

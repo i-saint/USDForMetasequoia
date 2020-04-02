@@ -6,6 +6,7 @@ namespace mqusd {
 ImportOptions::ImportOptions()
 {
     scale_factor = 20.0f;
+    flip_v = true;
 }
 
 bool ImportOptions::operator==(const ImportOptions& v) const
@@ -523,14 +524,34 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
             mqmat->SetName(src.getName().c_str());
             doc->AddMaterial(mqmat);
         }
-        mqmat->SetShader(src.shader);
+
+        int shader = MQMATERIAL_SHADER_LAMBERT;
+        switch (src.shader_type) {
+        case ShaderType::MQClassic: shader = MQMATERIAL_SHADER_CLASSIC; break;
+        case ShaderType::MQConstant:shader = MQMATERIAL_SHADER_CONSTANT; break;
+        case ShaderType::MQLambert: shader = MQMATERIAL_SHADER_LAMBERT; break;
+        case ShaderType::MQPhong:   shader = MQMATERIAL_SHADER_PHONG; break;
+        case ShaderType::MQBlinn:   shader = MQMATERIAL_SHADER_BLINN; break;
+        case ShaderType::MQHLSL:    shader = MQMATERIAL_SHADER_HLSL; break;
+        default: break;
+        }
+        mqmat->SetShader(shader);
+
         mqmat->SetVertexColor(src.use_vertex_color ? MQMATERIAL_VERTEXCOLOR_DIFFUSE : MQMATERIAL_VERTEXCOLOR_DISABLE);
         mqmat->SetDoubleSided(src.double_sided);
         mqmat->SetColor((MQColor&)src.diffuse_color);
+        mqmat->SetDiffuse(src.diffuse);
         mqmat->SetAlpha(src.opacity);
         mqmat->SetAmbientColor((MQColor&)src.ambient_color);
         mqmat->SetSpecularColor((MQColor&)src.specular_color);
         mqmat->SetEmissionColor((MQColor&)src.emissive_color);
+
+        if (src.diffuse_texture)
+            mqmat->SetTextureName(src.diffuse_texture.file_path.c_str());
+        if (src.opacity_texture)
+            mqmat->SetAlphaName(src.opacity_texture.file_path.c_str());
+        if (src.bump_texture)
+            mqmat->SetBumpName(src.bump_texture.file_path.c_str());
     }
     return true;
 }

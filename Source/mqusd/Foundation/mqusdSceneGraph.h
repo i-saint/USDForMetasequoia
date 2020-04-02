@@ -345,6 +345,7 @@ public:
     std::vector<ProtoRecord> proto_records;
 };
 
+
 class Texture
 {
 public:
@@ -357,6 +358,17 @@ public:
 };
 mqusdSerializable(Texture);
 mqusdDeclPtr(Texture);
+
+enum class ShaderType
+{
+    Unknown,
+    MQClassic,
+    MQConstant,
+    MQLambert,
+    MQPhong,
+    MQBlinn,
+    MQHLSL,
+};
 
 class MaterialNode : public Node
 {
@@ -372,10 +384,11 @@ public:
 
 public:
     // serializable
-    int shader = MQMATERIAL_SHADER_CLASSIC;
+    ShaderType shader_type = ShaderType::Unknown;
     bool use_vertex_color = false;
     bool double_sided = false;
     float3 diffuse_color = { 0.18f, 0.18f, 0.18f };
+    float diffuse = 1.0f;
     float opacity = 1.0f;
     float roughness = 0.5f;
     float3 ambient_color = float3::zero();

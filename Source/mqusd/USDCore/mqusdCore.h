@@ -4,15 +4,15 @@
 #define mqusdAttrUV             TfToken("primvars:st")
 #define mqusdAttrUVIndices      TfToken("primvars:st:indices")
 
-#define mqusdMtlTarget          "metasequoia"
-#define mqusdShaderClassic      "classic"
-#define mqusdShaderConstant     "constant"
-#define mqusdShaderLambert      "lambert"
-#define mqusdShaderPhong        "phong"
-#define mqusdShaderBlinn        "blinn"
-#define mqusdShaderHLSL         "hlsl"
+#define mqusdShaderMQClassic    "mqClassic"
+#define mqusdShaderMQConstant   "mqConstant"
+#define mqusdShaderMQLambert    "mqLambert"
+#define mqusdShaderMQPhong      "mqPhong"
+#define mqusdShaderMQBlinn      "mqBlinn"
+#define mqusdShaderMQHLSL       "mqHLSL"
 
 // Metasequoia-specific parameters
+#define mqusdMtlShaderType      TfToken("shaderType")
 #define mqusdMtlUseVertexColor  TfToken("useVertexColor")
 #define mqusdMtlDoubleSided     TfToken("doubleSided")
 #define mqusdMtlAmbientColor    TfToken("ambientColor")
@@ -28,6 +28,7 @@
 #define mqusdUsdPreviewSurface  TfToken("UsdPreviewSurface")
 #define mqusdUsdUVTexture       TfToken("UsdUVTexture")
 #define mqusdMtlDiffuseColor    TfToken("diffuseColor")
+#define mqusdMtlDiffuse         TfToken("diffuse")
 #define mqusdMtlEmissiveColor   TfToken("emissiveColor")
 #define mqusdMtlSpecularColor   TfToken("specularColor")
 #define mqusdMtlRoughness       TfToken("roughness")

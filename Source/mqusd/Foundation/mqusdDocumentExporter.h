@@ -24,10 +24,7 @@ struct ExportOptions : public ConvertOptions
     float time_scale = 1.0f; // relevant only when keep_time is true
     double capture_interval = 5.0; // in seconds
 
-    ExportOptions()
-    {
-        scale_factor = 0.05f;
-    }
+    ExportOptions();
 };
 
 class DocumentExporter

@@ -873,22 +873,22 @@ USDMaterialNode::USDMaterialNode(Node* n, UsdPrim prim)
 }
 
 
-template<class T> static inline void GetValue(T& src, float& v, UsdTimeCode t = {})
+template<class T> static inline void GetValue(T& src, float& v, UsdTimeCode t = { default_time })
 {
     if (src)
         src.Get(&v, t);
 }
-template<class T> static inline void GetValue(T& src, float2& v, UsdTimeCode t = {})
+template<class T> static inline void GetValue(T& src, float2& v, UsdTimeCode t = { default_time })
 {
     if (src)
         src.Get((GfVec2f*)&v, t);
 }
-template<class T> static inline void GetValue(T& src, float3& v, UsdTimeCode t = {})
+template<class T> static inline void GetValue(T& src, float3& v, UsdTimeCode t = { default_time })
 {
     if (src)
         src.Get((GfVec3f*)&v, t);
 }
-template<class T> static inline void GetValue(T& src, bool& v, UsdTimeCode t = {})
+template<class T> static inline void GetValue(T& src, bool& v, UsdTimeCode t = { default_time })
 {
     if (src) {
         int tmp = 0;
@@ -896,47 +896,99 @@ template<class T> static inline void GetValue(T& src, bool& v, UsdTimeCode t = {
             v = tmp != 0;
     }
 }
-template<class T> static inline void GetValue(T& src, TfToken& v, UsdTimeCode t = {})
+template<class T> static inline void GetValue(T& src, std::string& v, UsdTimeCode t = { default_time })
 {
-    if (src)
-        src.Get(&v, t);
+    if (src) {
+        if (src.GetTypeName() == SdfValueTypeNames->Token) {
+            TfToken tmp;
+            src.Get(&tmp, t);
+            v = tmp.GetString();
+        }
+        else if (src.GetTypeName() == SdfValueTypeNames->Asset) {
+            SdfAssetPath tmp;
+            src.Get(&tmp, t);
+            v = tmp.GetAssetPath();
+        }
+    }
 }
-template<class T> static inline void GetValue(T& src, std::string& v, UsdTimeCode t = {})
+
+static inline ShaderType ToShaderType(const std::string& v)
+{
+    if (v == mqusdShaderMQClassic)
+        return ShaderType::MQClassic;
+    else if (v == mqusdShaderMQConstant)
+        return ShaderType::MQConstant;
+    else if (v == mqusdShaderMQLambert)
+        return ShaderType::MQLambert;
+    else if (v == mqusdShaderMQPhong)
+        return ShaderType::MQPhong;
+    else if (v == mqusdShaderMQBlinn)
+        return ShaderType::MQBlinn;
+    else if (v == mqusdShaderMQHLSL)
+        return ShaderType::MQHLSL;
+    return ShaderType::Unknown;
+}
+template<class T> static inline void GetValue(T& src, ShaderType& v, UsdTimeCode t = { default_time })
 {
     if (src) {
         TfToken tmp;
         src.Get(&tmp, t);
-        v = tmp.GetString();
+        v = ToShaderType(tmp.GetString());
     }
 }
 
-template<class T> static inline void SetValue(T& dst, float v)
+template<class T> static inline void SetValue(T& dst, float v, UsdTimeCode t = { default_time })
 {
     if (dst)
-        dst.Set(v);
+        dst.Set(v, t);
 }
-template<class T> static inline void SetValue(T& dst, float2 v)
+template<class T> static inline void SetValue(T& dst, float2 v, UsdTimeCode t = { default_time })
 {
     if (dst)
-        dst.Set((GfVec2f&)v);
+        dst.Set((GfVec2f&)v, t);
 }
-template<class T> static inline void SetValue(T& dst, float3 v)
+template<class T> static inline void SetValue(T& dst, float3 v, UsdTimeCode t = { default_time })
 {
     if (dst)
-        dst.Set((GfVec3f&)v);
+        dst.Set((GfVec3f&)v, t);
 }
-template<class T> static inline void SetValue(T& dst, bool v)
+template<class T> static inline void SetValue(T& dst, bool v, UsdTimeCode t = { default_time })
 {
     if (dst) {
         int tmp = v ? 1 : 0;
-        dst.Set(tmp);
+        dst.Set(tmp, t);
     }
 }
-template<class T> static inline void SetValue(T& dst, const TfToken& v)
+template<class T> static inline void SetValue(T& dst, const std::string& v, UsdTimeCode t = { default_time })
 {
-    if (dst)
-        dst.Set(v);
+    if (dst) {
+        if (dst.GetTypeName() == SdfValueTypeNames->Token)
+            dst.Set(TfToken(v), t);
+        else if (dst.GetTypeName() == SdfValueTypeNames->Asset)
+            dst.Set(SdfAssetPath(v), t);
+    }
 }
+
+static inline std::string ToString(ShaderType v)
+{
+    switch (v) {
+    case ShaderType::MQClassic: return mqusdShaderMQClassic;
+    case ShaderType::MQConstant:return mqusdShaderMQConstant;
+    case ShaderType::MQLambert: return mqusdShaderMQLambert;
+    case ShaderType::MQPhong:   return mqusdShaderMQPhong;
+    case ShaderType::MQBlinn:   return mqusdShaderMQBlinn;
+    case ShaderType::MQHLSL:    return mqusdShaderMQHLSL;
+    default: return "";
+    }
+}
+template<class T> static inline void SetValue(T& dst, ShaderType v, UsdTimeCode t = { default_time })
+{
+    if (dst) {
+        dst.Set(TfToken(ToString(v)), t);
+    }
+}
+
+
 
 void USDMaterialNode::beforeRead()
 {
@@ -952,11 +1004,15 @@ void USDMaterialNode::beforeRead()
                 m_in_use_vertex_color = m_surface.GetInput(mqusdMtlUseVertexColor);
                 m_in_double_sided   = m_surface.GetInput(mqusdMtlDoubleSided);
                 m_in_diffuse_color  = m_surface.GetInput(mqusdMtlDiffuseColor);
+                m_in_diffuse        = m_surface.GetInput(mqusdMtlDiffuse);
                 m_in_opacity        = m_surface.GetInput(mqusdMtlOpacity);
                 m_in_roughness      = m_surface.GetInput(mqusdMtlRoughness);
                 m_in_ambient_color  = m_surface.GetInput(mqusdMtlAmbientColor);
                 m_in_specular_color = m_surface.GetInput(mqusdMtlSpecularColor);
                 m_in_emissive_color = m_surface.GetInput(mqusdMtlEmissiveColor);
+
+                auto& dst = *static_cast<MaterialNode*>(m_node);
+                GetValue(m_surface.GetInput(mqusdMtlShaderType), dst.shader_type);
             }
             else if (id == mqusdUsdUVTexture) {
                 if (c.GetName() == mqusdMtlDiffuseTexture)
@@ -982,6 +1038,7 @@ void USDMaterialNode::read(double time)
         GetValue(m_in_use_vertex_color, dst.use_vertex_color, t);
         GetValue(m_in_double_sided, dst.double_sided, t);
         GetValue(m_in_diffuse_color, dst.diffuse_color, t);
+        GetValue(m_in_diffuse, dst.diffuse, t);
         GetValue(m_in_opacity, dst.opacity, t);
         GetValue(m_in_roughness, dst.roughness, t);
         GetValue(m_in_ambient_color, dst.ambient_color, t);
@@ -1019,6 +1076,7 @@ void USDMaterialNode::beforeWrite()
         m_in_use_vertex_color = m_surface.CreateInput(mqusdMtlUseVertexColor, SdfValueTypeNames->Int);
         m_in_double_sided   = m_surface.CreateInput(mqusdMtlDoubleSided, SdfValueTypeNames->Int);
         m_in_diffuse_color  = m_surface.CreateInput(mqusdMtlDiffuseColor, SdfValueTypeNames->Float3);
+        m_in_diffuse        = m_surface.CreateInput(mqusdMtlDiffuse, SdfValueTypeNames->Float);
         m_in_opacity        = m_surface.CreateInput(mqusdMtlOpacity, SdfValueTypeNames->Float);
         m_in_roughness      = m_surface.CreateInput(mqusdMtlRoughness, SdfValueTypeNames->Float);
         m_in_ambient_color  = m_surface.CreateInput(mqusdMtlAmbientColor, SdfValueTypeNames->Float3);
@@ -1034,6 +1092,8 @@ void USDMaterialNode::beforeWrite()
         SetValue(tangents, mqusdMtlTangents);
         SetValue(binormals, mqusdMtlBinormals);
         mat_surf.ConnectToSource(sh_surf);
+
+        SetValue(m_surface.CreateInput(mqusdMtlShaderType, SdfValueTypeNames->Token), src.shader_type);
     }
 
     // base parameters
@@ -1041,6 +1101,7 @@ void USDMaterialNode::beforeWrite()
         SetValue(m_in_use_vertex_color, src.use_vertex_color);
         SetValue(m_in_double_sided, src.double_sided);
         SetValue(m_in_diffuse_color, src.diffuse_color);
+        SetValue(m_in_diffuse, src.diffuse);
         SetValue(m_in_opacity, src.opacity);
         SetValue(m_in_roughness, src.roughness);
         SetValue(m_in_ambient_color, src.ambient_color);
@@ -1057,7 +1118,7 @@ void USDMaterialNode::beforeWrite()
 
         auto in_file = tex.CreateInput(mqusdMtlFile, SdfValueTypeNames->Asset);
         auto in_st = tex.CreateInput(mqusdMtlST, SdfValueTypeNames->Float2);
-        SetValue(in_file, TfToken(v.file_path));
+        SetValue(in_file, v.file_path);
         SetValue(in_st, v.st);
         return tex;
     };
@@ -1068,7 +1129,7 @@ void USDMaterialNode::beforeWrite()
     }
     if (!m_tex_opacity && src.opacity_texture) {
         m_tex_opacity = add_texture(mqusdMtlOpacityTexture, src.opacity_texture);
-        auto o = m_tex_diffuse.CreateOutput(mqusdMtlA, SdfValueTypeNames->Float);
+        auto o = m_tex_opacity.CreateOutput(mqusdMtlA, SdfValueTypeNames->Float);
         m_in_opacity.ConnectToSource(o);
     }
     if (!m_tex_bump && src.bump_texture) {
