@@ -4,12 +4,12 @@
 #define mqusdAttrUV             TfToken("primvars:st")
 #define mqusdAttrUVIndices      TfToken("primvars:st:indices")
 
-#define mqusdShaderMQClassic    "mqClassic"
-#define mqusdShaderMQConstant   "mqConstant"
-#define mqusdShaderMQLambert    "mqLambert"
-#define mqusdShaderMQPhong      "mqPhong"
-#define mqusdShaderMQBlinn      "mqBlinn"
-#define mqusdShaderMQHLSL       "mqHLSL"
+#define mqusdShaderMQClassic    "mq:classic"
+#define mqusdShaderMQConstant   "mq:constant"
+#define mqusdShaderMQLambert    "mq:lambert"
+#define mqusdShaderMQPhong      "mq:phong"
+#define mqusdShaderMQBlinn      "mq:blinn"
+#define mqusdShaderMQHLSL       "mq:hlsl"
 
 // Metasequoia-specific parameters
 #define mqusdMtlShaderType      TfToken("shaderType")
@@ -34,6 +34,7 @@
 #define mqusdMtlRoughness       TfToken("roughness")
 #define mqusdMtlOpacity         TfToken("opacity")
 #define mqusdMtlFile            TfToken("file")
+#define mqusdMtlR               TfToken("r")
 #define mqusdMtlRGB             TfToken("rgb")
 #define mqusdMtlA               TfToken("a")
 #define mqusdMtlSurface         TfToken("surface")

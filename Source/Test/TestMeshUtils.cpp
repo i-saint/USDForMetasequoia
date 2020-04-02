@@ -101,3 +101,37 @@ TestCase(Test_Angle)
     auto q2 = mqusd::to_quat(a);
     Expect(mu::near_equal(q, q2) || mu::near_equal(q, -q2));
 }
+
+
+template<class T>
+void Test_Limits_Impl()
+{
+    auto _0 = mu::inf<T>();
+    auto _1 = mu::nan<T>();
+    auto _2 = mu::min<T>();
+    auto _3 = mu::max<T>();
+    auto _4 = mu::epsilon<T>();
+    auto _5 = mu::isnan(_0);
+    auto _6 = mu::isnan(_1);
+    auto _7 = mu::isinf(_0);
+    auto _8 = mu::isinf(_1);
+}
+
+TestCase(Test_Limits)
+{
+    Test_Limits_Impl<float2>();
+    Test_Limits_Impl<float3>();
+    Test_Limits_Impl<float4>();
+    Test_Limits_Impl<quatf>();
+    Test_Limits_Impl<float2x2>();
+    Test_Limits_Impl<float3x3>();
+    Test_Limits_Impl<float4x4>();
+
+    Test_Limits_Impl<double2>();
+    Test_Limits_Impl<double3>();
+    Test_Limits_Impl<double4>();
+    Test_Limits_Impl<quatd>();
+    Test_Limits_Impl<double2x2>();
+    Test_Limits_Impl<double3x3>();
+    Test_Limits_Impl<double4x4>();
+}

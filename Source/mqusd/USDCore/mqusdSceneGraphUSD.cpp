@@ -1093,7 +1093,8 @@ void USDMaterialNode::beforeWrite()
         SetValue(binormals, mqusdMtlBinormals);
         mat_surf.ConnectToSource(sh_surf);
 
-        SetValue(m_surface.CreateInput(mqusdMtlShaderType, SdfValueTypeNames->Token), src.shader_type);
+        if (src.shader_type != ShaderType::Unknown)
+            SetValue(m_surface.CreateInput(mqusdMtlShaderType, SdfValueTypeNames->Token), src.shader_type);
     }
 
     // base parameters
@@ -1134,6 +1135,7 @@ void USDMaterialNode::beforeWrite()
     }
     if (!m_tex_bump && src.bump_texture) {
         m_tex_bump = add_texture(mqusdMtlBumpTexture, src.bump_texture);
+        auto o = m_tex_bump.CreateOutput(mqusdMtlR, SdfValueTypeNames->Float);
     }
 }
 
