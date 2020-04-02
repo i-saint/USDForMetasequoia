@@ -145,6 +145,19 @@ public:
 };
 
 
+struct BlendshapeTarget
+{
+    SharedVector<float3> point_offsets;
+    SharedVector<float3> normal_offsets;
+    float weight = 0.0f;
+
+    static void deserialize(deserializer& d, std::shared_ptr<BlendshapeTarget>& v);
+    void serialize(serializer& s);
+    void deserialize(deserializer& d);
+};
+mqusdSerializable(BlendshapeTarget);
+mqusdDeclPtr(BlendshapeTarget);
+
 class BlendshapeNode : public Node
 {
 using super = Node;
@@ -158,14 +171,16 @@ public:
     void convert(const ConvertOptions& opt) override;
 
     void clear();
-    void makeMesh(MeshNode& dst, const MeshNode& base);
-    void makeOffsets(const MeshNode& target, const MeshNode& base);
+    void makeMesh(MeshNode& dst, const MeshNode& base, float weight = 1.0f);
+    BlendshapeTarget* addTarget(float weight);
+    BlendshapeTarget* addTarget(const MeshNode& target, const MeshNode& base, float weight = 1.0f);
+    void apply(float3* dst_points, float3* dst_normals, float weight);
+
 
 public:
     // serializable
     SharedVector<int> indices;
-    SharedVector<float3> point_offsets;
-    SharedVector<float3> normal_offsets;
+    std::vector<BlendshapeTargetPtr> targets;
 };
 
 
@@ -270,9 +285,19 @@ public:
     void clear();
     void merge(const MeshNode& other, const float4x4& trans = float4x4::identity());
     void bake(MeshNode& dst, const float4x4& trans = float4x4::identity());
+    void applySkinning(float3* dst_points, float3* dst_normals);
     void validate();
 
     int getMaxMaterialID() const;
+
+    template<class Body>
+    void eachBSTarget(const Body& body)
+    {
+        for (auto bs : blendshapes) {
+            for (auto& t : bs->targets)
+                body(*t);
+        }
+    };
 
 public:
     // serializable

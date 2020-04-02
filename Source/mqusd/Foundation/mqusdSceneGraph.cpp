@@ -312,9 +312,9 @@ void MeshNode::convert(const ConvertOptions& opt)
         mu::Scale(points.data(), opt.scale_factor, points.size());
         (float3&)bind_transform[3] *= opt.scale_factor;
 
-        for (auto bs: blendshapes) {
-            mu::Scale(bs->point_offsets.data(), opt.scale_factor, bs->point_offsets.size());
-        }
+        eachBSTarget([&opt](auto& t) {
+            mu::Scale(t.point_offsets.data(), opt.scale_factor, t.point_offsets.size());
+        });
     }
 
     if (opt.flip_x) {
@@ -322,10 +322,10 @@ void MeshNode::convert(const ConvertOptions& opt)
         mu::InvertX(normals.data(), normals.size());
         bind_transform = flip_x(bind_transform);
 
-        for (auto bs : blendshapes) {
-            mu::InvertX(bs->point_offsets.data(), bs->point_offsets.size());
-            mu::InvertX(bs->normal_offsets.data(), bs->normal_offsets.size());
-        }
+        eachBSTarget([](auto& t) {
+            mu::InvertX(t.point_offsets.data(), t.point_offsets.size());
+            mu::InvertX(t.normal_offsets.data(), t.normal_offsets.size());
+        });
     }
 
     if (opt.flip_yz) {
@@ -334,10 +334,10 @@ void MeshNode::convert(const ConvertOptions& opt)
         for (auto& v : normals) v = convert(v);
         bind_transform = convert(bind_transform);
 
-        for (auto bs : blendshapes) {
-            for (auto& v : bs->point_offsets) v = convert(v);
-            for (auto& v : bs->normal_offsets) v = convert(v);
-        }
+        eachBSTarget([&convert](auto& t) {
+            for (auto& v : t.point_offsets) v = convert(v);
+            for (auto& v : t.normal_offsets) v = convert(v);
+        });
     }
 
     if (opt.flip_v) {
@@ -363,6 +363,11 @@ void MeshNode::convert(const ConvertOptions& opt)
             do_flip(normals.data());
         if (colors.size() == indices.size())
             do_flip(colors.data());
+
+        eachBSTarget([this, &do_flip](auto& t) {
+            if (t.normal_offsets.size() == indices.size())
+                do_flip(t.normal_offsets.data());
+        });
     }
 }
 
@@ -373,10 +378,10 @@ void MeshNode::applyTransform(const float4x4& v)
         mu::MulVectors(v, normals.data(), normals.data(), normals.size());
         bind_transform *= v;
 
-        for (auto bs : blendshapes) {
-            mu::MulVectors(v, bs->point_offsets.data(), bs->point_offsets.data(), bs->point_offsets.size());
-            mu::MulVectors(v, bs->normal_offsets.data(), bs->normal_offsets.data(), bs->normal_offsets.size());
-        }
+        eachBSTarget([&v](auto& t) {
+            mu::MulVectors(v, t.point_offsets.data(), t.point_offsets.data(), t.point_offsets.size());
+            mu::MulVectors(v, t.normal_offsets.data(), t.normal_offsets.data(), t.normal_offsets.size());
+        });
     }
 }
 void MeshNode::toWorldSpace()
@@ -469,60 +474,46 @@ void MeshNode::bake(MeshNode& dst, const float4x4& trans)
     // blendshape
     if (!blendshapes.empty() && blendshapes.size() == blendshape_weights.size()) {
         size_t nbs = blendshapes.size();
-        for (size_t bsi = 0; bsi < nbs; ++bsi) {
-            float weight = blendshape_weights[bsi];
-            if (weight == 0.0f)
-                continue;
-
-            const auto* bs = blendshapes[bsi];
-            const float3* point_offsets = bs->point_offsets.cdata();
-            if (!bs->indices.empty()) {
-                size_t nbsi = bs->indices.size();
-                const int* i = bs->indices.cdata();
-                for (size_t oi = 0; oi < nbsi; ++oi)
-                    dst_points[i[oi]] += point_offsets[oi] * weight;
-            }
-            else if (bs->point_offsets.size() == npoints) {
-                for (size_t oi = 0; oi < npoints; ++oi)
-                    dst_points[oi] += point_offsets[oi] * weight;
-            }
-
-            // todo: handle normal offsets
-            //auto normal_offsets = bs->normal_offsets.cdata();
-        }
+        for (size_t bsi = 0; bsi < nbs; ++bsi)
+            blendshapes[bsi]->apply(dst_points, dst_normals, blendshape_weights[bsi]);
     }
 
     // skeleton
-    if (skeleton) {
-        transform_container(joint_matrices, joints, [this](auto& m, auto j) {
-            m = mu::invert(j->bindpose) * j->global_matrix;
-        });
-
-        auto* iv = joint_indices.cdata();
-        auto* wv = joint_weights.cdata();
-        for (int pi = 0; pi < npoints; ++pi) {
-            {
-                auto p = mu::mul_p(bind_transform, dst_points[pi]);
-                auto r = float3::zero();
-                for (int ji = 0; ji < joints_per_vertex; ++ji)
-                    r += mu::mul_p(joint_matrices[iv[ji]], p) * wv[ji];
-                dst_points[pi] = r;
-            }
-            if (dst_normals) {
-                auto n = mu::mul_v(bind_transform, dst_normals[pi]);
-                auto r = float3::zero();
-                for (int ji = 0; ji < joints_per_vertex; ++ji)
-                    r += mu::mul_v(joint_matrices[iv[ji]], n) * wv[ji];
-                dst_normals[pi] = r;
-            }
-            iv += joints_per_vertex;
-            wv += joints_per_vertex;
-        }
-    }
+    if (skeleton)
+        applySkinning(dst_points, dst_normals);
 
     if (trans != float4x4::identity()) {
         mu::MulPoints(trans, dst_points, dst_points, npoints);
         mu::MulVectors(trans, dst_normals, dst_normals, normals.size());
+    }
+}
+
+void MeshNode::applySkinning(float3* dst_points, float3* dst_normals)
+{
+    transform_container(joint_matrices, joints, [this](auto& m, auto j) {
+        m = mu::invert(j->bindpose) * j->global_matrix;
+    });
+
+    int npoints = (int)points.size();
+    auto* iv = joint_indices.cdata();
+    auto* wv = joint_weights.cdata();
+    for (int pi = 0; pi < npoints; ++pi) {
+        {
+            auto p = mu::mul_p(bind_transform, dst_points[pi]);
+            auto r = float3::zero();
+            for (int ji = 0; ji < joints_per_vertex; ++ji)
+                r += mu::mul_p(joint_matrices[iv[ji]], p) * wv[ji];
+            dst_points[pi] = r;
+        }
+        if (dst_normals) {
+            auto n = mu::mul_v(bind_transform, dst_normals[pi]);
+            auto r = float3::zero();
+            for (int ji = 0; ji < joints_per_vertex; ++ji)
+                r += mu::mul_v(joint_matrices[iv[ji]], n) * wv[ji];
+            dst_normals[pi] = r;
+        }
+        iv += joints_per_vertex;
+        wv += joints_per_vertex;
     }
 }
 
@@ -551,8 +542,34 @@ int MeshNode::getMaxMaterialID() const
 
 
 
+void BlendshapeTarget::deserialize(deserializer& d, BlendshapeTargetPtr& v)
+{
+    if (!v)
+        v = std::make_shared<BlendshapeTarget>();
+    v->deserialize(d);
+}
+
 #define EachMember(F)\
-    F(indices) F(point_offsets) F(normal_offsets)
+    F(point_offsets) F(normal_offsets) F(weight)
+
+void BlendshapeTarget::serialize(serializer& s)
+{
+#define Body(V) write(s, V);
+    EachMember(Body)
+#undef Body
+}
+
+void BlendshapeTarget::deserialize(deserializer& d)
+{
+#define Body(V) read(d, V);
+    EachMember(Body)
+#undef Body
+}
+#undef EachMember
+
+
+#define EachMember(F)\
+    F(indices) F(targets)
 
 void BlendshapeNode::serialize(serializer& s)
 {
@@ -590,11 +607,10 @@ void BlendshapeNode::convert(const ConvertOptions& opt)
 void BlendshapeNode::clear()
 {
     indices.clear();
-    point_offsets.clear();
-    normal_offsets.clear();
+    targets.clear();
 }
 
-void BlendshapeNode::makeMesh(MeshNode& dst, const MeshNode& base)
+void BlendshapeNode::makeMesh(MeshNode& dst, const MeshNode& base, float weight)
 {
     dst.points = base.points;
     dst.normals = base.normals;
@@ -604,58 +620,105 @@ void BlendshapeNode::makeMesh(MeshNode& dst, const MeshNode& base)
     dst.counts = base.counts;
     dst.indices = base.indices;
 
-    if (indices.empty()) {
-        size_t npoints = dst.points.size();
-        if (!point_offsets.empty() && point_offsets.size() == npoints) {
-            auto* points = dst.points.data();
-            for (size_t pi = 0; pi < npoints; ++pi)
-                points[pi] += point_offsets[pi];
-        }
-
-        size_t nnormals = dst.points.size();
-        if (!normal_offsets.empty() && normal_offsets.size() == nnormals) {
-            auto* normals = dst.normals.data();
-            for (size_t pi = 0; pi < nnormals; ++pi)
-                normals[pi] += normal_offsets[pi];
-            mu::Normalize(normals, dst.normals.size());
-        }
-    }
-    else {
-        size_t nindices = indices.size();
-        auto* idx = indices.data();
-        if (!point_offsets.empty()) {
-            auto* points = dst.points.data();
-            for (size_t ii = 0; ii < nindices; ++ii)
-                points[idx[ii]] += point_offsets[ii];
-        }
-        if (!normal_offsets.empty()) {
-            auto* normals = dst.normals.data();
-            for (size_t ii = 0; ii < nindices; ++ii)
-                normals[idx[ii]] += normal_offsets[ii];
-            mu::Normalize(normals, dst.normals.size());
-        }
-    }
+    apply(dst.points.data(), dst.normals.data(), weight);
 }
 
-void BlendshapeNode::makeOffsets(const MeshNode& target, const MeshNode& base)
+BlendshapeTarget* BlendshapeNode::addTarget(float weight)
 {
+    for (auto& t : targets)
+        if (t->weight == weight)
+            return t.get();
+
+    auto ret = new BlendshapeTarget();
+    ret->weight = weight;
+    targets.push_back(BlendshapeTargetPtr(ret));
+    std::sort(targets.begin(), targets.end(), [](auto& a, auto& b) { return a->weight < b->weight; });
+    return ret;
+}
+
+BlendshapeTarget* BlendshapeNode::addTarget(const MeshNode& target, const MeshNode& base, float weight)
+{
+    auto& dst = *addTarget(weight);
     if (!base.points.empty() && base.points.size() == target.points.size()) {
         size_t n = base.points.size();
-        point_offsets.resize_discard(n);
+        dst.point_offsets.resize_discard(n);
         auto* b = base.points.cdata();
         auto* t = target.points.cdata();
-        auto* d = point_offsets.data();
+        auto* d = dst.point_offsets.data();
         for (size_t i = 0; i < n; ++i)
             d[i] = t[i] - b[i];
     }
     if (!base.normals.empty() && base.normals.size() == target.normals.size()) {
         size_t n = base.normals.size();
-        normal_offsets.resize_discard(n);
+        dst.normal_offsets.resize_discard(n);
         auto* b = base.normals.cdata();
         auto* t = target.normals.cdata();
-        auto* d = normal_offsets.data();
+        auto* d = dst.normal_offsets.data();
         for (size_t i = 0; i < n; ++i)
             d[i] = t[i] - b[i];
+    }
+    return &dst;
+}
+
+void BlendshapeNode::apply(float3* dst_points, float3* dst_normals, float weight)
+{
+    if (weight == 0.0f)
+        return;
+
+    BlendshapeTarget* prev = nullptr;
+    BlendshapeTarget* next = nullptr;
+    for (auto& t : targets) {
+        if (weight <= t->weight) {
+            next = t.get();
+            break;
+        }
+        else {
+            prev = t.get();
+        }
+    }
+
+    auto apply1 = [this, dst_points, dst_normals](BlendshapeTarget *t, float w) {
+        const float3* po = t->point_offsets.cdata();
+        if (!indices.empty()) {
+            size_t nbsi = indices.size();
+            const int* i = indices.cdata();
+            for (size_t oi = 0; oi < nbsi; ++oi)
+                dst_points[i[oi]] += po[oi] * w;
+        }
+        else {
+            size_t npoints = t->point_offsets.size();
+            for (size_t oi = 0; oi < npoints; ++oi)
+                dst_points[oi] += po[oi] * w;
+        }
+        // todo: handle normal offsets
+    };
+
+    auto apply2 = [this, dst_points, dst_normals](BlendshapeTarget* t1, BlendshapeTarget* t2, float w) {
+        const float3* po1 = t1->point_offsets.cdata();
+        const float3* po2 = t2->point_offsets.cdata();
+        if (!indices.empty()) {
+            size_t nbsi = indices.size();
+            const int* i = indices.cdata();
+            for (size_t oi = 0; oi < nbsi; ++oi)
+                dst_points[i[oi]] += mu::lerp(po1[oi], po2[oi], w);
+        }
+        else {
+            size_t npoints = t1->point_offsets.size();
+            for (size_t oi = 0; oi < npoints; ++oi)
+                dst_points[oi] += mu::lerp(po1[oi], po2[oi], w);
+        }
+        // todo: handle normal offsets
+    };
+
+    if (next && !prev) {
+        apply1(next, weight / next->weight);
+    }
+    else if (!next && prev) {
+        apply1(prev, weight / prev->weight);
+    }
+    else if (next && prev) {
+        float w = (weight - prev->weight) / (next->weight - prev->weight);
+        apply2(prev, next, w);
     }
 }
 

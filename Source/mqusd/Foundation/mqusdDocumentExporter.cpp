@@ -216,7 +216,7 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     mu::parallel_for(0, nobjects, [this](int oi) {
         auto& rec = m_obj_records[oi];
         if (rec.blendshape)
-            rec.blendshape->makeOffsets(*rec.mesh, *rec.bs_base->mesh);
+            rec.blendshape->addTarget(*rec.mesh, *rec.bs_base->mesh);
     });
 
     // calculate local matrices
