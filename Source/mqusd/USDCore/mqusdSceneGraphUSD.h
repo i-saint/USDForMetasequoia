@@ -244,10 +244,8 @@ private:
 
     UsdShadeShader m_surface;
     UsdShadeShader m_tex_diffuse;
-    UsdShadeShader m_tex_ambient;
-    UsdShadeShader m_tex_specular;
-    UsdShadeShader m_tex_emission;
-    UsdShadeShader m_tex_roughness;
+    UsdShadeShader m_tex_opacity;
+    UsdShadeShader m_tex_bump;
 
     UsdShadeInput m_in_use_vertex_color;
     UsdShadeInput m_in_double_sided;

@@ -1077,7 +1077,7 @@ Texture::operator bool() const
 
 #define EachMember(F)\
     F(shader) F(use_vertex_color) F(double_sided) F(diffuse_color) F(opacity) F(roughness) F(ambient_color) F(specular_color) F(emissive_color)\
-    F(diffuse_texture) F(alpha_texture) F(bump_texture)
+    F(diffuse_texture) F(opacity_texture) F(bump_texture)
 
 void MaterialNode::serialize(serializer& s)
 {

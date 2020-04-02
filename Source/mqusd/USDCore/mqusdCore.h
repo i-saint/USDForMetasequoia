@@ -17,6 +17,12 @@
 #define mqusdMtlDoubleSided     TfToken("doubleSided")
 #define mqusdMtlAmbientColor    TfToken("ambientColor")
 
+#define mqusdMtlDiffuseTexture  "diffuseColorTexture"
+#define mqusdMtlOpacityTexture  "opacityTexture"
+#define mqusdMtlBumpTexture     "bumpTexture"
+#define mqusdMtlSpecularTexture "specularColorTexture"
+#define mqusdMtlEmissiveTexture "emissionColorTexture"
+
 // parameters based on UsdPreviewSurface Proposal
 // https://graphics.pixar.com/usd/docs/UsdPreviewSurface-Proposal.html
 #define mqusdUsdPreviewSurface  TfToken("UsdPreviewSurface")
@@ -26,20 +32,16 @@
 #define mqusdMtlSpecularColor   TfToken("specularColor")
 #define mqusdMtlRoughness       TfToken("roughness")
 #define mqusdMtlOpacity         TfToken("opacity")
+#define mqusdMtlFile            TfToken("file")
+#define mqusdMtlRGB             TfToken("rgb")
+#define mqusdMtlA               TfToken("a")
 #define mqusdMtlSurface         TfToken("surface")
-#define mqusdMtlSurfaceConnect  TfToken("surface.connect")
-
 #define mqusdMtlST              TfToken("st")
+#define mqusdMtlSTName          TfToken("frame:stPrimvarName")
 #define mqusdMtlTangents        TfToken("tangents")
+#define mqusdMtlTangentsName    TfToken("frame:tangentsPrimvarName")
 #define mqusdMtlBinormals       TfToken("binormals")
-#define mqusdMtlFrameST         TfToken("frame:stPrimvarName")
-#define mqusdMtlFrameTangents   TfToken("frame:tangentsPrimvarName")
-#define mqusdMtlFrameBinormals  TfToken("frame:binormalsPrimvarName")
-
-#define mqusdMtlDiffuseColorTexture     "diffuseColorTexture"
-#define mqusdMtlAmbientColorTexture     "ambientColorTexture"
-#define mqusdMtlSpecularColorTexture    "specularColorTexture"
-#define mqusdMtlEmissionColorTexture    "emissionColorTexture"
+#define mqusdMtlBinormalsName   TfToken("frame:binormalsPrimvarName")
 
 #ifdef _WIN32
     #define mqusdCoreAPI extern "C" __declspec(dllexport)

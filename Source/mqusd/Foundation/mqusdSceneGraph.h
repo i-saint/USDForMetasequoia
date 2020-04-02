@@ -353,6 +353,7 @@ public:
     operator bool() const;
 
     std::string file_path;
+    float2 st = float2::zero();
 };
 mqusdSerializable(Texture);
 mqusdDeclPtr(Texture);
@@ -382,7 +383,7 @@ public:
     float3 emissive_color = float3::zero();
 
     Texture diffuse_texture;
-    Texture alpha_texture;
+    Texture opacity_texture;
     Texture bump_texture;
 };
 

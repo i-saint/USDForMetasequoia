@@ -873,17 +873,22 @@ USDMaterialNode::USDMaterialNode(Node* n, UsdPrim prim)
 }
 
 
-template<class T> static inline void GetValue(T& src, float& v, UsdTimeCode t)
+template<class T> static inline void GetValue(T& src, float& v, UsdTimeCode t = {})
 {
     if (src)
         src.Get(&v, t);
 }
-template<class T> static inline void GetValue(T& src, float3& v, UsdTimeCode t)
+template<class T> static inline void GetValue(T& src, float2& v, UsdTimeCode t = {})
+{
+    if (src)
+        src.Get((GfVec2f*)&v, t);
+}
+template<class T> static inline void GetValue(T& src, float3& v, UsdTimeCode t = {})
 {
     if (src)
         src.Get((GfVec3f*)&v, t);
 }
-template<class T> static inline void GetValue(T& src, bool& v, UsdTimeCode t)
+template<class T> static inline void GetValue(T& src, bool& v, UsdTimeCode t = {})
 {
     if (src) {
         int tmp = 0;
@@ -891,11 +896,29 @@ template<class T> static inline void GetValue(T& src, bool& v, UsdTimeCode t)
             v = tmp != 0;
     }
 }
+template<class T> static inline void GetValue(T& src, TfToken& v, UsdTimeCode t = {})
+{
+    if (src)
+        src.Get(&v, t);
+}
+template<class T> static inline void GetValue(T& src, std::string& v, UsdTimeCode t = {})
+{
+    if (src) {
+        TfToken tmp;
+        src.Get(&tmp, t);
+        v = tmp.GetString();
+    }
+}
 
 template<class T> static inline void SetValue(T& dst, float v)
 {
     if (dst)
         dst.Set(v);
+}
+template<class T> static inline void SetValue(T& dst, float2 v)
+{
+    if (dst)
+        dst.Set((GfVec2f&)v);
 }
 template<class T> static inline void SetValue(T& dst, float3 v)
 {
@@ -926,22 +949,26 @@ void USDMaterialNode::beforeRead()
         if (sh.GetIdAttr().Get(&id)) {
             if (id == mqusdUsdPreviewSurface) {
                 m_surface = sh;
+                m_in_use_vertex_color = m_surface.GetInput(mqusdMtlUseVertexColor);
+                m_in_double_sided   = m_surface.GetInput(mqusdMtlDoubleSided);
+                m_in_diffuse_color  = m_surface.GetInput(mqusdMtlDiffuseColor);
+                m_in_opacity        = m_surface.GetInput(mqusdMtlOpacity);
+                m_in_roughness      = m_surface.GetInput(mqusdMtlRoughness);
+                m_in_ambient_color  = m_surface.GetInput(mqusdMtlAmbientColor);
+                m_in_specular_color = m_surface.GetInput(mqusdMtlSpecularColor);
+                m_in_emissive_color = m_surface.GetInput(mqusdMtlEmissiveColor);
             }
             else if (id == mqusdUsdUVTexture) {
-                // todo
+                if (c.GetName() == mqusdMtlDiffuseTexture)
+                    m_tex_diffuse = sh;
+                else if (c.GetName() == mqusdMtlOpacityTexture)
+                    m_tex_opacity = sh;
+                else if (c.GetName() == mqusdMtlBumpTexture)
+                    m_tex_bump = sh;
             }
         }
     });
-    if (m_surface) {
-        m_in_use_vertex_color = m_surface.GetInput(mqusdMtlUseVertexColor);
-        m_in_double_sided   = m_surface.GetInput(mqusdMtlDoubleSided);
-        m_in_diffuse_color  = m_surface.GetInput(mqusdMtlDiffuseColor);
-        m_in_opacity        = m_surface.GetInput(mqusdMtlOpacity);
-        m_in_roughness      = m_surface.GetInput(mqusdMtlRoughness);
-        m_in_ambient_color  = m_surface.GetInput(mqusdMtlAmbientColor);
-        m_in_specular_color = m_surface.GetInput(mqusdMtlSpecularColor);
-        m_in_emissive_color = m_surface.GetInput(mqusdMtlEmissiveColor);
-    }
+
     read(default_time);
 }
 
@@ -961,14 +988,32 @@ void USDMaterialNode::read(double time)
         GetValue(m_in_specular_color, dst.specular_color, t);
         GetValue(m_in_emissive_color, dst.emissive_color, t);
     }
+
+    auto get_texture = [](Texture& dst, UsdShadeShader& src) {
+        if (!src)
+            return;
+        if (auto file = src.GetInput(mqusdMtlFile))
+            GetValue(file, dst.file_path);
+        if (auto st = src.GetInput(mqusdMtlST))
+            GetValue(st, dst.st);
+    };
+    get_texture(dst.diffuse_texture, m_tex_diffuse);
+    get_texture(dst.opacity_texture, m_tex_opacity);
+    get_texture(dst.bump_texture, m_tex_bump);
 }
 
 void USDMaterialNode::beforeWrite()
 {
+    auto& src = *static_cast<const MaterialNode*>(m_node);
+
+    // setup
     if (!m_surface) {
         auto surf_path = m_prim.GetPath().GetString() + "/Surface";
         auto surf_prim = m_scene->getStage()->DefinePrim(SdfPath(surf_path), TfToken(USDShaderNode::getUsdTypeName()));
         m_surface = UsdShadeShader(surf_prim);
+
+        // based on UsdPreviewSurface Proposal
+        // https://graphics.pixar.com/usd/docs/UsdPreviewSurface-Proposal.html
         m_surface.SetShaderId(mqusdUsdPreviewSurface);
 
         m_in_use_vertex_color = m_surface.CreateInput(mqusdMtlUseVertexColor, SdfValueTypeNames->Int);
@@ -980,20 +1025,19 @@ void USDMaterialNode::beforeWrite()
         m_in_specular_color = m_surface.CreateInput(mqusdMtlSpecularColor, SdfValueTypeNames->Float3);
         m_in_emissive_color = m_surface.CreateInput(mqusdMtlEmissiveColor, SdfValueTypeNames->Float3);
 
-        // follow the convention
         auto sh_surf = m_surface.CreateOutput(mqusdMtlSurface, SdfValueTypeNames->Token);
         auto mat_surf = m_material.CreateOutput(mqusdMtlSurface, SdfValueTypeNames->Token);
-        auto st = m_material.CreateInput(mqusdMtlFrameST, SdfValueTypeNames->Token);
-        auto tangents = m_material.CreateInput(mqusdMtlFrameTangents, SdfValueTypeNames->Token);
-        auto binormals = m_material.CreateInput(mqusdMtlFrameBinormals, SdfValueTypeNames->Token);
+        auto st = m_material.CreateInput(mqusdMtlSTName, SdfValueTypeNames->Token);
+        auto tangents = m_material.CreateInput(mqusdMtlTangentsName, SdfValueTypeNames->Token);
+        auto binormals = m_material.CreateInput(mqusdMtlBinormalsName, SdfValueTypeNames->Token);
         SetValue(st, mqusdMtlST);
         SetValue(tangents, mqusdMtlTangents);
         SetValue(binormals, mqusdMtlBinormals);
         mat_surf.ConnectToSource(sh_surf);
     }
 
+    // base parameters
     if (m_surface) {
-        auto& src = *static_cast<const MaterialNode*>(m_node);
         SetValue(m_in_use_vertex_color, src.use_vertex_color);
         SetValue(m_in_double_sided, src.double_sided);
         SetValue(m_in_diffuse_color, src.diffuse_color);
@@ -1002,6 +1046,33 @@ void USDMaterialNode::beforeWrite()
         SetValue(m_in_ambient_color, src.ambient_color);
         SetValue(m_in_specular_color, src.specular_color);
         SetValue(m_in_emissive_color, src.emissive_color);
+    }
+
+    // textures
+    auto add_texture = [this](const char* name, const Texture& v) {
+        auto tex_path = m_prim.GetPath().GetString() + "/" + name;
+        auto tex_prim = m_scene->getStage()->DefinePrim(SdfPath(tex_path), TfToken(USDShaderNode::getUsdTypeName()));
+        auto tex = UsdShadeShader(tex_prim);
+        tex.SetShaderId(mqusdUsdUVTexture);
+
+        auto in_file = tex.CreateInput(mqusdMtlFile, SdfValueTypeNames->Asset);
+        auto in_st = tex.CreateInput(mqusdMtlST, SdfValueTypeNames->Float2);
+        SetValue(in_file, TfToken(v.file_path));
+        SetValue(in_st, v.st);
+        return tex;
+    };
+    if (!m_tex_diffuse && src.diffuse_texture) {
+        m_tex_diffuse = add_texture(mqusdMtlDiffuseTexture, src.diffuse_texture);
+        auto o = m_tex_diffuse.CreateOutput(mqusdMtlRGB, SdfValueTypeNames->Float3);
+        m_in_diffuse_color.ConnectToSource(o);
+    }
+    if (!m_tex_opacity && src.opacity_texture) {
+        m_tex_opacity = add_texture(mqusdMtlOpacityTexture, src.opacity_texture);
+        auto o = m_tex_diffuse.CreateOutput(mqusdMtlA, SdfValueTypeNames->Float);
+        m_in_opacity.ConnectToSource(o);
+    }
+    if (!m_tex_bump && src.bump_texture) {
+        m_tex_bump = add_texture(mqusdMtlBumpTexture, src.bump_texture);
     }
 }
 
