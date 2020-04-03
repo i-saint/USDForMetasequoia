@@ -10,6 +10,11 @@
 #define mqusdShaderMQBlinn      "mq:blinn"
 #define mqusdShaderMQHLSL       "mq:hlsl"
 
+#define mqusdWrapBlack  "black"
+#define mqusdWrapClamp  "clamp"
+#define mqusdWrapRepeat "repeat"
+#define mqusdWrapMirror "mirror"
+
 // Metasequoia-specific parameters
 #define mqusdAttrShaderType      TfToken("shaderType")
 #define mqusdAttrUseVertexColor  TfToken("useVertexColor")
@@ -37,6 +42,9 @@
 #define mqusdAttrRGB            TfToken("rgb")
 #define mqusdAttrA              TfToken("a")
 #define mqusdAttrSurface        TfToken("surface")
+#define mqusdAttrWrapS          TfToken("wrapS")
+#define mqusdAttrWrapT          TfToken("wrapT")
+#define mqusdAttrFallback       TfToken("fallback")
 #define mqusdAttrST             TfToken("st")
 #define mqusdAttrSTName         TfToken("frame:stPrimvarName")
 #define mqusdAttrTangents       TfToken("tangents")

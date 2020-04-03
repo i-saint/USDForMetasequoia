@@ -1094,8 +1094,17 @@ void InstancerNode::bake(MeshNode& dst, const float4x4& trans)
 }
 
 
+const float4 Texture::default_fallback = { 0.0f, 0.0f, 0.0f, 1.0f };
+
 #define EachMember(F)\
-    F(file_path)
+    F(file_path) F(st) F(wrap_s) F(wrap_t) F(fallback)
+
+void Texture::deserialize(deserializer& d, TexturePtr& v)
+{
+    if (!v)
+        v = std::make_shared<Texture>();
+    v->deserialize(d);
+}
 
 void Texture::serialize(serializer& s)
 {
@@ -1106,6 +1115,7 @@ void Texture::deserialize(deserializer& d)
 {
     EachMember(mqusdDeserialize)
 }
+
 #undef EachMember
 
 Texture::operator bool() const

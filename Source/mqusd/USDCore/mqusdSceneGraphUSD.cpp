@@ -905,6 +905,11 @@ template<class T> static inline void GetValue(T& src, float3& v, UsdTimeCode t =
     if (src)
         src.Get((GfVec3f*)&v, t);
 }
+template<class T> static inline void GetValue(T& src, float4& v, UsdTimeCode t = { default_time })
+{
+    if (src)
+        src.Get((GfVec4f*)&v, t);
+}
 template<class T> static inline void GetValue(T& src, bool& v, UsdTimeCode t = { default_time })
 {
     if (src) {
@@ -954,6 +959,27 @@ template<class T> static inline void GetValue(T& src, ShaderType& v, UsdTimeCode
     }
 }
 
+static inline WrapMode ToWrapMode(const std::string& v)
+{
+    if (v == mqusdWrapClamp)
+        return WrapMode::Clamp;
+    else if (v == mqusdWrapRepeat)
+        return WrapMode::Repeat;
+    else if (v == mqusdWrapMirror)
+        return WrapMode::Mirror;
+    else if (v == mqusdWrapBlack)
+        return WrapMode::Black;
+    return WrapMode::Clamp;
+}
+template<class T> static inline void GetValue(T& src, WrapMode& v, UsdTimeCode t = { default_time })
+{
+    if (src) {
+        TfToken tmp;
+        src.Get(&tmp, t);
+        v = ToWrapMode(tmp.GetString());
+    }
+}
+
 template<class T> static inline void SetValue(T& dst, float v, UsdTimeCode t = { default_time })
 {
     if (dst)
@@ -968,6 +994,11 @@ template<class T> static inline void SetValue(T& dst, float3 v, UsdTimeCode t = 
 {
     if (dst)
         dst.Set((GfVec3f&)v, t);
+}
+template<class T> static inline void SetValue(T& dst, float4 v, UsdTimeCode t = { default_time })
+{
+    if (dst)
+        dst.Set((GfVec4f&)v, t);
 }
 template<class T> static inline void SetValue(T& dst, bool v, UsdTimeCode t = { default_time })
 {
@@ -1000,11 +1031,24 @@ static inline std::string ToString(ShaderType v)
 }
 template<class T> static inline void SetValue(T& dst, ShaderType v, UsdTimeCode t = { default_time })
 {
-    if (dst) {
+    if (dst)
         dst.Set(TfToken(ToString(v)), t);
-    }
 }
 
+static inline std::string ToString(WrapMode v)
+{
+    switch (v) {
+    case WrapMode::Clamp:   return mqusdWrapClamp;
+    case WrapMode::Repeat:  return mqusdWrapRepeat;
+    case WrapMode::Mirror:  return mqusdWrapMirror;
+    default: return "";
+    }
+}
+template<class T> static inline void SetValue(T& dst, WrapMode v, UsdTimeCode t = { default_time })
+{
+    if (dst)
+        dst.Set(TfToken(ToString(v)), t);
+}
 
 
 void USDMaterialNode::beforeRead()
@@ -1063,13 +1107,21 @@ void USDMaterialNode::read(double time)
         GetValue(m_in_emissive_color, dst.emissive_color, t);
     }
 
-    auto get_texture = [](Texture& dst, UsdShadeShader& src) {
+    auto get_texture = [](TexturePtr& dst, UsdShadeShader& src) {
         if (!src)
             return;
+        dst = std::make_shared<Texture>();
         if (auto file = src.GetInput(mqusdAttrFile))
-            GetValue(file, dst.file_path);
+            GetValue(file, dst->file_path);
         if (auto st = src.GetInput(mqusdAttrST))
-            GetValue(st, dst.st);
+            GetValue(st, dst->st);
+        if (auto ws = src.GetInput(mqusdAttrWrapS))
+            GetValue(ws, dst->wrap_s);
+        if (auto wt = src.GetInput(mqusdAttrWrapT))
+            GetValue(wt, dst->wrap_t);
+        if (auto fallback = src.GetInput(mqusdAttrFallback))
+            GetValue(fallback, dst->fallback);
+
     };
     get_texture(dst.diffuse_texture, m_tex_diffuse);
     get_texture(dst.opacity_texture, m_tex_opacity);
@@ -1135,25 +1187,29 @@ void USDMaterialNode::beforeWrite()
         auto tex_prim = m_scene->getStage()->DefinePrim(SdfPath(tex_path), TfToken(USDShaderNode::getUsdTypeName()));
         auto tex = UsdShadeShader(tex_prim);
         tex.SetShaderId(mqusdUsdUVTexture);
-
-        auto in_file = tex.CreateInput(mqusdAttrFile, SdfValueTypeNames->Asset);
-        auto in_st = tex.CreateInput(mqusdAttrST, SdfValueTypeNames->Float2);
-        SetValue(in_file, v.file_path);
-        SetValue(in_st, v.st);
+        SetValue(tex.CreateInput(mqusdAttrFile, SdfValueTypeNames->Asset), v.file_path);
+        if (v.st != float2::zero())
+            SetValue(tex.CreateInput(mqusdAttrST, SdfValueTypeNames->Float2), v.st);
+        if (v.wrap_s != WrapMode::Unknown)
+            SetValue(tex.CreateInput(mqusdAttrWrapS, SdfValueTypeNames->Token), v.wrap_s);
+        if (v.wrap_t != WrapMode::Unknown)
+            SetValue(tex.CreateInput(mqusdAttrWrapT, SdfValueTypeNames->Token), v.wrap_t);
+        if (v.fallback != Texture::default_fallback)
+            SetValue(tex.CreateInput(mqusdAttrFallback, SdfValueTypeNames->Float4), v.fallback);
         return tex;
     };
     if (!m_tex_diffuse && src.diffuse_texture) {
-        m_tex_diffuse = add_texture(mqusdAttrDiffuseTexture, src.diffuse_texture);
+        m_tex_diffuse = add_texture(mqusdAttrDiffuseTexture, *src.diffuse_texture);
         auto o = m_tex_diffuse.CreateOutput(mqusdAttrRGB, SdfValueTypeNames->Float3);
         m_in_diffuse_color.ConnectToSource(o);
     }
     if (!m_tex_opacity && src.opacity_texture) {
-        m_tex_opacity = add_texture(mqusdAttrOpacityTexture, src.opacity_texture);
+        m_tex_opacity = add_texture(mqusdAttrOpacityTexture, *src.opacity_texture);
         auto o = m_tex_opacity.CreateOutput(mqusdAttrA, SdfValueTypeNames->Float);
         m_in_opacity.ConnectToSource(o);
     }
     if (!m_tex_bump && src.bump_texture) {
-        m_tex_bump = add_texture(mqusdAttrBumpTexture, src.bump_texture);
+        m_tex_bump = add_texture(mqusdAttrBumpTexture, *src.bump_texture);
         auto o = m_tex_bump.CreateOutput(mqusdAttrR, SdfValueTypeNames->Float);
     }
 }

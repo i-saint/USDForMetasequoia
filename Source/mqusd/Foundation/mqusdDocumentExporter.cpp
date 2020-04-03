@@ -486,15 +486,42 @@ bool DocumentExporter::extractMaterial(MQMaterial mtl, MaterialNode& dst)
     dst.specular_color = to_float3(mtl->GetSpecularColor());
     dst.emissive_color = to_float3(mtl->GetEmissionColor());
 
+    auto to_wrap_mode = [](int v) {
+        switch (v) {
+        case MQMATERIAL_WRAP_REPEAT: return WrapMode::Repeat;
+        case MQMATERIAL_WRAP_MIRROR: return WrapMode::Mirror;
+        case MQMATERIAL_WRAP_CLAMP: return WrapMode::Clamp;
+        }
+        return WrapMode::Unknown;
+    };
+
+    auto wrap_s = to_wrap_mode(mtl->GetWrapModeU());
+    auto wrap_t = to_wrap_mode(mtl->GetWrapModeV());
+
     char buf[1024];
     mtl->GetTextureName(buf, sizeof(buf));
-    dst.diffuse_texture.file_path = buf;
+    if (buf[0] != '\0') {
+        dst.diffuse_texture = std::make_shared<Texture>();
+        dst.diffuse_texture->file_path = buf;
+        dst.diffuse_texture->wrap_s = wrap_s;
+        dst.diffuse_texture->wrap_t = wrap_t;
+    }
 
     mtl->GetAlphaName(buf, sizeof(buf));
-    dst.opacity_texture.file_path = buf;
+    if (buf[0] != '\0') {
+        dst.opacity_texture = std::make_shared<Texture>();
+        dst.opacity_texture->file_path = buf;
+        dst.opacity_texture->wrap_s = wrap_s;
+        dst.opacity_texture->wrap_t = wrap_t;
+    }
 
     mtl->GetBumpName(buf, sizeof(buf));
-    dst.bump_texture.file_path = buf;
+    if (buf[0] != '\0') {
+        dst.bump_texture = std::make_shared<Texture>();
+        dst.bump_texture->file_path = buf;
+        dst.bump_texture->wrap_s = wrap_s;
+        dst.bump_texture->wrap_t = wrap_t;
+    }
     return true;
 }
 

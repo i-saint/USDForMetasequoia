@@ -546,12 +546,26 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
         mqmat->SetSpecularColor((MQColor&)src.specular_color);
         mqmat->SetEmissionColor((MQColor&)src.emissive_color);
 
-        if (src.diffuse_texture)
-            mqmat->SetTextureName(src.diffuse_texture.file_path.c_str());
+        auto from_wrap_mode = [](WrapMode v) {
+            switch (v) {
+            case WrapMode::Repeat: return MQMATERIAL_WRAP_REPEAT;
+            case WrapMode::Mirror: return MQMATERIAL_WRAP_MIRROR;
+            case WrapMode::Clamp: return MQMATERIAL_WRAP_CLAMP;
+            }
+            return MQMATERIAL_WRAP_REPEAT;
+        };
+
+        if (src.diffuse_texture) {
+            mqmat->SetTextureName(src.diffuse_texture->file_path.c_str());
+            if (src.diffuse_texture->wrap_s != WrapMode::Unknown)
+                mqmat->SetWrapModeU(from_wrap_mode(src.diffuse_texture->wrap_s));
+            if (src.diffuse_texture->wrap_t != WrapMode::Unknown)
+                mqmat->SetWrapModeV(from_wrap_mode(src.diffuse_texture->wrap_t));
+        }
         if (src.opacity_texture)
-            mqmat->SetAlphaName(src.opacity_texture.file_path.c_str());
+            mqmat->SetAlphaName(src.opacity_texture->file_path.c_str());
         if (src.bump_texture)
-            mqmat->SetBumpName(src.bump_texture.file_path.c_str());
+            mqmat->SetBumpName(src.bump_texture->file_path.c_str());
     }
     return true;
 }

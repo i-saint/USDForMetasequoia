@@ -371,20 +371,36 @@ public:
 };
 
 
+enum class WrapMode : int
+{
+    Unknown,
+    Clamp,
+    Repeat,
+    Mirror,
+    Black,
+};
+
 class Texture
 {
 public:
+    static const float4 default_fallback;
+    static void deserialize(deserializer& d, std::shared_ptr<Texture>& v);
+
     void serialize(serializer& s);
     void deserialize(deserializer& d);
     operator bool() const;
 
     std::string file_path;
     float2 st = float2::zero();
+    WrapMode wrap_s = WrapMode::Unknown;
+    WrapMode wrap_t = WrapMode::Unknown;
+    float4 fallback = Texture::default_fallback;
 };
 mqusdSerializable(Texture);
 mqusdDeclPtr(Texture);
 
-enum class ShaderType
+
+enum class ShaderType : int
 {
     Unknown,
     MQClassic,
@@ -420,13 +436,13 @@ public:
     float3 specular_color = float3::zero();
     float3 emissive_color = float3::zero();
 
-    Texture diffuse_texture;
-    Texture opacity_texture;
-    Texture bump_texture;
+    TexturePtr diffuse_texture;
+    TexturePtr opacity_texture;
+    TexturePtr bump_texture;
 };
 
 
-enum class UpAxis
+enum class UpAxis : int
 {
     Unknown,
     Y,
