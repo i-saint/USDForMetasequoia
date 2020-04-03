@@ -306,7 +306,11 @@ public:
     void applyTransform(const float4x4& v);
     void toWorldSpace();
     void toLocalSpace();
-    void makeFaceSets(bool cleanup = true);
+
+    // material_ids & materials -> facesets
+    void buildFaceSets(bool cleanup = true);
+    // facesets -> material_ids & materials
+    void buildMaterialIDs(bool cleanup = true);
 
     void clear();
     void merge(const MeshNode& other, const float4x4& trans = float4x4::identity());

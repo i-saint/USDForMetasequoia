@@ -416,7 +416,7 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst, XformNode& xf)
     transform_container(dst.materials, m_material_records, [](auto*& d, auto& s) {
         d = s.material_data;
     });
-    dst.makeFaceSets();
+    dst.buildFaceSets();
 
     return true;
 }

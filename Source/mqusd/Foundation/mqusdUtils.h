@@ -60,12 +60,46 @@ struct each_object<Body, bool>
     }
 };
 
+template<class Body, class R>
+struct each_material
+{
+    void operator()(MQDocument doc, const Body& body)
+    {
+        int n = doc->GetMaterialCount();
+        for (int i = 0; i < n; ++i) {
+            if (auto obj = doc->GetMaterial(i))
+                body(obj);
+        }
+    }
+};
+
+template<class Body>
+struct each_material<Body, bool>
+{
+    void operator()(MQDocument doc, const Body& body)
+    {
+        int n = doc->GetMaterialCount();
+        for (int i = 0; i < n; ++i) {
+            if (auto obj = doc->GetMaterial(i)) {
+                if (!body(obj))
+                    break;
+            }
+        }
+    }
+};
+
 } // namespace detail
 
 template<class Body>
 inline void each_object(MQDocument doc, const Body& body)
 {
     detail::each_object<Body, decltype(body(nullptr))>()(doc, body);
+}
+
+template<class Body>
+inline void each_material(MQDocument doc, const Body& body)
+{
+    detail::each_material<Body, decltype(body(nullptr))>()(doc, body);
 }
 
 inline std::string GetName(MQObject obj)
@@ -169,10 +203,32 @@ inline auto append(Container& dst, const Container& src)
 }
 
 template<class T>
+inline void fill(T* dst, size_t size, T v)
+{
+    for (size_t i = 0; i < size; ++i)
+        *(dst++) = v;
+}
+template<class Container, class T>
+inline void fill(Container& dst, T v)
+{
+    fill(dst.data(), dst.size(), v);
+}
+
+template<class T>
 inline void add(T* dst, size_t size, T v)
 {
     for (size_t i = 0; i < size; ++i)
         *(dst++) += v;
+}
+
+template<class Container, class Getter>
+inline auto get_max(const Container& src, const Getter& getter)
+{
+    size_t n = src.size();
+    auto r = getter(src.front());
+    for (size_t i = 1; i < n; ++i)
+        r = std::max(r, getter(src[i]));
+    return r;
 }
 
 std::string SanitizeNodeName(const std::string& name);

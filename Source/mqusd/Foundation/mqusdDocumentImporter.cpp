@@ -92,14 +92,39 @@ bool DocumentImporter::initialize(MQDocument doc)
     return true;
 }
 
-std::string DocumentImporter::makeUniqueName(MQDocument doc, const std::string& name)
+std::string DocumentImporter::makeUniqueObjectName(MQDocument doc, const std::string& name)
 {
     std::string base = name;
     std::string ret = base;
     for (int i = 1; ; ++i) {
         bool ok = true;
         each_object(doc, [&ret, &ok](MQObject obj) {
-            char buf[256];
+            char buf[512];
+            obj->GetName(buf, sizeof(buf));
+            if (ret == buf) {
+                ok = false;
+                return false;
+            }
+            return true;
+        });
+        if (ok)
+            break;
+
+        char buf[16];
+        sprintf(buf, "_%d", i);
+        ret = base + buf;
+    }
+    return ret;
+}
+
+std::string DocumentImporter::makeUniqueMaterialName(MQDocument doc, const std::string& name)
+{
+    std::string base = name;
+    std::string ret = base;
+    for (int i = 1; ; ++i) {
+        bool ok = true;
+        each_material(doc, [&ret, &ok](MQMaterial obj) {
+            char buf[512];
             obj->GetName(buf, sizeof(buf));
             if (ret == buf) {
                 ok = false;
@@ -196,6 +221,9 @@ bool DocumentImporter::read(MQDocument doc, double t)
     });
 
     auto mesh_nodes = m_scene->getNodes<MeshNode>();
+    mu::parallel_for_each(mesh_nodes.begin(), mesh_nodes.end(), [this](MeshNode* n) {
+        n->buildMaterialIDs();
+    });
 
     // reserve materials
     {
@@ -266,7 +294,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
         auto obj = findOrCreateMQObject(doc, m_merged_mqobj_id, 0, created);
         if (created) {
             auto name = mu::GetFilename_NoExtension(m_scene->path.c_str());
-            obj->SetName(makeUniqueName(doc, name).c_str());
+            obj->SetName(makeUniqueObjectName(doc, name).c_str());
         }
 
         updateMesh(doc, obj, m_merged_mesh);
@@ -282,7 +310,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
                 auto bs = findOrCreateMQObject(doc, rec.blendshape_ids[bi], rec.mqid, created);
                 updateMesh(doc, bs, rec.tmp_mesh);
                 if (created) {
-                    bs->SetName(makeUniqueName(doc, blendshape->getName()).c_str());
+                    bs->SetName(makeUniqueObjectName(doc, blendshape->getName()).c_str());
                     bs->SetVisible(0);
 #if MQPLUGIN_VERSION >= 0x0470
                     m_morph_manager->BindTargetObject(obj, bs);
@@ -299,7 +327,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
             bool created;
             auto obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
             if (created)
-                obj->SetName(makeUniqueName(doc, rec.node->getName()).c_str());
+                obj->SetName(makeUniqueObjectName(doc, rec.node->getName()).c_str());
             return obj;
         };
 
@@ -511,18 +539,19 @@ bool DocumentImporter::updateSkeleton(MQDocument /*doc*/, const SkeletonNode& sr
 bool DocumentImporter::updateMaterials(MQDocument doc)
 {
     auto material_nodes = m_scene->getNodes<MaterialNode>();
-    int nmaterials = (int)material_nodes.size();
-    for (int mi = 0; mi < nmaterials; ++mi) {
-        auto& src = *material_nodes[mi];
-        MQMaterial mqmat = nullptr;
-        if (mi < doc->GetMaterialCount()) {
-            mqmat = doc->GetMaterial(mi);
-            mqmat->SetName(src.getName().c_str());
-        }
-        else {
+    m_material_records.resize(material_nodes.size());
+    each_with_index(material_nodes, [&](MaterialNode* node, int mi) {
+        auto& src = *node;
+        auto& rec = m_material_records[mi];
+        rec.node = node;
+
+        MQMaterial mqmat = rec.mqid != 0 ? doc->GetMaterialFromUniqueID(rec.mqid) : nullptr;
+        if (!mqmat) {
             mqmat = MQ_CreateMaterial();
-            mqmat->SetName(src.getName().c_str());
-            doc->AddMaterial(mqmat);
+            mqmat->SetName(makeUniqueMaterialName(doc, src.getName()).c_str());
+            rec.mqindex = doc->AddMaterial(mqmat);
+            rec.mqid = mqmat->GetUniqueID();
+            src.index = rec.mqindex;
         }
 
         int shader = MQMATERIAL_SHADER_LAMBERT;
@@ -566,7 +595,7 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
             mqmat->SetAlphaName(src.opacity_texture->file_path.c_str());
         if (src.bump_texture)
             mqmat->SetBumpName(src.bump_texture->file_path.c_str());
-    }
+    });
     return true;
 }
 

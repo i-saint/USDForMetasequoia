@@ -53,7 +53,15 @@ private:
         std::vector<JointRecord> joints;
     };
 
-    std::string makeUniqueName(MQDocument doc, const std::string& name);
+    struct MaterialRecord
+    {
+        MaterialNode* node = nullptr;
+        int mqid = 0;
+        int mqindex = 0;
+    };
+
+    std::string makeUniqueObjectName(MQDocument doc, const std::string& name);
+    std::string makeUniqueMaterialName(MQDocument doc, const std::string& name);
     ObjectRecord* findRecord(UINT mqid);
     MQObject findOrCreateMQObject(MQDocument doc, UINT& id, UINT parent_id, bool& created);
     bool deleteMQObject(MQDocument doc, UINT id);
@@ -73,6 +81,7 @@ private:
     std::vector<ObjectRecord> m_obj_records;
     std::vector<InstancerRecord> m_inst_records;
     std::vector<SkeletonRecord> m_skel_records;
+    std::vector<MaterialRecord> m_material_records;
 
     UINT m_merged_mqobj_id = 0;
     MeshNode m_merged_mesh;

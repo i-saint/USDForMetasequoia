@@ -452,7 +452,7 @@ void MeshNode::toLocalSpace()
     applyTransform(invert(global_matrix));
 }
 
-void MeshNode::makeFaceSets(bool cleanup)
+void MeshNode::buildFaceSets(bool cleanup)
 {
     if (material_ids.empty() || materials.empty() || material_ids.size() != counts.size()) {
         facesets.clear();
@@ -483,6 +483,28 @@ void MeshNode::makeFaceSets(bool cleanup)
     if (cleanup) {
         material_ids.clear();
         materials.clear();
+    }
+}
+
+void MeshNode::buildMaterialIDs(bool cleanup)
+{
+    if (facesets.empty())
+        return;
+
+    material_ids.resize_discard(counts.size());
+    fill(material_ids, -1);
+
+    materials.resize(facesets.size());
+    each_with_index(facesets, [this](auto& faceset, int i) {
+        auto m = faceset->material;
+        materials[i] = m;
+        int mi = m ? m->index : -1;
+        for (int f : faceset->faces)
+            material_ids[f] = mi;
+    });
+
+    if (cleanup) {
+        facesets.clear();
     }
 }
 
