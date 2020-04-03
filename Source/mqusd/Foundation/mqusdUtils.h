@@ -141,6 +141,22 @@ inline void transform_container(DstContainer& dst, const SrcContainer& src, cons
         c(dst[i], src[i]);
 }
 
+template<class Container, class Body>
+inline void each_with_index(Container& dst, const Body& body)
+{
+    int i = 0;
+    for (auto& v : dst)
+        body(v, i++);
+}
+
+template<class Container, class Condition>
+inline void erase_if(Container& dst, const Condition& cond)
+{
+    dst.erase(
+        std::remove_if(dst.begin(), dst.end(), cond),
+        dst.end());
+}
+
 std::string SanitizeNodeName(const std::string& name);
 std::string SanitizeNodePath(const std::string& path);
 std::string GetParentPath(const std::string& path);

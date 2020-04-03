@@ -265,6 +265,25 @@ public:
 };
 
 
+struct FaceSet
+{
+    static void deserialize(deserializer& d, std::shared_ptr<FaceSet>& v);
+    void serialize(serializer& s);
+    void deserialize(deserializer& d);
+    void resolve();
+    void clear();
+
+    // serializable
+    SharedVector<int> faces;
+    std::string material_path;
+
+    // non-serializable
+    MaterialNode* material = nullptr;
+    void* userdata = nullptr;
+};
+mqusdSerializable(FaceSet);
+mqusdDeclPtr(FaceSet);
+
 class MeshNode : public XformNode
 {
 using super = XformNode;
@@ -281,6 +300,7 @@ public:
     void applyTransform(const float4x4& v);
     void toWorldSpace();
     void toLocalSpace();
+    void makeFaceSets();
 
     void clear();
     void merge(const MeshNode& other, const float4x4& trans = float4x4::identity());
@@ -318,6 +338,10 @@ public:
     std::string skeleton_path;
     std::vector<std::string> joint_paths; // paths to joints in skeleton
 
+    std::vector<std::string> material_paths;
+    std::vector<FaceSetPtr> facesets;
+
+
     // non-serializable
     std::vector<BlendshapeNode*> blendshapes;
     RawVector<float> blendshape_weights;
@@ -325,6 +349,8 @@ public:
     SkeletonNode* skeleton = nullptr;
     std::vector<Joint*> joints;
     RawVector<float4x4> joint_matrices;
+
+    std::vector<MaterialNode*> materials;
 };
 mqusdDeclPtr(MeshNode);
 

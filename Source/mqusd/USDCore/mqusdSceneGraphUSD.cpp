@@ -202,6 +202,10 @@ USDMeshNode::USDMeshNode(USDNode* parent, UsdPrim prim)
 {
     m_mesh = UsdGeomMesh(prim);
     setNode(CreateNode<MeshNode>(parent, prim));
+
+//#ifdef mqusdDebug
+//    PrintPrim(m_prim, PF_Full);
+//#endif
 }
 
 USDMeshNode::USDMeshNode(Node* n, UsdPrim prim)
@@ -391,6 +395,11 @@ void USDMeshNode::read(double time)
             dst.bind_transform.assign((double4x4&)data);
         }
     }
+
+    //auto subsets = UsdShadeMaterialBindingAPI(m_prim).GetMaterialBindSubsets();
+    //for (auto& subset : subsets) {
+    //    PrintPrim(subset.GetPrim(), PF_Full);
+    //}
 
     // validate
     dst.validate();
@@ -878,9 +887,9 @@ USDMaterialNode::USDMaterialNode(USDNode* parent, UsdPrim prim)
     m_material = UsdShadeMaterial(prim);
     setNode(CreateNode<MaterialNode>(parent, prim));
 
-#ifdef mqusdDebug
-    PrintPrim(m_prim, PF_Full);
-#endif
+//#ifdef mqusdDebug
+//    PrintPrim(m_prim, PF_Full);
+//#endif
 }
 
 USDMaterialNode::USDMaterialNode(Node* n, UsdPrim prim)
@@ -1220,9 +1229,9 @@ USDShaderNode::USDShaderNode(USDNode* parent, UsdPrim prim)
 {
     m_shader = UsdShadeShader(prim);
 
-#ifdef mqusdDebug
-    PrintPrim(m_prim, PF_Full);
-#endif
+//#ifdef mqusdDebug
+//    PrintPrim(m_prim, PF_Full);
+//#endif
 }
 
 USDShaderNode::USDShaderNode(Node* n, UsdPrim prim)

@@ -228,11 +228,46 @@ void XformNode::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 }
 
 
+void FaceSet::deserialize(deserializer& d, FaceSetPtr& v)
+{
+    if (!v)
+        v = std::make_shared<FaceSet>();
+    v->deserialize(d);
+}
+
+#define EachMember(F)\
+    F(faces) F(material_path)
+
+void FaceSet::serialize(serializer& s)
+{
+    material_path = material ? material->getPath() : "";
+    EachMember(mqusdSerialize)
+}
+void FaceSet::deserialize(deserializer& d)
+{
+    EachMember(mqusdDeserialize)
+}
+#undef EachMember
+
+void FaceSet::resolve()
+{
+    material = static_cast<MaterialNode*>(Scene::getCurrent()->findNodeByPath(material_path));
+}
+
+void FaceSet::clear()
+{
+    faces.clear();
+    material_path.clear();
+    material = nullptr;
+    userdata = nullptr;
+}
+
 
 #define EachMember(F)\
     F(points) F(normals) F(uvs) F(colors) F(material_ids) F(counts) F(indices)\
     F(joints_per_vertex) F(joint_indices) F(joint_weights) F(bind_transform)\
-    F(blendshape_paths) F(skeleton_path) F(joint_paths)
+    F(blendshape_paths) F(skeleton_path) F(joint_paths)\
+    F(material_paths) F(facesets)
 
 void MeshNode::serialize(serializer& s)
 {
@@ -249,6 +284,9 @@ void MeshNode::serialize(serializer& s)
             d = s->path;
         });
     }
+    transform_container(material_paths, materials, [](auto& d, auto* s) {
+        d = s->path;
+    });
 
     EachMember(mqusdSerialize)
 }
@@ -265,7 +303,7 @@ void MeshNode::resolve()
     transform_container(blendshapes, blendshape_paths, [this](auto& d, auto& s) {
         d = static_cast<BlendshapeNode*>(scene->findNodeByPath(s));
         if (!d) {
-            mqusdDbgPrint("blendshape not found %s\n", s.c_str());
+            mqusdDbgFatal("not found %s\n", s.c_str());
         }
     });
 
@@ -274,10 +312,20 @@ void MeshNode::resolve()
         transform_container(joints, joint_paths, [this](auto& d, auto& s) {
             d = skeleton->findJointByPath(s);
             if (!d) {
-                mqusdDbgPrint("joint not found %s\n", s.c_str());
+                mqusdDbgFatal("not found %s\n", s.c_str());
             }
         });
     }
+
+    transform_container(materials, material_paths, [this](auto& d, auto& s) {
+        d = static_cast<MaterialNode*>(scene->findNodeByPath(s));
+        if (!d) {
+            mqusdDbgFatal("not found %s\n", s.c_str());
+        }
+    });
+
+    for (auto& fs : facesets)
+        fs->resolve();
 }
 #undef EachMember
 
@@ -380,6 +428,35 @@ void MeshNode::toLocalSpace()
     applyTransform(invert(global_matrix));
 }
 
+void MeshNode::makeFaceSets()
+{
+    if (material_ids.empty() || materials.empty() || material_ids.size() != counts.size()) {
+        facesets.clear();
+        return;
+    }
+
+    // setup
+    facesets.resize(materials.size() + 1);
+    each_with_index(facesets, [this](auto& faceset, int i) {
+        if (!faceset)
+            faceset = std::make_shared<FaceSet>();
+        faceset->clear();
+        if (i < materials.size())
+            faceset->material = materials[i];
+    });
+
+    // select face by material
+    each_with_index(material_ids, [this](int mid, int fi) {
+        if (mid >= 0)
+            facesets[mid]->faces.push_back(fi);
+    });
+
+    // erase empty facesets
+    erase_if(facesets, [](auto& faceset) {
+        return faceset->faces.empty();
+    });
+}
+
 void MeshNode::clear()
 {
     points.clear();
@@ -403,6 +480,11 @@ void MeshNode::clear()
     joint_indices.clear();
     joint_weights.clear();
     bind_transform = float4x4::identity();
+
+    materials.clear();
+    material_paths.clear();
+
+    facesets.clear();
 }
 
 void MeshNode::merge(const MeshNode& v, const float4x4& trans)
@@ -963,7 +1045,7 @@ void InstancerNode::resolve()
     transform_container(protos, proto_paths, [this](auto& d, auto& s) {
         d = scene->findNodeByPath(s);
         if (!d) {
-            mqusdDbgPrint("not found %s\n", s.c_str());
+            mqusdDbgFatal("not found %s\n", s.c_str());
         }
     });
 }

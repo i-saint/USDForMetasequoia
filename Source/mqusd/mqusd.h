@@ -20,8 +20,10 @@
 
 #ifdef mqusdDebug
     #define mqusdDbgPrint(...) mu::Print(__VA_ARGS__)
+    #define mqusdDbgFatal(...) mu::Print(__VA_ARGS__)
 #else
     #define mqusdDbgPrint(...) 
+    #define mqusdDbgFatal(...) 
 #endif
 
 #include "MeshUtils/MeshUtils.h"

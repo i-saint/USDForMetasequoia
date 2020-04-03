@@ -78,6 +78,7 @@
 #include <pxr/usd/usdSkel/blendShape.h>
 #include <pxr/usd/usdShade/material.h>
 #include <pxr/usd/usdShade/shader.h>
+#include <pxr/usd/usdShade/materialBindingAPI.h>
 #pragma warning(pop)
 PXR_NAMESPACE_USING_DIRECTIVE;
 

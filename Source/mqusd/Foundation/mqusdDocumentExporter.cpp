@@ -197,7 +197,8 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
     for (int mi = 0; mi < nmaterials; ++mi) {
         auto& rec = m_material_records[mi];
         rec.mqmaterial = doc->GetMaterial(mi);
-        rec.material_data = (MaterialNode*)m_scene->createNode(m_root, GetName(rec.mqmaterial).c_str(), Node::Type::Material);
+        if (!rec.material_data)
+            rec.material_data = (MaterialNode*)m_scene->createNode(m_root, GetName(rec.mqmaterial).c_str(), Node::Type::Material);
         extractMaterial(rec.mqmaterial, *rec.material_data);
     }
 
@@ -410,6 +411,12 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst, XformNode& xf)
         }
     }
 #endif
+
+    transform_container(dst.materials, m_material_records, [](auto*& d, auto& s) {
+        d = s.material_data;
+    });
+    dst.makeFaceSets();
+
     return true;
 }
 
