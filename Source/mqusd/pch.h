@@ -22,5 +22,6 @@
 #include <fstream>
 #include <future>
 #include <random>
+#include <numeric>
 
 #include "mqsdk/sdk_Include.h"

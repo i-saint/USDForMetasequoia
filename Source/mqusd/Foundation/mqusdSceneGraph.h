@@ -457,6 +457,7 @@ public:
 
 public:
     // serializable
+    int index = 0;
     ShaderType shader_type = ShaderType::Unknown;
     bool use_vertex_color = false;
     bool double_sided = false;

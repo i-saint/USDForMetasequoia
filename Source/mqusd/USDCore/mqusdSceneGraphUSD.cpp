@@ -246,7 +246,7 @@ void USDMeshNode::beforeRead()
         transform_container(m_blendshapes, paths, [this, &dst](auto*& d, auto& s) {
             d = m_scene->findNode<USDBlendshapeNode>(s.GetString());
             if (d) {
-                dst.blendshapes.push_back(static_cast<BlendshapeNode*>(d->m_node));
+                dst.blendshapes.push_back(d->getNode<BlendshapeNode>());
             }
             else {
                 mqusdDbgPrint("not found %s\n", s.GetText());
@@ -271,7 +271,7 @@ void USDMeshNode::beforeRead()
         if (!paths.empty()) {
             m_skeleton = m_scene->findNode<USDSkeletonNode>(paths.front().GetString());
             if (m_skeleton)
-                dst.skeleton = static_cast<SkeletonNode*>(m_skeleton->m_node);
+                dst.skeleton = m_skeleton->getNode<SkeletonNode>();
         }
     }
     if (dst.skeleton) {
@@ -396,24 +396,37 @@ void USDMeshNode::read(double time)
         }
     }
 
-    // subsets
-    auto subsets = UsdShadeMaterialBindingAPI(m_prim).GetMaterialBindSubsets();
-    m_subset_faces.resize(subsets.size());
-    dst.facesets.resize(subsets.size());
-    each_with_index(subsets, [this, &t, &dst](UsdGeomSubset& subset, int i) {
-        auto& faces = m_subset_faces[i];
-        subset.GetIndicesAttr().Get(&faces, t);
-
-        auto& faceset = dst.facesets[i];
+    auto mbapi = UsdShadeMaterialBindingAPI(m_prim);
+    // material
+    if (auto mat = mbapi.ComputeBoundMaterial()) {
+        // bound single material
+        dst.facesets.resize(1);
+        auto& faceset = dst.facesets.front();
         if (!faceset)
             faceset = std::make_shared<FaceSet>();
-        faceset->faces.share(faces.cdata(), faces.size());
 
-        if (auto mat = UsdShadeMaterialBindingAPI(subset).ComputeBoundMaterial()) {
-            if (auto mat_node = m_scene->findNode(mat.GetPath().GetString()))
-                faceset->material = static_cast<MaterialNode*>(mat_node->m_node);
-        }
-    });
+        faceset->faces.resize_discard(dst.counts.size());
+        std::iota(faceset->faces.begin(), faceset->faces.end(), 0);
+        faceset->material = m_scene->findNode<MaterialNode>(mat.GetPath().GetString());
+    }
+    else {
+        // handle subsets
+        auto subsets = mbapi.GetMaterialBindSubsets();
+        m_subset_faces.resize(subsets.size());
+        dst.facesets.resize(subsets.size());
+        each_with_index(subsets, [this, &t, &dst](UsdGeomSubset& subset, int i) {
+            auto& faces = m_subset_faces[i];
+            subset.GetIndicesAttr().Get(&faces, t);
+
+            auto& faceset = dst.facesets[i];
+            if (!faceset)
+                faceset = std::make_shared<FaceSet>();
+            faceset->faces.share(faces.cdata(), faces.size());
+
+            if (auto mat = UsdShadeMaterialBindingAPI(subset).ComputeBoundMaterial())
+                faceset->material = m_scene->findNode<MaterialNode>(mat.GetPath().GetString());
+        });
+    }
 
     // validate
     dst.validate();
@@ -621,7 +634,7 @@ void USDSkelRootNode::beforeRead()
         SdfPathVector paths;
         rel_anim.GetTargets(&paths);
         if (!paths.empty()) {
-            if (auto usd_anim = m_scene->findNode<USDSkelAnimationNode>(paths.front().GetString())) {
+            if (auto usd_anim = m_scene->findUSDNode<USDSkelAnimationNode>(paths.front().GetString())) {
                 // update child meshes
                 eachChildR([usd_anim](USDNode* n) {
                     if (auto usd_mesh = dynamic_cast<USDMeshNode*>(n))
@@ -636,15 +649,15 @@ void USDSkelRootNode::beforeRead()
         SdfPathVector paths;
         rel_skel.GetTargets(&paths);
         if (!paths.empty()) {
-            if (auto usd_skel = m_scene->findNode<USDSkeletonNode>(paths.front().GetString())) {
-                auto skel = static_cast<SkeletonNode*>(usd_skel->m_node);
+            if (auto usd_skel = m_scene->findUSDNode<USDSkeletonNode>(paths.front().GetString())) {
+                auto skel = usd_skel->getNode<SkeletonNode>();
                 dst.skeleton = skel;
 
                 // update child meshes
                 eachChildR([usd_skel, skel](USDNode* n) {
                     if (auto usd_mesh = dynamic_cast<USDMeshNode*>(n)) {
                         usd_mesh->m_skeleton = usd_skel;
-                        static_cast<MeshNode*>(usd_mesh->m_node)->skeleton = skel;
+                        usd_mesh->getNode<MeshNode>()->skeleton = skel;
                     }
                 });
             }
@@ -843,7 +856,7 @@ void USDInstancerNode::beforeRead()
         SdfPathVector paths;
         rel.GetTargets(&paths);
         for (auto& path : paths) {
-            if (auto proto = m_scene->findNode(path.GetString()))
+            if (auto proto = m_scene->findUSDNode(path.GetString()))
                 dst.protos.push_back(proto->m_node);
         }
     }
@@ -1529,10 +1542,17 @@ UsdTimeCode USDScene::toTimeCode(double time) const
     return UsdTimeCode(time * m_frame_rate);
 }
 
-USDNode* USDScene::findNodeImpl(const std::string& path)
+USDNode* USDScene::findUSDNodeImpl(const std::string& path)
 {
     auto it = m_node_table.find(path);
     return it == m_node_table.end() ? nullptr : it->second;
+}
+
+Node* USDScene::findNodeImpl(const std::string& path)
+{
+    if (USDNode* n = findUSDNodeImpl(path))
+        return n->m_node;
+    return nullptr;
 }
 
 } // namespace mqusd

@@ -192,15 +192,16 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
 
 
     // extract material data
-    int nmaterials = doc->GetMaterialCount();
-    m_material_records.resize(nmaterials);
-    for (int mi = 0; mi < nmaterials; ++mi) {
-        auto& rec = m_material_records[mi];
+    m_material_records.resize(doc->GetMaterialCount());
+    each_with_index(m_material_records, [this, doc](auto& rec, int mi) {
         rec.mqmaterial = doc->GetMaterial(mi);
+        if (!rec.mqmaterial)
+            return;
         if (!rec.material_data)
             rec.material_data = m_scene->createNode<MaterialNode>(m_root, GetName(rec.mqmaterial).c_str());
+        rec.material_data->index = mi;
         extractMaterial(rec.mqmaterial, *rec.material_data);
-    }
+    });
 
     // skeleton
     if (m_skeleton)

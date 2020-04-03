@@ -1260,7 +1260,7 @@ Texture::operator bool() const
 
 
 #define EachMember(F)\
-    F(shader_type) F(use_vertex_color) F(double_sided)\
+    F(index) F(shader_type) F(use_vertex_color) F(double_sided)\
     F(diffuse_color) F(diffuse) F(opacity) F(roughness)\
     F(ambient_color) F(specular_color) F(emissive_color)\
     F(diffuse_texture) F(opacity_texture) F(bump_texture)

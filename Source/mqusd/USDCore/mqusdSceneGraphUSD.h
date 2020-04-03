@@ -38,6 +38,9 @@ public:
         }
     }
 
+    template<class NodeT = Node>
+    NodeT* getNode() { return static_cast<NodeT*>(m_node); }
+
 public:
     UsdPrim m_prim;
     USDScene* m_scene = nullptr;
@@ -301,13 +304,14 @@ public:
 
     UsdStageRefPtr& getStage();
     UsdTimeCode toTimeCode(double time) const;
-    USDNode* findNodeImpl(const std::string& path);
+    USDNode* findUSDNodeImpl(const std::string& path);
+    Node* findNodeImpl(const std::string& path);
 
     template<class NodeT = USDNode>
-    NodeT* findNode(const std::string& path) { return dynamic_cast<NodeT*>(findNodeImpl(path)); }
+    NodeT* findUSDNode(const std::string& path) { return dynamic_cast<NodeT*>(findUSDNodeImpl(path)); }
 
-    template<>
-    USDNode* findNode(const std::string& path) { return findNodeImpl(path); }
+    template<class NodeT = Node>
+    NodeT* findNode(const std::string& path) { return dynamic_cast<NodeT*>(findNodeImpl(path)); }
 
 private:
     void registerNode(USDNode* n);
