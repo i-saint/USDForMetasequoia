@@ -520,6 +520,12 @@ public:
     Node* createNode(Node* parent, const char* name, Node::Type type);
     void registerNode(Node* n);
 
+    template<class NodeT>
+    NodeT* createNode(Node* parent, const char* name)
+    {
+        return static_cast<NodeT*>(createNode(parent, name, NodeT::node_type));
+    }
+
     template<class Body>
     void eachNode(const Body& body)
     {

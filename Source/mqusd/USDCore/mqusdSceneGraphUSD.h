@@ -206,6 +206,7 @@ public:
     VtArray<int> m_material_ids;
     VtArray<int> m_joint_indices;
     VtArray<float> m_joint_weights;
+    std::vector<VtArray<int>> m_subset_faces;
 };
 
 
@@ -222,7 +223,7 @@ public:
     void beforeWrite() override;
     void write(double time) override;
 
-private:
+public:
     UsdGeomPointInstancer m_instancer;
     VtArray<int> m_proto_indices;
     VtArray<GfMatrix4d> m_matrices;
@@ -245,7 +246,7 @@ public:
     void read(double time) override;
     void beforeWrite() override;
 
-private:
+public:
     UsdShadeMaterial m_material;
 
     UsdShadeShader m_surface;

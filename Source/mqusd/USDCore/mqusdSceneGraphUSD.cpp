@@ -396,10 +396,24 @@ void USDMeshNode::read(double time)
         }
     }
 
-    //auto subsets = UsdShadeMaterialBindingAPI(m_prim).GetMaterialBindSubsets();
-    //for (auto& subset : subsets) {
-    //    PrintPrim(subset.GetPrim(), PF_Full);
-    //}
+    // subsets
+    auto subsets = UsdShadeMaterialBindingAPI(m_prim).GetMaterialBindSubsets();
+    m_subset_faces.resize(subsets.size());
+    dst.facesets.resize(subsets.size());
+    each_with_index(subsets, [this, &t, &dst](UsdGeomSubset& subset, int i) {
+        auto& faces = m_subset_faces[i];
+        subset.GetIndicesAttr().Get(&faces, t);
+
+        auto& faceset = dst.facesets[i];
+        if (!faceset)
+            faceset = std::make_shared<FaceSet>();
+        faceset->faces.share(faces.cdata(), faces.size());
+
+        if (auto mat = UsdShadeMaterialBindingAPI(subset).ComputeBoundMaterial()) {
+            if (auto mat_node = m_scene->findNode(mat.GetPath().GetString()))
+                faceset->material = static_cast<MaterialNode*>(mat_node->m_node);
+        }
+    });
 
     // validate
     dst.validate();
@@ -412,7 +426,6 @@ void USDMeshNode::beforeWrite()
     auto pvapi = UsdGeomPrimvarsAPI(m_prim);
     m_pv_st = pvapi.CreatePrimvar(mqusdAttrST, SdfValueTypeNames->TexCoord2fArray);
     m_pv_colors = pvapi.CreatePrimvar(mqusdAttrColors, SdfValueTypeNames->Color4fArray);
-    m_attr_mids = m_prim.CreateAttribute(mqusdAttrMaterialIDs, SdfValueTypeNames->IntArray, false);
 
     auto& src = static_cast<MeshNode&>(*m_node);
 
@@ -470,12 +483,10 @@ void USDMeshNode::write(double time)
     {
         m_counts.assign(src.counts.begin(), src.counts.end());
         m_mesh.GetFaceVertexCountsAttr().Set(m_counts, t);
-    }
-    {
+
         m_indices.assign(src.indices.begin(), src.indices.end());
         m_mesh.GetFaceVertexIndicesAttr().Set(m_indices, t);
-    }
-    {
+
         m_points.assign((GfVec3f*)src.points.begin(), (GfVec3f*)src.points.end());
         m_mesh.GetPointsAttr().Set(m_points, t);
     }
@@ -491,9 +502,25 @@ void USDMeshNode::write(double time)
         m_colors.assign((GfVec4f*)src.colors.begin(), (GfVec4f*)src.colors.end());
         m_pv_colors.Set(m_colors, t);
     }
-    if (m_attr_mids && !src.material_ids.empty()) {
+
+    if (!src.material_ids.empty()) {
+        if (!m_attr_mids)
+            m_attr_mids = m_prim.CreateAttribute(mqusdAttrMaterialIDs, SdfValueTypeNames->IntArray, false);
         m_material_ids.assign(src.material_ids.begin(), src.material_ids.end());
         m_attr_mids.Set(m_material_ids, t);
+    }
+    else {
+        auto mbapi = UsdShadeMaterialBindingAPI(m_prim);
+        for (auto& fs : src.facesets) {
+            auto mat = fs->material;
+            if (!mat)
+                continue;
+
+            VtArray<int> faces(fs->faces.begin(), fs->faces.end());
+            auto subset = mbapi.CreateMaterialBindSubset(TfToken(mat->getName()), faces);
+            auto mat_node = static_cast<USDMaterialNode*>(mat->impl);
+            UsdShadeMaterialBindingAPI(subset.GetPrim()).Bind(mat_node->m_material);
+        }
     }
 }
 

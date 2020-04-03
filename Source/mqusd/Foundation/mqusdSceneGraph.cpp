@@ -538,9 +538,9 @@ void MeshNode::merge(const MeshNode& v, const float4x4& trans)
     append(points, v.points);
     append(counts, v.counts);
     append(indices, v.indices);
-    append_padded(normals,      v.normals,      index_offset, float3::zero());
-    append_padded(uvs,          v.uvs,          index_offset, float2::zero());
-    append_padded(colors,       v.colors,       index_offset, float4::zero());
+    append_padded(normals, v.normals, index_offset, float3::zero());
+    append_padded(uvs,     v.uvs,     index_offset, float2::zero());
+    append_padded(colors,  v.colors,  index_offset, float4::one());
 
     // remove skinning data for now
     joints_per_vertex = 0;

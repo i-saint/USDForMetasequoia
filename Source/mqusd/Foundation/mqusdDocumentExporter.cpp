@@ -57,7 +57,7 @@ Node* DocumentExporter::findOrCreateNode(UINT mqid)
                 auto base_mesh = rec->bs_base->mesh;
                 rec->mesh_data = std::make_shared<MeshNode>();
                 rec->xform = rec->mesh = rec->mesh_data.get();
-                rec->blendshape = (BlendshapeNode*)m_scene->createNode(base_mesh, rec->name.c_str(), Node::Type::Blendshape);
+                rec->blendshape = m_scene->createNode<BlendshapeNode>(base_mesh, rec->name.c_str());
                 base_mesh->blendshapes.push_back(rec->blendshape);
             }
             ret = rec->blendshape;
@@ -69,11 +69,11 @@ Node* DocumentExporter::findOrCreateNode(UINT mqid)
                     parent = m_root;
 
                 if (m_options->separate_xform) {
-                    rec->xform = (XformNode*)m_scene->createNode(parent, rec->name.c_str(), Node::Type::Xform);
-                    rec->mesh = (MeshNode*)m_scene->createNode(rec->xform, (rec->name + "_Mesh").c_str(), Node::Type::Mesh);
+                    rec->xform = m_scene->createNode<XformNode>(parent, rec->name.c_str());
+                    rec->mesh = m_scene->createNode<MeshNode>(rec->xform, (rec->name + "_Mesh").c_str());
                 }
                 else {
-                    rec->xform = rec->mesh = (MeshNode*)m_scene->createNode(parent, rec->name.c_str(), Node::Type::Mesh);
+                    rec->xform = rec->mesh = m_scene->createNode<MeshNode>(parent, rec->name.c_str());
                 }
             }
             ret = rec->xform;
@@ -119,8 +119,8 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
         m_root = m_scene->root_node;
 #if MQPLUGIN_VERSION >= 0x0470
         if (m_options->export_skeletons && m_bone_manager->GetBoneNum() != 0) {
-            auto skel_root = (SkelRootNode*)m_scene->createNode(m_root, "Model", Node::Type::SkelRoot);
-            skel_root->skeleton= (SkeletonNode*)m_scene->createNode(skel_root, "Skel", Node::Type::Skeleton);
+            auto skel_root = m_scene->createNode<SkelRootNode>(m_root, "Model");
+            skel_root->skeleton= m_scene->createNode<SkeletonNode>(skel_root, "Skel");
             m_root = skel_root;
             m_skeleton = skel_root->skeleton;
         }
@@ -130,7 +130,7 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
             auto node_name = mu::GetFilename_NoExtension(m_scene->path.c_str());
             if (node_name.empty())
                 node_name = "Untitled";
-            m_merged_mesh = (MeshNode*)m_scene->createNode(m_root, node_name.c_str(), Node::Type::Mesh);
+            m_merged_mesh = m_scene->createNode<MeshNode>(m_root, node_name.c_str());
         }
     }
 
@@ -198,7 +198,7 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
         auto& rec = m_material_records[mi];
         rec.mqmaterial = doc->GetMaterial(mi);
         if (!rec.material_data)
-            rec.material_data = (MaterialNode*)m_scene->createNode(m_root, GetName(rec.mqmaterial).c_str(), Node::Type::Material);
+            rec.material_data = m_scene->createNode<MaterialNode>(m_root, GetName(rec.mqmaterial).c_str());
         extractMaterial(rec.mqmaterial, *rec.material_data);
     }
 
