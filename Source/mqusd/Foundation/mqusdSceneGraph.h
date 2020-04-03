@@ -265,16 +265,22 @@ public:
 };
 
 
-struct FaceSet
+class FaceSet
 {
+public:
     static void deserialize(deserializer& d, std::shared_ptr<FaceSet>& v);
     void serialize(serializer& s);
     void deserialize(deserializer& d);
     void resolve();
     void clear();
+    std::shared_ptr<FaceSet> clone();
+    void merge(const FaceSet& v, int face_offset, int index_offset);
+    void addOffset(int face_offset, int index_offset);
 
+public:
     // serializable
     SharedVector<int> faces;
+    SharedVector<int> indices;
     std::string material_path;
 
     // non-serializable
@@ -300,7 +306,7 @@ public:
     void applyTransform(const float4x4& v);
     void toWorldSpace();
     void toLocalSpace();
-    void makeFaceSets();
+    void makeFaceSets(bool cleanup = true);
 
     void clear();
     void merge(const MeshNode& other, const float4x4& trans = float4x4::identity());

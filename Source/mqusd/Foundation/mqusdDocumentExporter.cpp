@@ -542,7 +542,7 @@ void DocumentExporter::flush()
         auto& dst = *m_merged_mesh;
         dst.clear();
         for (auto& rec : m_obj_records)
-            dst.merge(rec.mesh);
+            dst.merge(*rec.mesh);
     }
 
     // do write

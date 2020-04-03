@@ -236,7 +236,7 @@ void FaceSet::deserialize(deserializer& d, FaceSetPtr& v)
 }
 
 #define EachMember(F)\
-    F(faces) F(material_path)
+    F(faces) F(indices) F(material_path)
 
 void FaceSet::serialize(serializer& s)
 {
@@ -260,6 +260,30 @@ void FaceSet::clear()
     material_path.clear();
     material = nullptr;
     userdata = nullptr;
+}
+
+FaceSetPtr FaceSet::clone()
+{
+    return std::make_shared<FaceSet>(*this);
+}
+
+void FaceSet::merge(const FaceSet& v, int face_offset, int index_offset)
+{
+    auto* fv = append(faces, v.faces);
+    if (face_offset > 0)
+        add(fv, v.faces.size(), face_offset);
+
+    auto* iv = append(indices, v.indices);
+    if (index_offset > 0)
+        add(iv, v.indices.size(), index_offset);
+}
+
+void FaceSet::addOffset(int face_offset, int index_offset)
+{
+    if (face_offset > 0)
+        add(faces.data(), faces.size(), face_offset);
+    if (index_offset > 0)
+        add(indices.data(), indices.size(), index_offset);
 }
 
 
@@ -428,7 +452,7 @@ void MeshNode::toLocalSpace()
     applyTransform(invert(global_matrix));
 }
 
-void MeshNode::makeFaceSets()
+void MeshNode::makeFaceSets(bool cleanup)
 {
     if (material_ids.empty() || materials.empty() || material_ids.size() != counts.size()) {
         facesets.clear();
@@ -455,6 +479,11 @@ void MeshNode::makeFaceSets()
     erase_if(facesets, [](auto& faceset) {
         return faceset->faces.empty();
     });
+
+    if (cleanup) {
+        material_ids.clear();
+        materials.clear();
+    }
 }
 
 void MeshNode::clear()
@@ -490,7 +519,7 @@ void MeshNode::clear()
 void MeshNode::merge(const MeshNode& v, const float4x4& trans)
 {
     auto append = [](auto& dst, const auto& src) {
-        dst.insert(dst.end(), src.cdata(), src.cdata() + src.size());
+        dst.insert(dst.end(), src.data(), src.data() + src.size());
     };
     auto append_padded = [](auto& dst, const auto& src, int base_size, const auto default_value) {
         if (!dst.empty() && src.empty())
@@ -503,26 +532,50 @@ void MeshNode::merge(const MeshNode& v, const float4x4& trans)
 
     int vertex_offset = (int)points.size();
     int index_offset = (int)indices.size();
+    int face_offset = (int)counts.size();
 
+    // handle vertex data
     append(points, v.points);
     append(counts, v.counts);
     append(indices, v.indices);
     append_padded(normals,      v.normals,      index_offset, float3::zero());
     append_padded(uvs,          v.uvs,          index_offset, float2::zero());
     append_padded(colors,       v.colors,       index_offset, float4::zero());
-    append_padded(material_ids, v.material_ids, index_offset, 0);
 
+    // remove skinning data for now
     joints_per_vertex = 0;
     joint_indices.clear();
     joint_weights.clear();
     bind_transform = float4x4::identity();
 
+    // handle offset
     if (vertex_offset > 0) {
-        int index_end = index_offset + (int)v.indices.size();
-        for (int ii = index_offset; ii < index_end; ++ii)
-            indices[ii] += vertex_offset;
+        add(indices.data() + index_offset, v.indices.size(), vertex_offset);
     }
 
+    // handle materials & facesets
+    append(materials, v.materials);
+    append_padded(material_ids, v.material_ids, index_offset, 0);
+    facesets.reserve(facesets.size() + v.facesets.size());
+    for (auto& fs : v.facesets) {
+        FaceSetPtr dfs;
+        for (auto& f : facesets) {
+            if (f->material == fs->material) {
+                dfs = f;
+                break;
+            }
+        }
+        if (dfs) {
+            dfs->merge(*fs, face_offset, index_offset);
+        }
+        else {
+            dfs = fs->clone();
+            dfs->addOffset(face_offset, index_offset);
+            facesets.push_back(dfs);
+        }
+    }
+
+    // handle transform
     if (trans != float4x4::identity()) {
         auto p = points.data() + vertex_offset;
         auto n = normals.data() + index_offset;

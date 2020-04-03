@@ -157,6 +157,24 @@ inline void erase_if(Container& dst, const Condition& cond)
         dst.end());
 }
 
+template<class Container>
+inline auto append(Container& dst, const Container& src)
+{
+    size_t pos = dst.size();
+    if (dst.empty())
+        dst = src; // share if Container is SharedVector
+    else
+        dst.insert(dst.end(), src.begin(), src.end());
+    return dst.begin() + pos;
+}
+
+template<class T>
+inline void add(T* dst, size_t size, T v)
+{
+    for (size_t i = 0; i < size; ++i)
+        *(dst++) += v;
+}
+
 std::string SanitizeNodeName(const std::string& name);
 std::string SanitizeNodePath(const std::string& path);
 std::string GetParentPath(const std::string& path);
