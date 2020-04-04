@@ -18,13 +18,13 @@
     <ClInclude Include="mqusd\mqusd.h">
       <Filter>mqusd</Filter>
     </ClInclude>
-    <ClInclude Include="mqusd\ABCPlayer\mqabcPlayerPlugin.h">
-      <Filter>mqusd\ABCPlayer</Filter>
-    </ClInclude>
     <ClInclude Include="mqusd\ABCPlayer\mqabcPlayerWindow.h">
       <Filter>mqusd\ABCPlayer</Filter>
     </ClInclude>
     <ClInclude Include="mqusd\ABCPlayer\mqabcRecorderWindow.h">
+      <Filter>mqusd\ABCPlayer</Filter>
+    </ClInclude>
+    <ClInclude Include="mqusd\ABCPlayer\mqabcPlugin.h">
       <Filter>mqusd\ABCPlayer</Filter>
     </ClInclude>
   </ItemGroup>
@@ -32,13 +32,13 @@
     <ClCompile Include="mqusd\pch.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
-    <ClCompile Include="mqusd\ABCPlayer\mqabcPlayerPlugin.cpp">
-      <Filter>mqusd\ABCPlayer</Filter>
-    </ClCompile>
     <ClCompile Include="mqusd\ABCPlayer\mqabcPlayerWindow.cpp">
       <Filter>mqusd\ABCPlayer</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\ABCPlayer\mqabcRecorderWindow.cpp">
+      <Filter>mqusd\ABCPlayer</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\ABCPlayer\mqabcPlugin.cpp">
       <Filter>mqusd\ABCPlayer</Filter>
     </ClCompile>
   </ItemGroup>

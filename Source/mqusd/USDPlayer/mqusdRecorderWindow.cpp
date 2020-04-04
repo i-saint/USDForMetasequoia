@@ -1,13 +1,23 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqusdRecorderPlugin.h"
+#include "mqusdPlugin.h"
 #include "mqusdRecorderWindow.h"
 
 namespace mqusd {
 
-mqusdRecorderWindow::mqusdRecorderWindow(mqusdRecorderPlugin* plugin, MQWindowBase& parent)
+static std::vector<mqusdRecorderWindow*> g_instances;
+
+void mqusdRecorderWindow::each(const std::function<void(mqusdRecorderWindow*)>& body)
+{
+    for (auto* i : g_instances)
+        body(i);
+}
+
+mqusdRecorderWindow::mqusdRecorderWindow(mqusdPlugin* plugin, MQWindowBase& parent)
     : MQWindow(parent)
 {
+    g_instances.push_back(this);
+
     setlocale(LC_ALL, "");
 
     m_plugin = plugin;
@@ -104,6 +114,12 @@ mqusdRecorderWindow::mqusdRecorderWindow(mqusdRecorderPlugin* plugin, MQWindowBa
     this->AddHideEvent(this, &mqusdRecorderWindow::OnHide);
 }
 
+mqusdRecorderWindow::~mqusdRecorderWindow()
+{
+    g_instances.erase(
+        std::find(g_instances.begin(), g_instances.end(), this));
+}
+
 BOOL mqusdRecorderWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 {
     SyncSettings();
@@ -112,45 +128,44 @@ BOOL mqusdRecorderWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqusdRecorderWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
-    m_plugin->CloseUSD();
-    m_plugin->WindowClose();
+    Close();
     return 0;
 }
 
 BOOL mqusdRecorderWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
 {
-    auto& settings = m_plugin->GetOptions();
+    auto& opt = m_options;
     {
         auto str = mu::ToMBS(m_edit_scale->GetText());
         auto value = std::atof(str.c_str());
         if (value != 0.0)
-            settings.scale_factor = (float)value;
+            opt.scale_factor = (float)value;
     }
     {
         auto str = mu::ToMBS(m_edit_interval->GetText());
         auto value = std::atof(str.c_str());
-        settings.capture_interval = value;
+        opt.capture_interval = value;
     }
-    settings.freeze_mirror = m_check_mirror->GetChecked();
-    settings.freeze_lathe = m_check_lathe->GetChecked();
-    settings.freeze_subdiv = m_check_subdiv->GetChecked();
-    settings.export_normals = m_check_normals->GetChecked();
-    settings.export_colors = m_check_colors->GetChecked();
-    settings.export_material_ids = m_check_mids->GetChecked();
-    settings.export_blendshapes = m_check_blendshapes->GetChecked();
-    settings.export_skeletons = m_check_skeletons->GetChecked();
+    opt.freeze_mirror = m_check_mirror->GetChecked();
+    opt.freeze_lathe = m_check_lathe->GetChecked();
+    opt.freeze_subdiv = m_check_subdiv->GetChecked();
+    opt.export_normals = m_check_normals->GetChecked();
+    opt.export_colors = m_check_colors->GetChecked();
+    opt.export_material_ids = m_check_mids->GetChecked();
+    opt.export_blendshapes = m_check_blendshapes->GetChecked();
+    opt.export_skeletons = m_check_skeletons->GetChecked();
 
-    settings.flip_faces = m_check_flip_faces->GetChecked();
-    settings.flip_x = m_check_flip_x->GetChecked();
-    settings.flip_yz = m_check_flip_yz->GetChecked();
-    settings.merge_meshes = m_check_merge->GetChecked();
+    opt.flip_faces = m_check_flip_faces->GetChecked();
+    opt.flip_x = m_check_flip_x->GetChecked();
+    opt.flip_yz = m_check_flip_yz->GetChecked();
+    opt.merge_meshes = m_check_merge->GetChecked();
 
     return 0;
 }
 
 BOOL mqusdRecorderWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument doc)
 {
-    if (!m_plugin->IsArchiveOpened()) {
+    if (!IsOpened()) {
         // show file open directory
 
         MQSaveFileDialog dlg(*this);
@@ -171,13 +186,13 @@ BOOL mqusdRecorderWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument do
 
         if (dlg.Execute()) {
             auto path = dlg.GetFileName();
-            if (m_plugin->OpenUSD(doc, mu::ToMBS(path))) {
-                m_plugin->CaptureFrame(doc);
+            if (Open(doc, mu::ToMBS(path))) {
+                CaptureFrame(doc);
             }
         }
     }
     else {
-        if (m_plugin->CloseUSD()) {
+        if (Close()) {
         }
     }
     SyncSettings();
@@ -189,30 +204,30 @@ void mqusdRecorderWindow::SyncSettings()
 {
     const size_t buf_len = 128;
     wchar_t buf[buf_len];
-    auto& settings = m_plugin->GetOptions();
+    auto& opt = m_options;
 
-    swprintf(buf, buf_len, L"%.2lf", settings.capture_interval);
+    swprintf(buf, buf_len, L"%.2lf", opt.capture_interval);
     m_edit_interval->SetText(buf);
 
-    swprintf(buf, buf_len, L"%.3f", settings.scale_factor);
+    swprintf(buf, buf_len, L"%.3f", opt.scale_factor);
     m_edit_scale->SetText(buf);
 
-    m_check_mirror->SetChecked(settings.freeze_mirror);
-    m_check_lathe->SetChecked(settings.freeze_lathe);
-    m_check_subdiv->SetChecked(settings.freeze_subdiv);
+    m_check_mirror->SetChecked(opt.freeze_mirror);
+    m_check_lathe->SetChecked(opt.freeze_lathe);
+    m_check_subdiv->SetChecked(opt.freeze_subdiv);
 
-    m_check_normals->SetChecked(settings.export_normals);
-    m_check_colors->SetChecked(settings.export_colors);
-    m_check_mids->SetChecked(settings.export_material_ids);
-    m_check_blendshapes->SetChecked(settings.export_blendshapes);
-    m_check_skeletons->SetChecked(settings.export_skeletons);
+    m_check_normals->SetChecked(opt.export_normals);
+    m_check_colors->SetChecked(opt.export_colors);
+    m_check_mids->SetChecked(opt.export_material_ids);
+    m_check_blendshapes->SetChecked(opt.export_blendshapes);
+    m_check_skeletons->SetChecked(opt.export_skeletons);
 
-    m_check_flip_faces->SetChecked(settings.flip_faces);
-    m_check_flip_x->SetChecked(settings.flip_x);
-    m_check_flip_yz->SetChecked(settings.flip_yz);
-    m_check_merge->SetChecked(settings.merge_meshes);
+    m_check_flip_faces->SetChecked(opt.flip_faces);
+    m_check_flip_x->SetChecked(opt.flip_x);
+    m_check_flip_yz->SetChecked(opt.flip_yz);
+    m_check_merge->SetChecked(opt.merge_meshes);
 
-    if (m_plugin->IsRecording()) {
+    if (IsRecording()) {
         SetBackColor(MQCanvasColor(255, 0, 0));
         m_button_recording->SetText(L"Stop Recording");
         m_frame_settings->SetEnabled(false);
@@ -230,4 +245,65 @@ void mqusdRecorderWindow::LogInfo(const char* message)
         m_log->SetText(mu::ToWCS(message));
 }
 
+
+bool mqusdRecorderWindow::Open(MQDocument doc, const std::string& path)
+{
+    Close();
+
+    m_scene = CreateUSDScene();
+    if (!m_scene)
+        return false;
+
+    if (!m_scene->create(path.c_str())) {
+        m_scene = {};
+        return false;
+    }
+
+    m_exporter.reset(new DocumentExporter(m_plugin, m_scene.get(), &m_options));
+    m_exporter->initialize(doc);
+
+    m_recording = true;
+    m_dirty = true;
+
+    mqusdLog("succeeded to open %s\nrecording started", path.c_str());
+    return true;
+}
+
+bool mqusdRecorderWindow::Close()
+{
+    if (m_recording) {
+        m_exporter = {};
+        m_scene = {};
+        m_recording = false;
+
+        mqusdLog("recording finished");
+    }
+    return true;
+}
+
+void mqusdRecorderWindow::CaptureFrame(MQDocument doc)
+{
+    if (!IsRecording() || !m_dirty)
+        return;
+
+    if (m_exporter->write(doc, true)) {
+        m_dirty = false;
+    }
+}
+
+
+void mqusdRecorderWindow::MarkSceneDirty()
+{
+    m_dirty = true;
+}
+
+bool mqusdRecorderWindow::IsOpened() const
+{
+    return m_scene != nullptr;
+}
+
+bool mqusdRecorderWindow::IsRecording() const
+{
+    return m_exporter && m_recording;
+}
 } // namespace mqusd

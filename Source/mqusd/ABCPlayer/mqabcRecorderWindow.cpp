@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "mqabcPlayerPlugin.h"
+#include "mqabcPlugin.h"
 #include "mqabcRecorderWindow.h"
 #include "ABCCore/mqabc.h"
 
@@ -13,7 +13,7 @@ void mqabcRecorderWindow::each(const std::function<void(mqabcRecorderWindow*)>& 
         body(i);
 }
 
-mqabcRecorderWindow::mqabcRecorderWindow(mqabcPlayerPlugin* plugin, MQWindowBase& parent)
+mqabcRecorderWindow::mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& parent)
     : MQWindow(parent)
 {
     g_instances.push_back(this);
@@ -233,6 +233,7 @@ void mqabcRecorderWindow::LogInfo(const char* message)
     if (m_log && message)
         m_log->SetText(mu::ToWCS(message));
 }
+
 
 bool mqabcRecorderWindow::Open(MQDocument doc, const std::string& path)
 {

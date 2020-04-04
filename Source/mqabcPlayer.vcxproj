@@ -19,18 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="mqusd\ABCPlayer\mqabcPlugin.cpp" />
     <ClCompile Include="mqusd\ABCPlayer\mqabcRecorderWindow.cpp" />
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="mqusd\ABCPlayer\mqabcPlayerPlugin.cpp" />
     <ClCompile Include="mqusd\ABCPlayer\mqabcPlayerWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mqusd\ABCPlayer\mqabcPlugin.h" />
     <ClInclude Include="mqusd\ABCPlayer\mqabcRecorderWindow.h" />
     <ClInclude Include="mqusd\mqusd.h" />
     <ClInclude Include="mqusd\pch.h" />
-    <ClInclude Include="mqusd\ABCPlayer\mqabcPlayerPlugin.h" />
     <ClInclude Include="mqusd\ABCPlayer\mqabcPlayerWindow.h" />
   </ItemGroup>
   <ItemGroup>

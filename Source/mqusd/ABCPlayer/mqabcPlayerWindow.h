@@ -4,14 +4,14 @@
 
 namespace mqusd {
 
-class mqabcPlayerPlugin;
+class mqabcPlugin;
 
 class mqabcPlayerWindow : public MQWindow
 {
 public:
     static void each(const std::function<void(mqabcPlayerWindow*)>& body);
 
-    mqabcPlayerWindow(mqabcPlayerPlugin* plugin, MQWindowBase& parent);
+    mqabcPlayerWindow(mqabcPlugin* plugin, MQWindowBase& parent);
     ~mqabcPlayerWindow();
 
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
@@ -32,7 +32,7 @@ public:
     double GetTimeRange() const;
 
 private:
-    mqabcPlayerPlugin* m_plugin = nullptr;
+    mqabcPlugin* m_plugin = nullptr;
     MQFrame* m_frame_open = nullptr;
     MQButton* m_button_open = nullptr;
     MQFrame* m_frame_play = nullptr;

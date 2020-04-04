@@ -4,14 +4,14 @@
 
 namespace mqusd {
 
-class mqabcPlayerPlugin;
+class mqabcPlugin;
 
 class mqabcRecorderWindow : public MQWindow
 {
 public:
     static void each(const std::function<void (mqabcRecorderWindow*)>& body);
 
-    mqabcRecorderWindow(mqabcPlayerPlugin* plugin, MQWindowBase& parent);
+    mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& parent);
     ~mqabcRecorderWindow();
 
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
@@ -30,7 +30,7 @@ public:
     bool IsRecording() const;
 
 private:
-    mqabcPlayerPlugin* m_plugin = nullptr;
+    mqabcPlugin* m_plugin = nullptr;
 
     MQFrame* m_frame_settings = nullptr;
     MQEdit* m_edit_interval = nullptr;
@@ -51,9 +51,6 @@ private:
 
     MQButton* m_button_recording = nullptr;
     MQMemo* m_log = nullptr;
-#ifdef mqusdDebug
-    MQButton* m_button_debug = nullptr;
-#endif // mqusdDebug
 
 
     ScenePtr m_scene;

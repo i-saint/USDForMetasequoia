@@ -1,15 +1,15 @@
 ﻿#pragma once
-#include "Foundation/mqusdDocumentImporter.h"
 
 namespace mqusd {
 
 class mqusdPlayerWindow;
+class mqusdRecorderWindow;
 
-class mqusdPlayerPlugin : public MQStationPlugin
+class mqusdPlugin : public MQStationPlugin
 {
 public:
-    mqusdPlayerPlugin();
-    virtual ~mqusdPlayerPlugin();
+    mqusdPlugin();
+    virtual ~mqusdPlugin();
 
 #if defined(__APPLE__) || defined(__linux__)
     // Create a new plugin class for another document.
@@ -75,7 +75,7 @@ public:
     void OnUpdateScene(MQDocument doc, MQScene scene) override;
 
 
-    typedef bool (mqusdPlayerPlugin::*ExecuteCallbackProc)(MQDocument doc);
+    typedef bool (mqusdPlugin::*ExecuteCallbackProc)(MQDocument doc);
 
     void Execute(ExecuteCallbackProc proc);
 
@@ -88,26 +88,14 @@ public:
 
     void LogInfo(const char* message);
 
+    const std::string& GetMQOPath() const;
+    void CloseAll();
 
-public:
-    bool OpenUSD(MQDocument doc, const std::string& v);
-    bool CloseUSD();
-    void Seek(MQDocument doc, double t);
-    void Refresh(MQDocument doc);
-
-    ImportOptions& GetSettings();
-    bool IsArchiveOpened() const;
-    double GetTimeRange() const;
 
 private:
-    mqusdPlayerWindow* m_window = nullptr;
-    ScenePtr m_scene;
-    ImportOptions m_options;
-    DocumentImporterPtr m_importer;
-
-    double m_seek_time = 0;
-    MeshNode m_mesh_merged;
-    int m_mqobj_id = 0;
+    mqusdPlayerWindow* m_player = nullptr;
+    mqusdRecorderWindow* m_recorder = nullptr;
+    std::string m_mqo_path;
 };
 
 } // namespace mqusd

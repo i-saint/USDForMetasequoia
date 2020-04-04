@@ -1,13 +1,23 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqusdPlayerPlugin.h"
+#include "mqusdPlugin.h"
 #include "mqusdPlayerWindow.h"
 
 namespace mqusd {
 
-mqusdPlayerWindow::mqusdPlayerWindow(mqusdPlayerPlugin* plugin, MQWindowBase& parent)
+static std::vector<mqusdPlayerWindow*> g_instances;
+
+void mqusdPlayerWindow::each(const std::function<void(mqusdPlayerWindow*)>& body)
+{
+    for (auto* i : g_instances)
+        body(i);
+}
+
+mqusdPlayerWindow::mqusdPlayerWindow(mqusdPlugin* plugin, MQWindowBase& parent)
     : MQWindow(parent)
 {
+    g_instances.push_back(this);
+
     setlocale(LC_ALL, "");
 
     m_plugin = plugin;
@@ -95,6 +105,12 @@ mqusdPlayerWindow::mqusdPlayerWindow(mqusdPlayerPlugin* plugin, MQWindowBase& pa
     this->AddHideEvent(this, &mqusdPlayerWindow::OnHide);
 }
 
+mqusdPlayerWindow::~mqusdPlayerWindow()
+{
+    g_instances.erase(
+        std::find(g_instances.begin(), g_instances.end(), this));
+}
+
 BOOL mqusdPlayerWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 {
     SyncSettings();
@@ -103,8 +119,7 @@ BOOL mqusdPlayerWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqusdPlayerWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
-    m_plugin->CloseUSD();
-    m_plugin->WindowClose();
+    Close();
 
     m_frame_open->SetVisible(true);
     m_frame_play->SetVisible(false);
@@ -113,16 +128,16 @@ BOOL mqusdPlayerWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqusdPlayerWindow::OnOpenClicked(MQWidgetBase* sender, MQDocument doc)
 {
-    if (!m_plugin->IsArchiveOpened()) {
+    if (!IsOpened()) {
         MQOpenFileDialog dlg(*this);
         dlg.AddFilter(L"USD Files (*.usd;*.usda;*.usdc;*.usdz)|*.usd;*.usda;*.usdc;*.usdz");
         dlg.AddFilter(L"All Files (*.*)|*.*");
         dlg.SetDefaultExt(L"usd");
         if (dlg.Execute()) {
             auto path = dlg.GetFileName();
-            if (m_plugin->OpenUSD(doc, mu::ToMBS(path))) {
+            if (Open(doc, mu::ToMBS(path))) {
                 m_slider_time->SetMin(0.0);
-                m_slider_time->SetMax(m_plugin->GetTimeRange());
+                m_slider_time->SetMax(GetTimeRange());
 
                 m_frame_open->SetVisible(false);
                 m_frame_play->SetVisible(true);
@@ -142,7 +157,7 @@ BOOL mqusdPlayerWindow::OnSampleEdit(MQWidgetBase* sender, MQDocument doc)
     m_slider_time->SetPosition(value);
     Repaint(true);
 
-    m_plugin->Seek(doc, value);
+    Seek(doc, value);
     return 0;
 }
 
@@ -155,7 +170,7 @@ BOOL mqusdPlayerWindow::OnSampleSlide(MQWidgetBase* sender, MQDocument doc)
     m_edit_time->SetText(buf);
     Repaint(true);
 
-    m_plugin->Seek(doc, value);
+    Seek(doc, value);
     return 0;
 }
 
@@ -163,26 +178,24 @@ BOOL mqusdPlayerWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
 {
     UpdateRelations();
 
-    auto& settings = m_plugin->GetSettings();
+    auto& opt = m_options;
 
     {
         auto str = mu::ToMBS(m_edit_scale->GetText());
         auto value = std::atof(str.c_str());
-        if (value != 0.0) {
-            auto& settings = m_plugin->GetSettings();
-            settings.scale_factor = (float)value;
-        }
+        if (value != 0.0)
+            opt.scale_factor = (float)value;
     }
 
-    settings.flip_x = m_check_flip_x->GetChecked();
-    settings.flip_yz = m_check_flip_yz->GetChecked();
-    settings.flip_faces = m_check_flip_faces->GetChecked();
-    settings.import_blendshapes = m_check_blendshapes->GetChecked();
-    settings.import_skeletons = m_check_skeletons->GetChecked();
-    settings.bake_meshes = m_check_bake->GetChecked();
-    settings.merge_meshes = m_check_merge->GetChecked();
+    opt.flip_x = m_check_flip_x->GetChecked();
+    opt.flip_yz = m_check_flip_yz->GetChecked();
+    opt.flip_faces = m_check_flip_faces->GetChecked();
+    opt.import_blendshapes = m_check_blendshapes->GetChecked();
+    opt.import_skeletons = m_check_skeletons->GetChecked();
+    opt.bake_meshes = m_check_bake->GetChecked();
+    opt.merge_meshes = m_check_merge->GetChecked();
 
-    m_plugin->Refresh(doc);
+    Refresh(doc);
     return 0;
 }
 
@@ -202,18 +215,18 @@ void mqusdPlayerWindow::SyncSettings()
 {
     const size_t buf_len = 128;
     wchar_t buf[buf_len];
-    auto& settings = m_plugin->GetSettings();
+    auto& opt = m_options;
 
-    swprintf(buf, buf_len, L"%.2f", settings.scale_factor);
+    swprintf(buf, buf_len, L"%.2f", opt.scale_factor);
     m_edit_scale->SetText(buf);
 
-    m_check_flip_x->SetChecked(settings.flip_x);
-    m_check_flip_yz->SetChecked(settings.flip_yz);
-    m_check_flip_faces->SetChecked(settings.flip_faces);
-    m_check_blendshapes->SetChecked(settings.import_blendshapes);
-    m_check_skeletons->SetChecked(settings.import_skeletons);
-    m_check_bake->SetChecked(settings.bake_meshes);
-    m_check_merge->SetChecked(settings.merge_meshes);
+    m_check_flip_x->SetChecked(opt.flip_x);
+    m_check_flip_yz->SetChecked(opt.flip_yz);
+    m_check_flip_faces->SetChecked(opt.flip_faces);
+    m_check_blendshapes->SetChecked(opt.import_blendshapes);
+    m_check_skeletons->SetChecked(opt.import_skeletons);
+    m_check_bake->SetChecked(opt.bake_meshes);
+    m_check_merge->SetChecked(opt.merge_meshes);
 
     UpdateRelations();
 }
@@ -224,5 +237,65 @@ void mqusdPlayerWindow::LogInfo(const char* message)
         m_log->SetText(mu::ToWCS(message));
     }
 }
+
+
+bool mqusdPlayerWindow::Open(MQDocument doc, const std::string& path)
+{
+    Close();
+
+    m_scene = CreateUSDScene();
+    if (!m_scene)
+        return false;
+
+    if (!m_scene->open(path.c_str())) {
+        mqusdLog(
+            "failed to open %s\n"
+            "it may not an usd file"
+            , path.c_str());
+        m_scene = {};
+        return false;
+    }
+
+    m_importer.reset(new DocumentImporter(m_plugin, m_scene.get(), &m_options));
+    m_importer->initialize(doc);
+
+    return true;
+}
+
+bool mqusdPlayerWindow::Close()
+{
+    m_importer = {};
+    m_scene = {};
+    m_seek_time = 0;
+    return true;
+}
+
+void mqusdPlayerWindow::Seek(MQDocument doc, double t)
+{
+    if (!m_importer)
+        return;
+
+    m_seek_time = t + m_scene->time_start;
+    m_importer->read(doc, m_seek_time);
+
+    // repaint
+    MQ_RefreshView(nullptr);
+}
+
+void mqusdPlayerWindow::Refresh(MQDocument doc)
+{
+    Seek(doc, m_seek_time);
+}
+
+bool mqusdPlayerWindow::IsOpened() const
+{
+    return m_scene != nullptr;
+}
+
+double mqusdPlayerWindow::GetTimeRange() const
+{
+    return m_scene ? m_scene->time_end - m_scene->time_start : 0.0;
+}
+
 
 } // namespace mqusd

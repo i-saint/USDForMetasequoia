@@ -5,11 +5,11 @@ namespace mqusd {
 class mqabcPlayerWindow;
 class mqabcRecorderWindow;
 
-class mqabcPlayerPlugin : public MQStationPlugin
+class mqabcPlugin : public MQStationPlugin
 {
 public:
-    mqabcPlayerPlugin();
-    virtual ~mqabcPlayerPlugin();
+    mqabcPlugin();
+    virtual ~mqabcPlugin();
 
 #if defined(__APPLE__) || defined(__linux__)
     // Create a new plugin class for another document.
@@ -75,7 +75,7 @@ public:
     void OnUpdateScene(MQDocument doc, MQScene scene) override;
 
 
-    typedef bool (mqabcPlayerPlugin::*ExecuteCallbackProc)(MQDocument doc);
+    typedef bool (mqabcPlugin::*ExecuteCallbackProc)(MQDocument doc);
 
     void Execute(ExecuteCallbackProc proc);
 

@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "mqabcPlayerPlugin.h"
+#include "mqabcPlugin.h"
 #include "mqabcPlayerWindow.h"
 #include "ABCCore/mqabc.h"
 
@@ -13,7 +13,7 @@ void mqabcPlayerWindow::each(const std::function<void(mqabcPlayerWindow*)>& body
         body(i);
 }
 
-mqabcPlayerWindow::mqabcPlayerWindow(mqabcPlayerPlugin* plugin, MQWindowBase& parent)
+mqabcPlayerWindow::mqabcPlayerWindow(mqabcPlugin* plugin, MQWindowBase& parent)
     : MQWindow(parent)
 {
     g_instances.push_back(this);
