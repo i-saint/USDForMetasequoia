@@ -6,10 +6,18 @@ namespace mqusd {
 std::string SanitizeNodeName(const std::string& name)
 {
     std::string ret = name;
+
+    // USD allows only alphabet, digit and '_' for node name.
+    // in addition, the first character must not be a digit.
+
+    if (ret.empty() || std::isdigit(ret.front()))
+        ret = "_" + ret;
+
     for (auto& c : ret) {
-        if (!std::isalnum(c))
+        if (!std::isalnum(c) && c != '_')
             c = '_';
     }
+
     return ret;
 }
 
@@ -19,7 +27,7 @@ std::string SanitizeNodePath(const std::string& path)
     for (auto& c : ret) {
         if (c == '/')
             continue;
-        if (!std::isalnum(c))
+        if (!std::isalnum(c) && c != '_')
             c = '_';
     }
     return ret;

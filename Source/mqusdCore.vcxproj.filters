@@ -24,12 +24,18 @@
     <ClInclude Include="mqusd\USDCore\mqusdSceneGraphUSD.h">
       <Filter>mqusd\USDCore</Filter>
     </ClInclude>
+    <ClInclude Include="mqusd\USDCore\mqusdUtilsUSD.h">
+      <Filter>mqusd\USDCore</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqusd\pch.cpp">
       <Filter>mqusd</Filter>
     </ClCompile>
     <ClCompile Include="mqusd\USDCore\mqusdSceneGraphUSD.cpp">
+      <Filter>mqusd\USDCore</Filter>
+    </ClCompile>
+    <ClCompile Include="mqusd\USDCore\mqusdUtilsUSD.cpp">
       <Filter>mqusd\USDCore</Filter>
     </ClCompile>
   </ItemGroup>

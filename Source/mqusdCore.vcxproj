@@ -15,12 +15,14 @@
     <ClCompile Include="mqusd\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="mqusd\USDCore\mqusdUtilsUSD.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mqusd\USDCore\mqusdCore.h" />
     <ClInclude Include="mqusd\USDCore\mqusdSceneGraphUSD.h" />
     <ClInclude Include="mqusd\mqusd.h" />
     <ClInclude Include="mqusd\pch.h" />
+    <ClInclude Include="mqusd\USDCore\mqusdUtilsUSD.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="NatvisFile.natvis" />
