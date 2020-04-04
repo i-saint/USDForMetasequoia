@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "Test.h"
 
-#include "mqsdk/sdk_Include.h"
-#include "mqusd/Foundation/mqusdUtils.h"
+#include "Plugins/mqsdk/sdk_Include.h"
+#include "Plugins/mqCommon/mqusdUtils.h"
 
 using namespace mu;
 

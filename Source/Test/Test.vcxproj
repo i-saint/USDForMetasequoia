@@ -18,10 +18,10 @@
     <ClCompile Include="TestMeshUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MeshUtils.vcxproj">
+    <ProjectReference Include="..\MeshUtils\MeshUtils.vcxproj">
       <Project>{fd3fe1ff-abe5-40db-b867-144e9dd9b23c}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\mqusdFoundation.vcxproj">
+    <ProjectReference Include="..\Plugins\mqCommon\mqCommon.vcxproj">
       <Project>{b970a73a-2b06-41ad-8870-266153e82d21}</Project>
     </ProjectReference>
   </ItemGroup>

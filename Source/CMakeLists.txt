@@ -34,7 +34,7 @@ function(add_subdirectory_link to from)
 endfunction()
 
 add_subdirectory(MeshUtils)
-add_subdirectory_link(mqsdk470 mqsdk)
-add_subdirectory_link(mqusd470 mqusd)
+add_subdirectory(SceneGraph)
+add_subdirectory_link(Plugins470 Plugins)
 
 add_subdirectory(Test)

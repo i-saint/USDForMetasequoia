@@ -22,5 +22,4 @@ _build_*/
 Externals/
 TestLocal/
 
-mqsdk4*/
-mqusd4*/
+Plugins4*/

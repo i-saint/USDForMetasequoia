@@ -40,8 +40,11 @@
     <ProjectReference Include="..\..\SceneGraph\SceneGraph.vcxproj">
       <Project>{0945d37c-f1f1-4b88-b738-85816e37d9af}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\setup.vcxproj">
-      <Project>{1c5de91b-7ae9-4304-9fa1-0de1aba8c02d}</Project>
+    <ProjectReference Include="..\mqCommon\mqCommon.vcxproj">
+      <Project>{b970a73a-2b06-41ad-8870-266153e82d21}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\mqsdk\mqsdk.vcxproj">
+      <Project>{d28511e8-4687-434e-8c18-c23fe683af2f}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -58,7 +61,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)mqusd;$(MQ_SDK_DIR);$(SolutionDir)Externals\$(Platform)\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)Plugins;$(MQ_SDK_DIR);$(SolutionDir)Externals\$(Platform)\include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(MQ_VERSION)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(Platform)_$(Configuration)\$(ProjectName)$(MQ_VERSION)\</IntDir>
     <LibraryPath>$(SolutionDir)Externals\$(Platform)\lib;$(LibraryPath)</LibraryPath>

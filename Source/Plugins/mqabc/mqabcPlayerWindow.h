@@ -1,18 +1,18 @@
 #pragma once
 #include "MQWidget.h"
-#include "Foundation/mqusdDocumentImporter.h"
+#include "mqCommon/mqusdDocumentImporter.h"
 
 namespace mqusd {
 
-class mqusdPlugin;
+class mqabcPlugin;
 
-class mqusdPlayerWindow : public MQWindow
+class mqabcPlayerWindow : public MQWindow
 {
 public:
-    static void each(const std::function<void(mqusdPlayerWindow*)>& body);
+    static void each(const std::function<void(mqabcPlayerWindow*)>& body);
 
-    mqusdPlayerWindow(mqusdPlugin* plugin, MQWindowBase& parent);
-    ~mqusdPlayerWindow();
+    mqabcPlayerWindow(mqabcPlugin* plugin, MQWindowBase& parent);
+    ~mqabcPlayerWindow();
 
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
@@ -21,7 +21,6 @@ public:
     BOOL OnSampleSlide(MQWidgetBase* sender, MQDocument doc);
     BOOL OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc);
 
-    void UpdateRelations();
     void SyncSettings();
     void LogInfo(const char *message);
 
@@ -33,8 +32,7 @@ public:
     double GetTimeRange() const;
 
 private:
-    mqusdPlugin* m_plugin = nullptr;
-
+    mqabcPlugin* m_plugin = nullptr;
     MQFrame* m_frame_open = nullptr;
     MQButton* m_button_open = nullptr;
     MQFrame* m_frame_play = nullptr;
@@ -44,9 +42,6 @@ private:
     MQCheckBox* m_check_flip_faces = nullptr;
     MQCheckBox* m_check_flip_x = nullptr;
     MQCheckBox* m_check_flip_yz = nullptr;
-    MQCheckBox* m_check_blendshapes = nullptr;
-    MQCheckBox* m_check_skeletons = nullptr;
-    MQCheckBox* m_check_bake = nullptr;
     MQCheckBox* m_check_merge = nullptr;
     MQMemo* m_log = nullptr;
 

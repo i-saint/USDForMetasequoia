@@ -1,9 +1,10 @@
-#include "pch.h"
-#include "../mqusdSceneGraph.h"
-#include "../mqusdSceneGraphRemote.h"
+#define _CRT_SECURE_NO_WARNINGS
+#include <iostream>
+#include <fstream>
 #include <io.h>
 #include <fcntl.h>
-#include <iostream>
+#include "../mqusdSceneGraph.h"
+#include "../mqusdSceneGraphRemote.h"
 using namespace mqusd;
 
 int main(int argc, char* argv[])

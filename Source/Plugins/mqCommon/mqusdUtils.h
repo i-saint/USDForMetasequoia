@@ -1,5 +1,5 @@
 #pragma once
-#include "mqusd.h"
+#include "../mqusd.h"
 
 namespace mqusd {
 

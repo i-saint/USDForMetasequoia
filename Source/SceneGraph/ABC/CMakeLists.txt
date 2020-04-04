@@ -1,11 +1,9 @@
 file(GLOB sources *.h *.cpp)
-add_library(${MQABC_CORE} STATIC ${sources})
-set_target_properties(${MQABC_CORE} PROPERTIES OUTPUT_NAME "mqabcCore")
+add_library(SceneGraphABC STATIC ${sources})
 
-target_include_directories(${MQABC_CORE}
+target_include_directories(SceneGraphABC
     PRIVATE
         ${CMAKE_SOURCE_DIR}
-        ${CMAKE_SOURCE_DIR}/mqusd
-        ${MQSDK_DIR}
+        ${CMAKE_SOURCE_DIR}/SceneGraph
         ${ALEMBIC_INCLUDE_DIRS}
 )

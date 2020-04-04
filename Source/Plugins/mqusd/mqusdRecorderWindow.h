@@ -1,6 +1,6 @@
 #pragma once
 #include "MQWidget.h"
-#include "Foundation/mqusdDocumentExporter.h"
+#include "mqCommon/mqusdDocumentExporter.h"
 
 namespace mqusd {
 

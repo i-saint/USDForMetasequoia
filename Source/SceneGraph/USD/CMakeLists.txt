@@ -1,23 +1,18 @@
-file(GLOB sources
-    mqusdCore.h
-    mqusdSceneGraphUSD.h
-    mqusdSceneGraphUSD.cpp
-    ../*.h)
-add_library(${MQUSD_CORE} SHARED ${sources})
-set_target_properties(${MQUSD_CORE} PROPERTIES OUTPUT_NAME "mqusdCore")
+file(GLOB sources *.h *.cpp)
+list(REMOVE_ITEM sources mqusdCoreExe.cpp)
+add_library(SceneGraphUSD SHARED ${sources})
 
-add_dependencies(${MQUSD_CORE} MeshUtils ${MQUSD_FOUNDATION})
-target_include_directories(${MQUSD_CORE}
+add_dependencies(SceneGraphUSD MeshUtils SceneGraph)
+target_include_directories(SceneGraphUSD
     PRIVATE
         ${CMAKE_SOURCE_DIR}
-        ${CMAKE_SOURCE_DIR}/mqusd
-        ${MQSDK_DIR}
+        ${CMAKE_SOURCE_DIR}/SceneGraph
         ${USD_INCLUDE_DIRS}
 )
-target_link_libraries(${MQUSD_CORE}
+target_link_libraries(SceneGraphUSD
     PRIVATE
         MeshUtils
-        ${MQUSD_FOUNDATION}
+        SceneGraph
         ${USD_LIBRARIES}
         ${COCOA_LIBRARY}
 )
