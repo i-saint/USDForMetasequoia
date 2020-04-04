@@ -1,9 +1,9 @@
 ﻿#pragma once
-#include "Foundation/mqusdDocumentImporter.h"
 
 namespace mqusd {
 
 class mqabcPlayerWindow;
+class mqabcRecorderWindow;
 
 class mqabcPlayerPlugin : public MQStationPlugin
 {
@@ -88,26 +88,13 @@ public:
 
     void LogInfo(const char* message);
 
-
-public:
-    bool OpenABC(MQDocument doc, const std::string& v);
-    bool CloseABC();
-    void Seek(MQDocument doc, double t);
-    void Refresh(MQDocument doc);
-
-    ImportOptions& GetSettings();
-    bool IsArchiveOpened() const;
-    double GetTimeRange() const;
+    const std::string& GetMQOPath() const;
+    void CloseAll();
 
 private:
-    mqabcPlayerWindow* m_window = nullptr;
-    ScenePtr m_scene;
-    ImportOptions m_options;
-    DocumentImporterPtr m_importer;
-
-    double m_seek_time = 0;
-    MeshNode m_mesh_merged;
-    int m_mqobj_id = 0;
+    mqabcPlayerWindow* m_player = nullptr;
+    mqabcRecorderWindow* m_recorder = nullptr;
+    std::string m_mqo_path;
 };
 
 } // namespace mqusd

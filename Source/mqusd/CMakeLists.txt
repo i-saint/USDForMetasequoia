@@ -8,7 +8,6 @@ set(MQUSD_PLAYER "mqusdPlayer${MQ_VERSION}")
 set(MQUSD_RECORDER "mqusdRecorder${MQ_VERSION}")
 set(MQABC_CORE "mqabcCore${MQ_VERSION}")
 set(MQABC_PLAYER "mqabcPlayer${MQ_VERSION}")
-set(MQABC_RECORDER "mqabcRecorder${MQ_VERSION}")
 set(DIST_DIR "${CMAKE_INSTALL_PREFIX}/mqusd_${PLATFORM}")
 
 add_subdirectory(Foundation)

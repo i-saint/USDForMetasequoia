@@ -2,7 +2,7 @@
 #include "mqusd.h"
 #include "mqabcPlayerPlugin.h"
 #include "mqabcPlayerWindow.h"
-#include "ABCCore/mqabc.h"
+#include "mqabcRecorderWindow.h"
 
 #ifdef _WIN32
     #pragma comment(lib, "Half-2_4.lib")
@@ -50,7 +50,7 @@ void mqabcPlayerPlugin::GetPlugInID(DWORD *Product, DWORD *ID)
     // プロダクト名(制作者名)とIDを、全部で64bitの値として返す
     // 値は他と重複しないようなランダムなもので良い
     *Product = mqabcPluginProduct;
-    *ID = mqabcPlayerPluginID;
+    *ID = mqabcPluginID;
 }
 
 //---------------------------------------------------------------------------
@@ -60,7 +60,7 @@ void mqabcPlayerPlugin::GetPlugInID(DWORD *Product, DWORD *ID)
 //---------------------------------------------------------------------------
 const char *mqabcPlayerPlugin::GetPlugInName(void)
 {
-    return "Alembic Player (version " mqusdVersionString ") " mqusdCopyRight;
+    return "Alembic for Metasequoia (version " mqusdVersionString ") " mqusdCopyRight;
 }
 
 //---------------------------------------------------------------------------
@@ -71,12 +71,12 @@ const char *mqabcPlayerPlugin::GetPlugInName(void)
 #if MQPLUGIN_VERSION >= 0x0470
 const wchar_t *mqabcPlayerPlugin::EnumString(void)
 {
-    return L"Alembic Player";
+    return L"Alembic for Metasequoia";
 }
 #else
 const char *mqabcPlayerPlugin::EnumString(void)
 {
-    return "Alembic Player";
+    return "Alembic for Metasequoia";
 }
 #endif
 
@@ -106,9 +106,12 @@ const wchar_t *mqabcPlayerPlugin::GetSubCommandString(int index)
 //---------------------------------------------------------------------------
 BOOL mqabcPlayerPlugin::Initialize()
 {
-    if (!m_window) {
-        auto parent = MQWindow::GetMainWindow();
-        m_window = new mqabcPlayerWindow(this, parent);
+    auto parent = MQWindow::GetMainWindow();
+    if (!m_player) {
+        m_player = new mqabcPlayerWindow(this, parent);
+    }
+    if (!m_recorder) {
+        m_recorder = new mqabcRecorderWindow(this, parent);
     }
     return TRUE;
 }
@@ -119,11 +122,7 @@ BOOL mqabcPlayerPlugin::Initialize()
 //---------------------------------------------------------------------------
 void mqabcPlayerPlugin::Exit()
 {
-    if (m_window) {
-        delete m_window;
-        m_window = nullptr;
-    }
-    CloseABC();
+    CloseAll();
 }
 
 //---------------------------------------------------------------------------
@@ -132,12 +131,14 @@ void mqabcPlayerPlugin::Exit()
 //---------------------------------------------------------------------------
 BOOL mqabcPlayerPlugin::Activate(MQDocument doc, BOOL flag)
 {
-    if (!m_window) {
-        return FALSE;
+    bool active = flag ? true : false;
+    if (m_player) {
+        m_player->SetVisible(active);
+    }
+    if (m_recorder) {
+        m_recorder->SetVisible(active);
     }
 
-    bool active = flag ? true : false;
-    m_window->SetVisible(active);
     return active;
 }
 
@@ -147,10 +148,9 @@ BOOL mqabcPlayerPlugin::Activate(MQDocument doc, BOOL flag)
 //---------------------------------------------------------------------------
 BOOL mqabcPlayerPlugin::IsActivated(MQDocument doc)
 {
-    if (!m_window) {
-        return FALSE;
-    }
-    return m_window->GetVisible();
+    return
+        (m_player && m_player->GetVisible()) ||
+        (m_recorder && m_recorder->GetVisible());
 }
 
 //---------------------------------------------------------------------------
@@ -186,6 +186,9 @@ BOOL mqabcPlayerPlugin::OnSubCommand(MQDocument doc, int index)
 //---------------------------------------------------------------------------
 void mqabcPlayerPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int height)
 {
+    mqabcRecorderWindow::each([doc](auto* w) {
+        w->CaptureFrame(doc);
+    });
 }
 
 
@@ -195,6 +198,11 @@ void mqabcPlayerPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int hei
 //---------------------------------------------------------------------------
 void mqabcPlayerPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUMENT_PARAM& param)
 {
+    m_mqo_path = filename ? filename : "";
+
+    mqabcRecorderWindow::each([doc](auto* w) {
+        w->MarkSceneDirty();
+    });
 }
 
 //---------------------------------------------------------------------------
@@ -203,7 +211,8 @@ void mqabcPlayerPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_
 //---------------------------------------------------------------------------
 void mqabcPlayerPlugin::OnEndDocument(MQDocument doc)
 {
-    CloseABC();
+    m_mqo_path.clear();
+    CloseAll();
 }
 
 //---------------------------------------------------------------------------
@@ -212,6 +221,7 @@ void mqabcPlayerPlugin::OnEndDocument(MQDocument doc)
 //---------------------------------------------------------------------------
 void mqabcPlayerPlugin::OnSaveDocument(MQDocument doc, const char *filename, SAVE_DOCUMENT_PARAM& param)
 {
+    m_mqo_path = filename ? filename : "";
 }
 
 //---------------------------------------------------------------------------
@@ -220,6 +230,9 @@ void mqabcPlayerPlugin::OnSaveDocument(MQDocument doc, const char *filename, SAV
 //---------------------------------------------------------------------------
 BOOL mqabcPlayerPlugin::OnUndo(MQDocument doc, int undo_state)
 {
+    mqabcRecorderWindow::each([doc](auto* w) {
+        w->MarkSceneDirty();
+    });
     return TRUE;
 }
 
@@ -229,6 +242,9 @@ BOOL mqabcPlayerPlugin::OnUndo(MQDocument doc, int undo_state)
 //---------------------------------------------------------------------------
 BOOL mqabcPlayerPlugin::OnRedo(MQDocument doc, int redo_state)
 {
+    mqabcRecorderWindow::each([doc](auto* w) {
+        w->MarkSceneDirty();
+    });
     return TRUE;
 }
 
@@ -238,6 +254,9 @@ BOOL mqabcPlayerPlugin::OnRedo(MQDocument doc, int redo_state)
 //---------------------------------------------------------------------------
 void mqabcPlayerPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo_size)
 {
+    mqabcRecorderWindow::each([doc](auto* w) {
+        w->MarkSceneDirty();
+    });
 }
 
 //---------------------------------------------------------------------------
@@ -308,8 +327,25 @@ void mqabcPlayerPlugin::Execute(ExecuteCallbackProc proc)
 
 void mqabcPlayerPlugin::LogInfo(const char* message)
 {
-    if (m_window)
-        m_window->LogInfo(message);
+    if (m_player)
+        m_player->LogInfo(message);
+}
+
+const std::string& mqabcPlayerPlugin::GetMQOPath() const
+{
+    return m_mqo_path;
+}
+
+void mqabcPlayerPlugin::CloseAll()
+{
+    if (m_player) {
+        delete m_player;
+        m_player = nullptr;
+    }
+    if (m_recorder) {
+        delete m_recorder;
+        m_recorder = nullptr;
+    }
 }
 
 void mqusdLog(const char* fmt, ...)
@@ -322,75 +358,6 @@ void mqusdLog(const char* fmt, ...)
     va_end(args);
 
     g_plugin.LogInfo(s_buf);
-}
-
-
-// impl
-
-bool mqabcPlayerPlugin::OpenABC(MQDocument doc, const std::string& path)
-{
-    CloseABC();
-
-    m_scene = CreateABCIScene();
-    if (!m_scene)
-        return false;
-
-    if (!m_scene->open(path.c_str())) {
-        mqusdLog(
-            "failed to open %s\n"
-            "it may not an usd file"
-            , path.c_str());
-        m_scene = {};
-        return false;
-    }
-
-    m_importer.reset(new DocumentImporter(this, m_scene.get(), &m_options));
-    m_importer->initialize(doc);
-
-    return true;
-}
-
-bool mqabcPlayerPlugin::CloseABC()
-{
-    m_importer = {};
-    m_scene = {};
-
-    m_seek_time = 0;
-    m_mqobj_id = 0;
-
-    return true;
-}
-
-void mqabcPlayerPlugin::Seek(MQDocument doc, double t)
-{
-    if (!m_importer)
-        return;
-
-    m_seek_time = t + m_scene->time_start;
-    m_importer->read(doc, m_seek_time);
-
-    // repaint
-    MQ_RefreshView(nullptr);
-}
-
-void mqabcPlayerPlugin::Refresh(MQDocument doc)
-{
-    Seek(doc, m_seek_time);
-}
-
-ImportOptions& mqabcPlayerPlugin::GetSettings()
-{
-    return m_options;
-}
-
-bool mqabcPlayerPlugin::IsArchiveOpened() const
-{
-    return m_scene != nullptr;
-}
-
-double mqabcPlayerPlugin::GetTimeRange() const
-{
-    return m_scene->time_end - m_scene->time_start;
 }
 
 } // namespace mqusd

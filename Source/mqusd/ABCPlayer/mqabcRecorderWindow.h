@@ -1,14 +1,18 @@
 #pragma once
 #include "MQWidget.h"
+#include "Foundation/mqusdDocumentExporter.h"
 
 namespace mqusd {
 
-class mqabcRecorderPlugin;
+class mqabcPlayerPlugin;
 
 class mqabcRecorderWindow : public MQWindow
 {
 public:
-    mqabcRecorderWindow(mqabcRecorderPlugin* plugin, MQWindowBase& parent);
+    static void each(const std::function<void (mqabcRecorderWindow*)>& body);
+
+    mqabcRecorderWindow(mqabcPlayerPlugin* plugin, MQWindowBase& parent);
+    ~mqabcRecorderWindow();
 
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
@@ -18,8 +22,15 @@ public:
     void SyncSettings();
     void LogInfo(const char *message);
 
+    bool Open(MQDocument doc, const std::string& v);
+    bool Close();
+    void CaptureFrame(MQDocument doc);
+    void MarkSceneDirty();
+    bool IsOpened() const;
+    bool IsRecording() const;
+
 private:
-    mqabcRecorderPlugin* m_plugin = nullptr;
+    mqabcPlayerPlugin* m_plugin = nullptr;
 
     MQFrame* m_frame_settings = nullptr;
     MQEdit* m_edit_interval = nullptr;
@@ -43,6 +54,13 @@ private:
 #ifdef mqusdDebug
     MQButton* m_button_debug = nullptr;
 #endif // mqusdDebug
+
+
+    ScenePtr m_scene;
+    ExportOptions m_options;
+    DocumentExporterPtr m_exporter;
+    bool m_dirty = false;
+    bool m_recording = false;
 };
 
 } // namespace mqusd

@@ -1,9 +1,10 @@
 #include "pch.h"
+#include "mqusdSceneGraphUSD.h"
 #include "mqusdUtilsUSD.h"
 
 namespace mqusd {
 
-void PrintPrim(UsdPrim prim, PrintFlags flags = PF_Path)
+void PrintPrim(UsdPrim prim, PrintFlags flags)
 {
     std::stringstream ss;
     if (flags & PF_Path) {

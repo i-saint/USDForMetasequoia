@@ -38,7 +38,7 @@ void mqusdRecorderPlugin::GetPlugInID(DWORD *Product, DWORD *ID)
     // プロダクト名(制作者名)とIDを、全部で64bitの値として返す
     // 値は他と重複しないようなランダムなもので良い
     *Product = mqusdPluginProduct;
-    *ID = mqusdRecorderPluginID;
+    *ID = mqusdPluginID;
 }
 
 //---------------------------------------------------------------------------

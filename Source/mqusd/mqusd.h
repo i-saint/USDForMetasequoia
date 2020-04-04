@@ -5,12 +5,10 @@
 #define mqusdCopyRight      "Copyright(C) 2020, i-saint"
 
 #define mqusdPluginProduct      0x493ADF11
-#define mqusdRecorderPluginID   0xB1CC99A0
-#define mqusdPlayerPluginID     0xB1CC99A1
+#define mqusdPluginID           0xB1CC99A0
 
 #define mqabcPluginProduct      mqusdPluginProduct
-#define mqabcRecorderPluginID   0xB1CC99B0
-#define mqabcPlayerPluginID     0xB1CC99B1
+#define mqabcPluginID           0xB1CC99B0
 
 #ifdef _WIN32
     #define mqusdAPI extern "C" __declspec(dllexport)
