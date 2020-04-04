@@ -19,27 +19,26 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mqusd\Foundation\mqusdDocumentExporter.h" />
-    <ClInclude Include="mqusd\Foundation\mqusdDocumentImporter.h" />
-    <ClInclude Include="mqusd\Foundation\mqusdUtils.h" />
-    <ClInclude Include="mqusd\mqusd.h" />
-    <ClInclude Include="mqusd\pch.h" />
+    <ClInclude Include="mqabc.h" />
+    <ClInclude Include="mqabcCore.h" />
+    <ClInclude Include="mqabcISceneGraph.h" />
+    <ClInclude Include="mqabcOSceneGraph.h" />
+    <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqusd\Foundation\mqusdDocumentExporter.cpp" />
-    <ClCompile Include="mqusd\Foundation\mqusdDocumentImporter.cpp" />
-    <ClCompile Include="mqusd\Foundation\mqusdUtils.cpp" />
-    <ClCompile Include="mqusd\pch.cpp">
+    <ClCompile Include="mqabcISceneGraph.cpp" />
+    <ClCompile Include="mqabcOSceneGraph.cpp" />
+    <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="setup.vcxproj">
+    <ProjectReference Include="..\..\setup.vcxproj">
       <Project>{1c5de91b-7ae9-4304-9fa1-0de1aba8c02d}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{B970A73A-2B06-41AD-8870-266153E82D21}</ProjectGuid>
+    <ProjectGuid>{6F1F478F-29EE-46F0-8AB1-75E5B77CA021}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -52,9 +51,9 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)mqusd;$(MQ_SDK_DIR);$(SolutionDir)Externals\$(Platform)\include;$(SolutionDir)Externals\$(Platform)\include\OpenEXR;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(MQ_VERSION)\</OutDir>
-    <IntDir>$(SolutionDir)_tmp\$(Platform)_$(Configuration)\$(ProjectName)$(MQ_VERSION)\</IntDir>
+    <IncludePath>$(SolutionDir);$(SolutionDir)Externals\$(Platform)\include;$(SolutionDir)Externals\$(Platform)\include\OpenEXR;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)_tmp\$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>

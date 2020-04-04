@@ -1,5 +1,4 @@
 #pragma once
-#include "mqusdCore.h"
 
 namespace mqusd {
 

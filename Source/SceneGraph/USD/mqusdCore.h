@@ -82,4 +82,4 @@
 #pragma warning(pop)
 PXR_NAMESPACE_USING_DIRECTIVE;
 
-#include "Foundation/mqusdSceneGraph.h"
+#include "../mqusdSceneGraph.h"

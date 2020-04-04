@@ -5,8 +5,8 @@ namespace mqusd {
 
 #define mqusdTBBDll muDLLPrefix "tbb" muDLLSuffix
 #define mqusdUSDDll muDLLPrefix "usd_ms" muDLLSuffix
-#define mqusdCoreDll muDLLPrefix "mqusdCore" muDLLSuffix
-#define mqusdCoreExe "mqusdCore" muEXESuffix
+#define mqusdCoreDll muDLLPrefix "SceneGraphUSD" muDLLSuffix
+#define mqusdCoreExe "SceneGraphUSD" muEXESuffix
 
 static std::string g_usd_module_dir;
 static std::string g_usd_plugin_path;

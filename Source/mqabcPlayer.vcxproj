@@ -43,6 +43,12 @@
     <ProjectReference Include="mqusdFoundation.vcxproj">
       <Project>{b970a73a-2b06-41ad-8870-266153e82d21}</Project>
     </ProjectReference>
+    <ProjectReference Include="SceneGraph\ABC\SceneGraphABC.vcxproj">
+      <Project>{6f1f478f-29ee-46f0-8ab1-75e5b77ca021}</Project>
+    </ProjectReference>
+    <ProjectReference Include="SceneGraph\SceneGraph.vcxproj">
+      <Project>{0945d37c-f1f1-4b88-b738-85816e37d9af}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="NatvisFile.natvis" />

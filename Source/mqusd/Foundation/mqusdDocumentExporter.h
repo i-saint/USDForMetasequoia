@@ -1,6 +1,6 @@
 #pragma once
-#include "mqusdSceneGraph.h"
-#include "mqusdSceneGraphRemote.h"
+#include "SceneGraph/mqusdSceneGraph.h"
+#include "SceneGraph/mqusdSceneGraphRemote.h"
 
 namespace mqusd {
 

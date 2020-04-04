@@ -1,24 +1,10 @@
 #pragma once
 
-#define mqabcEnableHDF5
-
 #define mqabcAttrVertexColor    "C"
 #define mqabcAttrMaterialID     "MID"
 
 
-#pragma warning(push)
-#pragma warning(disable:4244 4245 4100)
-#include <Alembic/AbcCoreAbstract/All.h>
-#include <Alembic/AbcCoreOgawa/All.h>
-#ifdef mqabcEnableHDF5
-    #include <Alembic/AbcCoreHDF5/All.h>
-#endif
-#include <Alembic/AbcGeom/All.h>
-#include <Alembic/AbcMaterial/All.h>
-#pragma warning(pop)
-
-#include "mqusd.h"
-#include "Foundation/mqusdSceneGraph.h"
+#include "../mqusdSceneGraph.h"
 
 using namespace Alembic;
 using abcV2 = Imath::V2f;

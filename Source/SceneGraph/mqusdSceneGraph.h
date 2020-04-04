@@ -1,11 +1,22 @@
 #pragma once
-#include "mqusd.h"
+
+#define sgVersion       100
+#define sgVersionString "100"
+
+#include "MeshUtils/MeshUtils.h"
 #include "mqusdSerialization.h"
 #include "mqusdUtils.h"
 
 namespace mqusd {
 
-extern const double default_time;
+using mu::float2;
+using mu::float3;
+using mu::float4;
+using mu::quatf;
+using mu::float2x2;
+using mu::float3x3;
+using mu::float4x4;
+using mu::double4x4;
 
 class Node;
 class RootNode;
@@ -18,6 +29,8 @@ class MaterialNode;
 
 class SceneInterface;
 class Scene;
+
+extern const double default_time;
 
 
 struct ConvertOptions

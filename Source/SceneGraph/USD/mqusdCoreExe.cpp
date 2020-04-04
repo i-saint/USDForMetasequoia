@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "Foundation/mqusdSceneGraph.h"
-#include "Foundation/mqusdSceneGraphRemote.h"
+#include "../mqusdSceneGraph.h"
+#include "../mqusdSceneGraphRemote.h"
 #include <io.h>
 #include <fcntl.h>
 #include <iostream>
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
     }
 
     if (version) {
-        printf("version: " mqusdVersionString "\n");
+        printf("version: " sgVersionString "\n");
         return 0;
     }
     else if (usd_path.empty()) {

@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "mqusd.h"
 #include "mqusdSceneGraphUSD.h"
 #include "mqusdUtilsUSD.h"
 
