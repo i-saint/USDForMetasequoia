@@ -20,8 +20,11 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\MeshUtils.vcxproj">
+    <ProjectReference Include="..\..\MeshUtils\MeshUtils.vcxproj">
       <Project>{fd3fe1ff-abe5-40db-b867-144e9dd9b23c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\setup.vcxproj">
+      <Project>{1c5de91b-7ae9-4304-9fa1-0de1aba8c02d}</Project>
     </ProjectReference>
     <ProjectReference Include="..\SceneGraph.vcxproj">
       <Project>{0945d37c-f1f1-4b88-b738-85816e37d9af}</Project>

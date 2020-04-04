@@ -19,44 +19,84 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="setup.vcxproj">
+    <ClInclude Include="MeshUtils_impl.h" />
+    <ClInclude Include="muAlgorithm.h" />
+    <ClInclude Include="muAllocator.h" />
+    <ClInclude Include="ampmath.h" />
+    <ClInclude Include="ampmath_impl.h" />
+    <ClInclude Include="muColor.h" />
+    <ClInclude Include="muCompression.h" />
+    <ClInclude Include="muConcurrency.h" />
+    <ClInclude Include="muConfig.h" />
+    <ClInclude Include="muDebugTimer.h" />
+    <ClInclude Include="muHalf.h" />
+    <ClInclude Include="muIntrusiveArray.h" />
+    <ClInclude Include="ispcmath.h" />
+    <ClInclude Include="muIterator.h" />
+    <ClInclude Include="muLimits.h" />
+    <ClInclude Include="muMeshRefiner.h" />
+    <ClInclude Include="muMisc.h" />
+    <ClInclude Include="muQuat32.h" />
+    <ClInclude Include="muSIMDConfig.h" />
+    <ClInclude Include="muStream.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="MeshUtils.h" />
+    <ClInclude Include="muRawVector.h" />
+    <ClInclude Include="muSIMD.h" />
+    <ClInclude Include="muTLS.h" />
+    <ClInclude Include="muMath.h" />
+    <ClInclude Include="muVertex.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="muAllocator.cpp" />
+    <ClCompile Include="muCompression.cpp" />
+    <ClCompile Include="muDebugTimer.cpp" />
+    <ClCompile Include="muMeshRefiner.cpp" />
+    <ClCompile Include="muMisc.cpp" />
+    <ClCompile Include="muStream.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="MeshUtils.cpp" />
+    <ClCompile Include="muSIMD.cpp" />
+    <ClCompile Include="muMath.cpp" />
+    <ClCompile Include="muVertex.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="MeshUtilsCore.ispc">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Platform)'=='x64'">$(SolutionDir)Externals\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86-64 --opt=fast-math --wno-perf</Command>
+      <Command Condition="'$(Platform)'=='Win32'">$(SolutionDir)Externals\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86 --opt=fast-math --wno-perf</Command>
+      <Outputs>$(IntDir)%(Filename).obj;$(IntDir)%(Filename)_sse4.obj;$(IntDir)%(Filename)_avx.obj;$(IntDir)%(Filename)_avx512skx.obj</Outputs>
+      <AdditionalInputs>$(ProjectDir)ispcmath.h;$(ProjectDir)muSIMDConfig.h</AdditionalInputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\setup.vcxproj">
       <Project>{1c5de91b-7ae9-4304-9fa1-0de1aba8c02d}</Project>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="mqsdk\pch.cpp">
-      <PrecompiledHeader>Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="mqsdk\sdk_MQBasePlugin.cpp" />
-    <ClCompile Include="mqsdk\sdk_MQBoneManager.cpp" />
-    <ClCompile Include="mqsdk\sdk_MQInit.cpp" />
-    <ClCompile Include="mqsdk\sdk_MQMorphManager.cpp" />
-    <ClCompile Include="mqsdk\sdk_MQPlugin.cpp" />
-    <ClCompile Include="mqsdk\sdk_MQSetting.cpp" />
-    <ClCompile Include="mqsdk\sdk_MQWidget.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="mqsdk\pch.h" />
-    <ClInclude Include="mqsdk\sdk_Include.h" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{D28511E8-4687-434E-8C18-C23FE683AF2F}</ProjectGuid>
+    <ProjectGuid>{FD3FE1FF-ABE5-40DB-B867-144E9DD9B23C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <PropertyGroup>
-    <IncludePath>$(MQ_SDK_DIR);$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(MQ_VERSION)\</OutDir>
-    <IntDir>$(SolutionDir)_tmp\$(Platform)_$(Configuration)\$(ProjectName)$(MQ_VERSION)\</IntDir>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External\include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)_tmp\$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
@@ -64,14 +104,14 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <AdditionalIncludeDirectories>$(IntDir)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">msDebug;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <FloatingPointModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Fast</FloatingPointModel>
+      <PreprocessorDefinitions>msDebug;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -87,8 +127,9 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>

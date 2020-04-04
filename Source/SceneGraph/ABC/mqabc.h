@@ -1,5 +1,5 @@
 #pragma once
-#include "Foundation/mqusdSceneGraph.h"
+#include "../mqusdSceneGraph.h"
 
 namespace mqusd {
 

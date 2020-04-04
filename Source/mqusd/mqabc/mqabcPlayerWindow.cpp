@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "mqabcPlugin.h"
 #include "mqabcPlayerWindow.h"
-#include "ABCCore/mqabc.h"
+#include "SceneGraph/ABC/mqabc.h"
 
 namespace mqusd {
 

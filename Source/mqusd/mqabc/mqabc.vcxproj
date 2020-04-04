@@ -19,39 +19,35 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqusd\pch.cpp">
+    <ClCompile Include="mqabcPlugin.cpp" />
+    <ClCompile Include="mqabcRecorderWindow.cpp" />
+    <ClCompile Include="mqabcPlayerWindow.cpp" />
+    <ClCompile Include="..\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="mqusd\USDPlayer\mqusdPlayerWindow.cpp" />
-    <ClCompile Include="mqusd\USDPlayer\mqusdPlugin.cpp" />
-    <ClCompile Include="mqusd\USDPlayer\mqusdRecorderWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mqusd\mqusd.h" />
-    <ClInclude Include="mqusd\pch.h" />
-    <ClInclude Include="mqusd\USDPlayer\mqusdPlayerWindow.h" />
-    <ClInclude Include="mqusd\USDPlayer\mqusdPlugin.h" />
-    <ClInclude Include="mqusd\USDPlayer\mqusdRecorderWindow.h" />
+    <ClInclude Include="mqabcPlugin.h" />
+    <ClInclude Include="mqabcRecorderWindow.h" />
+    <ClInclude Include="mqabcPlayerWindow.h" />
+    <ClInclude Include="..\pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="MeshUtils.vcxproj">
+    <ProjectReference Include="..\..\MeshUtils\MeshUtils.vcxproj">
       <Project>{fd3fe1ff-abe5-40db-b867-144e9dd9b23c}</Project>
     </ProjectReference>
-    <ProjectReference Include="mqsdk.vcxproj">
-      <Project>{d28511e8-4687-434e-8c18-c23fe683af2f}</Project>
+    <ProjectReference Include="..\..\SceneGraph\ABC\SceneGraphABC.vcxproj">
+      <Project>{6f1f478f-29ee-46f0-8ab1-75e5b77ca021}</Project>
     </ProjectReference>
-    <ProjectReference Include="mqusdFoundation.vcxproj">
-      <Project>{b970a73a-2b06-41ad-8870-266153e82d21}</Project>
-    </ProjectReference>
-    <ProjectReference Include="SceneGraph\SceneGraph.vcxproj">
+    <ProjectReference Include="..\..\SceneGraph\SceneGraph.vcxproj">
       <Project>{0945d37c-f1f1-4b88-b738-85816e37d9af}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Natvis Include="NatvisFile.natvis" />
+    <ProjectReference Include="..\..\setup.vcxproj">
+      <Project>{1c5de91b-7ae9-4304-9fa1-0de1aba8c02d}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{E4C06BCF-1349-494F-82BA-4CF54C84B0DF}</ProjectGuid>
+    <ProjectGuid>{B25F40AC-A6B2-4C76-B527-8CBFCE605CFE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
