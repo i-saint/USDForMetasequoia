@@ -19,15 +19,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mqabc.h" />
-    <ClInclude Include="mqabcCore.h" />
-    <ClInclude Include="mqabcISceneGraph.h" />
-    <ClInclude Include="mqabcOSceneGraph.h" />
+    <ClInclude Include="sgabc.h" />
+    <ClInclude Include="sgabcInternal.h" />
+    <ClInclude Include="sgabcISceneGraph.h" />
+    <ClInclude Include="sgabcOSceneGraph.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqabcISceneGraph.cpp" />
-    <ClCompile Include="mqabcOSceneGraph.cpp" />
+    <ClCompile Include="sgabcISceneGraph.cpp" />
+    <ClCompile Include="sgabcOSceneGraph.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

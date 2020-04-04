@@ -1,6 +1,7 @@
 #pragma once
+#include "sgusdInternal.h"
 
-namespace mqusd {
+namespace sg {
 
 enum PrintFlags
 {
@@ -191,4 +192,4 @@ template<class T> inline void SetValue(T& dst, WrapMode v, UsdTimeCode t = { def
 }
 
 
-} // namespace mqusd
+} // namespace sg

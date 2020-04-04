@@ -1,12 +1,12 @@
 #include "pch.h"
-#include "mqusdSceneGraphUSD.h"
-#include "mqusdUtilsUSD.h"
+#include "sgusdSceneGraph.h"
+#include "sgusdUtils.h"
 
 #ifdef _WIN32
     #pragma comment(lib, "usd_ms.lib")
 #endif
 
-namespace mqusd {
+namespace sg {
 
 USDNode::USDNode(USDNode* parent, UsdPrim prim, bool create_node)
     : m_prim(prim)
@@ -1325,9 +1325,9 @@ Node* USDScene::findNodeImpl(const std::string& path)
     return nullptr;
 }
 
-} // namespace mqusd
+} // namespace sg
 
-mqusdCoreAPI mqusd::SceneInterface* mqusdCreateUSDSceneInterface(mqusd::Scene *scene)
+sgusdAPI sg::SceneInterface* mqusdCreateUSDSceneInterface(sg::Scene *scene)
 {
-    return new mqusd::USDScene(scene);
+    return new sg::USDScene(scene);
 }

@@ -3,9 +3,9 @@
 #include <fstream>
 #include <io.h>
 #include <fcntl.h>
-#include "../mqusdSceneGraph.h"
-#include "../mqusdSceneGraphRemote.h"
-using namespace mqusd;
+#include "../SceneGraph.h"
+#include "../SceneGraphRemote.h"
+using namespace sg;
 
 int main(int argc, char* argv[])
 {
@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 
     std::string usd_path;
     std::string file_path;
-    double time = mqusd::default_time;
+    double time = sg::default_time;
     bool mode_export = false;
     bool mode_test = false;
     bool mode_header= false;
@@ -67,8 +67,8 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    mqusd::SetUSDModuleDir(mu::GetCurrentModuleDirectory());
-    auto scene = mqusd::CreateUSDScene();
+    sg::SetUSDModuleDir(mu::GetCurrentModuleDirectory());
+    auto scene = sg::CreateUSDScene();
     if (!scene)
         return 1;
 

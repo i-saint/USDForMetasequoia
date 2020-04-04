@@ -1,6 +1,7 @@
-#include "mqabcCore.h"
+#pragma once
+#include "sgabcInternal.h"
 
-namespace mqusd {
+namespace sg {
 
 class ABCIScene;
 
@@ -22,7 +23,7 @@ public:
     ABCINode* m_parent = nullptr;
     std::vector<ABCINode*> m_children;
 };
-mqusdDeclPtr(ABCINode);
+sgDeclPtr(ABCINode);
 
 
 class ABCIRootNode : public ABCINode
@@ -131,4 +132,4 @@ private:
 
 SceneInterface* CreateABCIScene(Scene* scene);
 
-} // namespace mqusd
+} // namespace sg

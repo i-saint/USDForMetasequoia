@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "mqusdUtils.h"
+#include "sgUtils.h"
 
-namespace mqusd {
+namespace sg {
 
 std::string SanitizeNodeName(const std::string& name)
 {
@@ -53,4 +53,4 @@ const char* GetLeafName(const std::string& path)
         return path.c_str() + (pos + 1);
 }
 
-} // namespace mqusd
+} // namespace sg

@@ -7,7 +7,8 @@ add_dependencies(Test MeshUtils mqusdFoundation470)
 target_include_directories(Test
     PRIVATE
         ${CMAKE_SOURCE_DIR}
-        ${CMAKE_SOURCE_DIR}/mqusd
+        ${CMAKE_SOURCE_DIR}/SceneGraph
+        ${CMAKE_SOURCE_DIR}/Plugins
         ${MQSDK_DIR}
 )
 target_link_libraries(Test

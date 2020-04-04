@@ -1,8 +1,8 @@
 #include "pch.h"
-#include "mqusdSceneGraphUSD.h"
-#include "mqusdUtilsUSD.h"
+#include "sgusdSceneGraph.h"
+#include "sgusdUtils.h"
 
-namespace mqusd {
+namespace sg {
 
 void PrintPrim(UsdPrim prim, PrintFlags flags)
 {
@@ -47,4 +47,4 @@ void PrintPrim(UsdPrim prim, PrintFlags flags)
 }
 
 
-} // namespace mqusd
+} // namespace sg

@@ -1,9 +1,9 @@
 #pragma once
-#include "../mqusdSceneGraph.h"
+#include "../SceneGraph.h"
 
-namespace mqusd {
+namespace sg {
 
 ScenePtr CreateABCIScene();
 ScenePtr CreateABCOScene();
 
-} // namespace mqusd
+} // namespace sg

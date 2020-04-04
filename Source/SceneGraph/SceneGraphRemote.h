@@ -1,11 +1,11 @@
 #pragma once
-#include "mqusdSceneGraph.h"
+#include "SceneGraph.h"
 
-namespace mqusd {
+namespace sg {
 
 void SetUSDModuleDir(const std::string& v);
 void SetUSDPluginPath(const std::string& v);
 ScenePtr CreateUSDScene();
 ScenePtr CreateUSDScenePipe();
 
-} // namespace mqusd
+} // namespace sg

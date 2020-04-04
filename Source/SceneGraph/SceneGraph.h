@@ -4,10 +4,9 @@
 #define sgVersionString "100"
 
 #include "MeshUtils/MeshUtils.h"
-#include "mqusdSerialization.h"
-#include "mqusdUtils.h"
+#include "sgSerialization.h"
 
-namespace mqusd {
+namespace sg {
 
 using mu::float2;
 using mu::float3;
@@ -115,8 +114,8 @@ public:
     void* impl = nullptr;
     void* userdata = nullptr;
 };
-mqusdSerializable(Node);
-mqusdDeclPtr(Node);
+sgSerializable(Node);
+sgDeclPtr(Node);
 
 
 class RootNode : public Node
@@ -168,8 +167,8 @@ struct BlendshapeTarget
     void serialize(serializer& s);
     void deserialize(deserializer& d);
 };
-mqusdSerializable(BlendshapeTarget);
-mqusdDeclPtr(BlendshapeTarget);
+sgSerializable(BlendshapeTarget);
+sgDeclPtr(BlendshapeTarget);
 
 class BlendshapeNode : public Node
 {
@@ -250,8 +249,8 @@ public:
     std::vector<Joint*> children;
     void* userdata = nullptr;
 };
-mqusdSerializable(Joint);
-mqusdDeclPtr(Joint);
+sgSerializable(Joint);
+sgDeclPtr(Joint);
 
 class SkeletonNode : public XformNode
 {
@@ -300,8 +299,8 @@ public:
     MaterialNode* material = nullptr;
     void* userdata = nullptr;
 };
-mqusdSerializable(FaceSet);
-mqusdDeclPtr(FaceSet);
+sgSerializable(FaceSet);
+sgDeclPtr(FaceSet);
 
 class MeshNode : public XformNode
 {
@@ -375,7 +374,7 @@ public:
 
     std::vector<MaterialNode*> materials;
 };
-mqusdDeclPtr(MeshNode);
+sgDeclPtr(MeshNode);
 
 
 class InstancerNode : public XformNode
@@ -445,8 +444,8 @@ public:
     WrapMode wrap_t = WrapMode::Unknown;
     float4 fallback = Texture::default_fallback;
 };
-mqusdSerializable(Texture);
-mqusdDeclPtr(Texture);
+sgSerializable(Texture);
+sgDeclPtr(Texture);
 
 
 enum class ShaderType : int
@@ -513,7 +512,7 @@ public:
     virtual Node* createNode(Node* parent, const char* name, Node::Type type) = 0;
     virtual bool wrapNode(Node* node) = 0;
 };
-mqusdDeclPtr(SceneInterface);
+sgDeclPtr(SceneInterface);
 
 class Scene
 {
@@ -596,7 +595,7 @@ public:
     SceneInterfacePtr impl;
     RootNode* root_node = nullptr;
 };
-mqusdSerializable(Scene);
-mqusdDeclPtr(Scene);
+sgSerializable(Scene);
+sgDeclPtr(Scene);
 
-} // namespace mqusd
+} // namespace sg

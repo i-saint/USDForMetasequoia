@@ -1,6 +1,6 @@
 #pragma once
 
-namespace mqusd {
+namespace sg {
 
 template<class T>
 inline bool is_uniform(const T* data, size_t data_size, size_t element_size)
@@ -106,7 +106,7 @@ std::string SanitizeNodePath(const std::string& path);
 std::string GetParentPath(const std::string& path);
 const char* GetLeafName(const std::string& path);
 
-} // namespace mqusd
+} // namespace sg
 
 #define mqusdDbgPrint(...)
 #define mqusdDbgFatal(...)

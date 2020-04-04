@@ -11,24 +11,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqusdSceneGraphUSD.cpp" />
+    <ClCompile Include="sgusdSceneGraph.cpp" />
+    <ClCompile Include="sgusdUtils.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="mqusdUtilsUSD.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mqusdCore.h" />
-    <ClInclude Include="mqusdSceneGraphUSD.h" />
+    <ClInclude Include="sgusdInternal.h" />
+    <ClInclude Include="sgusdSceneGraph.h" />
+    <ClInclude Include="sgusdUtils.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="mqusdUtilsUSD.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MeshUtils\MeshUtils.vcxproj">
       <Project>{fd3fe1ff-abe5-40db-b867-144e9dd9b23c}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\setup.vcxproj">
-      <Project>{1c5de91b-7ae9-4304-9fa1-0de1aba8c02d}</Project>
     </ProjectReference>
     <ProjectReference Include="..\SceneGraph.vcxproj">
       <Project>{0945d37c-f1f1-4b88-b738-85816e37d9af}</Project>
@@ -61,7 +58,7 @@
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>mqusdDebug;mqusdCoreImpl;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>sgusdDebug;sgusdCoreImpl;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -81,7 +78,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>false</OmitFramePointers>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>mqusdCoreImpl;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>sgusdCoreImpl;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ControlFlowGuard>Guard</ControlFlowGuard>
       <FloatingPointModel>Fast</FloatingPointModel>

@@ -55,9 +55,10 @@
 #define mqusdAttrColorsName     TfToken("frame:colorsPrimvarName")
 
 #ifdef _WIN32
-    #define mqusdCoreAPI extern "C" __declspec(dllexport)
+    #define sgusdAPI extern "C" __declspec(dllexport)
 #else
-    #define mqusdCoreAPI extern "C" __attribute__((visibility("default")))
+    #define sgusdAPI extern "C" __attribute__((visibility("default")))
 #endif
 
-#include "../mqusdSceneGraph.h"
+#include "../SceneGraph.h"
+#include "../sgUtils.h"

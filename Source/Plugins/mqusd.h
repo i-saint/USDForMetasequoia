@@ -25,8 +25,13 @@
 #endif
 
 #include "MeshUtils/MeshUtils.h"
+#include "SceneGraph/SceneGraph.h"
+#include "SceneGraph/SceneGraphRemote.h"
+#include "SceneGraph/sgUtils.h"
 
 namespace mqusd {
+
+using namespace sg;
 using mu::float2;
 using mu::float3;
 using mu::float4;

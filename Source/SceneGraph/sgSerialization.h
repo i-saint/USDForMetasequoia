@@ -1,6 +1,6 @@
 #pragma once
 
-namespace mqusd {
+namespace sg {
 
 using serializer = std::ostream;
 using deserializer = std::istream;
@@ -179,10 +179,10 @@ struct read_impl<std::vector<T>>
 template<class T> inline void write(serializer& os, T& v) { return write_impl<T>()(os, v); }
 template<class T> inline void read(deserializer& is, T& v) { return read_impl<T>()(is, v); }
 
-} // namespace mqusd
+} // namespace sg
 
-#define mqusdDeclPtr(T) using T##Ptr = std::shared_ptr<T>
-#define mqusdSerializable(T) template<> struct serializable<T> { static const bool value = true; };
+#define sgDeclPtr(T) using T##Ptr = std::shared_ptr<T>
+#define sgSerializable(T) template<> struct serializable<T> { static const bool value = true; };
 
-#define mqusdSerialize(V) mqusd::write(s, V);
-#define mqusdDeserialize(V) mqusd::read(d, V);
+#define sgSerialize(V) sg::write(s, V);
+#define sgDeserialize(V) sg::read(d, V);

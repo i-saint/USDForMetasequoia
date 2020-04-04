@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "mqabcISceneGraph.h"
+#include "sgabcISceneGraph.h"
 
-namespace mqusd {
+namespace sg {
 
 template<class NodeT>
 static inline NodeT* CreateNode(ABCINode* parent, Abc::IObject obj)
@@ -472,4 +472,4 @@ ScenePtr CreateABCIScene()
     return ScenePtr(ret);
 }
 
-} // namespace mqusd
+} // namespace sg

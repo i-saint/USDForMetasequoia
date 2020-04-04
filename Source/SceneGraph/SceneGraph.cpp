@@ -1,7 +1,8 @@
 #include "pch.h"
-#include "mqusdSceneGraph.h"
+#include "SceneGraph.h"
+#include "sgUtils.h"
 
-namespace mqusd {
+namespace sg {
 
 const double default_time = std::numeric_limits<double>::quiet_NaN();
 
@@ -38,13 +39,13 @@ void Node::serialize(serializer& s)
 {
     auto type = getType();
     write(s, type);
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 
 void Node::deserialize(deserializer& d)
 {
     // type will be consumed by create()
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 }
 void Node::resolve()
 {
@@ -160,13 +161,13 @@ Node::Type RootNode::getType() const
 void XformNode::serialize(serializer& s)
 {
     super::serialize(s);
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 
 void XformNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 }
 
 void XformNode::resolve()
@@ -240,11 +241,11 @@ void FaceSet::deserialize(deserializer& d, FaceSetPtr& v)
 void FaceSet::serialize(serializer& s)
 {
     material_path = material ? material->getPath() : "";
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 void FaceSet::deserialize(deserializer& d)
 {
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 }
 #undef EachMember
 
@@ -311,13 +312,13 @@ void MeshNode::serialize(serializer& s)
         d = s->path;
     });
 
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 
 void MeshNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 }
 void MeshNode::resolve()
 {
@@ -697,12 +698,12 @@ void BlendshapeTarget::deserialize(deserializer& d, BlendshapeTargetPtr& v)
 
 void BlendshapeTarget::serialize(serializer& s)
 {
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 
 void BlendshapeTarget::deserialize(deserializer& d)
 {
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 }
 #undef EachMember
 
@@ -713,13 +714,13 @@ void BlendshapeTarget::deserialize(deserializer& d)
 void BlendshapeNode::serialize(serializer& s)
 {
     super::serialize(s);
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 
 void BlendshapeNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 }
 #undef EachMember
 
@@ -885,13 +886,13 @@ void SkelRootNode::serialize(serializer& s)
     if (skeleton)
         skeleton_path = skeleton->path;
 
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 
 void SkelRootNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 }
 
 void SkelRootNode::resolve()
@@ -918,12 +919,12 @@ Node::Type SkelRootNode::getType() const
 
 void Joint::serialize(serializer& s)
 {
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 
 void Joint::deserialize(deserializer& d)
 {
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 }
 
 void Joint::resolve()
@@ -988,13 +989,13 @@ void Joint::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 void SkeletonNode::serialize(serializer& s)
 {
     super::serialize(s);
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 
 void SkeletonNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 }
 void SkeletonNode::resolve()
 {
@@ -1103,13 +1104,13 @@ void InstancerNode::serialize(serializer& s)
         d = s->path;
     });
 
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 
 void InstancerNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 }
 
 void InstancerNode::resolve()
@@ -1264,12 +1265,12 @@ void Texture::deserialize(deserializer& d, TexturePtr& v)
 
 void Texture::serialize(serializer& s)
 {
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 
 void Texture::deserialize(deserializer& d)
 {
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 }
 
 #undef EachMember
@@ -1289,13 +1290,13 @@ Texture::operator bool() const
 void MaterialNode::serialize(serializer& s)
 {
     super::serialize(s);
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 
 void MaterialNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 }
 #undef EachMember
 
@@ -1327,12 +1328,12 @@ Scene* Scene::getCurrent()
 
 void Scene::serialize(serializer& s)
 {
-    EachMember(mqusdSerialize)
+    EachMember(sgSerialize)
 }
 
 void Scene::deserialize(deserializer& d)
 {
-    EachMember(mqusdDeserialize)
+    EachMember(sgDeserialize)
 
     for (auto& n : nodes)
         n->resolve();
@@ -1476,4 +1477,4 @@ SceneInterface::~SceneInterface()
 {
 }
 
-} // namespace mqusd
+} // namespace sg

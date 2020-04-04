@@ -1,7 +1,8 @@
 #include "pch.h"
-#include "mqusdSceneGraphRemote.h"
+#include "SceneGraphRemote.h"
+#include "sgUtils.h"
 
-namespace mqusd {
+namespace sg {
 
 #define mqusdTBBDll muDLLPrefix "tbb" muDLLSuffix
 #define mqusdUSDDll muDLLPrefix "usd_ms" muDLLSuffix
@@ -221,4 +222,4 @@ ScenePtr CreateUSDScenePipe()
     return ScenePtr(ret);
 }
 
-} // namespace mqusd
+} // namespace sg

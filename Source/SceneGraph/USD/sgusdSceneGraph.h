@@ -1,7 +1,7 @@
 #pragma once
-#include "mqusdCore.h"
+#include "sgusdInternal.h"
 
-namespace mqusd {
+namespace sg {
 
 #define DefSchemaTraits(Type, Typename)\
     using UsdType = Type;\
@@ -331,4 +331,4 @@ private:
     double m_max_time = 0.0;
 };
 
-} // namespace mqusd
+} // namespace sg
