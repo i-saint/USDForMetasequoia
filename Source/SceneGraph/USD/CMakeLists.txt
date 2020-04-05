@@ -1,5 +1,6 @@
 file(GLOB sources *.h *.cpp)
-list(REMOVE_ITEM sources mqusdCoreExe.cpp)
+file(GLOB excludes sgusdMain.cpp)
+list(REMOVE_ITEM sources ${excludes})
 add_library(SceneGraphUSD SHARED ${sources})
 
 add_dependencies(SceneGraphUSD MeshUtils SceneGraph)

@@ -87,7 +87,7 @@ void ABCIXformNode::read(double time)
     Abc::ISampleSelector iss(time);
     m_schema.get(m_sample, iss);
 
-    auto& dst = static_cast<XformNode&>(*m_node);
+    auto& dst = *getNode<XformNode>();
 
     auto matd = m_sample.getMatrix();
     dst.local_matrix.assign((double4x4&)matd);
@@ -131,7 +131,7 @@ void ABCIMeshNode::read(double time)
 {
     super::read(time);
 
-    auto& dst = static_cast<MeshNode&>(*m_node);
+    auto& dst = *getNode<MeshNode>();
 
     // alembic's mesh is not xformable, but USD's and our intermediate data is.
     // so, need to update global matrix.
@@ -296,7 +296,7 @@ bool ABCIScene::open(const char* path)
             g_current_scene = this;
             m_abc_path = path;
             m_root = new ABCIRootNode(m_archive.getTop());
-            m_scene->root_node = static_cast<RootNode*>(m_root->m_node);
+            m_scene->root_node = m_root->getNode<RootNode>();
             constructTree(m_root);
         }
         catch (Alembic::Util::Exception e3) {

@@ -3,7 +3,7 @@ find_package(Metasequoia470)
 file(GLOB sources *.cpp *.h)
 add_executable(Test ${sources})
 
-add_dependencies(Test MeshUtils mqusdFoundation470)
+add_dependencies(Test MeshUtils SceneGraph mqCommon470)
 target_include_directories(Test
     PRIVATE
         ${CMAKE_SOURCE_DIR}
@@ -14,7 +14,8 @@ target_include_directories(Test
 target_link_libraries(Test
     PRIVATE
         MeshUtils
-        mqusdFoundation470
+        SceneGraph
+        mqCommon470
 )
 if(LINUX)
     target_link_libraries(Test pthread "-Wl,--no-undefined")

@@ -18,6 +18,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="sgusd.h" />
     <ClInclude Include="sgusdInternal.h" />
     <ClInclude Include="sgusdSceneGraph.h" />
     <ClInclude Include="sgusdUtils.h" />

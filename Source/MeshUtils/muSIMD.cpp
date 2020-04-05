@@ -2,6 +2,7 @@
 #include "muMath.h"
 #include "muSIMD.h"
 #include "muRawVector.h"
+#include "muSIMDConfig.h"
 
 namespace mu {
 

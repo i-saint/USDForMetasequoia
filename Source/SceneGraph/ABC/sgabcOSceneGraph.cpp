@@ -65,7 +65,7 @@ ABCOXformNode::ABCOXformNode(ABCONode* parent, Abc::OObject* obj)
 void ABCOXformNode::write()
 {
     super::write();
-    const auto& src = *static_cast<XformNode*>(m_node);
+    const auto& src = *getNode<XformNode>();
 
     double4x4 mat;
     mat.assign(src.local_matrix);
@@ -89,7 +89,7 @@ void ABCOMeshNode::beforeWrite()
 void ABCOMeshNode::write()
 {
     super::write();
-    const auto& src = *static_cast<MeshNode*>(m_node);
+    const auto& src = *getNode<MeshNode>();
 
     m_sample.reset();
     m_sample.setFaceIndices(Abc::Int32ArraySample(src.indices.cdata(), src.indices.size()));

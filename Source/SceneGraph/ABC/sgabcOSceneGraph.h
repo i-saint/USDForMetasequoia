@@ -21,6 +21,9 @@ public:
     void setNode(Node* node);
     std::string getPath() const;
 
+    template<class NodeT = Node>
+    NodeT* getNode() { return static_cast<NodeT*>(m_node); }
+
 public:
     Abc::OObject* m_obj;
     ABCOScene* m_scene = nullptr;

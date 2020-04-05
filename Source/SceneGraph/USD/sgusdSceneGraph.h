@@ -308,10 +308,18 @@ public:
     Node* findNodeImpl(const std::string& path);
 
     template<class NodeT = USDNode>
-    NodeT* findUSDNode(const std::string& path) { return dynamic_cast<NodeT*>(findUSDNodeImpl(path)); }
+    NodeT* findUSDNode(const std::string& path)
+    {
+        static_assert(std::is_base_of<USDNode, NodeT>::value, "NodeT must be USDNode");
+        return dynamic_cast<NodeT*>(findUSDNodeImpl(path));
+    }
 
     template<class NodeT = Node>
-    NodeT* findNode(const std::string& path) { return dynamic_cast<NodeT*>(findNodeImpl(path)); }
+    NodeT* findNode(const std::string& path)
+    {
+        static_assert(std::is_base_of<Node, NodeT>::value, "NodeT must be Node");
+        return dynamic_cast<NodeT*>(findNodeImpl(path));
+    }
 
 private:
     void registerNode(USDNode* n);

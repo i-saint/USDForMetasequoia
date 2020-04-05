@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "sgusd.h"
 #include "sgusdSceneGraph.h"
 #include "sgusdUtils.h"
 
@@ -94,7 +95,7 @@ void USDXformNode::read(double time)
     super::read(time);
 
     auto t = m_scene->toTimeCode(time);
-    auto& dst = static_cast<XformNode&>(*m_node);
+    auto& dst = *getNode<XformNode>();
 
     GfMatrix4d mat;
     bool reset_stack = false;
@@ -112,7 +113,7 @@ void USDXformNode::write(double time)
     super::write(time);
 
     auto t = m_scene->toTimeCode(time);
-    auto& src = static_cast<XformNode&>(*m_node);
+    const auto& src = *getNode<XformNode>();
 
     if (src.local_matrix != float4x4::identity()) {
         if (m_xf_ops.empty()) {
@@ -149,7 +150,7 @@ USDMeshNode::USDMeshNode(Node* n, UsdPrim prim)
 void USDMeshNode::beforeRead()
 {
     super::beforeRead();
-    auto& dst = static_cast<MeshNode&>(*m_node);
+    auto& dst = *getNode<MeshNode>();
 
     // find attributes
     auto pvapi = UsdGeomPrimvarsAPI(m_prim);
@@ -175,8 +176,8 @@ void USDMeshNode::beforeRead()
         SdfPathVector paths;
         rel_bs_targets.GetTargets(&paths);
 
-        transform_container(m_blendshapes, paths, [this, &dst](auto*& d, auto& s) {
-            d = m_scene->findNode<USDBlendshapeNode>(s.GetString());
+        transform_container(m_blendshapes, paths, [this, &dst](USDBlendshapeNode*& d, auto& s) {
+            d = m_scene->findUSDNode<USDBlendshapeNode>(s.GetString());
             if (d) {
                 dst.blendshapes.push_back(d->getNode<BlendshapeNode>());
             }
@@ -192,7 +193,7 @@ void USDMeshNode::beforeRead()
         SdfPathVector paths;
         rel_anim.GetTargets(&paths);
         if (!paths.empty())
-            m_animation = m_scene->findNode<USDSkelAnimationNode>(paths.front().GetString());
+            m_animation = m_scene->findUSDNode<USDSkelAnimationNode>(paths.front().GetString());
     }
 
     // resolve skeleton
@@ -201,7 +202,7 @@ void USDMeshNode::beforeRead()
         SdfPathVector paths;
         rel_skel.GetTargets(&paths);
         if (!paths.empty()) {
-            m_skeleton = m_scene->findNode<USDSkeletonNode>(paths.front().GetString());
+            m_skeleton = m_scene->findUSDNode<USDSkeletonNode>(paths.front().GetString());
             if (m_skeleton)
                 dst.skeleton = m_skeleton->getNode<SkeletonNode>();
         }
@@ -231,7 +232,7 @@ void USDMeshNode::read(double time)
     super::read(time);
 
     auto t = m_scene->toTimeCode(time);
-    auto& dst = static_cast<MeshNode&>(*m_node);
+    auto& dst = *getNode<MeshNode>();
 
     // counts, indices, points
     {
@@ -372,7 +373,7 @@ void USDMeshNode::beforeWrite()
     m_pv_st = pvapi.CreatePrimvar(mqusdAttrST, SdfValueTypeNames->TexCoord2fArray);
     m_pv_colors = pvapi.CreatePrimvar(mqusdAttrColors, SdfValueTypeNames->Color4fArray);
 
-    auto& src = static_cast<MeshNode&>(*m_node);
+    auto& src = *getNode<MeshNode>();
 
     // skinning attributes
     if (src.joints_per_vertex > 0) {
@@ -424,7 +425,7 @@ void USDMeshNode::write(double time)
     super::write(time);
 
     auto t = m_scene->toTimeCode(time);
-    auto& src = static_cast<MeshNode&>(*m_node);
+    auto& src = *getNode<MeshNode>();
     {
         m_counts.assign(src.counts.begin(), src.counts.end());
         m_mesh.GetFaceVertexCountsAttr().Set(m_counts, t);
@@ -488,7 +489,7 @@ USDBlendshapeNode::USDBlendshapeNode(Node* n, UsdPrim prim)
 void USDBlendshapeNode::read(double time)
 {
     super::read(time);
-    auto& dst = *static_cast<BlendshapeNode*>(m_node);
+    auto& dst = *getNode<BlendshapeNode>();
 
     m_blendshape.GetPointIndicesAttr().Get(&m_point_indices);
     dst.indices.share(m_point_indices.cdata(), m_point_indices.size());
@@ -519,7 +520,7 @@ void USDBlendshapeNode::read(double time)
 void USDBlendshapeNode::beforeWrite()
 {
     super::beforeWrite();
-    auto& src = *static_cast<const BlendshapeNode*>(m_node);
+    const auto& src = *getNode<BlendshapeNode>();
 
     if (src.targets.empty())
         return;
@@ -559,7 +560,7 @@ USDSkelRootNode::USDSkelRootNode(Node* n, UsdPrim prim)
 void USDSkelRootNode::beforeRead()
 {
     super::beforeRead();
-    auto& dst = *static_cast<SkelRootNode*>(m_node);
+    auto& dst = *getNode<SkelRootNode>();
 
     // resolve animation
     if (auto rel_anim = m_prim.GetRelationship(UsdSkelTokens->skelAnimationSource)) {
@@ -601,7 +602,7 @@ void USDSkelRootNode::beforeWrite()
 {
     super::beforeWrite();
 
-    auto& src = *static_cast<SkelRootNode*>(m_node);
+    const auto& src = *getNode<SkelRootNode>();
     if (src.skeleton) {
         auto rel_skel = m_prim.CreateRelationship(UsdSkelTokens->skelSkeleton, false);
 
@@ -619,7 +620,7 @@ USDSkeletonNode::USDSkeletonNode(USDNode* parent, UsdPrim prim)
     setNode(CreateNode<SkeletonNode>(parent, prim));
 
     // build joints
-    auto& dst = *static_cast<SkeletonNode*>(m_node);
+    auto& dst = *getNode<SkeletonNode>();
     VtArray<TfToken> data;
     m_skel.GetJointsAttr().Get(&data);
     for (auto& token : data)
@@ -642,7 +643,7 @@ void USDSkeletonNode::read(double time)
     super::read(time);
 
     auto t = m_scene->toTimeCode(time);
-    auto& dst = *static_cast<SkeletonNode*>(m_node);
+    auto& dst = *getNode<SkeletonNode>();
 
     // bindpose
     {
@@ -679,7 +680,7 @@ void USDSkeletonNode::read(double time)
 
 void USDSkeletonNode::beforeWrite()
 {
-    auto& src = *static_cast<SkeletonNode*>(m_node);
+    const auto& src = *getNode<SkeletonNode>();
     size_t njoints = src.joints.size();
 
     {
@@ -781,7 +782,7 @@ USDInstancerNode::USDInstancerNode(Node* n, UsdPrim prim)
 void USDInstancerNode::beforeRead()
 {
     super::beforeRead();
-    auto& dst = *static_cast<InstancerNode*>(m_node);
+    auto& dst = *getNode<InstancerNode>();
 
     auto rel = m_instancer.GetPrototypesRel();
     if (rel) {
@@ -799,7 +800,7 @@ void USDInstancerNode::read(double time)
     super::read(time);
 
     auto t = m_scene->toTimeCode(time);
-    auto& dst = *static_cast<InstancerNode*>(m_node);
+    auto& dst = *getNode<InstancerNode>();
 
     m_instancer.GetProtoIndicesAttr().Get(&m_proto_indices, t);
     dst.proto_indices.share(m_proto_indices.cdata(), m_proto_indices.size());
@@ -813,7 +814,7 @@ void USDInstancerNode::read(double time)
 void USDInstancerNode::beforeWrite()
 {
     super::beforeWrite();
-    auto& src = *static_cast<InstancerNode*>(m_node);
+    const auto& src = *getNode<InstancerNode>();
 
     auto rel = m_instancer.CreatePrototypesRel();
     if (rel) {
@@ -829,7 +830,7 @@ void USDInstancerNode::write(double time)
     super::write(time);
 
     auto t = m_scene->toTimeCode(time);
-    auto& src = *static_cast<InstancerNode*>(m_node);
+    const auto& src = *getNode<InstancerNode>();
 
     m_proto_indices.assign(src.proto_indices.begin(), src.proto_indices.end());
     m_instancer.GetProtoIndicesAttr().Set(m_proto_indices, t);
@@ -891,7 +892,7 @@ void USDMaterialNode::beforeRead()
                 m_in_specular_color = m_surface.GetInput(mqusdAttrSpecularColor);
                 m_in_emissive_color = m_surface.GetInput(mqusdAttrEmissiveColor);
 
-                auto& dst = *static_cast<MaterialNode*>(m_node);
+                auto& dst = *getNode<MaterialNode>();
                 GetValue(m_surface.GetInput(mqusdAttrShaderType), dst.shader_type);
             }
             else if (id == mqusdUsdUVTexture) {
@@ -913,7 +914,7 @@ void USDMaterialNode::read(double time)
     super::read(time);
 
     auto t = m_scene->toTimeCode(time);
-    auto& dst = *static_cast<MaterialNode*>(m_node);
+    auto& dst = *getNode<MaterialNode>();
     if (m_surface) {
         GetValue(m_in_use_vertex_color, dst.use_vertex_color, t);
         GetValue(m_in_double_sided, dst.double_sided, t);
@@ -949,7 +950,7 @@ void USDMaterialNode::read(double time)
 
 void USDMaterialNode::beforeWrite()
 {
-    auto& src = *static_cast<const MaterialNode*>(m_node);
+    const auto& src = *getNode<MaterialNode>();
 
     // setup
     if (!m_surface) {
@@ -1327,7 +1328,7 @@ Node* USDScene::findNodeImpl(const std::string& path)
 
 } // namespace sg
 
-sgusdAPI sg::SceneInterface* mqusdCreateUSDSceneInterface(sg::Scene *scene)
+sgusdAPI sg::SceneInterface* sgusdCreateSceneInterface(sg::Scene *scene)
 {
     return new sg::USDScene(scene);
 }

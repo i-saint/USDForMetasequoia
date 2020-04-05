@@ -1,11 +1,16 @@
+#ifdef _WIN32
 #define _CRT_SECURE_NO_WARNINGS
-#include <iostream>
-#include <fstream>
 #include <io.h>
 #include <fcntl.h>
+#endif
+
+#include <iostream>
+#include <fstream>
 #include "../SceneGraph.h"
 #include "../SceneGraphRemote.h"
+
 using namespace sg;
+
 
 int main(int argc, char* argv[])
 {

@@ -322,7 +322,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
 
         auto handle_mqobject = [this, doc](auto& rec) {
             UINT parent_id = 0;
-            if (auto pmesh = rec.node->findParent<MeshNode>())
+            if (auto pmesh = rec.node->template findParent<MeshNode>())
                 parent_id = ((ObjectRecord*)pmesh->userdata)->mqid;
 
             bool created;
@@ -581,8 +581,8 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
             case WrapMode::Repeat: return MQMATERIAL_WRAP_REPEAT;
             case WrapMode::Mirror: return MQMATERIAL_WRAP_MIRROR;
             case WrapMode::Clamp: return MQMATERIAL_WRAP_CLAMP;
+            default: return MQMATERIAL_WRAP_REPEAT;
             }
-            return MQMATERIAL_WRAP_REPEAT;
         };
 
         if (src.diffuse_texture) {

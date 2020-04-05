@@ -31,27 +31,27 @@ inline NodeT* CreateNode(USDNode* parent, UsdPrim prim)
         prim.GetName().GetText());
 }
 
-template<class T> inline void GetValue(T& src, float& v, UsdTimeCode t = { default_time })
+template<class T> inline void GetValue(const T& src, float& v, UsdTimeCode t = { default_time })
 {
     if (src)
         src.Get(&v, t);
 }
-template<class T> inline void GetValue(T& src, float2& v, UsdTimeCode t = { default_time })
+template<class T> inline void GetValue(const T& src, float2& v, UsdTimeCode t = { default_time })
 {
     if (src)
         src.Get((GfVec2f*)&v, t);
 }
-template<class T> inline void GetValue(T& src, float3& v, UsdTimeCode t = { default_time })
+template<class T> inline void GetValue(const T& src, float3& v, UsdTimeCode t = { default_time })
 {
     if (src)
         src.Get((GfVec3f*)&v, t);
 }
-template<class T> inline void GetValue(T& src, float4& v, UsdTimeCode t = { default_time })
+template<class T> inline void GetValue(const T& src, float4& v, UsdTimeCode t = { default_time })
 {
     if (src)
         src.Get((GfVec4f*)&v, t);
 }
-template<class T> inline void GetValue(T& src, bool& v, UsdTimeCode t = { default_time })
+template<class T> inline void GetValue(const T& src, bool& v, UsdTimeCode t = { default_time })
 {
     if (src) {
         int tmp = 0;
@@ -59,7 +59,7 @@ template<class T> inline void GetValue(T& src, bool& v, UsdTimeCode t = { defaul
             v = tmp != 0;
     }
 }
-template<class T> inline void GetValue(T& src, std::string& v, UsdTimeCode t = { default_time })
+template<class T> inline void GetValue(const T& src, std::string& v, UsdTimeCode t = { default_time })
 {
     if (src) {
         if (src.GetTypeName() == SdfValueTypeNames->Token) {
@@ -91,7 +91,7 @@ inline ShaderType ToShaderType(const std::string& v)
         return ShaderType::MQHLSL;
     return ShaderType::Unknown;
 }
-template<class T> inline void GetValue(T& src, ShaderType& v, UsdTimeCode t = { default_time })
+template<class T> inline void GetValue(const T& src, ShaderType& v, UsdTimeCode t = { default_time })
 {
     if (src) {
         TfToken tmp;
@@ -112,7 +112,7 @@ inline WrapMode ToWrapMode(const std::string& v)
         return WrapMode::Black;
     return WrapMode::Clamp;
 }
-template<class T> inline void GetValue(T& src, WrapMode& v, UsdTimeCode t = { default_time })
+template<class T> inline void GetValue(const T& src, WrapMode& v, UsdTimeCode t = { default_time })
 {
     if (src) {
         TfToken tmp;
@@ -121,34 +121,34 @@ template<class T> inline void GetValue(T& src, WrapMode& v, UsdTimeCode t = { de
     }
 }
 
-template<class T> inline void SetValue(T& dst, float v, UsdTimeCode t = { default_time })
+template<class T> inline void SetValue(const T& dst, const float& v, UsdTimeCode t = { default_time })
 {
     if (dst)
         dst.Set(v, t);
 }
-template<class T> inline void SetValue(T& dst, float2 v, UsdTimeCode t = { default_time })
+template<class T> inline void SetValue(const T& dst, const float2& v, UsdTimeCode t = { default_time })
 {
     if (dst)
         dst.Set((GfVec2f&)v, t);
 }
-template<class T> inline void SetValue(T& dst, float3 v, UsdTimeCode t = { default_time })
+template<class T> inline void SetValue(const T& dst, const float3& v, UsdTimeCode t = { default_time })
 {
     if (dst)
         dst.Set((GfVec3f&)v, t);
 }
-template<class T> inline void SetValue(T& dst, float4 v, UsdTimeCode t = { default_time })
+template<class T> inline void SetValue(const T& dst, const float4& v, UsdTimeCode t = { default_time })
 {
     if (dst)
         dst.Set((GfVec4f&)v, t);
 }
-template<class T> inline void SetValue(T& dst, bool v, UsdTimeCode t = { default_time })
+template<class T> inline void SetValue(const T& dst, const bool& v, UsdTimeCode t = { default_time })
 {
     if (dst) {
         int tmp = v ? 1 : 0;
         dst.Set(tmp, t);
     }
 }
-template<class T> inline void SetValue(T& dst, const std::string& v, UsdTimeCode t = { default_time })
+template<class T> inline void SetValue(const T& dst, const std::string& v, UsdTimeCode t = { default_time })
 {
     if (dst) {
         if (dst.GetTypeName() == SdfValueTypeNames->Token)
@@ -170,7 +170,7 @@ inline std::string ToString(ShaderType v)
     default: return "";
     }
 }
-template<class T> inline void SetValue(T& dst, ShaderType v, UsdTimeCode t = { default_time })
+template<class T> inline void SetValue(const T& dst, const ShaderType& v, UsdTimeCode t = { default_time })
 {
     if (dst)
         dst.Set(TfToken(ToString(v)), t);
@@ -185,7 +185,7 @@ inline std::string ToString(WrapMode v)
     default: return "";
     }
 }
-template<class T> inline void SetValue(T& dst, WrapMode v, UsdTimeCode t = { default_time })
+template<class T> inline void SetValue(const T& dst, const WrapMode& v, UsdTimeCode t = { default_time })
 {
     if (dst)
         dst.Set(TfToken(ToString(v)), t);

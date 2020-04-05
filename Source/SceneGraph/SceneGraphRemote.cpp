@@ -12,7 +12,7 @@ namespace sg {
 static std::string g_usd_module_dir;
 static std::string g_usd_plugin_path;
 static void* g_core_module;
-static SceneInterface* (*g_mqusdCreateUSDSceneInterface)(Scene* scene);
+static SceneInterface* (*g_sgusdCreateSceneInterface)(Scene* scene);
 
 static std::string GetDefaultModulePath()
 {
@@ -45,7 +45,7 @@ static void LoadCoreModule()
             g_core_module = mu::LoadModule(core_dll.c_str());
         }
         if (g_core_module) {
-            (void*&)g_mqusdCreateUSDSceneInterface = mu::GetSymbol(g_core_module, "mqusdCreateUSDSceneInterface");
+            (void*&)g_sgusdCreateSceneInterface = mu::GetSymbol(g_core_module, "sgusdCreateSceneInterface");
         }
     });
 }
@@ -56,9 +56,9 @@ ScenePtr CreateUSDScene()
     return CreateUSDScenePipe();
 #else
     LoadCoreModule();
-    if (g_mqusdCreateUSDSceneInterface) {
+    if (g_sgusdCreateSceneInterface) {
         auto ret = new Scene();
-        ret->impl.reset(g_mqusdCreateUSDSceneInterface(ret));
+        ret->impl.reset(g_sgusdCreateSceneInterface(ret));
         return ScenePtr(ret);
     }
     else
@@ -187,7 +187,8 @@ void USDScenePipe::read()
         sprintf(buf, " -time %lf", m_scene->time_current);
         commnd += buf;
     }
-    commnd += " -hide \"";
+    commnd += " -hide";
+    commnd += " \"";
     commnd += m_usd_path;
     commnd += "\"";
     if (m_pipe->open(commnd.c_str(), std::ios::in | std::ios::binary)) {
