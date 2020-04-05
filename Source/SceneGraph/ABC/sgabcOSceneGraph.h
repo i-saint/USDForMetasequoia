@@ -21,7 +21,7 @@ public:
     void setNode(Node* node);
     std::string getPath() const;
 
-    template<class NodeT = Node>
+    template<class NodeT = Node, sgTypeConstraint(std::is_base_of<Node, NodeT>::value)>
     NodeT* getNode() { return static_cast<NodeT*>(m_node); }
 
 public:

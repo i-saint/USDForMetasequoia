@@ -278,13 +278,13 @@ bool ABCIScene::open(const char* path)
         catch (Alembic::Util::Exception e2)
         {
             close();
-            mqusdDbgPrint(
+            sgDbgPrint(
                 "failed to open %s\n"
                 "it may not an alembic file"
                 , path);
         }
 #else
-        mqusdDbgPrint(
+        sgDbgPrint(
             "failed to open %s\n"
             "it may not an alembic file or not in Ogawa format (HDF5 is not supported)"
             , path);
@@ -301,7 +301,7 @@ bool ABCIScene::open(const char* path)
         }
         catch (Alembic::Util::Exception e3) {
             close();
-            mqusdDbgPrint(
+            sgDbgPrint(
                 "failed to read %s\n"
                 "it seems an alembic file but probably broken"
                 , path);
@@ -441,7 +441,7 @@ void ABCIScene::registerNode(ABCINode* n)
 void ABCIScene::constructTree(ABCINode* n)
 {
 #ifdef mqusdDebug
-    mqusdDbgPrint("%s\n", n->getPath().c_str());
+    sgDbgPrint("%s\n", n->getPath().c_str());
 #endif
     registerNode(n);
 

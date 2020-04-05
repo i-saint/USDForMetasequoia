@@ -177,12 +177,12 @@ void USDMeshNode::beforeRead()
         rel_bs_targets.GetTargets(&paths);
 
         transform_container(m_blendshapes, paths, [this, &dst](USDBlendshapeNode*& d, auto& s) {
-            d = m_scene->findUSDNode<USDBlendshapeNode>(s.GetString());
+            d = m_scene->findNode<USDBlendshapeNode>(s.GetString());
             if (d) {
                 dst.blendshapes.push_back(d->getNode<BlendshapeNode>());
             }
             else {
-                mqusdDbgPrint("not found %s\n", s.GetText());
+                sgDbgPrint("not found %s\n", s.GetText());
             }
         });
     }
@@ -193,7 +193,7 @@ void USDMeshNode::beforeRead()
         SdfPathVector paths;
         rel_anim.GetTargets(&paths);
         if (!paths.empty())
-            m_animation = m_scene->findUSDNode<USDSkelAnimationNode>(paths.front().GetString());
+            m_animation = m_scene->findNode<USDSkelAnimationNode>(paths.front().GetString());
     }
 
     // resolve skeleton
@@ -202,7 +202,7 @@ void USDMeshNode::beforeRead()
         SdfPathVector paths;
         rel_skel.GetTargets(&paths);
         if (!paths.empty()) {
-            m_skeleton = m_scene->findUSDNode<USDSkeletonNode>(paths.front().GetString());
+            m_skeleton = m_scene->findNode<USDSkeletonNode>(paths.front().GetString());
             if (m_skeleton)
                 dst.skeleton = m_skeleton->getNode<SkeletonNode>();
         }
@@ -215,7 +215,7 @@ void USDMeshNode::beforeRead()
             transform_container(dst.joints, data, [&dst](auto*& d, auto& s) {
                 d = dst.skeleton->findJointByPath(s.GetString());
                 if (!d) {
-                    mqusdDbgPrint("not found %s\n", s.GetText());
+                    sgDbgPrint("not found %s\n", s.GetText());
                 }
             });
         }
@@ -567,7 +567,7 @@ void USDSkelRootNode::beforeRead()
         SdfPathVector paths;
         rel_anim.GetTargets(&paths);
         if (!paths.empty()) {
-            if (auto usd_anim = m_scene->findUSDNode<USDSkelAnimationNode>(paths.front().GetString())) {
+            if (auto usd_anim = m_scene->findNode<USDSkelAnimationNode>(paths.front().GetString())) {
                 // update child meshes
                 eachChildR([usd_anim](USDNode* n) {
                     if (auto usd_mesh = dynamic_cast<USDMeshNode*>(n))
@@ -582,7 +582,7 @@ void USDSkelRootNode::beforeRead()
         SdfPathVector paths;
         rel_skel.GetTargets(&paths);
         if (!paths.empty()) {
-            if (auto usd_skel = m_scene->findUSDNode<USDSkeletonNode>(paths.front().GetString())) {
+            if (auto usd_skel = m_scene->findNode<USDSkeletonNode>(paths.front().GetString())) {
                 auto skel = usd_skel->getNode<SkeletonNode>();
                 dst.skeleton = skel;
 
@@ -789,7 +789,7 @@ void USDInstancerNode::beforeRead()
         SdfPathVector paths;
         rel.GetTargets(&paths);
         for (auto& path : paths) {
-            if (auto proto = m_scene->findUSDNode(path.GetString()))
+            if (auto proto = m_scene->findNode<USDNode>(path.GetString()))
                 dst.protos.push_back(proto->m_node);
         }
     }
@@ -1282,7 +1282,7 @@ USDNode* USDScene::wrapNodeImpl(Node* node)
         return ret;
     }
     else {
-        mqusdDbgPrint("USDScene::wrapNodeImpl(): failed to create prim %s\n", path.c_str());
+        sgDbgPrint("USDScene::wrapNodeImpl(): failed to create prim %s\n", path.c_str());
     }
     return nullptr;
 }

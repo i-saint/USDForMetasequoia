@@ -38,7 +38,7 @@ public:
         }
     }
 
-    template<class NodeT = Node>
+    template<class NodeT = Node, sgTypeConstraint(std::is_base_of<Node, NodeT>::value)>
     NodeT* getNode() { return static_cast<NodeT*>(m_node); }
 
 public:
@@ -307,17 +307,15 @@ public:
     USDNode* findUSDNodeImpl(const std::string& path);
     Node* findNodeImpl(const std::string& path);
 
-    template<class NodeT = USDNode>
-    NodeT* findUSDNode(const std::string& path)
+    template<class NodeT, sgTypeConstraint(std::is_base_of<USDNode, NodeT>::value)>
+    NodeT* findNode(const std::string& path)
     {
-        static_assert(std::is_base_of<USDNode, NodeT>::value, "NodeT must be USDNode");
         return dynamic_cast<NodeT*>(findUSDNodeImpl(path));
     }
 
-    template<class NodeT = Node>
+    template<class NodeT, sgTypeConstraint(std::is_base_of<Node, NodeT>::value)>
     NodeT* findNode(const std::string& path)
     {
-        static_assert(std::is_base_of<Node, NodeT>::value, "NodeT must be Node");
         return dynamic_cast<NodeT*>(findNodeImpl(path));
     }
 

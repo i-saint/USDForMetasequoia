@@ -171,7 +171,7 @@ bool ABCOScene::create(const char* path)
     }
     catch (Alembic::Util::Exception e)
     {
-        mqusdDbgPrint("failed to open %s\nexception: %s", path, e.what());
+        sgDbgPrint("failed to open %s\nexception: %s", path, e.what());
         return false;
     }
 
@@ -185,7 +185,7 @@ bool ABCOScene::create(const char* path)
     m_root = new ABCORootNode(top.get());
     registerNode(m_root);
 
-    mqusdDbgPrint("succeeded to open %s\nrecording started", m_abc_path.c_str());
+    sgDbgPrint("succeeded to open %s\nrecording started", m_abc_path.c_str());
     return true;
 }
 
@@ -269,7 +269,7 @@ Node* ABCOScene::createNode(Node* parent_, const char* name, Node::Type type)
     }
 
 #ifdef mqusdDebug
-    mqusdDbgPrint("%s\n", ret->getPath().c_str());
+    sgDbgPrint("%s\n", ret->getPath().c_str());
 #endif
     registerNode(ret);
     return ret ? ret->m_node : nullptr;

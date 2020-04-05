@@ -327,7 +327,7 @@ void MeshNode::resolve()
     transform_container(blendshapes, blendshape_paths, [this](auto& d, auto& s) {
         d = static_cast<BlendshapeNode*>(scene->findNodeByPath(s));
         if (!d) {
-            mqusdDbgFatal("not found %s\n", s.c_str());
+            sgDbgFatal("not found %s\n", s.c_str());
         }
     });
 
@@ -336,7 +336,7 @@ void MeshNode::resolve()
         transform_container(joints, joint_paths, [this](auto& d, auto& s) {
             d = skeleton->findJointByPath(s);
             if (!d) {
-                mqusdDbgFatal("not found %s\n", s.c_str());
+                sgDbgFatal("not found %s\n", s.c_str());
             }
         });
     }
@@ -344,7 +344,7 @@ void MeshNode::resolve()
     transform_container(materials, material_paths, [this](auto& d, auto& s) {
         d = static_cast<MaterialNode*>(scene->findNodeByPath(s));
         if (!d) {
-            mqusdDbgFatal("not found %s\n", s.c_str());
+            sgDbgFatal("not found %s\n", s.c_str());
         }
     });
 
@@ -1120,7 +1120,7 @@ void InstancerNode::resolve()
     transform_container(protos, proto_paths, [this](auto& d, auto& s) {
         d = scene->findNodeByPath(s);
         if (!d) {
-            mqusdDbgFatal("not found %s\n", s.c_str());
+            sgDbgFatal("not found %s\n", s.c_str());
         }
     });
 }

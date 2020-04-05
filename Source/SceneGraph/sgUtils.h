@@ -1,5 +1,10 @@
 #pragma once
 
+#define sgTypeConstraint(...) std::enable_if_t<__VA_ARGS__, bool> = true
+
+#define sgDbgPrint(...)
+#define sgDbgFatal(...)
+
 namespace sg {
 
 template<class T>
@@ -107,6 +112,3 @@ std::string GetParentPath(const std::string& path);
 const char* GetLeafName(const std::string& path);
 
 } // namespace sg
-
-#define mqusdDbgPrint(...)
-#define mqusdDbgFatal(...)
