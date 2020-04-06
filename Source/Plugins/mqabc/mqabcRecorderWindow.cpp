@@ -5,24 +5,14 @@
 
 namespace mqusd {
 
-static std::vector<mqabcRecorderWindow*> g_instances;
-
-void mqabcRecorderWindow::each(const std::function<void(mqabcRecorderWindow*)>& body)
-{
-    for (auto* i : g_instances)
-        body(i);
-}
-
 mqabcRecorderWindow::mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& parent)
-    : MQWindow(parent)
+    : super(parent)
 {
-    g_instances.push_back(this);
-
     setlocale(LC_ALL, "");
 
     m_plugin = plugin;
 
-    SetTitle(L"Alembic Recorder");
+    SetTitle(L"Recording Alembic");
     SetOutSpace(0.4);
 
     double outer_margin = 0.2;
@@ -99,19 +89,10 @@ mqabcRecorderWindow::mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& pare
         m_log = CreateMemo(vf);
         m_log->SetHorzBarStatus(MQMemo::SCROLLBAR_OFF);
         m_log->SetVertBarStatus(MQMemo::SCROLLBAR_OFF);
-
-        std::string plugin_version = "Plugin Version: " mqusdVersionString;
-        CreateLabel(vf, mu::ToWCS(plugin_version));
     }
 
     this->AddShowEvent(this, &mqabcRecorderWindow::OnShow);
     this->AddHideEvent(this, &mqabcRecorderWindow::OnHide);
-}
-
-mqabcRecorderWindow::~mqabcRecorderWindow()
-{
-    g_instances.erase(
-        std::find(g_instances.begin(), g_instances.end(), this));
 }
 
 BOOL mqabcRecorderWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
@@ -275,7 +256,7 @@ void mqabcRecorderWindow::CaptureFrame(MQDocument doc)
     if (!IsRecording() || !m_dirty)
         return;
 
-    if (m_exporter->write(doc, true)) {
+    if (m_exporter->write(doc, false)) {
         m_dirty = false;
     }
 }

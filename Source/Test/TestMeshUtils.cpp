@@ -3,7 +3,7 @@
 
 #include "MeshUtils/muSIMDConfig.h"
 #include "Plugins/mqsdk/sdk_Include.h"
-#include "Plugins/mqCommon/mqusdUtils.h"
+#include "Plugins/mqCommon/mqUtils.h"
 
 using namespace mu;
 

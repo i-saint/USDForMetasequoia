@@ -19,18 +19,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="mqabcExportWindow.cpp" />
+    <ClCompile Include="mqabcImportWindow.cpp" />
     <ClCompile Include="mqabcPlugin.cpp" />
     <ClCompile Include="mqabcRecorderWindow.cpp" />
-    <ClCompile Include="mqabcPlayerWindow.cpp" />
+    <ClCompile Include="mqabcWindow.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\mqusd.h" />
+    <ClInclude Include="mqabcExportWindow.h" />
+    <ClInclude Include="mqabcImportWindow.h" />
     <ClInclude Include="mqabcPlugin.h" />
     <ClInclude Include="mqabcRecorderWindow.h" />
-    <ClInclude Include="mqabcPlayerWindow.h" />
+    <ClInclude Include="mqabcWindow.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

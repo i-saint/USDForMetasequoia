@@ -3,12 +3,12 @@
 
 namespace mqusd {
 
-class mqusdPlugin;
+class mqabcPlugin;
 
-class mqusdWindow : public MQWindow
+class mqabcWindow : public MQWindow
 {
 public:
-    mqusdWindow(mqusdPlugin* plugin, MQWindowBase& parent);
+    mqabcWindow(mqabcPlugin* plugin, MQWindowBase& parent);
 
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
@@ -17,7 +17,7 @@ public:
     BOOL OnRecordingClicked(MQWidgetBase* sender, MQDocument doc);
 
 private:
-    mqusdPlugin* m_plugin = nullptr;
+    mqabcPlugin* m_plugin = nullptr;
 
     MQButton* m_button_import = nullptr;
     MQButton* m_button_export = nullptr;

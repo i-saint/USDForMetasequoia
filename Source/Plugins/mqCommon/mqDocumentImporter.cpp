@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "mqusdDocumentImporter.h"
-#include "mqusdUtils.h"
+#include "mqDocumentImporter.h"
+#include "mqUtils.h"
 
 namespace mqusd {
 

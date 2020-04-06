@@ -1,7 +1,9 @@
 ﻿#include "pch.h"
 #include "mqusd.h"
 #include "mqabcPlugin.h"
-#include "mqabcPlayerWindow.h"
+#include "mqabcWindow.h"
+#include "mqabcImportWindow.h"
+#include "mqabcExportWindow.h"
 #include "mqabcRecorderWindow.h"
 
 #ifdef _WIN32
@@ -106,11 +108,8 @@ const wchar_t *mqabcPlugin::GetSubCommandString(int index)
 //---------------------------------------------------------------------------
 BOOL mqabcPlugin::Initialize()
 {
-    auto parent = MQWindow::GetMainWindow();
-    if (!m_player)
-        m_player = new mqabcPlayerWindow(this, parent);
-    if (!m_recorder)
-        m_recorder = new mqabcRecorderWindow(this, parent);
+    if (!m_window)
+        m_window = new mqabcWindow(this, MQWindow::GetMainWindow());
     return TRUE;
 }
 
@@ -120,7 +119,11 @@ BOOL mqabcPlugin::Initialize()
 //---------------------------------------------------------------------------
 void mqabcPlugin::Exit()
 {
-    CloseAll();
+    mqabcImportWindow::each([](auto* w) { delete w; });
+    mqabcExportWindow::each([](auto* w) { delete w; });
+    mqabcRecorderWindow::each([](auto* w) { delete w; });
+    delete m_window;
+    m_window = nullptr;
 }
 
 //---------------------------------------------------------------------------
@@ -130,10 +133,8 @@ void mqabcPlugin::Exit()
 BOOL mqabcPlugin::Activate(MQDocument doc, BOOL flag)
 {
     bool active = flag ? true : false;
-    if (m_player)
-        m_player->SetVisible(active);
-    if (m_recorder)
-        m_recorder->SetVisible(active);
+    if (m_window)
+        m_window->SetVisible(active);
     return active;
 }
 
@@ -143,9 +144,7 @@ BOOL mqabcPlugin::Activate(MQDocument doc, BOOL flag)
 //---------------------------------------------------------------------------
 BOOL mqabcPlugin::IsActivated(MQDocument doc)
 {
-    return
-        (m_player && m_player->GetVisible()) ||
-        (m_recorder && m_recorder->GetVisible());
+    return m_window && m_window->GetVisible();
 }
 
 //---------------------------------------------------------------------------
@@ -207,7 +206,6 @@ void mqabcPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUME
 void mqabcPlugin::OnEndDocument(MQDocument doc)
 {
     m_mqo_path.clear();
-    CloseAll();
 }
 
 //---------------------------------------------------------------------------
@@ -322,25 +320,11 @@ void mqabcPlugin::Execute(ExecuteCallbackProc proc)
 
 void mqabcPlugin::LogInfo(const char* message)
 {
-    if (m_player)
-        m_player->LogInfo(message);
 }
 
 const std::string& mqabcPlugin::GetMQOPath() const
 {
     return m_mqo_path;
-}
-
-void mqabcPlugin::CloseAll()
-{
-    if (m_player) {
-        delete m_player;
-        m_player = nullptr;
-    }
-    if (m_recorder) {
-        delete m_recorder;
-        m_recorder = nullptr;
-    }
 }
 
 void mqusdLog(const char* fmt, ...)

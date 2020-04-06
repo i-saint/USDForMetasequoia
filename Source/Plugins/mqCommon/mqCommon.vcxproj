@@ -20,15 +20,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\mqusd.h" />
-    <ClInclude Include="mqusdDocumentExporter.h" />
-    <ClInclude Include="mqusdDocumentImporter.h" />
-    <ClInclude Include="mqusdUtils.h" />
+    <ClInclude Include="mqDocumentExporter.h" />
+    <ClInclude Include="mqDocumentImporter.h" />
+    <ClInclude Include="mqTWindow.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqusdDocumentExporter.cpp" />
-    <ClCompile Include="mqusdDocumentImporter.cpp" />
-    <ClCompile Include="mqusdUtils.cpp" />
+    <ClCompile Include="mqDocumentExporter.cpp" />
+    <ClCompile Include="mqDocumentImporter.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

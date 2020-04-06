@@ -1,19 +1,20 @@
 #pragma once
 #include "MQWidget.h"
-#include "mqCommon/mqusdDocumentExporter.h"
+#include "mqCommon/mqTWindow.h"
+#include "mqCommon/mqDocumentExporter.h"
 
 namespace mqusd {
 
 class mqabcPlugin;
 
-class mqabcRecorderWindow : public MQWindow
+class mqabcRecorderWindow : public mqTWindow<mqabcRecorderWindow>
 {
-public:
-    static void each(const std::function<void (mqabcRecorderWindow*)>& body);
-
+using super = mqTWindow<mqabcRecorderWindow>;
+friend class super;
+private:
     mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& parent);
-    ~mqabcRecorderWindow() override;
 
+public:
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
     BOOL OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc);

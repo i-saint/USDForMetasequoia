@@ -5,12 +5,14 @@
 
 namespace mqusd {
 
-class mqusdExportWindow : public mqTWindow<mqusdExportWindow>
+class mqabcPlugin;
+
+class mqabcExportWindow : public mqTWindow<mqabcExportWindow>
 {
-using super = mqTWindow<mqusdExportWindow>;
+using super = mqTWindow<mqabcExportWindow>;
 friend class super;
 private:
-    mqusdExportWindow(mqusdPlugin* plugin, MQWindowBase& parent);
+    mqabcExportWindow(mqabcPlugin* plugin, MQWindowBase& parent);
 
 public:
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
@@ -23,10 +25,12 @@ public:
 
     bool Open(MQDocument doc, const std::string& v);
     bool Close();
+    void CaptureFrame(MQDocument doc);
 
 private:
-    mqusdPlugin* m_plugin = nullptr;
+    mqabcPlugin* m_plugin = nullptr;
 
+    MQFrame* m_frame_settings = nullptr;
     MQEdit* m_edit_scale = nullptr;
 
     MQCheckBox* m_check_mirror = nullptr;
@@ -36,8 +40,6 @@ private:
     MQCheckBox* m_check_normals = nullptr;
     MQCheckBox* m_check_colors = nullptr;
     MQCheckBox* m_check_mids = nullptr;
-    MQCheckBox* m_check_blendshapes = nullptr;
-    MQCheckBox* m_check_skeletons = nullptr;
 
     MQCheckBox* m_check_flip_faces = nullptr;
     MQCheckBox* m_check_flip_x = nullptr;

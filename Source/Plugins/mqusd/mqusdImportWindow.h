@@ -1,13 +1,13 @@
 #pragma once
 #include "MQWidget.h"
-#include "mqCommon/mqusdDocumentImporter.h"
-#include "mqusdWindow.h"
+#include "mqCommon/mqTWindow.h"
+#include "mqCommon/mqDocumentImporter.h"
 
 namespace mqusd {
 
-class mqusdImportWindow : public mqusdTWindow<mqusdImportWindow>
+class mqusdImportWindow : public mqTWindow<mqusdImportWindow>
 {
-using super = mqusdTWindow<mqusdImportWindow>;
+using super = mqTWindow<mqusdImportWindow>;
 friend class super;
 private:
     mqusdImportWindow(mqusdPlugin* plugin, MQWindowBase& parent);

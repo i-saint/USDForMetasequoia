@@ -2,8 +2,7 @@
 
 namespace mqusd {
 
-class mqabcPlayerWindow;
-class mqabcRecorderWindow;
+class mqabcWindow;
 
 class mqabcPlugin : public MQStationPlugin
 {
@@ -89,11 +88,9 @@ public:
     void LogInfo(const char* message);
 
     const std::string& GetMQOPath() const;
-    void CloseAll();
 
 private:
-    mqabcPlayerWindow* m_player = nullptr;
-    mqabcRecorderWindow* m_recorder = nullptr;
+    mqabcWindow* m_window = nullptr;
     std::string m_mqo_path;
 };
 
