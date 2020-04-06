@@ -2,7 +2,8 @@
 #include "mqusd.h"
 #include "mqusdPlugin.h"
 #include "mqusdWindow.h"
-#include "mqusdPlayerWindow.h"
+#include "mqusdImportWindow.h"
+#include "mqusdExportWindow.h"
 #include "mqusdRecorderWindow.h"
 
 namespace mqusd {
@@ -61,22 +62,19 @@ BOOL mqusdWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqusdWindow::OnImportClicked(MQWidgetBase* sender, MQDocument doc)
 {
-    auto w = new mqusdPlayerWindow(m_plugin, MQWindow::GetMainWindow());
-    w->SetVisible(true);
+    mqusdImportWindow::create(m_plugin);
     return 0;
 }
 
 BOOL mqusdWindow::OnExportClicked(MQWidgetBase* sender, MQDocument doc)
 {
-    auto w = new mqusdRecorderWindow(m_plugin, MQWindow::GetMainWindow());
-    w->SetVisible(true);
+    mqusdExportWindow::create(m_plugin);
     return 0;
 }
 
 BOOL mqusdWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument doc)
 {
-    auto w = new mqusdRecorderWindow(m_plugin, MQWindow::GetMainWindow());
-    w->SetVisible(true);
+    mqusdRecorderWindow::create(m_plugin);
     return 0;
 }
 

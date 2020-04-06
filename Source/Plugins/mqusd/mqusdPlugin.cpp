@@ -2,7 +2,8 @@
 #include "mqusd.h"
 #include "mqusdPlugin.h"
 #include "mqusdWindow.h"
-#include "mqusdPlayerWindow.h"
+#include "mqusdImportWindow.h"
+#include "mqusdExportWindow.h"
 #include "mqusdRecorderWindow.h"
 
 namespace mqusd {
@@ -108,7 +109,11 @@ BOOL mqusdPlugin::Initialize()
 //---------------------------------------------------------------------------
 void mqusdPlugin::Exit()
 {
-    CloseAll();
+    mqusdImportWindow::each([](auto* w) { delete w; });
+    mqusdExportWindow::each([](auto* w) { delete w; });
+    mqusdRecorderWindow::each([](auto* w) { delete w; });
+    delete m_window;
+    m_window = nullptr;
 }
 
 //---------------------------------------------------------------------------
@@ -188,7 +193,6 @@ void mqusdPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUME
 void mqusdPlugin::OnEndDocument(MQDocument doc)
 {
     m_mqo_path.clear();
-    CloseAll();
 }
 
 //---------------------------------------------------------------------------
@@ -308,12 +312,6 @@ void mqusdPlugin::LogInfo(const char* message)
 const std::string& mqusdPlugin::GetMQOPath() const
 {
     return m_mqo_path;
-}
-
-void mqusdPlugin::CloseAll()
-{
-    mqusdPlayerWindow::each([](auto* w) { delete w; });
-    mqusdRecorderWindow::each([](auto* w) { delete w; });
 }
 
 void mqusdLog(const char* fmt, ...)

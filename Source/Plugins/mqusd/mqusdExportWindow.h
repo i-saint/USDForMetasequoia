@@ -5,12 +5,12 @@
 
 namespace mqusd {
 
-class mqusdRecorderWindow : public mqusdTWindow<mqusdRecorderWindow>
+class mqusdExportWindow : public mqusdTWindow<mqusdExportWindow>
 {
-using super = mqusdTWindow<mqusdRecorderWindow>;
+using super = mqusdTWindow<mqusdExportWindow>;
 friend class super;
 private:
-    mqusdRecorderWindow(mqusdPlugin* plugin, MQWindowBase& parent);
+    mqusdExportWindow(mqusdPlugin* plugin, MQWindowBase& parent);
 
 public:
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
@@ -23,16 +23,10 @@ public:
 
     bool Open(MQDocument doc, const std::string& v);
     bool Close();
-    void CaptureFrame(MQDocument doc);
-    void MarkSceneDirty();
-    bool IsOpened() const;
-    bool IsRecording() const;
 
 private:
     mqusdPlugin* m_plugin = nullptr;
 
-    MQFrame* m_frame_settings = nullptr;
-    MQEdit* m_edit_interval = nullptr;
     MQEdit* m_edit_scale = nullptr;
 
     MQCheckBox* m_check_mirror = nullptr;
@@ -50,15 +44,13 @@ private:
     MQCheckBox* m_check_flip_yz = nullptr;
     MQCheckBox* m_check_merge = nullptr;
 
-    MQButton* m_button_recording = nullptr;
+    MQButton* m_button_export = nullptr;
     MQMemo* m_log = nullptr;
 
 
     ScenePtr m_scene;
     ExportOptions m_options;
     DocumentExporterPtr m_exporter;
-    bool m_dirty = false;
-    bool m_recording = false;
 };
 
 } // namespace mqusd

@@ -88,7 +88,6 @@ public:
     void LogInfo(const char* message);
 
     const std::string& GetMQOPath() const;
-    void CloseAll();
 
 
 private:

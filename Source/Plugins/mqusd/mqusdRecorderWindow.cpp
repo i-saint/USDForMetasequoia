@@ -5,26 +5,14 @@
 
 namespace mqusd {
 
-static std::vector<mqusdRecorderWindow*> g_recorder_windows;
-
-void mqusdRecorderWindow::each(const std::function<void(mqusdRecorderWindow*)>& body)
-{
-    static std::vector<mqusdRecorderWindow*> s_tmp;
-    s_tmp = g_recorder_windows;
-    for (auto* i : s_tmp)
-        body(i);
-}
-
 mqusdRecorderWindow::mqusdRecorderWindow(mqusdPlugin* plugin, MQWindowBase& parent)
-    : MQWindow(parent)
+    : super(parent)
 {
-    g_recorder_windows.push_back(this);
-
     setlocale(LC_ALL, "");
 
     m_plugin = plugin;
 
-    SetTitle(L"USD Recorder");
+    SetTitle(L"Recording USD");
     SetOutSpace(0.4);
 
     double outer_margin = 0.2;
@@ -113,21 +101,16 @@ mqusdRecorderWindow::mqusdRecorderWindow(mqusdPlugin* plugin, MQWindowBase& pare
     this->AddHideEvent(this, &mqusdRecorderWindow::OnHide);
 }
 
-mqusdRecorderWindow::~mqusdRecorderWindow()
-{
-    g_recorder_windows.erase(
-        std::find(g_recorder_windows.begin(), g_recorder_windows.end(), this));
-}
-
 BOOL mqusdRecorderWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 {
+    m_log->SetText(L"");
     SyncSettings();
     return 0;
 }
 
 BOOL mqusdRecorderWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
-    delete this;
+    Close();
     return 0;
 }
 
@@ -192,6 +175,7 @@ BOOL mqusdRecorderWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument do
     }
     else {
         if (Close()) {
+            mqusdLog("recording finished");
         }
     }
     SyncSettings();
@@ -274,8 +258,6 @@ bool mqusdRecorderWindow::Close()
         m_exporter = {};
         m_scene = {};
         m_recording = false;
-
-        mqusdLog("recording finished");
     }
     return true;
 }
@@ -285,7 +267,7 @@ void mqusdRecorderWindow::CaptureFrame(MQDocument doc)
     if (!IsRecording() || !m_dirty)
         return;
 
-    if (m_exporter->write(doc, true)) {
+    if (m_exporter->write(doc, false)) {
         m_dirty = false;
     }
 }

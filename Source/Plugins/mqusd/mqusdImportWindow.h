@@ -1,19 +1,18 @@
 #pragma once
 #include "MQWidget.h"
 #include "mqCommon/mqusdDocumentImporter.h"
+#include "mqusdWindow.h"
 
 namespace mqusd {
 
-class mqusdPlugin;
-
-class mqusdPlayerWindow : public MQWindow
+class mqusdImportWindow : public mqusdTWindow<mqusdImportWindow>
 {
+using super = mqusdTWindow<mqusdImportWindow>;
+friend class super;
+private:
+    mqusdImportWindow(mqusdPlugin* plugin, MQWindowBase& parent);
+
 public:
-    static void each(const std::function<void(mqusdPlayerWindow*)>& body);
-
-    mqusdPlayerWindow(mqusdPlugin* plugin, MQWindowBase& parent);
-    ~mqusdPlayerWindow() override;
-
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
     BOOL OnOpenClicked(MQWidgetBase* sender, MQDocument doc);
