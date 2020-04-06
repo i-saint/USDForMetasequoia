@@ -26,6 +26,7 @@
 
 #pragma warning(push)
 #pragma warning(disable:4244 267)
+#include <pxr/base/plug/registry.h>
 #include <pxr/usd/usd/stage.h>
 #include <pxr/usd/usdGeom/xform.h>
 #include <pxr/usd/usdGeom/camera.h>

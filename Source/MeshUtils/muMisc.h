@@ -2,16 +2,20 @@
 
 #if defined(_WIN32)
     #define muDLLPrefix 
-    #define muDLLSuffix ".dll"
-    #define muEXESuffix ".exe"
-#elif defined(__APPLE__)
-    #define muDLLPrefix "lib"
-    #define muDLLSuffix ".dylib"
-    #define muEXESuffix 
+    #define muDLLSuffix     ".dll"
+    #define muEXESuffix     ".exe"
+    #define muPathSep       "\\"
+    #define muPathListSep   ";"
 #else
-    #define muDLLPrefix "lib"
-    #define muDLLSuffix ".so"
+    #define muDLLPrefix     "lib"
+    #if defined(__APPLE__)
+        #define muDLLSuffix ".dylib"
+    #else
+        #define muDLLSuffix ".so"
+    #endif
     #define muEXESuffix 
+    #define muPathSep       "/"
+    #define muPathListSep   ":"
 #endif
 
 namespace mu {

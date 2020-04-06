@@ -1330,5 +1330,13 @@ Node* USDScene::findNodeImpl(const std::string& path)
 
 sgusdAPI sg::SceneInterface* sgusdCreateSceneInterface(sg::Scene *scene)
 {
+    static std::once_flag s_once;
+    std::call_once(s_once, []() {
+        // register plugins
+        std::string pluginfo_path = mu::GetCurrentModuleDirectory();
+        pluginfo_path += muPathSep "usd" muPathSep "plugInfo.json";
+        PlugRegistry::GetInstance().RegisterPlugins(pluginfo_path);
+    });
+
     return new sg::USDScene(scene);
 }

@@ -465,7 +465,7 @@ void MeshNode::buildFaceSets(bool cleanup)
         if (!faceset)
             faceset = std::make_shared<FaceSet>();
         faceset->clear();
-        if (i < materials.size())
+        if (i < (int)materials.size())
             faceset->material = materials[i];
     });
 

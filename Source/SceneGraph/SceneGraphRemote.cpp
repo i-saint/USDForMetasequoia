@@ -34,12 +34,9 @@ static void LoadCoreModule()
         g_core_module = mu::GetModule(mqusdCoreDll);
         if (!g_core_module) {
             std::string core_dir = g_usd_module_dir.empty() ? GetDefaultModulePath() : g_usd_module_dir;
-            std::string plugin_path = g_usd_plugin_path.empty() ? core_dir + "/usd/plugInfo.json" : g_usd_plugin_path;
-            mu::SetEnv("PXR_PLUGINPATH_NAME", plugin_path.c_str());
-
-            std::string tbb_dll = core_dir + "/" mqusdTBBDll;
-            std::string usd_dll = core_dir + "/" mqusdUSDDll;
-            std::string core_dll = core_dir + "/" mqusdCoreDll;
+            std::string tbb_dll = core_dir + muPathSep mqusdTBBDll;
+            std::string usd_dll = core_dir + muPathSep mqusdUSDDll;
+            std::string core_dll = core_dir + muPathSep mqusdCoreDll;
             mu::LoadModule(tbb_dll.c_str());
             mu::LoadModule(usd_dll.c_str());
             g_core_module = mu::LoadModule(core_dll.c_str());
