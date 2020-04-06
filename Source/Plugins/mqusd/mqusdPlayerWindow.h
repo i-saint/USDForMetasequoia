@@ -12,7 +12,7 @@ public:
     static void each(const std::function<void(mqusdPlayerWindow*)>& body);
 
     mqusdPlayerWindow(mqusdPlugin* plugin, MQWindowBase& parent);
-    ~mqusdPlayerWindow();
+    ~mqusdPlayerWindow() override;
 
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);

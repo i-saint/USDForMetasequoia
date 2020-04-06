@@ -10,7 +10,6 @@ namespace sg {
 #define mqusdCoreExe "SceneGraphUSD" muEXESuffix
 
 static std::string g_usd_module_dir;
-static std::string g_usd_plugin_path;
 static void* g_core_module;
 static SceneInterface* (*g_sgusdCreateSceneInterface)(Scene* scene);
 
@@ -25,7 +24,6 @@ static std::string GetDefaultModulePath()
 }
 
 void SetUSDModuleDir(const std::string& v) { g_usd_module_dir = v; }
-void SetUSDPluginPath(const std::string& v) { g_usd_plugin_path = v; }
 
 static void LoadCoreModule()
 {
@@ -93,8 +91,7 @@ USDScenePipe::USDScenePipe(Scene* scene)
     : m_scene(scene)
 {
     m_exe_path = g_usd_module_dir.empty() ? GetDefaultModulePath() : g_usd_module_dir;
-    m_exe_path += '/';
-    m_exe_path += mqusdCoreExe;
+    m_exe_path += muPathSep mqusdCoreExe;
 }
 
 USDScenePipe::~USDScenePipe()

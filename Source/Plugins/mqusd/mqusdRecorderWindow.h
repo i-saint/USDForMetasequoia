@@ -12,7 +12,7 @@ public:
     static void each(const std::function<void(mqusdRecorderWindow*)>& body);
 
     mqusdRecorderWindow(mqusdPlugin* plugin, MQWindowBase& parent);
-    ~mqusdRecorderWindow();
+    ~mqusdRecorderWindow() override;
 
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);

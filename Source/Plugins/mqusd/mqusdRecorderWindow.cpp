@@ -5,18 +5,20 @@
 
 namespace mqusd {
 
-static std::vector<mqusdRecorderWindow*> g_instances;
+static std::vector<mqusdRecorderWindow*> g_recorder_windows;
 
 void mqusdRecorderWindow::each(const std::function<void(mqusdRecorderWindow*)>& body)
 {
-    for (auto* i : g_instances)
+    static std::vector<mqusdRecorderWindow*> s_tmp;
+    s_tmp = g_recorder_windows;
+    for (auto* i : s_tmp)
         body(i);
 }
 
 mqusdRecorderWindow::mqusdRecorderWindow(mqusdPlugin* plugin, MQWindowBase& parent)
     : MQWindow(parent)
 {
-    g_instances.push_back(this);
+    g_recorder_windows.push_back(this);
 
     setlocale(LC_ALL, "");
 
@@ -105,9 +107,6 @@ mqusdRecorderWindow::mqusdRecorderWindow(mqusdPlugin* plugin, MQWindowBase& pare
         m_log = CreateMemo(vf);
         m_log->SetHorzBarStatus(MQMemo::SCROLLBAR_OFF);
         m_log->SetVertBarStatus(MQMemo::SCROLLBAR_OFF);
-
-        std::string plugin_version = "Plugin Version: " mqusdVersionString;
-        CreateLabel(vf, mu::ToWCS(plugin_version));
     }
 
     this->AddShowEvent(this, &mqusdRecorderWindow::OnShow);
@@ -116,8 +115,8 @@ mqusdRecorderWindow::mqusdRecorderWindow(mqusdPlugin* plugin, MQWindowBase& pare
 
 mqusdRecorderWindow::~mqusdRecorderWindow()
 {
-    g_instances.erase(
-        std::find(g_instances.begin(), g_instances.end(), this));
+    g_recorder_windows.erase(
+        std::find(g_recorder_windows.begin(), g_recorder_windows.end(), this));
 }
 
 BOOL mqusdRecorderWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
@@ -128,7 +127,7 @@ BOOL mqusdRecorderWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqusdRecorderWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
-    Close();
+    delete this;
     return 0;
 }
 

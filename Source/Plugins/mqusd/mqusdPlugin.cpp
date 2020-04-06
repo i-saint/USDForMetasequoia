@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "mqusd.h"
 #include "mqusdPlugin.h"
+#include "mqusdWindow.h"
 #include "mqusdPlayerWindow.h"
 #include "mqusdRecorderWindow.h"
 
@@ -95,11 +96,9 @@ const wchar_t *mqusdPlugin::GetSubCommandString(int index)
 //---------------------------------------------------------------------------
 BOOL mqusdPlugin::Initialize()
 {
-    auto parent = MQWindow::GetMainWindow();
-    if (!m_player)
-        m_player = new mqusdPlayerWindow(this, parent);
-    if (!m_recorder)
-        m_recorder = new mqusdRecorderWindow(this, parent);
+    if (!m_window) {
+        m_window = new mqusdWindow(this, MQWindow::GetMainWindow());
+    }
     return TRUE;
 }
 
@@ -119,10 +118,8 @@ void mqusdPlugin::Exit()
 BOOL mqusdPlugin::Activate(MQDocument doc, BOOL flag)
 {
     bool active = flag ? true : false;
-    if (m_player)
-        m_player->SetVisible(active);
-    if (m_recorder)
-        m_recorder->SetVisible(active);
+    if (m_window)
+        m_window->SetVisible(active);
     return active;
 }
 
@@ -132,9 +129,7 @@ BOOL mqusdPlugin::Activate(MQDocument doc, BOOL flag)
 //---------------------------------------------------------------------------
 BOOL mqusdPlugin::IsActivated(MQDocument doc)
 {
-    return
-        (m_player && m_player->GetVisible()) ||
-        (m_recorder && m_recorder->GetVisible());
+    return m_window && m_window->GetVisible();
 }
 
 //---------------------------------------------------------------------------
@@ -308,8 +303,6 @@ void mqusdPlugin::Execute(ExecuteCallbackProc proc)
 
 void mqusdPlugin::LogInfo(const char* message)
 {
-    if (m_player)
-        m_player->LogInfo(message);
 }
 
 const std::string& mqusdPlugin::GetMQOPath() const
@@ -319,14 +312,8 @@ const std::string& mqusdPlugin::GetMQOPath() const
 
 void mqusdPlugin::CloseAll()
 {
-    if (m_player) {
-        delete m_player;
-        m_player = nullptr;
-    }
-    if (m_recorder) {
-        delete m_recorder;
-        m_recorder = nullptr;
-    }
+    mqusdPlayerWindow::each([](auto* w) { delete w; });
+    mqusdRecorderWindow::each([](auto* w) { delete w; });
 }
 
 void mqusdLog(const char* fmt, ...)

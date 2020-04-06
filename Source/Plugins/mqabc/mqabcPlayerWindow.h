@@ -12,7 +12,7 @@ public:
     static void each(const std::function<void(mqabcPlayerWindow*)>& body);
 
     mqabcPlayerWindow(mqabcPlugin* plugin, MQWindowBase& parent);
-    ~mqabcPlayerWindow();
+    ~mqabcPlayerWindow() override;
 
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);

@@ -2,8 +2,7 @@
 
 namespace mqusd {
 
-class mqusdPlayerWindow;
-class mqusdRecorderWindow;
+class mqusdWindow;
 
 class mqusdPlugin : public MQStationPlugin
 {
@@ -93,8 +92,7 @@ public:
 
 
 private:
-    mqusdPlayerWindow* m_player = nullptr;
-    mqusdRecorderWindow* m_recorder = nullptr;
+    mqusdWindow* m_window = nullptr;
     std::string m_mqo_path;
 };
 

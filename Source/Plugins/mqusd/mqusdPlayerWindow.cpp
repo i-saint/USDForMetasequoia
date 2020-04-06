@@ -5,18 +5,20 @@
 
 namespace mqusd {
 
-static std::vector<mqusdPlayerWindow*> g_instances;
+static std::vector<mqusdPlayerWindow*> g_player_windows;
 
 void mqusdPlayerWindow::each(const std::function<void(mqusdPlayerWindow*)>& body)
 {
-    for (auto* i : g_instances)
+    static std::vector<mqusdPlayerWindow*> s_tmp;
+    s_tmp = g_player_windows;
+    for (auto* i : s_tmp)
         body(i);
 }
 
 mqusdPlayerWindow::mqusdPlayerWindow(mqusdPlugin* plugin, MQWindowBase& parent)
     : MQWindow(parent)
 {
-    g_instances.push_back(this);
+    g_player_windows.push_back(this);
 
     setlocale(LC_ALL, "");
 
@@ -96,9 +98,6 @@ mqusdPlayerWindow::mqusdPlayerWindow(mqusdPlugin* plugin, MQWindowBase& parent)
         m_log = CreateMemo(vf);
         m_log->SetHorzBarStatus(MQMemo::SCROLLBAR_OFF);
         m_log->SetVertBarStatus(MQMemo::SCROLLBAR_OFF);
-
-        std::string plugin_version = "Plugin Version: " mqusdVersionString;
-        CreateLabel(vf, mu::ToWCS(plugin_version));
     }
 
     this->AddShowEvent(this, &mqusdPlayerWindow::OnShow);
@@ -107,8 +106,8 @@ mqusdPlayerWindow::mqusdPlayerWindow(mqusdPlugin* plugin, MQWindowBase& parent)
 
 mqusdPlayerWindow::~mqusdPlayerWindow()
 {
-    g_instances.erase(
-        std::find(g_instances.begin(), g_instances.end(), this));
+    g_player_windows.erase(
+        std::find(g_player_windows.begin(), g_player_windows.end(), this));
 }
 
 BOOL mqusdPlayerWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
@@ -119,10 +118,10 @@ BOOL mqusdPlayerWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqusdPlayerWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
-    Close();
+    delete this;
 
-    m_frame_open->SetVisible(true);
-    m_frame_play->SetVisible(false);
+    //m_frame_open->SetVisible(true);
+    //m_frame_play->SetVisible(false);
     return 0;
 }
 

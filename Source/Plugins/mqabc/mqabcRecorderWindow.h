@@ -12,7 +12,7 @@ public:
     static void each(const std::function<void (mqabcRecorderWindow*)>& body);
 
     mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& parent);
-    ~mqabcRecorderWindow();
+    ~mqabcRecorderWindow() override;
 
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
