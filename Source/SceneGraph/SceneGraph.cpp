@@ -6,6 +6,11 @@ namespace sg {
 
 const double default_time = std::numeric_limits<double>::quiet_NaN();
 
+bool IsDefaultTime(double t)
+{
+    return std::isnan(t);
+}
+
 static uint32_t GenID()
 {
     static uint32_t s_seed;

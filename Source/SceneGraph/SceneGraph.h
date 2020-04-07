@@ -30,6 +30,7 @@ class SceneInterface;
 class Scene;
 
 extern const double default_time;
+bool IsDefaultTime(double t);
 
 
 struct ConvertOptions

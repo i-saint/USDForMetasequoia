@@ -462,10 +462,14 @@ void USDMeshNode::write(double time)
             if (!mat)
                 continue;
 
-            VtArray<int> faces(fs->faces.begin(), fs->faces.end());
-            auto subset = mbapi.CreateMaterialBindSubset(TfToken(mat->getName()), faces);
-            auto mat_node = static_cast<USDMaterialNode*>(mat->impl);
-            UsdShadeMaterialBindingAPI(subset.GetPrim()).Bind(mat_node->m_material);
+            auto& data = m_subsets[mat->getName()];
+            if (!data.subset) {
+                data.subset = mbapi.CreateMaterialBindSubset(TfToken(mat->getName()), VtArray<int>());
+                if (auto mat_node = static_cast<USDMaterialNode*>(mat->impl))
+                    UsdShadeMaterialBindingAPI(data.subset.GetPrim()).Bind(mat_node->m_material);
+            }
+            data.faces.assign(fs->faces.begin(), fs->faces.end());
+            data.subset.GetIndicesAttr().Set(data.faces, t);
         }
     }
 }

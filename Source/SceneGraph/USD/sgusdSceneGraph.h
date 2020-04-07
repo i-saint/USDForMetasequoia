@@ -210,6 +210,14 @@ public:
     VtArray<int> m_joint_indices;
     VtArray<float> m_joint_weights;
     std::vector<VtArray<int>> m_subset_faces;
+
+    // subset data
+    struct SubsetData
+    {
+        UsdGeomSubset subset;
+        VtArray<int> faces;
+    };
+    std::map<std::string, SubsetData> m_subsets;
 };
 
 
