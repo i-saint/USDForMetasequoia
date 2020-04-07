@@ -73,6 +73,14 @@ protected:
     AbcGeom::IC4fGeomParam::Sample m_rgba;
     Abc::Int32ArraySamplePtr m_material_ids;
     SharedVector<float3> m_tmp_rgb;
+
+    struct FacesetData
+    {
+        AbcGeom::IFaceSetSchema faceset;
+        AbcGeom::IFaceSetSchema::Sample sample;
+        FaceSet* dst = nullptr;
+    };
+    std::vector<FacesetData> m_facesets;
 };
 
 

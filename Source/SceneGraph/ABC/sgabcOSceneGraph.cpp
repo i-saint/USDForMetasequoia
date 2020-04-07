@@ -124,7 +124,7 @@ void ABCOMeshNode::write(double t)
 
     if(!src.colors.empty()){
         if (!m_rgba_param)
-            m_rgba_param = AbcGeom::OC4fGeomParam(m_schema.getArbGeomParams(), mqabcAttrVertexColor, false, AbcGeom::GeometryScope::kFacevaryingScope, 1, 1);
+            m_rgba_param = AbcGeom::OC4fGeomParam(m_schema.getArbGeomParams(), sgabcAttrVertexColor, false, AbcGeom::GeometryScope::kFacevaryingScope, 1, 1);
 
         PadSamples(m_rgba_param, wc);
         m_rgba.setVals(Abc::C4fArraySample((const abcC4*)src.colors.cdata(), src.colors.size()));
@@ -133,7 +133,7 @@ void ABCOMeshNode::write(double t)
 
     if (!src.material_ids.empty()) {
         if (!m_mids_prop.valid())
-            m_mids_prop = AbcGeom::OInt32ArrayProperty(m_schema.getArbGeomParams(), mqabcAttrMaterialID, 1);
+            m_mids_prop = AbcGeom::OInt32ArrayProperty(m_schema.getArbGeomParams(), sgabcAttrMaterialID, 1);
 
         PadSamples(m_mids_prop, wc);
         m_mids_prop.set(Abc::Int32ArraySample(src.material_ids.cdata(), src.material_ids.size()));
@@ -149,6 +149,9 @@ void ABCOMeshNode::write(double t)
                 auto ofs = m_schema.createFaceSet(mat->getName());
                 data.faceset = ofs.getSchema();
                 data.faceset.setTimeSampling(1);
+
+                auto binding = AbcGeom::OStringProperty(data.faceset.getArbGeomParams(), sgabcAttrMaterialBinding, 1);
+                binding.set(mat->path);
             }
             PadSamples(data.faceset, wc);
             data.sample.setFaces(Abc::Int32ArraySample(fs->faces.cdata(), fs->faces.size()));

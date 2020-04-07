@@ -90,7 +90,13 @@ const char *mqabcPlugin::EnumString(void)
 //---------------------------------------------------------------------------
 const char *mqabcPlugin::EnumSubCommand(int index)
 {
-    return NULL;
+    switch (index) {
+    case 0: return "Import Alembic";
+    case 1: return "Insert Alembic";
+    case 2: return "Export Alembic";
+    case 3: return "Recording Alembic";
+    default: return nullptr;
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -99,7 +105,13 @@ const char *mqabcPlugin::EnumSubCommand(int index)
 //---------------------------------------------------------------------------
 const wchar_t *mqabcPlugin::GetSubCommandString(int index)
 {
-    return NULL;
+    switch (index) {
+    case 0: return L"Import Alembic";
+    case 1: return L"Insert Alembic";
+    case 2: return L"Export Alembic";
+    case 3: return L"Recording Alembic";
+    default: return nullptr;
+    }
 }
 
 //---------------------------------------------------------------------------

@@ -154,9 +154,9 @@ void USDMeshNode::beforeRead()
 
     // find attributes
     auto pvapi = UsdGeomPrimvarsAPI(m_prim);
-    m_pv_st     = pvapi.GetPrimvar(mqusdAttrST);
-    m_pv_colors = pvapi.GetPrimvar(mqusdAttrColors);
-    m_attr_mids     = m_prim.GetAttribute(mqusdAttrMaterialIDs);
+    m_pv_st     = pvapi.GetPrimvar(sgusdAttrST);
+    m_pv_colors = pvapi.GetPrimvar(sgusdAttrColors);
+    m_attr_mids     = m_prim.GetAttribute(sgusdAttrMaterialIDs);
     m_attr_bs_ids   = m_prim.GetAttribute(UsdSkelTokens->skelBlendShapes);
     m_attr_joints   = m_prim.GetAttribute(UsdSkelTokens->skelJoints);
     m_attr_joint_indices    = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelJointIndices);
@@ -370,8 +370,8 @@ void USDMeshNode::beforeWrite()
 {
     // create attributes
     auto pvapi = UsdGeomPrimvarsAPI(m_prim);
-    m_pv_st = pvapi.CreatePrimvar(mqusdAttrST, SdfValueTypeNames->TexCoord2fArray);
-    m_pv_colors = pvapi.CreatePrimvar(mqusdAttrColors, SdfValueTypeNames->Color4fArray);
+    m_pv_st = pvapi.CreatePrimvar(sgusdAttrST, SdfValueTypeNames->TexCoord2fArray);
+    m_pv_colors = pvapi.CreatePrimvar(sgusdAttrColors, SdfValueTypeNames->Color4fArray);
 
     auto& src = *getNode<MeshNode>();
 
@@ -451,7 +451,7 @@ void USDMeshNode::write(double time)
 
     if (!src.material_ids.empty()) {
         if (!m_attr_mids)
-            m_attr_mids = m_prim.CreateAttribute(mqusdAttrMaterialIDs, SdfValueTypeNames->IntArray, false);
+            m_attr_mids = m_prim.CreateAttribute(sgusdAttrMaterialIDs, SdfValueTypeNames->IntArray, false);
         m_material_ids.assign(src.material_ids.begin(), src.material_ids.end());
         m_attr_mids.Set(m_material_ids, t);
     }
@@ -884,27 +884,27 @@ void USDMaterialNode::beforeRead()
 
         TfToken id;
         if (sh.GetIdAttr().Get(&id)) {
-            if (id == mqusdUsdPreviewSurface) {
+            if (id == sgusdUsdPreviewSurface) {
                 m_surface = sh;
-                m_in_use_vertex_color = m_surface.GetInput(mqusdAttrUseVertexColor);
-                m_in_double_sided   = m_surface.GetInput(mqusdAttrDoubleSided);
-                m_in_diffuse_color  = m_surface.GetInput(mqusdAttrDiffuseColor);
-                m_in_diffuse        = m_surface.GetInput(mqusdAttrDiffuse);
-                m_in_opacity        = m_surface.GetInput(mqusdAttrOpacity);
-                m_in_roughness      = m_surface.GetInput(mqusdAttrRoughness);
-                m_in_ambient_color  = m_surface.GetInput(mqusdAttrAmbientColor);
-                m_in_specular_color = m_surface.GetInput(mqusdAttrSpecularColor);
-                m_in_emissive_color = m_surface.GetInput(mqusdAttrEmissiveColor);
+                m_in_use_vertex_color = m_surface.GetInput(sgusdAttrUseVertexColor);
+                m_in_double_sided   = m_surface.GetInput(sgusdAttrDoubleSided);
+                m_in_diffuse_color  = m_surface.GetInput(sgusdAttrDiffuseColor);
+                m_in_diffuse        = m_surface.GetInput(sgusdAttrDiffuse);
+                m_in_opacity        = m_surface.GetInput(sgusdAttrOpacity);
+                m_in_roughness      = m_surface.GetInput(sgusdAttrRoughness);
+                m_in_ambient_color  = m_surface.GetInput(sgusdAttrAmbientColor);
+                m_in_specular_color = m_surface.GetInput(sgusdAttrSpecularColor);
+                m_in_emissive_color = m_surface.GetInput(sgusdAttrEmissiveColor);
 
                 auto& dst = *getNode<MaterialNode>();
-                GetValue(m_surface.GetInput(mqusdAttrShaderType), dst.shader_type);
+                GetValue(m_surface.GetInput(sgusdAttrShaderType), dst.shader_type);
             }
-            else if (id == mqusdUsdUVTexture) {
-                if (c.GetName() == mqusdAttrDiffuseTexture)
+            else if (id == sgusdUsdUVTexture) {
+                if (c.GetName() == sgusdAttrDiffuseTexture)
                     m_tex_diffuse = sh;
-                else if (c.GetName() == mqusdAttrOpacityTexture)
+                else if (c.GetName() == sgusdAttrOpacityTexture)
                     m_tex_opacity = sh;
-                else if (c.GetName() == mqusdAttrBumpTexture)
+                else if (c.GetName() == sgusdAttrBumpTexture)
                     m_tex_bump = sh;
             }
         }
@@ -935,15 +935,15 @@ void USDMaterialNode::read(double time)
         if (!src)
             return;
         dst = std::make_shared<Texture>();
-        if (auto file = src.GetInput(mqusdAttrFile))
+        if (auto file = src.GetInput(sgusdAttrFile))
             GetValue(file, dst->file_path);
-        if (auto st = src.GetInput(mqusdAttrST))
+        if (auto st = src.GetInput(sgusdAttrST))
             GetValue(st, dst->st);
-        if (auto ws = src.GetInput(mqusdAttrWrapS))
+        if (auto ws = src.GetInput(sgusdAttrWrapS))
             GetValue(ws, dst->wrap_s);
-        if (auto wt = src.GetInput(mqusdAttrWrapT))
+        if (auto wt = src.GetInput(sgusdAttrWrapT))
             GetValue(wt, dst->wrap_t);
-        if (auto fallback = src.GetInput(mqusdAttrFallback))
+        if (auto fallback = src.GetInput(sgusdAttrFallback))
             GetValue(fallback, dst->fallback);
 
     };
@@ -964,32 +964,32 @@ void USDMaterialNode::beforeWrite()
 
         // based on UsdPreviewSurface Proposal
         // https://graphics.pixar.com/usd/docs/UsdPreviewSurface-Proposal.html
-        m_surface.SetShaderId(mqusdUsdPreviewSurface);
+        m_surface.SetShaderId(sgusdUsdPreviewSurface);
 
-        m_in_use_vertex_color = m_surface.CreateInput(mqusdAttrUseVertexColor, SdfValueTypeNames->Int);
-        m_in_double_sided   = m_surface.CreateInput(mqusdAttrDoubleSided, SdfValueTypeNames->Int);
-        m_in_diffuse_color  = m_surface.CreateInput(mqusdAttrDiffuseColor, SdfValueTypeNames->Float3);
-        m_in_diffuse        = m_surface.CreateInput(mqusdAttrDiffuse, SdfValueTypeNames->Float);
-        m_in_opacity        = m_surface.CreateInput(mqusdAttrOpacity, SdfValueTypeNames->Float);
-        m_in_roughness      = m_surface.CreateInput(mqusdAttrRoughness, SdfValueTypeNames->Float);
-        m_in_ambient_color  = m_surface.CreateInput(mqusdAttrAmbientColor, SdfValueTypeNames->Float3);
-        m_in_specular_color = m_surface.CreateInput(mqusdAttrSpecularColor, SdfValueTypeNames->Float3);
-        m_in_emissive_color = m_surface.CreateInput(mqusdAttrEmissiveColor, SdfValueTypeNames->Float3);
+        m_in_use_vertex_color = m_surface.CreateInput(sgusdAttrUseVertexColor, SdfValueTypeNames->Int);
+        m_in_double_sided   = m_surface.CreateInput(sgusdAttrDoubleSided, SdfValueTypeNames->Int);
+        m_in_diffuse_color  = m_surface.CreateInput(sgusdAttrDiffuseColor, SdfValueTypeNames->Float3);
+        m_in_diffuse        = m_surface.CreateInput(sgusdAttrDiffuse, SdfValueTypeNames->Float);
+        m_in_opacity        = m_surface.CreateInput(sgusdAttrOpacity, SdfValueTypeNames->Float);
+        m_in_roughness      = m_surface.CreateInput(sgusdAttrRoughness, SdfValueTypeNames->Float);
+        m_in_ambient_color  = m_surface.CreateInput(sgusdAttrAmbientColor, SdfValueTypeNames->Float3);
+        m_in_specular_color = m_surface.CreateInput(sgusdAttrSpecularColor, SdfValueTypeNames->Float3);
+        m_in_emissive_color = m_surface.CreateInput(sgusdAttrEmissiveColor, SdfValueTypeNames->Float3);
 
-        auto sh_surf    = m_surface.CreateOutput(mqusdAttrSurface, SdfValueTypeNames->Token);
-        auto mat_surf   = m_material.CreateOutput(mqusdAttrSurface, SdfValueTypeNames->Token);
-        auto st         = m_material.CreateInput(mqusdAttrSTName, SdfValueTypeNames->Token);
-        auto tangents   = m_material.CreateInput(mqusdAttrTangentsName, SdfValueTypeNames->Token);
-        auto binormals  = m_material.CreateInput(mqusdAttrBinormalsName, SdfValueTypeNames->Token);
-        auto colors     = m_material.CreateInput(mqusdAttrColorsName, SdfValueTypeNames->Token);
+        auto sh_surf    = m_surface.CreateOutput(sgusdAttrSurface, SdfValueTypeNames->Token);
+        auto mat_surf   = m_material.CreateOutput(sgusdAttrSurface, SdfValueTypeNames->Token);
+        auto st         = m_material.CreateInput(sgusdAttrSTName, SdfValueTypeNames->Token);
+        auto tangents   = m_material.CreateInput(sgusdAttrTangentsName, SdfValueTypeNames->Token);
+        auto binormals  = m_material.CreateInput(sgusdAttrBinormalsName, SdfValueTypeNames->Token);
+        auto colors     = m_material.CreateInput(sgusdAttrColorsName, SdfValueTypeNames->Token);
         mat_surf.ConnectToSource(sh_surf);
-        SetValue(st, mqusdAttrST);
-        SetValue(tangents, mqusdAttrTangents);
-        SetValue(binormals, mqusdAttrBinormals);
-        SetValue(colors, mqusdAttrColors);
+        SetValue(st, sgusdAttrST);
+        SetValue(tangents, sgusdAttrTangents);
+        SetValue(binormals, sgusdAttrBinormals);
+        SetValue(colors, sgusdAttrColors);
 
         if (src.shader_type != ShaderType::Unknown)
-            SetValue(m_surface.CreateInput(mqusdAttrShaderType, SdfValueTypeNames->Token), src.shader_type);
+            SetValue(m_surface.CreateInput(sgusdAttrShaderType, SdfValueTypeNames->Token), src.shader_type);
     }
 
     // base parameters
@@ -1010,31 +1010,31 @@ void USDMaterialNode::beforeWrite()
         auto tex_path = m_prim.GetPath().GetString() + "/" + name;
         auto tex_prim = m_scene->getStage()->DefinePrim(SdfPath(tex_path), TfToken(USDShaderNode::getUsdTypeName()));
         auto tex = UsdShadeShader(tex_prim);
-        tex.SetShaderId(mqusdUsdUVTexture);
-        SetValue(tex.CreateInput(mqusdAttrFile, SdfValueTypeNames->Asset), v.file_path);
+        tex.SetShaderId(sgusdUsdUVTexture);
+        SetValue(tex.CreateInput(sgusdAttrFile, SdfValueTypeNames->Asset), v.file_path);
         if (v.st != float2::zero())
-            SetValue(tex.CreateInput(mqusdAttrST, SdfValueTypeNames->Float2), v.st);
+            SetValue(tex.CreateInput(sgusdAttrST, SdfValueTypeNames->Float2), v.st);
         if (v.wrap_s != WrapMode::Unknown)
-            SetValue(tex.CreateInput(mqusdAttrWrapS, SdfValueTypeNames->Token), v.wrap_s);
+            SetValue(tex.CreateInput(sgusdAttrWrapS, SdfValueTypeNames->Token), v.wrap_s);
         if (v.wrap_t != WrapMode::Unknown)
-            SetValue(tex.CreateInput(mqusdAttrWrapT, SdfValueTypeNames->Token), v.wrap_t);
+            SetValue(tex.CreateInput(sgusdAttrWrapT, SdfValueTypeNames->Token), v.wrap_t);
         if (v.fallback != Texture::default_fallback)
-            SetValue(tex.CreateInput(mqusdAttrFallback, SdfValueTypeNames->Float4), v.fallback);
+            SetValue(tex.CreateInput(sgusdAttrFallback, SdfValueTypeNames->Float4), v.fallback);
         return tex;
     };
     if (!m_tex_diffuse && src.diffuse_texture) {
-        m_tex_diffuse = add_texture(mqusdAttrDiffuseTexture, *src.diffuse_texture);
-        auto o = m_tex_diffuse.CreateOutput(mqusdAttrRGB, SdfValueTypeNames->Float3);
+        m_tex_diffuse = add_texture(sgusdAttrDiffuseTexture, *src.diffuse_texture);
+        auto o = m_tex_diffuse.CreateOutput(sgusdAttrRGB, SdfValueTypeNames->Float3);
         m_in_diffuse_color.ConnectToSource(o);
     }
     if (!m_tex_opacity && src.opacity_texture) {
-        m_tex_opacity = add_texture(mqusdAttrOpacityTexture, *src.opacity_texture);
-        auto o = m_tex_opacity.CreateOutput(mqusdAttrA, SdfValueTypeNames->Float);
+        m_tex_opacity = add_texture(sgusdAttrOpacityTexture, *src.opacity_texture);
+        auto o = m_tex_opacity.CreateOutput(sgusdAttrA, SdfValueTypeNames->Float);
         m_in_opacity.ConnectToSource(o);
     }
     if (!m_tex_bump && src.bump_texture) {
-        m_tex_bump = add_texture(mqusdAttrBumpTexture, *src.bump_texture);
-        auto o = m_tex_bump.CreateOutput(mqusdAttrR, SdfValueTypeNames->Float);
+        m_tex_bump = add_texture(sgusdAttrBumpTexture, *src.bump_texture);
+        auto o = m_tex_bump.CreateOutput(sgusdAttrR, SdfValueTypeNames->Float);
     }
 }
 

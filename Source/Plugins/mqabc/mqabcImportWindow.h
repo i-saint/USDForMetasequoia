@@ -23,6 +23,7 @@ public:
     void SyncSettings();
     void LogInfo(const char *message);
 
+    void SetInsertMode(bool insert);
     bool Open(MQDocument doc, const std::string& path);
     bool Close();
     void Seek(MQDocument doc, double t);

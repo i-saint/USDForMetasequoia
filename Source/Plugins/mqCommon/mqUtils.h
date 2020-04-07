@@ -35,7 +35,7 @@ inline void each_object(MQDocument doc, const Body& body)
     int n = doc->GetObjectCount();
     for (int i = 0; i < n; ++i) {
         if (auto obj = doc->GetObject(i)) {
-            if (variadic_invoke_false(body, obj, i))
+            if (invoke_false(body, obj, i))
                 break;
         }
     }
@@ -47,7 +47,7 @@ inline void each_material(MQDocument doc, const Body& body)
     int n = doc->GetMaterialCount();
     for (int i = 0; i < n; ++i) {
         if (auto obj = doc->GetMaterial(i)) {
-            if (variadic_invoke_false(body, obj, i))
+            if (invoke_false(body, obj, i))
                 break;
         }
     }

@@ -77,17 +77,17 @@ template<class T> inline void GetValue(const T& src, std::string& v, UsdTimeCode
 
 inline ShaderType ToShaderType(const std::string& v)
 {
-    if (v == mqusdShaderMQClassic)
+    if (v == sgusdShaderMQClassic)
         return ShaderType::MQClassic;
-    else if (v == mqusdShaderMQConstant)
+    else if (v == sgusdShaderMQConstant)
         return ShaderType::MQConstant;
-    else if (v == mqusdShaderMQLambert)
+    else if (v == sgusdShaderMQLambert)
         return ShaderType::MQLambert;
-    else if (v == mqusdShaderMQPhong)
+    else if (v == sgusdShaderMQPhong)
         return ShaderType::MQPhong;
-    else if (v == mqusdShaderMQBlinn)
+    else if (v == sgusdShaderMQBlinn)
         return ShaderType::MQBlinn;
-    else if (v == mqusdShaderMQHLSL)
+    else if (v == sgusdShaderMQHLSL)
         return ShaderType::MQHLSL;
     return ShaderType::Unknown;
 }
@@ -102,13 +102,13 @@ template<class T> inline void GetValue(const T& src, ShaderType& v, UsdTimeCode 
 
 inline WrapMode ToWrapMode(const std::string& v)
 {
-    if (v == mqusdWrapClamp)
+    if (v == sgusdWrapClamp)
         return WrapMode::Clamp;
-    else if (v == mqusdWrapRepeat)
+    else if (v == sgusdWrapRepeat)
         return WrapMode::Repeat;
-    else if (v == mqusdWrapMirror)
+    else if (v == sgusdWrapMirror)
         return WrapMode::Mirror;
-    else if (v == mqusdWrapBlack)
+    else if (v == sgusdWrapBlack)
         return WrapMode::Black;
     return WrapMode::Clamp;
 }
@@ -161,12 +161,12 @@ template<class T> inline void SetValue(const T& dst, const std::string& v, UsdTi
 inline std::string ToString(ShaderType v)
 {
     switch (v) {
-    case ShaderType::MQClassic: return mqusdShaderMQClassic;
-    case ShaderType::MQConstant:return mqusdShaderMQConstant;
-    case ShaderType::MQLambert: return mqusdShaderMQLambert;
-    case ShaderType::MQPhong:   return mqusdShaderMQPhong;
-    case ShaderType::MQBlinn:   return mqusdShaderMQBlinn;
-    case ShaderType::MQHLSL:    return mqusdShaderMQHLSL;
+    case ShaderType::MQClassic: return sgusdShaderMQClassic;
+    case ShaderType::MQConstant:return sgusdShaderMQConstant;
+    case ShaderType::MQLambert: return sgusdShaderMQLambert;
+    case ShaderType::MQPhong:   return sgusdShaderMQPhong;
+    case ShaderType::MQBlinn:   return sgusdShaderMQBlinn;
+    case ShaderType::MQHLSL:    return sgusdShaderMQHLSL;
     default: return "";
     }
 }
@@ -179,9 +179,9 @@ template<class T> inline void SetValue(const T& dst, const ShaderType& v, UsdTim
 inline std::string ToString(WrapMode v)
 {
     switch (v) {
-    case WrapMode::Clamp:   return mqusdWrapClamp;
-    case WrapMode::Repeat:  return mqusdWrapRepeat;
-    case WrapMode::Mirror:  return mqusdWrapMirror;
+    case WrapMode::Clamp:   return sgusdWrapClamp;
+    case WrapMode::Repeat:  return sgusdWrapRepeat;
+    case WrapMode::Mirror:  return sgusdWrapMirror;
     default: return "";
     }
 }

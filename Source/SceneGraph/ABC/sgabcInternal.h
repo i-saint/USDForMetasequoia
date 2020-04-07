@@ -1,7 +1,8 @@
 #pragma once
 
-#define mqabcAttrVertexColor    "C"
-#define mqabcAttrMaterialID     "MID"
+#define sgabcAttrVertexColor        "C"
+#define sgabcAttrMaterialID         "MID"
+#define sgabcAttrMaterialBinding    "material:binding"
 
 
 #include "../SceneGraph.h"

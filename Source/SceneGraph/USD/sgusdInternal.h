@@ -1,58 +1,58 @@
 #pragma once
 
-#define mqusdAttrMaterialIDs    TfToken("materialIds")
-#define mqusdAttrST             TfToken("st")
+#define sgusdAttrMaterialIDs    TfToken("materialIds")
+#define sgusdAttrST             TfToken("st")
 
-#define mqusdShaderMQClassic    "mq:classic"
-#define mqusdShaderMQConstant   "mq:constant"
-#define mqusdShaderMQLambert    "mq:lambert"
-#define mqusdShaderMQPhong      "mq:phong"
-#define mqusdShaderMQBlinn      "mq:blinn"
-#define mqusdShaderMQHLSL       "mq:hlsl"
+#define sgusdShaderMQClassic    "mq:classic"
+#define sgusdShaderMQConstant   "mq:constant"
+#define sgusdShaderMQLambert    "mq:lambert"
+#define sgusdShaderMQPhong      "mq:phong"
+#define sgusdShaderMQBlinn      "mq:blinn"
+#define sgusdShaderMQHLSL       "mq:hlsl"
 
-#define mqusdWrapBlack  "black"
-#define mqusdWrapClamp  "clamp"
-#define mqusdWrapRepeat "repeat"
-#define mqusdWrapMirror "mirror"
+#define sgusdWrapBlack  "black"
+#define sgusdWrapClamp  "clamp"
+#define sgusdWrapRepeat "repeat"
+#define sgusdWrapMirror "mirror"
 
 // Metasequoia-specific parameters
-#define mqusdAttrShaderType      TfToken("shaderType")
-#define mqusdAttrUseVertexColor  TfToken("useVertexColor")
-#define mqusdAttrDoubleSided     TfToken("doubleSided")
-#define mqusdAttrAmbientColor    TfToken("ambientColor")
+#define sgusdAttrShaderType      TfToken("shaderType")
+#define sgusdAttrUseVertexColor  TfToken("useVertexColor")
+#define sgusdAttrDoubleSided     TfToken("doubleSided")
+#define sgusdAttrAmbientColor    TfToken("ambientColor")
 
-#define mqusdAttrDiffuseTexture  "diffuseColorTexture"
-#define mqusdAttrOpacityTexture  "opacityTexture"
-#define mqusdAttrBumpTexture     "bumpTexture"
-#define mqusdAttrSpecularTexture "specularColorTexture"
-#define mqusdAttrEmissiveTexture "emissionColorTexture"
+#define sgusdAttrDiffuseTexture  "diffuseColorTexture"
+#define sgusdAttrOpacityTexture  "opacityTexture"
+#define sgusdAttrBumpTexture     "bumpTexture"
+#define sgusdAttrSpecularTexture "specularColorTexture"
+#define sgusdAttrEmissiveTexture "emissionColorTexture"
 
 // parameters based on UsdPreviewSurface Proposal
 // https://graphics.pixar.com/usd/docs/UsdPreviewSurface-Proposal.html
-#define mqusdUsdPreviewSurface  TfToken("UsdPreviewSurface")
-#define mqusdUsdUVTexture       TfToken("UsdUVTexture")
-#define mqusdAttrDiffuseColor   TfToken("diffuseColor")
-#define mqusdAttrDiffuse        TfToken("diffuse")
-#define mqusdAttrEmissiveColor  TfToken("emissiveColor")
-#define mqusdAttrSpecularColor  TfToken("specularColor")
-#define mqusdAttrRoughness      TfToken("roughness")
-#define mqusdAttrOpacity        TfToken("opacity")
-#define mqusdAttrFile           TfToken("file")
-#define mqusdAttrR              TfToken("r")
-#define mqusdAttrRGB            TfToken("rgb")
-#define mqusdAttrA              TfToken("a")
-#define mqusdAttrSurface        TfToken("surface")
-#define mqusdAttrWrapS          TfToken("wrapS")
-#define mqusdAttrWrapT          TfToken("wrapT")
-#define mqusdAttrFallback       TfToken("fallback")
-#define mqusdAttrST             TfToken("st")
-#define mqusdAttrSTName         TfToken("frame:stPrimvarName")
-#define mqusdAttrTangents       TfToken("tangents")
-#define mqusdAttrTangentsName   TfToken("frame:tangentsPrimvarName")
-#define mqusdAttrBinormals      TfToken("binormals")
-#define mqusdAttrBinormalsName  TfToken("frame:binormalsPrimvarName")
-#define mqusdAttrColors         TfToken("colors")
-#define mqusdAttrColorsName     TfToken("frame:colorsPrimvarName")
+#define sgusdUsdPreviewSurface  TfToken("UsdPreviewSurface")
+#define sgusdUsdUVTexture       TfToken("UsdUVTexture")
+#define sgusdAttrDiffuseColor   TfToken("diffuseColor")
+#define sgusdAttrDiffuse        TfToken("diffuse")
+#define sgusdAttrEmissiveColor  TfToken("emissiveColor")
+#define sgusdAttrSpecularColor  TfToken("specularColor")
+#define sgusdAttrRoughness      TfToken("roughness")
+#define sgusdAttrOpacity        TfToken("opacity")
+#define sgusdAttrFile           TfToken("file")
+#define sgusdAttrR              TfToken("r")
+#define sgusdAttrRGB            TfToken("rgb")
+#define sgusdAttrA              TfToken("a")
+#define sgusdAttrSurface        TfToken("surface")
+#define sgusdAttrWrapS          TfToken("wrapS")
+#define sgusdAttrWrapT          TfToken("wrapT")
+#define sgusdAttrFallback       TfToken("fallback")
+#define sgusdAttrST             TfToken("st")
+#define sgusdAttrSTName         TfToken("frame:stPrimvarName")
+#define sgusdAttrTangents       TfToken("tangents")
+#define sgusdAttrTangentsName   TfToken("frame:tangentsPrimvarName")
+#define sgusdAttrBinormals      TfToken("binormals")
+#define sgusdAttrBinormalsName  TfToken("frame:binormalsPrimvarName")
+#define sgusdAttrColors         TfToken("colors")
+#define sgusdAttrColorsName     TfToken("frame:colorsPrimvarName")
 
 #include "../SceneGraph.h"
 #include "../sgUtils.h"

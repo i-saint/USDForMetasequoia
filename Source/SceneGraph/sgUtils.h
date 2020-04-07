@@ -37,10 +37,10 @@ struct lambda_traits<R(T::*)(Args...) const> : detail::lambda_traits_impl<R, Arg
 
 
 template<class Body, class A1, class A2, sgEnableIf(lambda_traits<Body>::arity == 1)>
-inline auto variadic_invoke(const Body& body, A1& a1, A2&) { return body(a1); }
+inline auto invoke(const Body& body, A1& a1, A2&) { return body(a1); }
 
 template<class Body, class A1, class A2, sgEnableIf(lambda_traits<Body>::arity == 2)>
-inline auto variadic_invoke(const Body& body, A1& a1, A2& a2) { return body(a1, a2); }
+inline auto invoke(const Body& body, A1& a1, A2& a2) { return body(a1, a2); }
 
 
 
@@ -56,17 +56,31 @@ inline bool invoke_false(const Body& body, A1& a1)
     return false;
 }
 
-
 template<class Body, class A1, class A2, sgEnableIf(std::is_same<typename lambda_traits<Body>::return_type, bool>::value)>
-inline bool variadic_invoke_false(const Body& body, A1& a1, A2& a2)
+inline bool invoke_false(const Body& body, A1& a1, A2& a2)
 {
-    return variadic_invoke(body, a1, a2) == false;
+    return invoke(body, a1, a2) == false;
 }
 template<class Body, class A1, class A2, sgEnableIf(!std::is_same<typename lambda_traits<Body>::return_type, bool>::value)>
-inline bool variadic_invoke_false(const Body& body, A1& a1, A2& a2)
+inline bool invoke_false(const Body& body, A1& a1, A2& a2)
 {
-    variadic_invoke(body, a1, a2);
+    invoke(body, a1, a2);
     return false;
+}
+
+template<class Container, class Body>
+inline void each(Container& dst, const Body& body)
+{
+    for (auto& v : dst)
+        body(v);
+}
+
+template<class Container, class Body>
+inline void each_with_index(Container& dst, const Body& body)
+{
+    int i = 0;
+    for (auto& v : dst)
+        body(v, i++);
 }
 
 
@@ -111,14 +125,6 @@ inline void transform_container(DstContainer& dst, const SrcContainer& src, cons
     dst.resize(n);
     for (size_t i = 0; i < n; ++i)
         c(dst[i], src[i]);
-}
-
-template<class Container, class Body>
-inline void each_with_index(Container& dst, const Body& body)
-{
-    int i = 0;
-    for (auto& v : dst)
-        body(v, i++);
 }
 
 template<class Container, class Condition>

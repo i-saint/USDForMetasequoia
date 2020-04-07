@@ -106,6 +106,7 @@ ABCIMeshNode::ABCIMeshNode(ABCINode* parent, Abc::IObject& obj)
 void ABCIMeshNode::beforeRead()
 {
     super::beforeRead();
+    auto& dst = *getNode<MeshNode>();
 
     auto params = m_schema.getArbGeomParams();
     if (params.valid()) {
@@ -121,16 +122,38 @@ void ABCIMeshNode::beforeRead()
                 m_rgb_param = AbcGeom::IC3fGeomParam(params, header.getName());
 
             // material ids
-            if (AbcGeom::IInt32ArrayProperty::matches(header) && header.getName() == mqabcAttrMaterialID)
+            if (AbcGeom::IInt32ArrayProperty::matches(header) && header.getName() == sgabcAttrMaterialID)
                 m_mids_prop = AbcGeom::IInt32ArrayProperty(params, header.getName());
         }
+    }
+
+    // face sets & materials
+    {
+        std::vector<std::string> fs_names;
+        m_schema.getFaceSetNames(fs_names);
+        m_facesets.resize(fs_names.size());
+        dst.facesets.resize(fs_names.size());
+        each_with_index(fs_names, [this, &dst](std::string& name, int i) {
+            auto& data = m_facesets[i];
+            data.faceset = m_schema.getFaceSet(name).getSchema();
+
+            auto& faceset = dst.facesets[i];
+            if (!faceset)
+                faceset = std::make_shared<FaceSet>();
+            data.dst = faceset.get();
+
+            if (auto binding = AbcGeom::IStringProperty(data.faceset.getArbGeomParams(), sgabcAttrMaterialBinding)) {
+                std::string path;
+                binding.get(path);
+                faceset->material = m_scene->findNode<MaterialNode>(path);
+            }
+        });
     }
 }
 
 void ABCIMeshNode::read(double time)
 {
     super::read(time);
-
     auto& dst = *getNode<MeshNode>();
 
     // alembic's mesh is not xformable, but USD's and our intermediate data is.
@@ -203,6 +226,13 @@ void ABCIMeshNode::read(double time)
     if (m_mids_prop.valid()) {
         m_mids_prop.get(m_material_ids, iss);
         dst.material_ids.share(m_material_ids->get(), m_material_ids->size());
+    }
+    else {
+        for (auto& fs : m_facesets) {
+            fs.faceset.get(fs.sample, iss);
+            auto sp = fs.sample.getFaces();
+            fs.dst->faces.share(sp->get(), sp->size());
+        }
     }
 
     // validate
@@ -298,6 +328,8 @@ bool ABCIScene::open(const char* path)
             m_root = new ABCIRootNode(m_archive.getTop());
             m_scene->root_node = m_root->getNode<RootNode>();
             constructTree(m_root);
+            for (auto& node : m_nodes)
+                node->beforeRead();
         }
         catch (Alembic::Util::Exception e3) {
             close();

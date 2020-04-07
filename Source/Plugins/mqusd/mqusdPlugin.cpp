@@ -79,7 +79,13 @@ const char *mqusdPlugin::EnumString(void)
 //---------------------------------------------------------------------------
 const char *mqusdPlugin::EnumSubCommand(int index)
 {
-    return NULL;
+    switch (index) {
+    case 0: return "Import USD";
+    case 1: return "Insert USD";
+    case 2: return "Export USD";
+    case 3: return "Recording USD";
+    default: return nullptr;
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -88,7 +94,13 @@ const char *mqusdPlugin::EnumSubCommand(int index)
 //---------------------------------------------------------------------------
 const wchar_t *mqusdPlugin::GetSubCommandString(int index)
 {
-    return NULL;
+    switch (index) {
+    case 0: return L"Import USD";
+    case 1: return L"Insert USD";
+    case 2: return L"Export USD";
+    case 3: return L"Recording USD";
+    default: return nullptr;
+    }
 }
 
 //---------------------------------------------------------------------------

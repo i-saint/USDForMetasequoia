@@ -4,10 +4,10 @@
 
 namespace sg {
 
-#define mqusdTBBDll muDLLPrefix "tbb" muDLLSuffix
-#define mqusdUSDDll muDLLPrefix "usd_ms" muDLLSuffix
-#define mqusdCoreDll muDLLPrefix "SceneGraphUSD" muDLLSuffix
-#define mqusdCoreExe "SceneGraphUSD" muEXESuffix
+#define sgusdTBBDll muDLLPrefix "tbb" muDLLSuffix
+#define sgusdUsdDll muDLLPrefix "usd_ms" muDLLSuffix
+#define sgusdCoreDll muDLLPrefix "SceneGraphUSD" muDLLSuffix
+#define sgusdCoreExe "SceneGraphUSD" muEXESuffix
 
 static std::string g_usd_module_dir;
 static void* g_core_module;
@@ -29,12 +29,12 @@ static void LoadCoreModule()
 {
     static std::once_flag s_flag;
     std::call_once(s_flag, []() {
-        g_core_module = mu::GetModule(mqusdCoreDll);
+        g_core_module = mu::GetModule(sgusdCoreDll);
         if (!g_core_module) {
             std::string core_dir = g_usd_module_dir.empty() ? GetDefaultModulePath() : g_usd_module_dir;
-            std::string tbb_dll = core_dir + muPathSep mqusdTBBDll;
-            std::string usd_dll = core_dir + muPathSep mqusdUSDDll;
-            std::string core_dll = core_dir + muPathSep mqusdCoreDll;
+            std::string tbb_dll = core_dir + muPathSep sgusdTBBDll;
+            std::string usd_dll = core_dir + muPathSep sgusdUsdDll;
+            std::string core_dll = core_dir + muPathSep sgusdCoreDll;
             mu::LoadModule(tbb_dll.c_str());
             mu::LoadModule(usd_dll.c_str());
             g_core_module = mu::LoadModule(core_dll.c_str());
@@ -91,7 +91,7 @@ USDScenePipe::USDScenePipe(Scene* scene)
     : m_scene(scene)
 {
     m_exe_path = g_usd_module_dir.empty() ? GetDefaultModulePath() : g_usd_module_dir;
-    m_exe_path += muPathSep mqusdCoreExe;
+    m_exe_path += muPathSep sgusdCoreExe;
 }
 
 USDScenePipe::~USDScenePipe()
