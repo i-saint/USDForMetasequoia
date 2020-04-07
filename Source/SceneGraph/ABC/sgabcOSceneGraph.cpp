@@ -11,6 +11,22 @@ static inline NodeT* CreateNode(ABCONode* parent, Abc::OObject* obj)
         obj->getName().c_str());
 }
 
+template<class T>
+static inline void PadSamples(Abc::OTypedArrayProperty<T>& dst, uint32_t n)
+{
+    using SampleT = typename Abc::OTypedArrayProperty<T>::sample_type;
+    while (dst.getNumSamples() < n)
+        dst.set(SampleT());
+}
+
+template<class T>
+static inline void PadSamples(T& dst, uint32_t n)
+{
+    using SampleT = typename T::Sample;
+    while (dst.getNumSamples() < n)
+        dst.set(SampleT());
+}
+
 
 ABCONode::ABCONode(ABCONode* parent, Abc::OObject* obj, bool create_node)
     : m_obj(obj)
@@ -31,7 +47,7 @@ void ABCONode::beforeWrite()
 {
 }
 
-void ABCONode::write()
+void ABCONode::write(double /*t*/)
 {
 }
 
@@ -62,9 +78,9 @@ ABCOXformNode::ABCOXformNode(ABCONode* parent, Abc::OObject* obj)
     setNode(CreateNode<XformNode>(parent, obj));
 }
 
-void ABCOXformNode::write()
+void ABCOXformNode::write(double t)
 {
-    super::write();
+    super::write(t);
     const auto& src = *getNode<XformNode>();
 
     double4x4 mat;
@@ -86,37 +102,58 @@ void ABCOMeshNode::beforeWrite()
     super::beforeWrite();
 }
 
-void ABCOMeshNode::write()
+void ABCOMeshNode::write(double t)
 {
-    super::write();
+    super::write(t);
     const auto& src = *getNode<MeshNode>();
+    uint32_t wc = m_scene->getWriteCount();
 
     m_sample.reset();
     m_sample.setFaceIndices(Abc::Int32ArraySample(src.indices.cdata(), src.indices.size()));
     m_sample.setFaceCounts(Abc::Int32ArraySample(src.counts.cdata(), src.counts.size()));
     m_sample.setPositions(Abc::P3fArraySample((const abcV3*)src.points.cdata(), src.points.size()));
-    if (src.normals.size() == src.indices.size()) {
+    {
         m_normals.setVals(Abc::V3fArraySample((const abcV3*)src.normals.cdata(), src.normals.size()));
         m_sample.setNormals(m_normals);
     }
-    if (src.uvs.size() == src.indices.size()) {
+    {
         m_uvs.setVals(Abc::V2fArraySample((const abcV2*)src.uvs.cdata(), src.uvs.size()));
         m_sample.setUVs(m_uvs);
     }
     m_schema.set(m_sample);
 
-    if (src.colors.size() == src.indices.size()) {
-        if (!m_rgba_param.valid())
+    if(!src.colors.empty()){
+        if (!m_rgba_param)
             m_rgba_param = AbcGeom::OC4fGeomParam(m_schema.getArbGeomParams(), mqabcAttrVertexColor, false, AbcGeom::GeometryScope::kFacevaryingScope, 1, 1);
 
+        PadSamples(m_rgba_param, wc);
         m_rgba.setVals(Abc::C4fArraySample((const abcC4*)src.colors.cdata(), src.colors.size()));
         m_rgba_param.set(m_rgba);
     }
-    if (src.material_ids.size() == src.counts.size()) {
+
+    if (!src.material_ids.empty()) {
         if (!m_mids_prop.valid())
             m_mids_prop = AbcGeom::OInt32ArrayProperty(m_schema.getArbGeomParams(), mqabcAttrMaterialID, 1);
 
+        PadSamples(m_mids_prop, wc);
         m_mids_prop.set(Abc::Int32ArraySample(src.material_ids.cdata(), src.material_ids.size()));
+    }
+    else if (!src.facesets.empty()) {
+        for (auto& fs : src.facesets) {
+            auto mat = fs->material;
+            if (!mat)
+                continue;
+
+            auto& data = m_facesets[mat->getName()];
+            if (!data.faceset) {
+                auto ofs = m_schema.createFaceSet(mat->getName());
+                data.faceset = ofs.getSchema();
+                data.faceset.setTimeSampling(1);
+            }
+            PadSamples(data.faceset, wc);
+            data.sample.setFaces(Abc::Int32ArraySample(fs->faces.cdata(), fs->faces.size()));
+            data.faceset.set(data.sample);
+        }
     }
 }
 
@@ -133,9 +170,9 @@ void ABCOMaterialNode::beforeWrite()
     super::beforeWrite();
 }
 
-void ABCOMaterialNode::write()
+void ABCOMaterialNode::write(double t)
 {
-    super::write();
+    super::write(t);
 }
 
 
@@ -176,9 +213,7 @@ bool ABCOScene::create(const char* path)
     }
 
     // add dummy time sampling
-    auto ts = Abc::TimeSampling(Abc::chrono_t(1.0f / 30.0f), Abc::chrono_t(0.0));
-    auto tsi = m_archive.addTimeSampling(ts);
-
+    auto tsi = m_archive.addTimeSampling(Abc::TimeSampling(Abc::chrono_t(1.0f / m_scene->frame_rate), Abc::chrono_t(0.0)));
     g_current_scene = this;
     auto top = std::make_shared<AbcGeom::OObject>(m_archive, AbcGeom::kTop, tsi);
     m_objects.push_back(top);
@@ -226,7 +261,7 @@ void ABCOScene::write()
             n->beforeWrite();
     }
     for (auto& n : m_nodes)
-        n->write();
+        n->write(time);
     ++m_write_count;
 
     if (!std::isnan(time)) {
@@ -285,6 +320,11 @@ ABCONode* ABCOScene::findNode(const std::string& path)
 {
     auto it = m_node_table.find(path);
     return it == m_node_table.end() ? nullptr : it->second;
+}
+
+uint32_t ABCOScene::getWriteCount() const
+{
+    return m_write_count;
 }
 
 

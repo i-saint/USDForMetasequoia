@@ -16,7 +16,7 @@ public:
     ABCONode(ABCONode* parent, Abc::OObject* obj, bool create_node = true);
     virtual ~ABCONode();
     virtual void beforeWrite();
-    virtual void write();
+    virtual void write(double t);
 
     void setNode(Node* node);
     std::string getPath() const;
@@ -51,7 +51,7 @@ public:
     DefSchemaTraits(AbcGeom::OXform);
 
     ABCOXformNode(ABCONode* parent, Abc::OObject* obj);
-    void write() override;
+    void write(double t) override;
 
 protected:
     AbcGeom::OXformSchema m_schema;
@@ -67,7 +67,7 @@ public:
 
     ABCOMeshNode(ABCONode* parent, Abc::OObject* obj);
     void beforeWrite() override;
-    void write() override;
+    void write(double t) override;
 
 protected:
     AbcGeom::OPolyMeshSchema m_schema;
@@ -78,6 +78,13 @@ protected:
     AbcGeom::ON3fGeomParam::Sample m_normals;
     AbcGeom::OV2fGeomParam::Sample m_uvs;
     AbcGeom::OC4fGeomParam::Sample m_rgba;
+
+    struct FacesetData
+    {
+        AbcGeom::OFaceSetSchema faceset;
+        AbcGeom::OFaceSetSchema::Sample sample;
+    };
+    std::map<std::string, FacesetData> m_facesets;
 };
 
 
@@ -89,7 +96,7 @@ public:
 
     ABCOMaterialNode(ABCONode* parent, Abc::OObject* obj);
     void beforeWrite() override;
-    void write() override;
+    void write(double t) override;
 
 protected:
     AbcMaterial::OMaterialSchema m_schema;
@@ -124,6 +131,7 @@ public:
     bool wrapNode(Node* node) override;
 
     ABCONode* findNode(const std::string& path);
+    uint32_t getWriteCount() const;
 
 private:
     void registerNode(ABCONode* n);
@@ -137,7 +145,7 @@ private:
     ABCORootNode* m_root = nullptr;
 
     Scene* m_scene = nullptr;
-    int m_write_count = 0;
+    uint32_t m_write_count = 0;
     double m_max_time = 0.0;
 
     bool m_keep_time = false;
