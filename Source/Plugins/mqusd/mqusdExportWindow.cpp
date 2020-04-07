@@ -55,14 +55,14 @@ mqusdExportWindow::mqusdExportWindow(mqusdPlugin* plugin, MQWindowBase& parent)
         m_check_subdiv = CreateCheckBox(vf, L"Freeze Subdiv");
         m_check_subdiv->AddChangedEvent(this, &mqusdExportWindow::OnSettingsUpdate);
 
-        m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
-        m_check_flip_faces->AddChangedEvent(this, &mqusdExportWindow::OnSettingsUpdate);
-
         m_check_flip_x = CreateCheckBox(vf, L"Flip X");
         m_check_flip_x->AddChangedEvent(this, &mqusdExportWindow::OnSettingsUpdate);
 
         m_check_flip_yz = CreateCheckBox(vf, L"Flip YZ");
         m_check_flip_yz->AddChangedEvent(this, &mqusdExportWindow::OnSettingsUpdate);
+
+        m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
+        m_check_flip_faces->AddChangedEvent(this, &mqusdExportWindow::OnSettingsUpdate);
 
         m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
         m_check_merge->AddChangedEvent(this, &mqusdExportWindow::OnSettingsUpdate);
@@ -122,9 +122,9 @@ BOOL mqusdExportWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     opt.export_blendshapes = m_check_blendshapes->GetChecked();
     opt.export_skeletons = m_check_skeletons->GetChecked();
 
-    opt.flip_faces = m_check_flip_faces->GetChecked();
     opt.flip_x = m_check_flip_x->GetChecked();
     opt.flip_yz = m_check_flip_yz->GetChecked();
+    opt.flip_faces = m_check_flip_faces->GetChecked();
     opt.merge_meshes = m_check_merge->GetChecked();
 
     return 0;
@@ -178,12 +178,10 @@ void mqusdExportWindow::SyncSettings()
     m_check_blendshapes->SetChecked(opt.export_blendshapes);
     m_check_skeletons->SetChecked(opt.export_skeletons);
 
-    m_check_flip_faces->SetChecked(opt.flip_faces);
     m_check_flip_x->SetChecked(opt.flip_x);
     m_check_flip_yz->SetChecked(opt.flip_yz);
+    m_check_flip_faces->SetChecked(opt.flip_faces);
     m_check_merge->SetChecked(opt.merge_meshes);
-
-    m_button_export->SetText(L"Export");
 }
 
 void mqusdExportWindow::LogInfo(const char* message)

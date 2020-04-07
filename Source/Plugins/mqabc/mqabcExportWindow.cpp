@@ -50,14 +50,14 @@ mqabcExportWindow::mqabcExportWindow(mqabcPlugin* plugin, MQWindowBase& parent)
         m_check_subdiv = CreateCheckBox(vf, L"Freeze Subdiv");
         m_check_subdiv->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
 
-        m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
-        m_check_flip_faces->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
-
         m_check_flip_x = CreateCheckBox(vf, L"Flip X");
         m_check_flip_x->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
 
         m_check_flip_yz = CreateCheckBox(vf, L"Flip YZ");
         m_check_flip_yz->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
+
+        m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
+        m_check_flip_faces->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
 
         m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
         m_check_merge->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
@@ -114,9 +114,9 @@ BOOL mqabcExportWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     opt.export_colors = m_check_colors->GetChecked();
     opt.export_material_ids = m_check_mids->GetChecked();
 
-    opt.flip_faces = m_check_flip_faces->GetChecked();
     opt.flip_x = m_check_flip_x->GetChecked();
     opt.flip_yz = m_check_flip_yz->GetChecked();
+    opt.flip_faces = m_check_flip_faces->GetChecked();
     opt.merge_meshes = m_check_merge->GetChecked();
 
     return 0;

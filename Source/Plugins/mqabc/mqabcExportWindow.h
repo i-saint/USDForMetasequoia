@@ -41,9 +41,9 @@ private:
     MQCheckBox* m_check_colors = nullptr;
     MQCheckBox* m_check_mids = nullptr;
 
-    MQCheckBox* m_check_flip_faces = nullptr;
     MQCheckBox* m_check_flip_x = nullptr;
     MQCheckBox* m_check_flip_yz = nullptr;
+    MQCheckBox* m_check_flip_faces = nullptr;
     MQCheckBox* m_check_merge = nullptr;
 
     MQButton* m_button_export = nullptr;

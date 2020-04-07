@@ -56,14 +56,14 @@ mqusdRecorderWindow::mqusdRecorderWindow(mqusdPlugin* plugin, MQWindowBase& pare
         m_check_subdiv = CreateCheckBox(vf, L"Freeze Subdiv");
         m_check_subdiv->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
-        m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
-        m_check_flip_faces->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
-
         m_check_flip_x = CreateCheckBox(vf, L"Flip X");
         m_check_flip_x->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
         m_check_flip_yz = CreateCheckBox(vf, L"Flip YZ");
         m_check_flip_yz->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
+
+        m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
+        m_check_flip_faces->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
         m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
         m_check_merge->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
@@ -137,9 +137,9 @@ BOOL mqusdRecorderWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     opt.export_blendshapes = m_check_blendshapes->GetChecked();
     opt.export_skeletons = m_check_skeletons->GetChecked();
 
-    opt.flip_faces = m_check_flip_faces->GetChecked();
     opt.flip_x = m_check_flip_x->GetChecked();
     opt.flip_yz = m_check_flip_yz->GetChecked();
+    opt.flip_faces = m_check_flip_faces->GetChecked();
     opt.merge_meshes = m_check_merge->GetChecked();
 
     return 0;
@@ -205,9 +205,9 @@ void mqusdRecorderWindow::SyncSettings()
     m_check_blendshapes->SetChecked(opt.export_blendshapes);
     m_check_skeletons->SetChecked(opt.export_skeletons);
 
-    m_check_flip_faces->SetChecked(opt.flip_faces);
     m_check_flip_x->SetChecked(opt.flip_x);
     m_check_flip_yz->SetChecked(opt.flip_yz);
+    m_check_flip_faces->SetChecked(opt.flip_faces);
     m_check_merge->SetChecked(opt.merge_meshes);
 
     if (IsRecording()) {

@@ -20,9 +20,9 @@ mqabcRecorderWindow::mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& pare
 
     {
         MQFrame* vf = CreateVerticalFrame(this);
+        m_frame_settings = vf;
         vf->SetOutSpace(outer_margin);
         vf->SetInSpace(inner_margin);
-        m_frame_settings = vf;
 
         {
             MQFrame* hf = CreateHorizontalFrame(vf);
@@ -50,14 +50,14 @@ mqabcRecorderWindow::mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& pare
         m_check_subdiv = CreateCheckBox(vf, L"Freeze Subdiv");
         m_check_subdiv->AddChangedEvent(this, &mqabcRecorderWindow::OnSettingsUpdate);
 
-        m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
-        m_check_flip_faces->AddChangedEvent(this, &mqabcRecorderWindow::OnSettingsUpdate);
-
         m_check_flip_x = CreateCheckBox(vf, L"Flip X");
         m_check_flip_x->AddChangedEvent(this, &mqabcRecorderWindow::OnSettingsUpdate);
 
         m_check_flip_yz = CreateCheckBox(vf, L"Flip YZ");
         m_check_flip_yz->AddChangedEvent(this, &mqabcRecorderWindow::OnSettingsUpdate);
+
+        m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
+        m_check_flip_faces->AddChangedEvent(this, &mqabcRecorderWindow::OnSettingsUpdate);
 
         m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
         m_check_merge->AddChangedEvent(this, &mqabcRecorderWindow::OnSettingsUpdate);
@@ -128,9 +128,9 @@ BOOL mqabcRecorderWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     opt.export_colors = m_check_colors->GetChecked();
     opt.export_material_ids = m_check_mids->GetChecked();
 
-    opt.flip_faces = m_check_flip_faces->GetChecked();
     opt.flip_x = m_check_flip_x->GetChecked();
     opt.flip_yz = m_check_flip_yz->GetChecked();
+    opt.flip_faces = m_check_flip_faces->GetChecked();
     opt.merge_meshes = m_check_merge->GetChecked();
 
     return 0;
@@ -165,6 +165,7 @@ BOOL mqabcRecorderWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument do
     }
     else {
         if (Close()) {
+            mqusdLog("recording finished");
         }
     }
     SyncSettings();
@@ -245,8 +246,6 @@ bool mqabcRecorderWindow::Close()
         m_exporter = {};
         m_scene = {};
         m_recording = false;
-
-        mqusdLog("recording finished");
     }
     return true;
 }
