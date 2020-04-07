@@ -316,15 +316,22 @@ bool ABCOScene::wrapNode(Node* /*node*/)
     return false;
 }
 
-ABCONode* ABCOScene::findNode(const std::string& path)
+uint32_t ABCOScene::getWriteCount() const
+{
+    return m_write_count;
+}
+
+ABCONode* ABCOScene::findABCNodeImpl(const std::string& path)
 {
     auto it = m_node_table.find(path);
     return it == m_node_table.end() ? nullptr : it->second;
 }
 
-uint32_t ABCOScene::getWriteCount() const
+Node* ABCOScene::findNodeImpl(const std::string& path)
 {
-    return m_write_count;
+    if (ABCONode* n = findABCNodeImpl(path))
+        return n->m_node;
+    return nullptr;
 }
 
 

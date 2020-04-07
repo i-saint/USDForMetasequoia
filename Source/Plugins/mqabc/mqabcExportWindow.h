@@ -10,8 +10,8 @@ class mqabcPlugin;
 class mqabcExportWindow : public mqTWindow<mqabcExportWindow>
 {
 using super = mqTWindow<mqabcExportWindow>;
-friend class super;
-private:
+friend mqabcExportWindow* super::create(mqabcPlugin* plugin);
+protected:
     mqabcExportWindow(mqabcPlugin* plugin, MQWindowBase& parent);
 
 public:

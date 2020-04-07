@@ -44,8 +44,12 @@ DocumentImporter::DocumentImporter(MQBasePlugin* plugin, Scene* scene, const Imp
 {
 }
 
-bool DocumentImporter::initialize(MQDocument doc)
+bool DocumentImporter::initialize(MQDocument doc, bool insert)
 {
+    m_insert = insert;
+    if (!m_insert)
+        clearDocument(doc);
+
     {
         auto mesh_nodes = m_scene->getNodes<MeshNode>();
         size_t nobjs = mesh_nodes.size();
@@ -91,6 +95,17 @@ bool DocumentImporter::initialize(MQDocument doc)
 
     read(doc, mqusd::default_time);
     return true;
+}
+
+void DocumentImporter::clearDocument(MQDocument doc)
+{
+    each_object(doc, [doc](MQObject /*obj*/, int i) {
+        doc->DeleteObject(i);
+    });
+    each_material(doc, [doc](MQMaterial /*mat*/, int i) {
+        doc->DeleteMaterial(i);
+    });
+    doc->Compact();
 }
 
 std::string DocumentImporter::makeUniqueObjectName(MQDocument doc, const std::string& name)

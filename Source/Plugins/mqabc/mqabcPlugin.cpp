@@ -108,8 +108,10 @@ const wchar_t *mqabcPlugin::GetSubCommandString(int index)
 //---------------------------------------------------------------------------
 BOOL mqabcPlugin::Initialize()
 {
-    if (!m_window)
-        m_window = new mqabcWindow(this, MQWindow::GetMainWindow());
+    if (!m_window) {
+        auto parent = MQWindow::GetMainWindow();
+        m_window = new mqabcWindow(this, parent);
+    }
     return TRUE;
 }
 

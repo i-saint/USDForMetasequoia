@@ -8,8 +8,8 @@ namespace mqusd {
 class mqusdImportWindow : public mqTWindow<mqusdImportWindow>
 {
 using super = mqTWindow<mqusdImportWindow>;
-friend class super;
-private:
+friend mqusdImportWindow* super::create(mqusdPlugin* plugin);
+protected:
     mqusdImportWindow(mqusdPlugin* plugin, MQWindowBase& parent);
 
 public:

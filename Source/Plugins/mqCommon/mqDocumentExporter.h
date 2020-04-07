@@ -82,6 +82,7 @@ private:
     SkeletonNode* m_skeleton = nullptr;
     MeshNode* m_merged_mesh = nullptr;
 
+    bool m_one_shot = false;
     mu::nanosec m_start_time = 0;
     mu::nanosec m_last_write = 0;
     int m_frame = 0;

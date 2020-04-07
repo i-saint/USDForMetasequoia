@@ -10,8 +10,8 @@ class mqabcPlugin;
 class mqabcRecorderWindow : public mqTWindow<mqabcRecorderWindow>
 {
 using super = mqTWindow<mqabcRecorderWindow>;
-friend class super;
-private:
+friend mqabcRecorderWindow* super::create(mqabcPlugin* plugin);
+protected:
     mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& parent);
 
 public:

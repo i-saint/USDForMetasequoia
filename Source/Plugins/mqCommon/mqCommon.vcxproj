@@ -23,11 +23,13 @@
     <ClInclude Include="mqDocumentExporter.h" />
     <ClInclude Include="mqDocumentImporter.h" />
     <ClInclude Include="mqTWindow.h" />
+    <ClInclude Include="mqUtils.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mqDocumentExporter.cpp" />
     <ClCompile Include="mqDocumentImporter.cpp" />
+    <ClCompile Include="mqUtils.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

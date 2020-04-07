@@ -16,7 +16,7 @@ public:
     void setNode(Node* node);
     std::string getPath() const;
 
-    template<class NodeT = Node, sgTypeConstraint(std::is_base_of<Node, NodeT>::value)>
+    template<class NodeT = Node, sgEnableIf(std::is_base_of<Node, NodeT>::value)>
     NodeT* getNode() { return static_cast<NodeT*>(m_node); }
 
 public:
@@ -114,7 +114,20 @@ public:
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
     bool wrapNode(Node* node) override;
 
-    ABCINode* findNode(const std::string& path);
+    ABCINode* findABCNodeImpl(const std::string& path);
+    Node* findNodeImpl(const std::string& path);
+
+    template<class NodeT, sgEnableIf(std::is_base_of<ABCINode, NodeT>::value)>
+    NodeT* findNode(const std::string& path)
+    {
+        return dynamic_cast<NodeT*>(findABCNodeImpl(path));
+    }
+
+    template<class NodeT, sgEnableIf(std::is_base_of<Node, NodeT>::value)>
+    NodeT* findNode(const std::string& path)
+    {
+        return dynamic_cast<NodeT*>(findNodeImpl(path));
+    }
 
 private:
     void registerNode(ABCINode* n);

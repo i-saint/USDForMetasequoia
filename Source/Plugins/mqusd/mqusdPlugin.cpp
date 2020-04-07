@@ -98,7 +98,8 @@ const wchar_t *mqusdPlugin::GetSubCommandString(int index)
 BOOL mqusdPlugin::Initialize()
 {
     if (!m_window) {
-        m_window = new mqusdWindow(this, MQWindow::GetMainWindow());
+        auto parent = MQWindow::GetMainWindow();
+        m_window = new mqusdWindow(this, parent);
     }
     return TRUE;
 }

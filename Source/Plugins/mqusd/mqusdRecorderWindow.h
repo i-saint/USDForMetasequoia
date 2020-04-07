@@ -8,8 +8,8 @@ namespace mqusd {
 class mqusdRecorderWindow : public mqTWindow<mqusdRecorderWindow>
 {
 using super = mqTWindow<mqusdRecorderWindow>;
-friend class super;
-private:
+friend mqusdRecorderWindow* super::create(mqusdPlugin* plugin);
+protected:
     mqusdRecorderWindow(mqusdPlugin* plugin, MQWindowBase& parent);
 
 public:

@@ -87,6 +87,7 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
 {
     waitFlush();
 
+    m_one_shot = one_shot;
     doc->Compact();
 
     // handle time & frame

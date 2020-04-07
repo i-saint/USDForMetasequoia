@@ -365,10 +365,17 @@ bool ABCIScene::wrapNode(Node* /*node*/)
     return false;
 }
 
-ABCINode* ABCIScene::findNode(const std::string& path)
+ABCINode* ABCIScene::findABCNodeImpl(const std::string& path)
 {
     auto it = m_node_table.find(path);
     return it == m_node_table.end() ? nullptr : it->second;
+}
+
+Node* ABCIScene::findNodeImpl(const std::string& path)
+{
+    if (ABCINode* n = findABCNodeImpl(path))
+        return n->m_node;
+    return nullptr;
 }
 
 void ABCIScene::setupTimeRange()

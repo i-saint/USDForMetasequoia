@@ -1,11 +1,74 @@
 #pragma once
 
-#define sgTypeConstraint(...) std::enable_if_t<__VA_ARGS__, bool> = true
+#define sgEnableIf(...) std::enable_if_t<__VA_ARGS__, bool> = true
 
 #define sgDbgPrint(...)
 #define sgDbgFatal(...)
 
 namespace sg {
+
+
+namespace detail
+{
+    template<class R, class... Args>
+    struct lambda_traits_impl
+    {
+        using return_type = R;
+        enum { arity = sizeof...(Args) };
+
+        template<size_t i> struct arg
+        {
+            using type = typename std::tuple_element<i, std::tuple<Args...>>::type;
+        };
+    };
+}
+
+template<class L>
+struct lambda_traits : lambda_traits<decltype(&L::operator())>
+{};
+
+template<class R, class T, class... Args>
+struct lambda_traits<R(T::*)(Args...)> : detail::lambda_traits_impl<R, Args...>
+{};
+
+template<class R, class T, class... Args>
+struct lambda_traits<R(T::*)(Args...) const> : detail::lambda_traits_impl<R, Args...>
+{};
+
+
+template<class Body, class A1, class A2, sgEnableIf(lambda_traits<Body>::arity == 1)>
+inline auto variadic_invoke(const Body& body, A1& a1, A2&) { return body(a1); }
+
+template<class Body, class A1, class A2, sgEnableIf(lambda_traits<Body>::arity == 2)>
+inline auto variadic_invoke(const Body& body, A1& a1, A2& a2) { return body(a1, a2); }
+
+
+
+template<class Body, class A1, sgEnableIf(std::is_same<typename lambda_traits<Body>::return_type, bool>::value)>
+inline bool invoke_false(const Body& body, A1& a1)
+{
+    return body(a1) == false;
+}
+template<class Body, class A1, sgEnableIf(!std::is_same<typename lambda_traits<Body>::return_type, bool>::value)>
+inline bool invoke_false(const Body& body, A1& a1)
+{
+    body(a1);
+    return false;
+}
+
+
+template<class Body, class A1, class A2, sgEnableIf(std::is_same<typename lambda_traits<Body>::return_type, bool>::value)>
+inline bool variadic_invoke_false(const Body& body, A1& a1, A2& a2)
+{
+    return variadic_invoke(body, a1, a2) == false;
+}
+template<class Body, class A1, class A2, sgEnableIf(!std::is_same<typename lambda_traits<Body>::return_type, bool>::value)>
+inline bool variadic_invoke_false(const Body& body, A1& a1, A2& a2)
+{
+    variadic_invoke(body, a1, a2);
+    return false;
+}
+
 
 template<class T>
 inline bool is_uniform(const T* data, size_t data_size, size_t element_size)

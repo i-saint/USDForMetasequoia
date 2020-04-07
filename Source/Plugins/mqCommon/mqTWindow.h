@@ -32,8 +32,10 @@ public:
                 break;
             }
         }
-        if (!ret)
-            ret = new WindowT(plugin, MQWindow::GetMainWindow());
+        if (!ret) {
+            auto parent = MQWindow::GetMainWindow();
+            ret = new WindowT(plugin, parent);
+        }
         ret->SetVisible(true);
         return ret;
     }
