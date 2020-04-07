@@ -448,8 +448,11 @@ bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNo
     // material ids
     if (!src.material_ids.empty()) {
         auto* data = src.material_ids.cdata();
-        for (int fi = 0; fi < nfaces; ++fi)
-            obj->SetFaceMaterial(fi, data[fi]);
+        for (int fi = 0; fi < nfaces; ++fi) {
+            int mid = data[fi];
+            if (mid >= 0)
+                obj->SetFaceMaterial(fi, mid);
+        }
     }
 
 #if MQPLUGIN_VERSION >= 0x0470

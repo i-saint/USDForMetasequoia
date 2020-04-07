@@ -7,7 +7,7 @@ class mqTWindow : public MQWindow
 {
 using super = MQWindow;
 public:
-    static std::vector<WindowT*> getInstances()
+    static std::vector<WindowT*>& getInstances()
     {
         static std::vector<WindowT*> s_instances;
         return s_instances;

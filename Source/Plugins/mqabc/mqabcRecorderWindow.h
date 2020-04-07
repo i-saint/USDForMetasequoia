@@ -48,7 +48,6 @@ private:
     MQCheckBox* m_check_flip_x = nullptr;
     MQCheckBox* m_check_flip_yz = nullptr;
     MQCheckBox* m_check_flip_faces = nullptr;
-    MQCheckBox* m_check_merge = nullptr;
 
     MQButton* m_button_recording = nullptr;
     MQMemo* m_log = nullptr;

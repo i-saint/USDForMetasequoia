@@ -170,6 +170,9 @@ BOOL mqusdPlugin::OnSubCommand(MQDocument doc, int index)
 //---------------------------------------------------------------------------
 void mqusdPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int height)
 {
+    mqusdRecorderWindow::each([doc](auto* w) {
+        w->CaptureFrame(doc);
+    });
 }
 
 

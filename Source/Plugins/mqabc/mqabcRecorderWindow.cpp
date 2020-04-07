@@ -8,10 +8,13 @@ namespace mqusd {
 mqabcRecorderWindow::mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& parent)
     : super(parent)
 {
-    setlocale(LC_ALL, "");
-
     m_plugin = plugin;
 
+    m_options.merge_meshes = true;
+    m_options.export_blendshapes = false;
+    m_options.export_skeletons = false;
+
+    setlocale(LC_ALL, "");
     SetTitle(L"Recording Alembic");
     SetOutSpace(0.4);
 
@@ -58,9 +61,6 @@ mqabcRecorderWindow::mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& pare
 
         m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
         m_check_flip_faces->AddChangedEvent(this, &mqabcRecorderWindow::OnSettingsUpdate);
-
-        m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
-        m_check_merge->AddChangedEvent(this, &mqabcRecorderWindow::OnSettingsUpdate);
     }
 
     {
@@ -131,7 +131,6 @@ BOOL mqabcRecorderWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     opt.flip_x = m_check_flip_x->GetChecked();
     opt.flip_yz = m_check_flip_yz->GetChecked();
     opt.flip_faces = m_check_flip_faces->GetChecked();
-    opt.merge_meshes = m_check_merge->GetChecked();
 
     return 0;
 }
@@ -196,7 +195,6 @@ void mqabcRecorderWindow::SyncSettings()
     m_check_flip_faces->SetChecked(opt.flip_faces);
     m_check_flip_x->SetChecked(opt.flip_x);
     m_check_flip_yz->SetChecked(opt.flip_yz);
-    m_check_merge->SetChecked(opt.merge_meshes);
 
     if (IsRecording()) {
         SetBackColor(MQCanvasColor(255, 0, 0));

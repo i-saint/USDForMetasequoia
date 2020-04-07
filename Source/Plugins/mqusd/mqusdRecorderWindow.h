@@ -42,13 +42,10 @@ private:
     MQCheckBox* m_check_normals = nullptr;
     MQCheckBox* m_check_colors = nullptr;
     MQCheckBox* m_check_mids = nullptr;
-    MQCheckBox* m_check_blendshapes = nullptr;
-    MQCheckBox* m_check_skeletons = nullptr;
 
     MQCheckBox* m_check_flip_x = nullptr;
     MQCheckBox* m_check_flip_yz = nullptr;
     MQCheckBox* m_check_flip_faces = nullptr;
-    MQCheckBox* m_check_merge = nullptr;
 
     MQButton* m_button_recording = nullptr;
     MQMemo* m_log = nullptr;

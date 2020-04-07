@@ -488,7 +488,7 @@ void MeshNode::buildFaceSets(bool cleanup)
 
 void MeshNode::buildMaterialIDs(bool cleanup)
 {
-    if (facesets.empty())
+    if (counts.empty() || facesets.empty())
         return;
 
     material_ids.resize_discard(counts.size());
