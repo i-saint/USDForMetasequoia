@@ -544,12 +544,16 @@ void MeshNode::merge(const MeshNode& v, const float4x4& trans)
         dst.insert(dst.end(), src.data(), src.data() + src.size());
     };
     auto append_padded = [](auto& dst, const auto& src, int base_size, const auto default_value) {
-        if (!dst.empty() && src.empty())
+        if (!dst.empty() && !src.empty()) {
             dst.insert(dst.end(), src.cdata(), src.cdata() + src.size());
-        else if (!dst.empty() && src.empty())
+        }
+        else if (!dst.empty() && src.empty()) {
             dst.resize(dst.size() + src.size(), default_value);
-        else if (dst.empty() && !src.empty())
-            dst.resize(base_size + src.size(), default_value);
+        }
+        else if (dst.empty() && !src.empty()) {
+            dst.resize(base_size, default_value);
+            dst.insert(dst.end(), src.cdata(), src.cdata() + src.size());
+        }
     };
 
     int vertex_offset = (int)points.size();
@@ -577,7 +581,7 @@ void MeshNode::merge(const MeshNode& v, const float4x4& trans)
 
     // handle materials & facesets
     append(materials, v.materials);
-    append_padded(material_ids, v.material_ids, index_offset, 0);
+    append_padded(material_ids, v.material_ids, face_offset, -1);
     facesets.reserve(facesets.size() + v.facesets.size());
     for (auto& fs : v.facesets) {
         FaceSetPtr dfs;
