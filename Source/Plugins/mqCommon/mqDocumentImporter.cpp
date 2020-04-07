@@ -264,14 +264,18 @@ bool DocumentImporter::read(MQDocument doc, double t)
     }
 
     auto bake_mesh = [](MeshNode& dst, MeshNode* n) {
-        if (!n->skeleton)
-            n->toWorldSpace();
-        n->bake(dst);
+        if (n) {
+            if (!n->skeleton)
+                n->toWorldSpace();
+            n->bake(dst);
+        }
     };
 
     auto merge_mesh = [](MeshNode& dst, MeshNode* n) {
-        n->toWorldSpace();
-        dst.merge(*n);
+        if (n) {
+            n->toWorldSpace();
+            dst.merge(*n);
+        }
     };
 
     // update mq object
@@ -284,7 +288,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
         }
         else {
             for (auto n : mesh_nodes)
-                m_merged_mesh.merge(*n);
+                merge_mesh(m_merged_mesh, n);
         }
         for (auto& rec : m_inst_records) {
             rec.node->bake(m_merged_mesh, rec.node->global_matrix);
