@@ -24,8 +24,6 @@ DocumentExporter::~DocumentExporter()
         return;
 
     waitFlush();
-    if (m_options->export_materials)
-        writeMaterials();
 
     // flush archive
     m_scene->save();
@@ -194,16 +192,23 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
 
 
     // extract material data
-    m_material_records.resize(doc->GetMaterialCount());
-    each_with_index(m_material_records, [this, doc](auto& rec, int mi) {
-        rec.mqmaterial = doc->GetMaterial(mi);
-        if (!rec.mqmaterial)
-            return;
-        if (!rec.material_data)
-            rec.material_data = m_scene->createNode<MaterialNode>(m_root, GetName(rec.mqmaterial).c_str());
-        rec.material_data->index = mi;
-        extractMaterial(rec.mqmaterial, *rec.material_data);
-    });
+    if (m_options->export_materials) {
+        m_material_nodes.resize(doc->GetMaterialCount());
+        fill(m_material_nodes, nullptr);
+
+        for (auto& kvp : m_material_records)
+            kvp.second.updated = false;
+        each_material(doc, [this](MQMaterial mat, int mi) {
+            auto& rec = m_material_records[mat->GetUniqueID()];
+            rec.updated = true;
+            if (!rec.material_data)
+                rec.material_data = m_scene->createNode<MaterialNode>(m_root, GetName(mat).c_str());
+            rec.material_data->index = mi;
+            m_material_nodes[mi] = rec.material_data;
+            extractMaterial(mat, *rec.material_data);
+        });
+        erase_if(m_material_records, [](auto& rec) { return !rec.updated; });
+    }
 
     // skeleton
     if (m_skeleton)
@@ -415,9 +420,7 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst, XformNode& xf)
     }
 #endif
 
-    transform_container(dst.materials, m_material_records, [](auto*& d, auto& s) {
-        d = s.material_data;
-    });
+    dst.materials = m_material_nodes;
     dst.buildFaceSets();
 
     return true;
@@ -476,17 +479,32 @@ bool DocumentExporter::extractSkeleton(MQDocument /*doc*/, SkeletonNode& dst)
 #endif
 }
 
+inline ShaderType ToShaderType(int t)
+{
+    switch (t) {
+    case MQMATERIAL_SHADER_CLASSIC: return ShaderType::MQClassic;
+    case MQMATERIAL_SHADER_CONSTANT:return ShaderType::MQConstant;
+    case MQMATERIAL_SHADER_LAMBERT: return ShaderType::MQLambert;
+    case MQMATERIAL_SHADER_PHONG:   return ShaderType::MQPhong;
+    case MQMATERIAL_SHADER_BLINN:   return ShaderType::MQBlinn;
+    case MQMATERIAL_SHADER_HLSL:    return ShaderType::MQHLSL;
+    default: return ShaderType::Unknown;
+    }
+}
+
+inline WrapMode ToWrapMode(int t)
+{
+    switch (t) {
+    case MQMATERIAL_WRAP_REPEAT: return WrapMode::Repeat;
+    case MQMATERIAL_WRAP_MIRROR: return WrapMode::Mirror;
+    case MQMATERIAL_WRAP_CLAMP: return WrapMode::Clamp;
+    default: return WrapMode::Unknown;
+    }
+}
+
 bool DocumentExporter::extractMaterial(MQMaterial mtl, MaterialNode& dst)
 {
-    switch (mtl->GetShader()) {
-    case MQMATERIAL_SHADER_CLASSIC: dst.shader_type = ShaderType::MQClassic; break;
-    case MQMATERIAL_SHADER_CONSTANT:dst.shader_type = ShaderType::MQConstant; break;
-    case MQMATERIAL_SHADER_LAMBERT: dst.shader_type = ShaderType::MQLambert; break;
-    case MQMATERIAL_SHADER_PHONG:   dst.shader_type = ShaderType::MQPhong; break;
-    case MQMATERIAL_SHADER_BLINN:   dst.shader_type = ShaderType::MQBlinn; break;
-    case MQMATERIAL_SHADER_HLSL:    dst.shader_type = ShaderType::MQHLSL; break;
-    default: break;
-    }
+    dst.shader_type = ToShaderType(mtl->GetShader());
     dst.use_vertex_color = mtl->GetVertexColor() == MQMATERIAL_VERTEXCOLOR_DIFFUSE;
     dst.double_sided = mtl->GetDoubleSided();
     dst.diffuse_color = to_float3(mtl->GetColor());
@@ -496,18 +514,8 @@ bool DocumentExporter::extractMaterial(MQMaterial mtl, MaterialNode& dst)
     dst.specular_color = to_float3(mtl->GetSpecularColor());
     dst.emissive_color = to_float3(mtl->GetEmissionColor());
 
-    auto to_wrap_mode = [](int v) {
-        switch (v) {
-        case MQMATERIAL_WRAP_REPEAT: return WrapMode::Repeat;
-        case MQMATERIAL_WRAP_MIRROR: return WrapMode::Mirror;
-        case MQMATERIAL_WRAP_CLAMP: return WrapMode::Clamp;
-        }
-        return WrapMode::Unknown;
-    };
-
-    auto wrap_s = to_wrap_mode(mtl->GetWrapModeU());
-    auto wrap_t = to_wrap_mode(mtl->GetWrapModeV());
-
+    auto wrap_s = ToWrapMode(mtl->GetWrapModeU());
+    auto wrap_t = ToWrapMode(mtl->GetWrapModeV());
     char buf[1024];
     mtl->GetTextureName(buf, sizeof(buf));
     if (buf[0] != '\0') {
@@ -570,11 +578,6 @@ void DocumentExporter::waitFlush()
             rec.mqobj = nullptr;
         }
     }
-}
-
-void DocumentExporter::writeMaterials()
-{
-    // todo
 }
 
 } // namespace mqusd

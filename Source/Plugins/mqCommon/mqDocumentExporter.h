@@ -53,7 +53,7 @@ private:
 
     struct MaterialRecord
     {
-        MQMaterial mqmaterial = nullptr;
+        bool updated = false;
         MaterialNode* material_data = nullptr;
     };
 
@@ -65,7 +65,6 @@ private:
 
     void flush();
     void waitFlush();
-    void writeMaterials();
 
     std::wstring getBonePath(UINT bone_id);
 
@@ -88,7 +87,9 @@ private:
     int m_frame = 0;
     double m_time = 0.0;
     std::vector<ObjectRecord> m_obj_records;
-    std::vector<MaterialRecord> m_material_records;
+    std::map<UINT, MaterialRecord> m_material_records;
+    std::vector<MaterialNode*> m_material_nodes;
+
     std::future<void> m_task_write;
 };
 using DocumentExporterPtr = std::shared_ptr<DocumentExporter>;

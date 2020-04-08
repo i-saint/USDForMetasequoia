@@ -136,12 +136,12 @@ inline void expand_uniform(T* dst, size_t data_size, const T* src, size_t elemen
 }
 
 template<class DstContainer, class SrcContainer, class Convert>
-inline void transform_container(DstContainer& dst, const SrcContainer& src, const Convert& c)
+inline void transform_container(DstContainer& dst, SrcContainer& src, const Convert& c)
 {
-    size_t n = src.size();
-    dst.resize(n);
-    for (size_t i = 0; i < n; ++i)
-        c(dst[i], src[i]);
+    dst.resize(src.size());
+    auto d = dst.begin();
+    for (auto& v : src)
+        c(*d++, v);
 }
 
 template<class Container, class Condition>
@@ -150,6 +150,19 @@ inline void erase_if(Container& dst, const Condition& cond)
     dst.erase(
         std::remove_if(dst.begin(), dst.end(), cond),
         dst.end());
+}
+
+template<class K, class V, class Condition>
+inline void erase_if(std::map<K, V>& dst, const Condition& cond)
+{
+    std::vector<K> keys_to_erase;
+    for (auto& kvp : dst) {
+        if (cond(kvp.second))
+            keys_to_erase.push_back(kvp.first);
+
+    }
+    for (auto& k : keys_to_erase)
+        dst.erase(k);
 }
 
 template<class Container>
@@ -163,8 +176,8 @@ inline auto append(Container& dst, const Container& src)
     return dst.begin() + pos;
 }
 
-template<class T>
-inline void fill(T* dst, size_t size, T v)
+template<class T, class U>
+inline void fill(T* dst, size_t size, U v)
 {
     for (size_t i = 0; i < size; ++i)
         *(dst++) = v;
