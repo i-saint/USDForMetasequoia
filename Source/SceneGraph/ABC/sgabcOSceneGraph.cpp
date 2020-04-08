@@ -26,11 +26,10 @@ static inline void PadSamples(Abc::OTypedArrayProperty<T>& dst, uint32_t n)
         dst.set(SampleT());
 }
 template<class T>
-static inline void PadSamples(T& dst, uint32_t n)
+static inline void PadSamples(T& dst, uint32_t n, const typename T::Sample& default_sample = {})
 {
-    using SampleT = typename T::Sample;
     while (dst.getNumSamples() < n)
-        dst.set(SampleT());
+        dst.set(default_sample);
 }
 
 
@@ -112,7 +111,6 @@ void ABCOMeshNode::write(double t)
 {
     super::write(t);
     const auto& src = *getNode<MeshNode>();
-    uint32_t wc = m_scene->getWriteCount();
 
     m_sample.reset();
     m_sample.setFaceIndices(Abc::Int32ArraySample(src.indices.cdata(), src.indices.size()));
@@ -128,6 +126,7 @@ void ABCOMeshNode::write(double t)
     }
     m_schema.set(m_sample);
 
+    uint32_t wc = (uint32_t)m_schema.getNumSamples();
     if(!src.colors.empty()){
         if (!m_rgba_param)
             m_rgba_param = AbcGeom::OC4fGeomParam(m_schema.getArbGeomParams(), sgabcAttrVertexColor, false, AbcGeom::GeometryScope::kFacevaryingScope, 1, 1);
@@ -159,7 +158,13 @@ void ABCOMeshNode::write(double t)
                 auto binding = AbcGeom::OStringProperty(data.faceset.getArbGeomParams(), sgabcAttrMaterialBinding, 1);
                 binding.set(mat->path);
             }
-            PadSamples(data.faceset, wc);
+
+            // first sample of OFaceSet must contain faces. so, add dummy.
+            // it will be ignored when import.
+            int dummy[] = {0};
+            data.sample.setFaces(Abc::Int32ArraySample(dummy, 1));
+            PadSamples(data.faceset, wc, data.sample);
+
             data.sample.setFaces(Abc::Int32ArraySample(fs->faces.cdata(), fs->faces.size()));
             data.faceset.set(data.sample);
         }
@@ -183,15 +188,20 @@ void ABCOMaterialNode::beforeWrite()
     m_schema.setShader(mqabcMaterialTarget, shader_type, src.getName());
 
     m_shader_params = m_schema.getShaderParameters(mqabcMaterialTarget, shader_type);
-    m_use_vertex_color_prop = Abc::OBoolProperty(m_shader_params, sgabcAttrUseVertexColor, 1);
-    m_double_sided_prop = Abc::OBoolProperty(m_shader_params, sgabcAttrDoubleSided, 1);
-    m_diffuse_color_prop = Abc::OC3fProperty(m_shader_params, sgabcAttrDiffuseColor, 1);
-    m_diffuse_prop = Abc::OFloatProperty(m_shader_params, sgabcAttrDiffuse, 1);
-    m_opacity_prop = Abc::OFloatProperty(m_shader_params, sgabcAttrOpacity, 1);
-    m_roughness_prop = Abc::OFloatProperty(m_shader_params, sgabcAttrRoughness, 1);
-    m_ambient_color_prop = Abc::OC3fProperty(m_shader_params, sgabcAttrAmbientColor, 1);
-    m_specular_color_prop = Abc::OC3fProperty(m_shader_params, sgabcAttrSpecularColor, 1);
-    m_emissive_color_prop = Abc::OC3fProperty(m_shader_params, sgabcAttrEmissiveColor, 1);
+
+    auto create_prop = [this](auto& prop, const char *name) {
+        using PropType = std::remove_reference_t<decltype(prop)>;
+        prop = PropType(m_shader_params, name, 1);
+    };
+    create_prop(m_use_vertex_color_prop, sgabcAttrUseVertexColor);
+    create_prop(m_double_sided_prop, sgabcAttrDoubleSided);
+    create_prop(m_diffuse_color_prop, sgabcAttrDiffuseColor);
+    create_prop(m_diffuse_prop, sgabcAttrDiffuse);
+    create_prop(m_opacity_prop, sgabcAttrOpacity);
+    create_prop(m_roughness_prop, sgabcAttrRoughness);
+    create_prop(m_ambient_color_prop, sgabcAttrAmbientColor);
+    create_prop(m_specular_color_prop, sgabcAttrSpecularColor);
+    create_prop(m_emissive_color_prop, sgabcAttrEmissiveColor);
 }
 
 void ABCOMaterialNode::write(double t)
@@ -201,7 +211,6 @@ void ABCOMaterialNode::write(double t)
         return;
 
     const auto& src = *getNode<MaterialNode>();
-    uint32_t wc = m_scene->getWriteCount();
 
     m_use_vertex_color_prop.set(src.use_vertex_color);
     m_double_sided_prop.set(src.double_sided);
@@ -213,10 +222,13 @@ void ABCOMaterialNode::write(double t)
     m_specular_color_prop.set((abcV3&)src.specular_color);
     m_emissive_color_prop.set((abcV3&)src.emissive_color);
 
-    auto set_texture = [this, wc](Abc::OStringProperty& prop, const char *prop_name, const TexturePtr& tex) {
+    uint32_t wc = (uint32_t)m_diffuse_color_prop.getNumSamples();
+    auto set_texture = [this, wc](auto& prop, const char *prop_name, const TexturePtr& tex) {
+        using PropType = std::remove_reference_t<decltype(prop)>;
         if (tex) {
             if (!prop)
-                prop = Abc::OStringProperty(m_shader_params, prop_name, 1);
+                prop = PropType(m_shader_params, prop_name, 1);
+            // keep consistent sample count
             PadSamples(prop, wc);
             prop.set(tex->file_path);
         }
@@ -264,7 +276,7 @@ bool ABCOScene::create(const char* path)
     }
 
     // add dummy time sampling
-    auto tsi = m_archive.addTimeSampling(Abc::TimeSampling(Abc::chrono_t(1.0f / m_scene->frame_rate), Abc::chrono_t(0.0)));
+    auto tsi = getTimeSampling(0.0);
     g_current_scene = this;
     auto top = std::make_shared<AbcGeom::OObject>(m_archive, AbcGeom::kTop, tsi);
     m_objects.push_back(top);
@@ -334,7 +346,7 @@ void ABCOScene::registerNode(ABCONode* n)
 template<class NodeT>
 inline ABCONode* ABCOScene::createNodeImpl(ABCONode* parent, const char* name)
 {
-    auto abc = std::make_shared<typename NodeT::AbcType>(*parent->m_obj, parent->m_node->makeUniqueName(name));
+    auto abc = std::make_shared<typename NodeT::AbcType>(*parent->m_obj, parent->m_node->makeUniqueName(name), 1);
     if (abc->valid()) {
         m_objects.push_back(abc);
         return new NodeT(parent, abc.get());
@@ -369,6 +381,24 @@ bool ABCOScene::wrapNode(Node* /*node*/)
 uint32_t ABCOScene::getWriteCount() const
 {
     return m_write_count;
+}
+
+uint32_t ABCOScene::getTimeSampling(double start_time)
+{
+    // in most cases what to return is the last element. so, search from back to front.
+    // (0th element is reserved and not considered)
+    uint32_t n = (uint32_t)m_archive.getNumTimeSamplings();
+    for (uint32_t i = n - 1; i >= 1; --i) {
+        auto ts = m_archive.getTimeSampling(i);
+        double t = ts->getStoredTimes().front();
+        if (t == start_time)
+            return i;
+        else if (start_time > t)
+            break;
+    }
+
+    // not found. add new time sampling.
+    return m_archive.addTimeSampling(Abc::TimeSampling(1.0 / m_scene->frame_rate, start_time));
 }
 
 ABCONode* ABCOScene::findABCNodeImpl(const std::string& path)

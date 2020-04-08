@@ -500,7 +500,9 @@ void MeshNode::buildMaterialIDs(bool cleanup)
     fill(material_ids, -1);
 
     materials.resize(facesets.size());
-    each_with_index(facesets, [this](auto& faceset, int i) {
+    // process by reverse order because of later element maybe dummy.
+    // (dummy contains overlapped faces and is overwritten by other valid facesets)
+    each_with_index_r(facesets, [this](auto& faceset, int i) {
         auto m = faceset->material;
         materials[i] = m;
         int mi = m ? m->index : -1;

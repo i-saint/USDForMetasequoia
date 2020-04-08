@@ -78,7 +78,7 @@ protected:
     {
         AbcGeom::IFaceSetSchema faceset;
         AbcGeom::IFaceSetSchema::Sample sample;
-        FaceSet* dst = nullptr;
+        FaceSetPtr dst;
     };
     std::vector<FacesetData> m_facesets;
 };

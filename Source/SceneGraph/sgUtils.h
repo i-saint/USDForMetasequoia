@@ -76,11 +76,28 @@ inline void each(Container& dst, const Body& body)
 }
 
 template<class Container, class Body>
+inline void each_r(Container& dst, const Body& body)
+{
+    auto rend = dst.rend();
+    for (auto p = dst.rbegin(); p != rend; ++p)
+        body(*p);
+}
+
+template<class Container, class Body>
 inline void each_with_index(Container& dst, const Body& body)
 {
     int i = 0;
     for (auto& v : dst)
         body(v, i++);
+}
+
+template<class Container, class Body>
+inline void each_with_index_r(Container& dst, const Body& body)
+{
+    int i = (int)dst.size();
+    auto rend = dst.rend();
+    for (auto p = dst.rbegin(); p != rend; ++p)
+        body(*p, --i);
 }
 
 

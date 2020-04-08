@@ -139,6 +139,7 @@ public:
     bool wrapNode(Node* node) override;
 
     uint32_t getWriteCount() const;
+    uint32_t getTimeSampling(double start_time);
     ABCONode* findABCNodeImpl(const std::string& path);
     Node* findNodeImpl(const std::string& path);
 

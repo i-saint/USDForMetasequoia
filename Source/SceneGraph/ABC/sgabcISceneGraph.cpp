@@ -173,7 +173,7 @@ void ABCIMeshNode::beforeRead()
             auto& faceset = dst.facesets[i];
             if (!faceset)
                 faceset = std::make_shared<FaceSet>();
-            data.dst = faceset.get();
+            data.dst = faceset;
 
             AbcGeom::IStringProperty binding;
             if (FindProperty(binding, data.faceset.getArbGeomParams(), sgabcAttrMaterialBinding)) {
@@ -201,6 +201,7 @@ void ABCIMeshNode::read(double time)
     m_schema.get(m_sample, iss);
 
     {
+        // m_sample holds counts/indices/points sample pointers. so, no need to hold these by myself.
         auto counts = m_sample.getFaceCounts();
         dst.counts.share(counts->get(), counts->size());
 
@@ -257,11 +258,13 @@ void ABCIMeshNode::read(double time)
         dst.material_ids.share(m_material_ids->get(), m_material_ids->size());
     }
     else {
-        for (auto& fs : m_facesets) {
+        dst.facesets.resize(m_facesets.size());
+        each_with_index(m_facesets, [&dst, &iss](auto& fs, int i) {
             fs.faceset.get(fs.sample, iss);
             auto sp = fs.sample.getFaces();
             fs.dst->faces.share(sp->get(), sp->size());
-        }
+            dst.facesets[i] = fs.dst;
+        });
     }
 
     // validate
