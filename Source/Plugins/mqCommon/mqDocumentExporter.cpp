@@ -537,9 +537,6 @@ bool DocumentExporter::extractMaterial(MQMaterial mtl, MaterialNode& dst)
 
 void DocumentExporter::flush()
 {
-    mu::parallel_for_each(m_scene->nodes.begin(), m_scene->nodes.end(), [this](NodePtr& n) {
-        n->convert(*m_options);
-    });
     if (m_options->merge_meshes) {
         // make merged mesh
         auto& dst = *m_merged_mesh;
@@ -547,6 +544,11 @@ void DocumentExporter::flush()
         for (auto& rec : m_obj_records)
             dst.merge(*rec.mesh);
     }
+
+    // convert. this must be after merge.
+    mu::parallel_for_each(m_scene->nodes.begin(), m_scene->nodes.end(), [this](NodePtr& n) {
+        n->convert(*m_options);
+    });
 
     // do write
     m_scene->write(m_time);

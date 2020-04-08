@@ -111,6 +111,7 @@ void ABCOMeshNode::write(double t)
 {
     super::write(t);
     const auto& src = *getNode<MeshNode>();
+    uint32_t wc = (uint32_t)m_schema.getNumSamples();
 
     m_sample.reset();
     m_sample.setFaceIndices(Abc::Int32ArraySample(src.indices.cdata(), src.indices.size()));
@@ -126,7 +127,6 @@ void ABCOMeshNode::write(double t)
     }
     m_schema.set(m_sample);
 
-    uint32_t wc = (uint32_t)m_schema.getNumSamples();
     if(!src.colors.empty()){
         if (!m_rgba_param)
             m_rgba_param = AbcGeom::OC4fGeomParam(m_schema.getArbGeomParams(), sgabcAttrVertexColor, false, AbcGeom::GeometryScope::kFacevaryingScope, 1, 1);
@@ -211,6 +211,7 @@ void ABCOMaterialNode::write(double t)
         return;
 
     const auto& src = *getNode<MaterialNode>();
+    uint32_t wc = (uint32_t)m_diffuse_color_prop.getNumSamples();
 
     m_use_vertex_color_prop.set(src.use_vertex_color);
     m_double_sided_prop.set(src.double_sided);
@@ -222,7 +223,6 @@ void ABCOMaterialNode::write(double t)
     m_specular_color_prop.set((abcV3&)src.specular_color);
     m_emissive_color_prop.set((abcV3&)src.emissive_color);
 
-    uint32_t wc = (uint32_t)m_diffuse_color_prop.getNumSamples();
     auto set_texture = [this, wc](auto& prop, const char *prop_name, const TexturePtr& tex) {
         using PropType = std::remove_reference_t<decltype(prop)>;
         if (tex) {
