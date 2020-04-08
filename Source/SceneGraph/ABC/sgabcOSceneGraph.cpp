@@ -149,38 +149,29 @@ void ABCOMeshNode::write(double t)
         m_rgba_param.set(m_rgba);
     }
 
-    if (!src.material_ids.empty()) {
-        if (!m_mids_prop.valid())
-            m_mids_prop = AbcGeom::OInt32ArrayProperty(m_schema.getArbGeomParams(), sgabcAttrMaterialID, 1);
+    for (auto& fs : src.facesets) {
+        auto mat = fs->material;
+        if (!mat)
+            continue;
 
-        PadSamples(m_mids_prop, wc);
-        m_mids_prop.set(Abc::Int32ArraySample(src.material_ids.cdata(), src.material_ids.size()));
-    }
-    else if (!src.facesets.empty()) {
-        for (auto& fs : src.facesets) {
-            auto mat = fs->material;
-            if (!mat)
-                continue;
+        auto& data = m_facesets[mat->getName()];
+        if (!data.faceset) {
+            auto ofs = m_schema.createFaceSet(mat->getName());
+            data.faceset = ofs.getSchema();
+            data.faceset.setTimeSampling(1);
 
-            auto& data = m_facesets[mat->getName()];
-            if (!data.faceset) {
-                auto ofs = m_schema.createFaceSet(mat->getName());
-                data.faceset = ofs.getSchema();
-                data.faceset.setTimeSampling(1);
-
-                auto binding = AbcGeom::OStringProperty(data.faceset.getArbGeomParams(), sgabcAttrMaterialBinding, 1);
-                binding.set(mat->path);
-            }
-
-            // first sample of OFaceSet must contain faces. so, add dummy.
-            // it will be ignored when import.
-            int dummy[] = {0};
-            data.sample.setFaces(Abc::Int32ArraySample(dummy, 1));
-            PadSamples(data.faceset, wc, data.sample);
-
-            data.sample.setFaces(Abc::Int32ArraySample(fs->faces.cdata(), fs->faces.size()));
-            data.faceset.set(data.sample);
+            auto binding = AbcGeom::OStringProperty(data.faceset.getArbGeomParams(), sgabcAttrMaterialBinding, 1);
+            binding.set(mat->path);
         }
+
+        // first sample of OFaceSet must contain faces. so, add dummy.
+        // it will be ignored when import.
+        int dummy[] = { 0 };
+        data.sample.setFaces(Abc::Int32ArraySample(dummy, 1));
+        PadSamples(data.faceset, wc, data.sample);
+
+        data.sample.setFaces(Abc::Int32ArraySample(fs->faces.cdata(), fs->faces.size()));
+        data.faceset.set(data.sample);
     }
 }
 

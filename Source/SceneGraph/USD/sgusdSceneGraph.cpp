@@ -172,7 +172,6 @@ void USDMeshNode::beforeRead()
     auto pvapi = UsdGeomPrimvarsAPI(m_prim);
     m_pv_st     = pvapi.GetPrimvar(sgusdAttrST);
     m_pv_colors = pvapi.GetPrimvar(sgusdAttrColors);
-    m_attr_mids     = m_prim.GetAttribute(sgusdAttrMaterialIDs);
     m_attr_bs_ids   = m_prim.GetAttribute(UsdSkelTokens->skelBlendShapes);
     m_attr_joints   = m_prim.GetAttribute(UsdSkelTokens->skelJoints);
     m_attr_joint_indices    = m_prim.GetAttribute(UsdSkelTokens->primvarsSkelJointIndices);
@@ -296,12 +295,6 @@ void USDMeshNode::read(double time)
     if (m_pv_colors) {
         m_pv_colors.ComputeFlattened(&m_colors, t);
         flatten_primvar(dst.colors, m_colors);
-    }
-
-    // material ids
-    if (m_attr_mids) {
-        m_attr_mids.Get(&m_material_ids, t);
-        dst.material_ids.share(m_material_ids.cdata(), m_material_ids.size());
     }
 
     // blendshape weights
@@ -465,28 +458,20 @@ void USDMeshNode::write(double time)
         m_pv_colors.Set(m_colors, t);
     }
 
-    if (!src.material_ids.empty()) {
-        if (!m_attr_mids)
-            m_attr_mids = m_prim.CreateAttribute(sgusdAttrMaterialIDs, SdfValueTypeNames->IntArray, false);
-        m_material_ids.assign(src.material_ids.begin(), src.material_ids.end());
-        m_attr_mids.Set(m_material_ids, t);
-    }
-    else {
-        auto mbapi = UsdShadeMaterialBindingAPI(m_prim);
-        for (auto& fs : src.facesets) {
-            auto mat = fs->material;
-            if (!mat)
-                continue;
+    for (auto& fs : src.facesets) {
+        auto mat = fs->material;
+        if (!mat)
+            continue;
 
-            auto& data = m_subsets[mat->getName()];
-            if (!data.subset) {
-                data.subset = mbapi.CreateMaterialBindSubset(TfToken(mat->getName()), VtArray<int>());
-                if (auto mat_node = static_cast<USDMaterialNode*>(mat->impl))
-                    UsdShadeMaterialBindingAPI(data.subset.GetPrim()).Bind(mat_node->m_material);
-            }
-            data.faces.assign(fs->faces.begin(), fs->faces.end());
-            data.subset.GetIndicesAttr().Set(data.faces, t);
+        auto& data = m_subsets[mat->getName()];
+        if (!data.subset) {
+            auto mbapi = UsdShadeMaterialBindingAPI(m_prim);
+            data.subset = mbapi.CreateMaterialBindSubset(TfToken(mat->getName()), VtArray<int>());
+            if (auto mat_node = static_cast<USDMaterialNode*>(mat->impl))
+                UsdShadeMaterialBindingAPI(data.subset.GetPrim()).Bind(mat_node->m_material);
         }
+        data.faces.assign(fs->faces.begin(), fs->faces.end());
+        data.subset.GetIndicesAttr().Set(data.faces, t);
     }
 }
 

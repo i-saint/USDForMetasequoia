@@ -1,6 +1,5 @@
 #pragma once
 
-#define sgusdAttrMaterialIDs    TfToken("materialIds")
 #define sgusdAttrST             TfToken("st")
 
 // Metasequoia-specific parameters

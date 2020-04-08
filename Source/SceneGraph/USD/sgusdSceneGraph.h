@@ -190,7 +190,6 @@ public:
 
     UsdGeomPrimvar m_pv_st;
     UsdGeomPrimvar m_pv_colors;
-    UsdAttribute m_attr_mids;
     UsdAttribute m_attr_bs_ids;
     UsdAttribute m_attr_joints;
     UsdAttribute m_attr_joint_indices;

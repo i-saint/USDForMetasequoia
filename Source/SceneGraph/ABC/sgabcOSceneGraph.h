@@ -75,7 +75,6 @@ protected:
     AbcGeom::OPolyMeshSchema m_schema;
     AbcGeom::OVisibilityProperty m_visibility_prop;
     AbcGeom::OC4fGeomParam m_rgba_param;
-    AbcGeom::OInt32ArrayProperty m_mids_prop;
 
     AbcGeom::OPolyMeshSchema::Sample m_sample;
     AbcGeom::ON3fGeomParam::Sample m_normals;

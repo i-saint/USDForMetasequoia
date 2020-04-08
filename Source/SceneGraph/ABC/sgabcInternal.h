@@ -1,7 +1,6 @@
 #pragma once
 
 #define sgabcAttrVertexColor        "C"
-#define sgabcAttrMaterialID         "MID"
 #define sgabcAttrMaterialBinding    "material:binding"
 
 // some of these are based on Preview Material Specification

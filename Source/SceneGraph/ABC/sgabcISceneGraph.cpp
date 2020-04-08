@@ -167,7 +167,6 @@ void ABCIMeshNode::beforeRead()
     auto params = m_schema.getArbGeomParams();
     if (!FindProperty(m_rgba_param, params, nullptr))
         FindProperty(m_rgb_param, params, nullptr);
-    FindProperty(m_mids_prop, params, sgabcAttrMaterialID);
 
     // face sets & materials
     {
@@ -268,20 +267,14 @@ void ABCIMeshNode::read(double time)
             transform_container(dst.colors, m_tmp_rgb, [](float4& d, const float3& s) { d = to_vec4(s, 1.0f); });
     }
 
-    // material ids
-    if (m_mids_prop && m_mids_prop.getNumSamples() != 0) {
-        m_mids_prop.get(m_material_ids, iss);
-        dst.material_ids.share(m_material_ids->get(), m_material_ids->size());
-    }
-    else {
-        dst.facesets.resize(m_facesets.size());
-        each_with_index(m_facesets, [&dst, &iss](auto& fs, int i) {
-            fs.faceset.get(fs.sample, iss);
-            auto sp = fs.sample.getFaces();
-            fs.dst->faces.share(sp->get(), sp->size());
-            dst.facesets[i] = fs.dst;
-        });
-    }
+    // facesets
+    dst.facesets.resize(m_facesets.size());
+    each_with_index(m_facesets, [&dst, &iss](auto& fs, int i) {
+        fs.faceset.get(fs.sample, iss);
+        auto sp = fs.sample.getFaces();
+        fs.dst->faces.share(sp->get(), sp->size());
+        dst.facesets[i] = fs.dst;
+    });
 
     // validate
     dst.validate();

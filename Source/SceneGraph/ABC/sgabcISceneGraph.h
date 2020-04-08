@@ -66,7 +66,6 @@ protected:
     AbcGeom::IVisibilityProperty m_visibility_prop;
     AbcGeom::IC3fGeomParam m_rgb_param;
     AbcGeom::IC4fGeomParam m_rgba_param;
-    AbcGeom::IInt32ArrayProperty m_mids_prop;
 
     AbcGeom::IPolyMeshSchema::Sample m_sample;
     AbcGeom::IN3fGeomParam::Sample m_normals;
