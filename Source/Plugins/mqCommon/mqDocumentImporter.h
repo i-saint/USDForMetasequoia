@@ -55,8 +55,7 @@ private:
     struct MaterialRecord
     {
         MaterialNode* node = nullptr;
-        int mqid = 0;
-        int mqindex = 0;
+        UINT mqid = 0;
     };
 
     void clearDocument(MQDocument doc);
@@ -78,6 +77,9 @@ private:
 #endif
 
     Scene* m_scene = nullptr;
+    std::vector<MeshNode*> m_mesh_nodes;
+    std::vector<MaterialNode*> m_material_nodes;
+
     std::vector<ObjectRecord> m_obj_records;
     std::vector<InstancerRecord> m_inst_records;
     std::vector<SkeletonRecord> m_skel_records;

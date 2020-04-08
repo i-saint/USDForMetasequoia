@@ -51,12 +51,12 @@ bool DocumentImporter::initialize(MQDocument doc, bool insert)
         clearDocument(doc);
 
     {
-        auto mesh_nodes = m_scene->getNodes<MeshNode>();
-        size_t nobjs = mesh_nodes.size();
+        m_mesh_nodes = m_scene->getNodes<MeshNode>();
+        size_t nobjs = m_mesh_nodes.size();
         m_obj_records.resize(nobjs);
         for (size_t oi = 0; oi < nobjs; ++oi) {
             auto& rec = m_obj_records[oi];
-            rec.node = mesh_nodes[oi];
+            rec.node = m_mesh_nodes[oi];
             rec.node->userdata = &rec;
             rec.blendshape_ids.resize(rec.node->blendshapes.size());
         }
@@ -89,9 +89,17 @@ bool DocumentImporter::initialize(MQDocument doc, bool insert)
             }
         }
     }
+    {
+        m_material_nodes = m_scene->getNodes<MaterialNode>();
+        size_t nobjs = m_material_nodes.size();
+        m_material_records.resize(nobjs);
+        for (size_t oi = 0; oi < nobjs; ++oi) {
+            auto& rec = m_material_records[oi];
+            rec.node = m_material_nodes[oi];
+            rec.node->userdata = &rec;
+        }
+    }
 
-    if (m_options->import_materials)
-        updateMaterials(doc);
 
     read(doc, mqusd::default_time);
     return true;
@@ -236,15 +244,18 @@ bool DocumentImporter::read(MQDocument doc, double t)
         n->convert(*m_options);
     });
 
-    auto mesh_nodes = m_scene->getNodes<MeshNode>();
-    mu::parallel_for_each(mesh_nodes.begin(), mesh_nodes.end(), [this](MeshNode* n) {
+    // materials
+    if (m_options->import_materials)
+        updateMaterials(doc);
+
+    mu::parallel_for_each(m_mesh_nodes.begin(), m_mesh_nodes.end(), [this](MeshNode* n) {
         n->buildMaterialIDs();
     });
 
     // reserve materials
     {
         int nmaterials = 0;
-        for (auto n : mesh_nodes)
+        for (auto n : m_mesh_nodes)
             nmaterials = std::max(nmaterials, n->getMaxMaterialID());
 
         int mi = 0;
@@ -298,11 +309,11 @@ bool DocumentImporter::read(MQDocument doc, double t)
         // build merged mesh
         m_merged_mesh.clear();
         if (m_options->bake_meshes) {
-            for (auto n : mesh_nodes)
+            for (auto n : m_mesh_nodes)
                 bake_mesh(m_merged_mesh, n);
         }
         else {
-            for (auto n : mesh_nodes)
+            for (auto n : m_mesh_nodes)
                 merge_mesh(m_merged_mesh, n);
         }
         for (auto& rec : m_inst_records) {
@@ -559,11 +570,33 @@ bool DocumentImporter::updateSkeleton(MQDocument /*doc*/, const SkeletonNode& sr
 #endif
 }
 
+static int ToMQShader(ShaderType v)
+{
+    switch (v) {
+    case ShaderType::MQClassic: return MQMATERIAL_SHADER_CLASSIC;
+    case ShaderType::MQConstant:return MQMATERIAL_SHADER_CONSTANT;
+    case ShaderType::MQLambert: return MQMATERIAL_SHADER_LAMBERT;
+    case ShaderType::MQPhong:   return MQMATERIAL_SHADER_PHONG;
+    case ShaderType::MQBlinn:   return MQMATERIAL_SHADER_BLINN;
+    case ShaderType::MQHLSL:    return MQMATERIAL_SHADER_HLSL;
+    default: return MQMATERIAL_SHADER_LAMBERT;
+    }
+}
+
+static int ToMQWrapMode(WrapMode v)
+{
+    switch (v) {
+    case WrapMode::Repeat: return MQMATERIAL_WRAP_REPEAT;
+    case WrapMode::Mirror: return MQMATERIAL_WRAP_MIRROR;
+    case WrapMode::Clamp: return MQMATERIAL_WRAP_CLAMP;
+    default: return MQMATERIAL_WRAP_REPEAT;
+    }
+}
+
 bool DocumentImporter::updateMaterials(MQDocument doc)
 {
-    auto material_nodes = m_scene->getNodes<MaterialNode>();
-    m_material_records.resize(material_nodes.size());
-    each_with_index(material_nodes, [&](MaterialNode* node, int mi) {
+    // create / update materials
+    each_with_index(m_material_nodes, [&](MaterialNode* node, int mi) {
         auto& src = *node;
         auto& rec = m_material_records[mi];
         rec.node = node;
@@ -572,23 +605,11 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
         if (!mqmat) {
             mqmat = MQ_CreateMaterial();
             mqmat->SetName(makeUniqueMaterialName(doc, src.getName()).c_str());
-            rec.mqindex = doc->AddMaterial(mqmat);
+            src.index = doc->AddMaterial(mqmat);
             rec.mqid = mqmat->GetUniqueID();
-            src.index = rec.mqindex;
         }
 
-        int shader = MQMATERIAL_SHADER_LAMBERT;
-        switch (src.shader_type) {
-        case ShaderType::MQClassic: shader = MQMATERIAL_SHADER_CLASSIC; break;
-        case ShaderType::MQConstant:shader = MQMATERIAL_SHADER_CONSTANT; break;
-        case ShaderType::MQLambert: shader = MQMATERIAL_SHADER_LAMBERT; break;
-        case ShaderType::MQPhong:   shader = MQMATERIAL_SHADER_PHONG; break;
-        case ShaderType::MQBlinn:   shader = MQMATERIAL_SHADER_BLINN; break;
-        case ShaderType::MQHLSL:    shader = MQMATERIAL_SHADER_HLSL; break;
-        default: break;
-        }
-        mqmat->SetShader(shader);
-
+        mqmat->SetShader(ToMQShader(src.shader_type));
         mqmat->SetVertexColor(src.use_vertex_color ? MQMATERIAL_VERTEXCOLOR_DIFFUSE : MQMATERIAL_VERTEXCOLOR_DISABLE);
         mqmat->SetDoubleSided(src.double_sided);
         mqmat->SetColor((MQColor&)src.diffuse_color);
@@ -598,27 +619,31 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
         mqmat->SetSpecularColor((MQColor&)src.specular_color);
         mqmat->SetEmissionColor((MQColor&)src.emissive_color);
 
-        auto from_wrap_mode = [](WrapMode v) {
-            switch (v) {
-            case WrapMode::Repeat: return MQMATERIAL_WRAP_REPEAT;
-            case WrapMode::Mirror: return MQMATERIAL_WRAP_MIRROR;
-            case WrapMode::Clamp: return MQMATERIAL_WRAP_CLAMP;
-            default: return MQMATERIAL_WRAP_REPEAT;
-            }
-        };
-
         if (src.diffuse_texture) {
             mqmat->SetTextureName(src.diffuse_texture->file_path.c_str());
             if (src.diffuse_texture->wrap_s != WrapMode::Unknown)
-                mqmat->SetWrapModeU(from_wrap_mode(src.diffuse_texture->wrap_s));
+                mqmat->SetWrapModeU(ToMQWrapMode(src.diffuse_texture->wrap_s));
             if (src.diffuse_texture->wrap_t != WrapMode::Unknown)
-                mqmat->SetWrapModeV(from_wrap_mode(src.diffuse_texture->wrap_t));
+                mqmat->SetWrapModeV(ToMQWrapMode(src.diffuse_texture->wrap_t));
         }
         if (src.opacity_texture)
             mqmat->SetAlphaName(src.opacity_texture->file_path.c_str());
         if (src.bump_texture)
             mqmat->SetBumpName(src.bump_texture->file_path.c_str());
     });
+
+    // update indices
+    each_material(doc, [this](MQMaterial mat, int mi) {
+        UINT mqid = mat->GetUniqueID();
+        for (auto& rec : m_material_records) {
+            if (rec.mqid == mqid) {
+                if (rec.node)
+                    rec.node->index = mi;
+                return;
+            }
+        }
+    });
+
     return true;
 }
 

@@ -909,8 +909,6 @@ void USDMaterialNode::beforeRead()
             }
         }
     });
-
-    read(default_time);
 }
 
 void USDMaterialNode::read(double time)

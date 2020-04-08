@@ -479,9 +479,9 @@ bool DocumentExporter::extractSkeleton(MQDocument /*doc*/, SkeletonNode& dst)
 #endif
 }
 
-inline ShaderType ToShaderType(int t)
+static ShaderType ToShaderType(int v)
 {
-    switch (t) {
+    switch (v) {
     case MQMATERIAL_SHADER_CLASSIC: return ShaderType::MQClassic;
     case MQMATERIAL_SHADER_CONSTANT:return ShaderType::MQConstant;
     case MQMATERIAL_SHADER_LAMBERT: return ShaderType::MQLambert;
@@ -492,9 +492,9 @@ inline ShaderType ToShaderType(int t)
     }
 }
 
-inline WrapMode ToWrapMode(int t)
+static WrapMode ToWrapMode(int v)
 {
-    switch (t) {
+    switch (v) {
     case MQMATERIAL_WRAP_REPEAT: return WrapMode::Repeat;
     case MQMATERIAL_WRAP_MIRROR: return WrapMode::Mirror;
     case MQMATERIAL_WRAP_CLAMP: return WrapMode::Clamp;

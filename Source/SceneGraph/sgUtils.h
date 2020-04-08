@@ -159,7 +159,6 @@ inline void erase_if(std::map<K, V>& dst, const Condition& cond)
     for (auto& kvp : dst) {
         if (cond(kvp.second))
             keys_to_erase.push_back(kvp.first);
-
     }
     for (auto& k : keys_to_erase)
         dst.erase(k);

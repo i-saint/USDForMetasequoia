@@ -312,7 +312,6 @@ void ABCIMaterialNode::beforeRead()
             find_prop(m_bump_texture_prop, sgabcAttrBumpTexture);
         }
     }
-    read(default_time);
 }
 
 void ABCIMaterialNode::read(double time)
