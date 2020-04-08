@@ -68,13 +68,13 @@ inline bool invoke_false(const Body& body, A1& a1, A2& a2)
     return false;
 }
 
+
 template<class Container, class Body>
 inline void each(Container& dst, const Body& body)
 {
     for (auto& v : dst)
         body(v);
 }
-
 template<class Container, class Body>
 inline void each_r(Container& dst, const Body& body)
 {
@@ -90,7 +90,6 @@ inline void each_with_index(Container& dst, const Body& body)
     for (auto& v : dst)
         body(v, i++);
 }
-
 template<class Container, class Body>
 inline void each_with_index_r(Container& dst, const Body& body)
 {

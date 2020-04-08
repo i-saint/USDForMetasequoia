@@ -24,6 +24,7 @@ public:
     void SyncSettings();
     void LogInfo(const char *message);
 
+    void SetAdditive(bool v);
     bool Open(MQDocument doc, const std::string& path);
     bool Close();
     void Seek(MQDocument doc, double t);
@@ -53,6 +54,7 @@ private:
     MQMemo* m_log = nullptr;
 
 
+    bool m_additive = false;
     ScenePtr m_scene;
     ImportOptions m_options;
     DocumentImporterPtr m_importer;

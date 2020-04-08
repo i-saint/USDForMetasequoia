@@ -44,10 +44,9 @@ DocumentImporter::DocumentImporter(MQBasePlugin* plugin, Scene* scene, const Imp
 {
 }
 
-bool DocumentImporter::initialize(MQDocument doc, bool insert)
+bool DocumentImporter::initialize(MQDocument doc, bool additive)
 {
-    m_insert = insert;
-    if (!m_insert)
+    if (!additive)
         clearDocument(doc);
 
     m_mesh_nodes = m_scene->getNodes<MeshNode>();

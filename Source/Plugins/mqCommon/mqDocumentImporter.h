@@ -21,7 +21,7 @@ class DocumentImporter
 {
 public:
     DocumentImporter(MQBasePlugin* plugin, Scene* scene, const ImportOptions* options);
-    bool initialize(MQDocument doc, bool insert = false);
+    bool initialize(MQDocument doc, bool additive);
     bool read(MQDocument doc, double t);
 
 private:
@@ -90,7 +90,6 @@ private:
     double m_prev_time = mqusd::default_time;
     ImportOptions m_prev_options;
     bool m_option_changed = false;
-    bool m_insert = false;
 };
 using DocumentImporterPtr = std::shared_ptr<DocumentImporter>;
 

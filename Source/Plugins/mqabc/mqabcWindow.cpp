@@ -27,13 +27,16 @@ mqabcWindow::mqabcWindow(mqabcPlugin* plugin, MQWindowBase& parent)
         vf->SetOutSpace(outer_margin);
         vf->SetInSpace(inner_margin);
 
-        m_button_import = CreateButton(vf, L"Import");
+        m_button_import = CreateButton(vf, L"Import Alembic");
         m_button_import->AddClickEvent(this, &mqabcWindow::OnImportClicked);
 
-        m_button_export = CreateButton(vf, L"Export");
+        m_button_insert = CreateButton(vf, L"Insert Alembic");
+        m_button_insert->AddClickEvent(this, &mqabcWindow::OnInsertClicked);
+
+        m_button_export = CreateButton(vf, L"Export Alembic");
         m_button_export->AddClickEvent(this, &mqabcWindow::OnExportClicked);
 
-        m_button_recording = CreateButton(vf, L"Recording");
+        m_button_recording = CreateButton(vf, L"Recording Alembic");
         m_button_recording->AddClickEvent(this, &mqabcWindow::OnRecordingClicked);
     }
     {
@@ -62,7 +65,15 @@ BOOL mqabcWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqabcWindow::OnImportClicked(MQWidgetBase* sender, MQDocument doc)
 {
-    mqabcImportWindow::create(m_plugin);
+    auto w = mqabcImportWindow::create(m_plugin);
+    w->SetAdditive(false);
+    return 0;
+}
+
+BOOL mqabcWindow::OnInsertClicked(MQWidgetBase* sender, MQDocument doc)
+{
+    auto w = mqabcImportWindow::create(m_plugin);
+    w->SetAdditive(true);
     return 0;
 }
 

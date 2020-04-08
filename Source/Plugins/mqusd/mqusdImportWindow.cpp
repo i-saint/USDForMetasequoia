@@ -218,6 +218,15 @@ void mqusdImportWindow::LogInfo(const char* message)
 }
 
 
+void mqusdImportWindow::SetAdditive(bool v)
+{
+    m_additive = v;
+    if (v)
+        SetTitle(L"Insert USD");
+    else
+        SetTitle(L"Import USD");
+}
+
 bool mqusdImportWindow::Open(MQDocument doc, const std::string& path)
 {
     Close();
@@ -236,7 +245,7 @@ bool mqusdImportWindow::Open(MQDocument doc, const std::string& path)
     }
 
     m_importer.reset(new DocumentImporter(m_plugin, m_scene.get(), &m_options));
-    m_importer->initialize(doc);
+    m_importer->initialize(doc, m_additive);
 
     return true;
 }

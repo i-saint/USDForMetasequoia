@@ -27,13 +27,16 @@ mqusdWindow::mqusdWindow(mqusdPlugin* plugin, MQWindowBase& parent)
         vf->SetOutSpace(outer_margin);
         vf->SetInSpace(inner_margin);
 
-        m_button_import = CreateButton(vf, L"Import");
+        m_button_import = CreateButton(vf, L"Import USD");
         m_button_import->AddClickEvent(this, &mqusdWindow::OnImportClicked);
 
-        m_button_export = CreateButton(vf, L"Export");
+        m_button_insert = CreateButton(vf, L"Insert USD");
+        m_button_insert->AddClickEvent(this, &mqusdWindow::OnInsertClicked);
+
+        m_button_export = CreateButton(vf, L"Export USD");
         m_button_export->AddClickEvent(this, &mqusdWindow::OnExportClicked);
 
-        m_button_recording = CreateButton(vf, L"Recording");
+        m_button_recording = CreateButton(vf, L"Recording USD");
         m_button_recording->AddClickEvent(this, &mqusdWindow::OnRecordingClicked);
     }
     {
@@ -62,7 +65,15 @@ BOOL mqusdWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqusdWindow::OnImportClicked(MQWidgetBase* sender, MQDocument doc)
 {
-    mqusdImportWindow::create(m_plugin);
+    auto w = mqusdImportWindow::create(m_plugin);
+    w->SetAdditive(false);
+    return 0;
+}
+
+BOOL mqusdWindow::OnInsertClicked(MQWidgetBase* sender, MQDocument doc)
+{
+    auto w = mqusdImportWindow::create(m_plugin);
+    w->SetAdditive(true);
     return 0;
 }
 
