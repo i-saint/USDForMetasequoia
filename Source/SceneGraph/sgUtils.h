@@ -2,8 +2,8 @@
 
 #define sgEnableIf(...) std::enable_if_t<__VA_ARGS__, bool> = true
 
-#define sgDbgPrint(...)
-#define sgDbgFatal(...)
+#define sgDbgPrint(...) mu::Print(__VA_ARGS__)
+#define sgDbgFatal(...) mu::Print(__VA_ARGS__)
 
 namespace sg {
 

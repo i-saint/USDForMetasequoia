@@ -21,6 +21,50 @@ static inline NodeT* FindParent(ABCINode *n)
     return nullptr;
 }
 
+template<class PropT>
+static bool FindProperty(PropT& dst, const Abc::ICompoundProperty& parent, const char* name) {
+    if (!parent)
+        return false;
+    size_t n = parent.getNumProperties();
+    for (size_t i = 0; i < n; ++i) {
+        auto& header = parent.getPropertyHeader(i);
+        if (PropT::matches(header) && (!name || header.getName() == name)) {
+            dst = PropT(parent, header.getName());
+            return true;
+        }
+    }
+    return false;
+}
+
+static void GetValue(const Abc::IBoolProperty& prop, bool& dst, const Abc::ISampleSelector& iss)
+{
+    if (!prop || prop.getNumSamples() == 0)
+        return;
+    Abc::bool_t tmp;
+    prop.get(tmp, iss);
+    dst = tmp;
+}
+static void GetValue(const Abc::IFloatProperty& prop, float& dst, const Abc::ISampleSelector& iss)
+{
+    if (!prop || prop.getNumSamples() == 0)
+        return;
+    prop.get(dst, iss);
+}
+static void GetValue(const Abc::IC3fProperty& prop, float3& dst, const Abc::ISampleSelector& iss)
+{
+    if (!prop || prop.getNumSamples() == 0)
+        return;
+    prop.get((abcC3&)dst, iss);
+}
+static void GetValue(const Abc::IStringProperty& prop, TexturePtr& dst, const Abc::ISampleSelector& iss)
+{
+    if (!prop || prop.getNumSamples() == 0)
+        return;
+    if (!dst)
+        dst = std::make_shared<Texture>();
+    prop.get(dst->file_path, iss);
+}
+
 static void UpdateGlobalMatrix(XformNode& n)
 {
     if (n.parent_xform)
@@ -83,11 +127,13 @@ ABCIXformNode::ABCIXformNode(ABCINode* parent, Abc::IObject& obj)
 void ABCIXformNode::read(double time)
 {
     super::read(time);
+    auto& dst = *getNode<XformNode>();
+
+    if (m_schema.getNumSamples() == 0)
+        return;
 
     Abc::ISampleSelector iss(time);
     m_schema.get(m_sample, iss);
-
-    auto& dst = *getNode<XformNode>();
 
     auto matd = m_sample.getMatrix();
     dst.local_matrix.assign((double4x4&)matd);
@@ -108,24 +154,11 @@ void ABCIMeshNode::beforeRead()
     super::beforeRead();
     auto& dst = *getNode<MeshNode>();
 
+    // find vertex color and material ids params
     auto params = m_schema.getArbGeomParams();
-    if (params.valid()) {
-        // find vertex color and material ids params
-        size_t nprops = params.getNumProperties();
-        for (size_t i = 0; i < nprops; ++i) {
-            auto& header = params.getPropertyHeader(i);
-
-            // vertex color
-            if (AbcGeom::IC4fGeomParam::matches(header))
-                m_rgba_param = AbcGeom::IC4fGeomParam(params, header.getName());
-            if (AbcGeom::IC3fGeomParam::matches(header))
-                m_rgb_param = AbcGeom::IC3fGeomParam(params, header.getName());
-
-            // material ids
-            if (AbcGeom::IInt32ArrayProperty::matches(header) && header.getName() == sgabcAttrMaterialID)
-                m_mids_prop = AbcGeom::IInt32ArrayProperty(params, header.getName());
-        }
-    }
+    if (!FindProperty(m_rgba_param, params, nullptr))
+        FindProperty(m_rgb_param, params, nullptr);
+    FindProperty(m_mids_prop, params, sgabcAttrMaterialID);
 
     // face sets & materials
     {
@@ -142,7 +175,8 @@ void ABCIMeshNode::beforeRead()
                 faceset = std::make_shared<FaceSet>();
             data.dst = faceset.get();
 
-            if (auto binding = AbcGeom::IStringProperty(data.faceset.getArbGeomParams(), sgabcAttrMaterialBinding)) {
+            AbcGeom::IStringProperty binding;
+            if (FindProperty(binding, data.faceset.getArbGeomParams(), sgabcAttrMaterialBinding)) {
                 std::string path;
                 binding.get(path);
                 faceset->material = m_scene->findNode<MaterialNode>(path);
@@ -160,30 +194,25 @@ void ABCIMeshNode::read(double time)
     // so, need to update global matrix.
     UpdateGlobalMatrix(dst);
 
-    Abc::ISampleSelector iss(time);
-    try {
-        // this may throw exception
-        m_schema.get(m_sample, iss);
-    }
-    catch (...) {
+    if (m_schema.getNumSamples() == 0)
         return;
-    }
+
+    Abc::ISampleSelector iss(time);
+    m_schema.get(m_sample, iss);
 
     {
         auto counts = m_sample.getFaceCounts();
         dst.counts.share(counts->get(), counts->size());
-    }
-    {
+
         auto indices = m_sample.getFaceIndices();
         dst.indices.share(indices->get(), indices->size());
-    }
-    {
+
         auto points = m_sample.getPositions();
         dst.points.share((float3*)points->get(), points->size());
     }
 
     auto get_expanded_data = [this, &iss, &dst](auto param, auto& sample, auto& dst_data) -> bool {
-        if (!param.valid() || param.getNumSamples() == 0)
+        if (!param || param.getNumSamples() == 0)
             return false;
 
         using src_t = typename std::remove_reference_t<decltype(param)>::value_type;
@@ -223,7 +252,7 @@ void ABCIMeshNode::read(double time)
     }
 
     // material ids
-    if (m_mids_prop.valid()) {
+    if (m_mids_prop && m_mids_prop.getNumSamples() != 0) {
         m_mids_prop.get(m_material_ids, iss);
         dst.material_ids.share(m_material_ids->get(), m_material_ids->size());
     }
@@ -254,50 +283,42 @@ void ABCIMaterialNode::beforeRead()
 
     std::vector<std::string> shader_types;
     m_schema.getShaderTypesForTarget(mqabcMaterialTarget, shader_types);
+
     if (!shader_types.empty()) {
         ShaderType st = ToShaderType(shader_types.front());
         if (st != ShaderType::Unknown) {
             dst.shader_type = st;
-            auto params = m_schema.getShaderParameters(mqabcMaterialTarget, shader_types.front());
-            m_use_vertex_color_prop = Abc::IBoolProperty(params, sgabcAttrUseVertexColor, 1);
-            m_double_sided_prop = Abc::IBoolProperty(params, sgabcAttrDoubleSided, 1);
-            m_diffuse_color_prop = Abc::IC3fProperty(params, sgabcAttrDiffuseColor, 1);
-            m_diffuse_prop = Abc::IFloatProperty(params, sgabcAttrDiffuse, 1);
-            m_opacity_prop = Abc::IFloatProperty(params, sgabcAttrOpacity, 1);
-            m_roughness_prop = Abc::IFloatProperty(params, sgabcAttrRoughness, 1);
-            m_ambient_color_prop = Abc::IC3fProperty(params, sgabcAttrAmbientColor, 1);
-            m_specular_color_prop = Abc::IC3fProperty(params, sgabcAttrSpecularColor, 1);
-            m_emissive_color_prop = Abc::IC3fProperty(params, sgabcAttrEmissiveColor, 1);
+            m_shader_params = m_schema.getShaderParameters(mqabcMaterialTarget, shader_types.front());
+
+            auto find_prop = [this](auto& prop, const char* name) {
+                return FindProperty(prop, m_shader_params, name);
+            };
+
+            find_prop(m_use_vertex_color_prop, sgabcAttrUseVertexColor);
+            find_prop(m_double_sided_prop, sgabcAttrDoubleSided);
+            find_prop(m_diffuse_color_prop, sgabcAttrDiffuseColor);
+            find_prop(m_diffuse_prop, sgabcAttrDiffuse);
+            find_prop(m_opacity_prop, sgabcAttrOpacity);
+            find_prop(m_roughness_prop, sgabcAttrRoughness);
+            find_prop(m_ambient_color_prop, sgabcAttrAmbientColor);
+            find_prop(m_specular_color_prop, sgabcAttrSpecularColor);
+            find_prop(m_emissive_color_prop, sgabcAttrEmissiveColor);
+
+            find_prop(m_diffuse_texture_prop, sgabcAttrDiffuseTexture);
+            find_prop(m_opacity_texture_prop, sgabcAttrOpacityTexture);
+            find_prop(m_bump_texture_prop, sgabcAttrBumpTexture);
         }
     }
     read(default_time);
-}
-
-static inline void GetValue(const Abc::IBoolProperty& prop, bool& dst, const Abc::ISampleSelector& iss)
-{
-    if (!prop || prop.getNumSamples() == 0)
-        return;
-    Abc::bool_t tmp;
-    prop.get(tmp, iss);
-    dst = tmp;
-}
-static inline void GetValue(const Abc::IFloatProperty& prop, float& dst, const Abc::ISampleSelector& iss)
-{
-    if (!prop || prop.getNumSamples() == 0)
-        return;
-    prop.get(dst, iss);
-}
-static inline void GetValue(const Abc::IC3fProperty& prop, float3& dst, const Abc::ISampleSelector& iss)
-{
-    if (!prop || prop.getNumSamples() == 0)
-        return;
-    prop.get((abcC3&)dst, iss);
 }
 
 void ABCIMaterialNode::read(double time)
 {
     super::read(time);
     auto& dst = *getNode<MaterialNode>();
+
+    if (!m_shader_params)
+        return;
 
     Abc::ISampleSelector iss(time);
     GetValue(m_use_vertex_color_prop, dst.use_vertex_color, iss);
@@ -309,6 +330,10 @@ void ABCIMaterialNode::read(double time)
     GetValue(m_ambient_color_prop, dst.ambient_color, iss);
     GetValue(m_specular_color_prop, dst.specular_color, iss);
     GetValue(m_emissive_color_prop, dst.emissive_color, iss);
+
+    GetValue(m_diffuse_texture_prop, dst.diffuse_texture, iss);
+    GetValue(m_opacity_texture_prop, dst.opacity_texture, iss);
+    GetValue(m_bump_texture_prop, dst.bump_texture, iss);
 }
 
 

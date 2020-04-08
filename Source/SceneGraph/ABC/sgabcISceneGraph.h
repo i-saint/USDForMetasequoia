@@ -94,6 +94,7 @@ public:
 
 protected:
     AbcMaterial::IMaterialSchema m_schema;
+    Abc::ICompoundProperty m_shader_params;
 
     Abc::IBoolProperty  m_use_vertex_color_prop;
     Abc::IBoolProperty  m_double_sided_prop;

@@ -23,18 +23,31 @@ nanosec Now()
     return duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
 }
 
+static std::function<void(const char*)> g_print_handler;
+
+void SetPrintHandler(const PrintHandler& v)
+{
+    g_print_handler = v;
+}
+
 void Print(const char *fmt, ...)
 {
+    char buf[1024];
     va_list args;
     va_start(args, fmt);
-#ifdef _WIN32
-    char buf[1024];
     vsnprintf(buf, sizeof(buf), fmt, args);
-    ::OutputDebugStringA(buf);
-#else
-    vprintf(fmt, args);
-#endif
     va_end(args);
+
+    if (g_print_handler) {
+        g_print_handler(buf);
+    }
+    else {
+#ifdef _WIN32
+        ::OutputDebugStringA(buf);
+#else
+        printf(buf);
+#endif
+    }
 }
 
 void Print(const wchar_t *fmt, ...)

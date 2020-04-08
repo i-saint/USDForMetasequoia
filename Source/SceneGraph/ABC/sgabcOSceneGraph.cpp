@@ -12,13 +12,19 @@ static inline NodeT* CreateNode(ABCONode* parent, Abc::OObject* obj)
 }
 
 template<class T>
+static inline void PadSamples(Abc::OTypedScalarProperty<T>& dst, uint32_t n)
+{
+    using SampleT = typename Abc::OTypedScalarProperty<T>::value_type;
+    while (dst.getNumSamples() < n)
+        dst.set(SampleT());
+}
+template<class T>
 static inline void PadSamples(Abc::OTypedArrayProperty<T>& dst, uint32_t n)
 {
     using SampleT = typename Abc::OTypedArrayProperty<T>::sample_type;
     while (dst.getNumSamples() < n)
         dst.set(SampleT());
 }
-
 template<class T>
 static inline void PadSamples(T& dst, uint32_t n)
 {
@@ -176,23 +182,26 @@ void ABCOMaterialNode::beforeWrite()
     auto shader_type = ToString(src.shader_type);
     m_schema.setShader(mqabcMaterialTarget, shader_type, src.getName());
 
-    auto params = m_schema.getShaderParameters(mqabcMaterialTarget, shader_type);
-    m_use_vertex_color_prop = Abc::OBoolProperty(params, sgabcAttrUseVertexColor, 1);
-    m_double_sided_prop = Abc::OBoolProperty(params, sgabcAttrDoubleSided, 1);
-    m_diffuse_color_prop = Abc::OC3fProperty(params, sgabcAttrDiffuseColor, 1);
-    m_diffuse_prop = Abc::OFloatProperty(params, sgabcAttrDiffuse, 1);
-    m_opacity_prop = Abc::OFloatProperty(params, sgabcAttrOpacity, 1);
-    m_roughness_prop = Abc::OFloatProperty(params, sgabcAttrRoughness, 1);
-    m_ambient_color_prop = Abc::OC3fProperty(params, sgabcAttrAmbientColor, 1);
-    m_specular_color_prop = Abc::OC3fProperty(params, sgabcAttrSpecularColor, 1);
-    m_emissive_color_prop = Abc::OC3fProperty(params, sgabcAttrEmissiveColor, 1);
-
+    m_shader_params = m_schema.getShaderParameters(mqabcMaterialTarget, shader_type);
+    m_use_vertex_color_prop = Abc::OBoolProperty(m_shader_params, sgabcAttrUseVertexColor, 1);
+    m_double_sided_prop = Abc::OBoolProperty(m_shader_params, sgabcAttrDoubleSided, 1);
+    m_diffuse_color_prop = Abc::OC3fProperty(m_shader_params, sgabcAttrDiffuseColor, 1);
+    m_diffuse_prop = Abc::OFloatProperty(m_shader_params, sgabcAttrDiffuse, 1);
+    m_opacity_prop = Abc::OFloatProperty(m_shader_params, sgabcAttrOpacity, 1);
+    m_roughness_prop = Abc::OFloatProperty(m_shader_params, sgabcAttrRoughness, 1);
+    m_ambient_color_prop = Abc::OC3fProperty(m_shader_params, sgabcAttrAmbientColor, 1);
+    m_specular_color_prop = Abc::OC3fProperty(m_shader_params, sgabcAttrSpecularColor, 1);
+    m_emissive_color_prop = Abc::OC3fProperty(m_shader_params, sgabcAttrEmissiveColor, 1);
 }
 
 void ABCOMaterialNode::write(double t)
 {
     super::write(t);
+    if (!m_shader_params)
+        return;
+
     const auto& src = *getNode<MaterialNode>();
+    uint32_t wc = m_scene->getWriteCount();
 
     m_use_vertex_color_prop.set(src.use_vertex_color);
     m_double_sided_prop.set(src.double_sided);
@@ -203,6 +212,18 @@ void ABCOMaterialNode::write(double t)
     m_ambient_color_prop.set((abcV3&)src.ambient_color);
     m_specular_color_prop.set((abcV3&)src.specular_color);
     m_emissive_color_prop.set((abcV3&)src.emissive_color);
+
+    auto set_texture = [this, wc](Abc::OStringProperty& prop, const char *prop_name, const TexturePtr& tex) {
+        if (tex) {
+            if (!prop)
+                prop = Abc::OStringProperty(m_shader_params, prop_name, 1);
+            PadSamples(prop, wc);
+            prop.set(tex->file_path);
+        }
+    };
+    set_texture(m_diffuse_texture_prop, sgabcAttrDiffuseTexture, src.diffuse_texture);
+    set_texture(m_opacity_texture_prop, sgabcAttrOpacityTexture, src.opacity_texture);
+    set_texture(m_bump_texture_prop, sgabcAttrBumpTexture, src.bump_texture);
 }
 
 

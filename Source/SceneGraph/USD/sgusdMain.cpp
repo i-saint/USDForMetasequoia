@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <functional>
 #include "../SceneGraph.h"
 #include "../SceneGraphRemote.h"
 

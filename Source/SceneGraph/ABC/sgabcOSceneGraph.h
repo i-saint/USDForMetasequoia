@@ -102,6 +102,7 @@ public:
 protected:
     AbcMaterial::OMaterialSchema m_schema;
 
+    Abc::OCompoundProperty m_shader_params;
     Abc::OBoolProperty  m_use_vertex_color_prop;
     Abc::OBoolProperty  m_double_sided_prop;
     Abc::OC3fProperty   m_diffuse_color_prop;

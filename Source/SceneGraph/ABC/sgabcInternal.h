@@ -4,10 +4,13 @@
 #define sgabcAttrMaterialID         "MID"
 #define sgabcAttrMaterialBinding    "material:binding"
 
+// some of these are based on Preview Material Specification
+// https://github.com/alembic/alembic/wiki/Alembic-Preview-Material-Specification
+
 #define mqabcMaterialTarget         "metasequoia"
 #define sgabcAttrUseVertexColor     "useVertexColor"
 #define sgabcAttrDoubleSided        "doubleSided"
-#define sgabcAttrDiffuseColor       "diffuseColor"
+#define sgabcAttrDiffuseColor       "baseColor"
 #define sgabcAttrDiffuse            "diffuse"
 #define sgabcAttrOpacity            "opacity"
 #define sgabcAttrRoughness          "roughness"
@@ -15,9 +18,12 @@
 #define sgabcAttrEmissiveColor      "emissiveColor"
 #define sgabcAttrSpecularColor      "specularColor"
 
-#define sgabcAttrDiffuseTexture     "diffuseColorTexture"
-#define sgabcAttrOpacityTexture     "opacityTexture"
-#define sgabcAttrBumpTexture        "bumpTexture"
+#define sgabcAttrDiffuseTexture     "baseColorMap"
+#define sgabcAttrOpacityTexture     "opacityMap"
+#define sgabcAttrBumpTexture        "bumpMap"
+#define sgabcAttrNormalTexture      "normalMap"
+#define sgabcAttrRoughnessTexture   "roughnessMap"
+#define sgabcAttrEmissiveTexture    "emissiveColorMap"
 
 #define sgabcAttrWrapS              "wrapS"
 #define sgabcAttrWrapT              "wrapT"

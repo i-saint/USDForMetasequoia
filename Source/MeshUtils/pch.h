@@ -21,6 +21,7 @@
 #include <codecvt>
 #include <locale>
 #include <type_traits>
+#include <functional>
 
 #include "muConfig.h"
 

@@ -32,6 +32,8 @@ inline nanosec MS2NS(float ms) { return (nanosec)((double)ms * 1000000.0); }
 inline nanosec S2NS(float s) { return (nanosec)((double)s * 1000000000.0); }
 inline nanosec S2NS(double s) { return (nanosec)(s * 1000000000.0); }
 
+using PrintHandler = std::function<void(const char*)>;
+void SetPrintHandler(const PrintHandler& v);
 void Print(const char *fmt, ...);
 void Print(const wchar_t *fmt, ...);
 std::string Format(const char *fmt, ...);
