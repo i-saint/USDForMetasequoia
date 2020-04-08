@@ -240,6 +240,25 @@ void USDMeshNode::beforeRead()
             });
         }
     }
+
+    // prepare subsets
+    auto mbapi = UsdShadeMaterialBindingAPI(m_prim);
+    if (auto mat = mbapi.ComputeBoundMaterial()) {
+        // bound single material
+        m_isubsets.resize(1);
+        auto& data = m_isubsets.front();
+        data.dst = std::make_shared<FaceSet>();
+        data.dst->material = m_scene->findNode<MaterialNode>(mat.GetPath().GetString());
+    }
+    else {
+        auto subsets = mbapi.GetMaterialBindSubsets();
+        transform_container(m_isubsets, subsets, [this, &mbapi](SubsetData& data, UsdGeomSubset& subset) {
+            data.subset = subset;
+            data.dst = std::make_shared<FaceSet>();
+            if (auto mat = mbapi.ComputeBoundMaterial())
+                data.dst->material = m_scene->findNode<MaterialNode>(mat.GetPath().GetString());
+        });
+    }
 }
 
 void USDMeshNode::read(double time)
@@ -250,18 +269,14 @@ void USDMeshNode::read(double time)
     auto& dst = *getNode<MeshNode>();
 
     // counts, indices, points
-    {
-        m_mesh.GetFaceVertexCountsAttr().Get(&m_counts, t);
-        dst.counts.share(m_counts.cdata(), m_counts.size());
-    }
-    {
-        m_mesh.GetFaceVertexIndicesAttr().Get(&m_indices, t);
-        dst.indices.share(m_indices.cdata(), m_indices.size());
-    }
-    {
-        m_mesh.GetPointsAttr().Get(&m_points, t);
-        dst.points.share((float3*)m_points.cdata(), m_points.size());
-    }
+    m_mesh.GetFaceVertexCountsAttr().Get(&m_counts, t);
+    dst.counts.share(m_counts.cdata(), m_counts.size());
+
+    m_mesh.GetFaceVertexIndicesAttr().Get(&m_indices, t);
+    dst.indices.share(m_indices.cdata(), m_indices.size());
+
+    m_mesh.GetPointsAttr().Get(&m_points, t);
+    dst.points.share((float3*)m_points.cdata(), m_points.size());
 
 
     auto flatten_primvar = [this, &dst](auto& d, auto& s) {
@@ -338,37 +353,20 @@ void USDMeshNode::read(double time)
         }
     }
 
-    auto mbapi = UsdShadeMaterialBindingAPI(m_prim);
-    // material
-    if (auto mat = mbapi.ComputeBoundMaterial()) {
-        // bound single material
-        dst.facesets.resize(1);
-        auto& faceset = dst.facesets.front();
-        if (!faceset)
-            faceset = std::make_shared<FaceSet>();
-
-        faceset->faces.resize_discard(dst.counts.size());
-        std::iota(faceset->faces.begin(), faceset->faces.end(), 0);
-        faceset->material = m_scene->findNode<MaterialNode>(mat.GetPath().GetString());
-    }
-    else {
-        // handle subsets
-        auto subsets = mbapi.GetMaterialBindSubsets();
-        m_subset_faces.resize(subsets.size());
-        dst.facesets.resize(subsets.size());
-        each_with_index(subsets, [this, &t, &dst](UsdGeomSubset& subset, int i) {
-            auto& faces = m_subset_faces[i];
-            subset.GetIndicesAttr().Get(&faces, t);
-
-            auto& faceset = dst.facesets[i];
-            if (!faceset)
-                faceset = std::make_shared<FaceSet>();
-            faceset->faces.share(faces.cdata(), faces.size());
-
-            if (auto mat = UsdShadeMaterialBindingAPI(subset).ComputeBoundMaterial())
-                faceset->material = m_scene->findNode<MaterialNode>(mat.GetPath().GetString());
-        });
-    }
+    // subsets
+    transform_container(dst.facesets, m_isubsets, [&dst, &t](FaceSetPtr& dfs, SubsetData& data) {
+        auto& faces = data.dst->faces;
+        if (data.subset) {
+            data.subset.GetIndicesAttr().Get(&data.faces_sample, t);
+            faces.share(data.faces_sample.cdata(), data.faces_sample.size());
+        }
+        else {
+            // bound single material
+            faces.resize_discard(dst.counts.size());
+            std::iota(faces.begin(), faces.end(), 0);
+        }
+        dfs = data.dst;
+    });
 
     // validate
     dst.validate();
@@ -463,15 +461,15 @@ void USDMeshNode::write(double time)
         if (!mat)
             continue;
 
-        auto& data = m_subsets[mat->getName()];
+        auto& data = m_osubsets[mat->getName()];
         if (!data.subset) {
             auto mbapi = UsdShadeMaterialBindingAPI(m_prim);
             data.subset = mbapi.CreateMaterialBindSubset(TfToken(mat->getName()), VtArray<int>());
             if (auto mat_node = static_cast<USDMaterialNode*>(mat->impl))
                 UsdShadeMaterialBindingAPI(data.subset.GetPrim()).Bind(mat_node->m_material);
         }
-        data.faces.assign(fs->faces.begin(), fs->faces.end());
-        data.subset.GetIndicesAttr().Set(data.faces, t);
+        data.faces_sample.assign(fs->faces.begin(), fs->faces.end());
+        data.subset.GetIndicesAttr().Set(data.faces_sample, t);
     }
 }
 

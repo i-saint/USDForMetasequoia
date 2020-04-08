@@ -8,10 +8,9 @@ namespace mqusd {
 mqabcImportWindow::mqabcImportWindow(mqabcPlugin* plugin, MQWindowBase& parent)
     : super(parent)
 {
-    setlocale(LC_ALL, "");
-
     m_plugin = plugin;
 
+    setlocale(LC_ALL, "");
     SetTitle(L"Import Alembic");
     SetOutSpace(0.4);
 
@@ -85,6 +84,9 @@ mqabcImportWindow::mqabcImportWindow(mqabcPlugin* plugin, MQWindowBase& parent)
 
 BOOL mqabcImportWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 {
+    m_frame_open->SetVisible(true);
+    m_frame_play->SetVisible(false);
+    m_log->SetText(L"");
     SyncSettings();
     return 0;
 }
@@ -92,10 +94,6 @@ BOOL mqabcImportWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 BOOL mqabcImportWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
     Close();
-    m_plugin->WindowClose();
-
-    m_frame_open->SetVisible(true);
-    m_frame_play->SetVisible(false);
     return 0;
 }
 
@@ -117,9 +115,6 @@ BOOL mqabcImportWindow::OnOpenClicked(MQWidgetBase* sender, MQDocument doc)
             }
         }
     }
-    else {
-    }
-
     return 0;
 }
 

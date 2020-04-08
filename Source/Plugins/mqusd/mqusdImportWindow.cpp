@@ -94,6 +94,8 @@ mqusdImportWindow::mqusdImportWindow(mqusdPlugin* plugin, MQWindowBase& parent)
 
 BOOL mqusdImportWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 {
+    m_frame_open->SetVisible(true);
+    m_frame_play->SetVisible(false);
     m_log->SetText(L"");
     SyncSettings();
     return 0;
@@ -123,9 +125,6 @@ BOOL mqusdImportWindow::OnOpenClicked(MQWidgetBase* sender, MQDocument doc)
             }
         }
     }
-    else {
-    }
-
     return 0;
 }
 
