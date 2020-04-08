@@ -456,6 +456,8 @@ void ABCIScene::read()
 {
     g_current_scene = this;
     double time = m_scene->time_current;
+    if (IsDefaultTime(time))
+        time = 0.0;
 
     for (auto& n : m_nodes)
         n->read(time);

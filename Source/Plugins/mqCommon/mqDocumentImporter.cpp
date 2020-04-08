@@ -50,56 +50,35 @@ bool DocumentImporter::initialize(MQDocument doc, bool insert)
     if (!m_insert)
         clearDocument(doc);
 
-    {
-        m_mesh_nodes = m_scene->getNodes<MeshNode>();
-        size_t nobjs = m_mesh_nodes.size();
-        m_obj_records.resize(nobjs);
-        for (size_t oi = 0; oi < nobjs; ++oi) {
-            auto& rec = m_obj_records[oi];
-            rec.node = m_mesh_nodes[oi];
-            rec.node->userdata = &rec;
-            rec.blendshape_ids.resize(rec.node->blendshapes.size());
-        }
-    }
-    {
-        auto inst_nodes = m_scene->getNodes<InstancerNode>();
-        size_t ninsts = inst_nodes.size();
-        m_inst_records.resize(ninsts);
-        for (size_t oi = 0; oi < ninsts; ++oi) {
-            auto& rec = m_inst_records[oi];
-            rec.node = inst_nodes[oi];
-            rec.node->userdata = &rec;
-        }
-    }
-    {
-        auto skel_nodes = m_scene->getNodes<SkeletonNode>();
-        size_t nskels = skel_nodes.size();
-        m_skel_records.resize(nskels);
-        for (size_t si = 0; si < nskels; ++si) {
-            auto& rec = m_skel_records[si];
-            rec.node = skel_nodes[si];
-            rec.node->userdata = &rec;
+    m_mesh_nodes = m_scene->getNodes<MeshNode>();
+    transform_container(m_obj_records, m_mesh_nodes, [](auto& rec, MeshNode* node) {
+        rec.node = node;
+        rec.node->userdata = &rec;
+        rec.blendshape_ids.resize(rec.node->blendshapes.size());
+    });
 
-            size_t njoints = rec.node->joints.size();
-            rec.joints.resize(njoints);
-            for (size_t ji = 0; ji < njoints; ++ji) {
-                auto& jrec = rec.joints[ji];
-                jrec.joint = rec.node->joints[ji].get();
-                jrec.joint->userdata = &jrec;
-            }
-        }
-    }
-    {
-        m_material_nodes = m_scene->getNodes<MaterialNode>();
-        size_t nobjs = m_material_nodes.size();
-        m_material_records.resize(nobjs);
-        for (size_t oi = 0; oi < nobjs; ++oi) {
-            auto& rec = m_material_records[oi];
-            rec.node = m_material_nodes[oi];
-            rec.node->userdata = &rec;
-        }
-    }
+    transform_container(m_inst_records, m_scene->getNodes<InstancerNode>(), [](auto& rec, InstancerNode* node) {
+        rec.node = node;
+        rec.node->userdata = &rec;
+    });
+    
+    transform_container(m_skel_records, m_scene->getNodes<SkeletonNode>(), [](auto& rec, SkeletonNode* node) {
+        rec.node = node;
+        rec.node->userdata = &rec;
 
+        size_t njoints = rec.node->joints.size();
+        rec.joints.resize(njoints);
+        for (size_t ji = 0; ji < njoints; ++ji) {
+            auto& jrec = rec.joints[ji];
+            jrec.joint = rec.node->joints[ji].get();
+            jrec.joint->userdata = &jrec;
+        }
+    });
+
+    transform_container(m_material_records, m_scene->getNodes<MaterialNode>(), [](auto& rec, MaterialNode* node) {
+        rec.node = node;
+        rec.node->userdata = &rec;
+    });
 
     read(doc, mqusd::default_time);
     return true;
@@ -596,10 +575,8 @@ static int ToMQWrapMode(WrapMode v)
 bool DocumentImporter::updateMaterials(MQDocument doc)
 {
     // create / update materials
-    each_with_index(m_material_nodes, [&](MaterialNode* node, int mi) {
-        auto& src = *node;
-        auto& rec = m_material_records[mi];
-        rec.node = node;
+    for (auto& rec : m_material_records) {
+        auto& src = *rec.node;
 
         MQMaterial mqmat = rec.mqid != 0 ? doc->GetMaterialFromUniqueID(rec.mqid) : nullptr;
         if (!mqmat) {
@@ -630,7 +607,7 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
             mqmat->SetAlphaName(src.opacity_texture->file_path.c_str());
         if (src.bump_texture)
             mqmat->SetBumpName(src.bump_texture->file_path.c_str());
-    });
+    }
 
     // update indices
     each_material(doc, [this](MQMaterial mat, int mi) {

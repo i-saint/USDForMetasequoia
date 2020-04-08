@@ -78,7 +78,6 @@ private:
 
     Scene* m_scene = nullptr;
     std::vector<MeshNode*> m_mesh_nodes;
-    std::vector<MaterialNode*> m_material_nodes;
 
     std::vector<ObjectRecord> m_obj_records;
     std::vector<InstancerRecord> m_inst_records;

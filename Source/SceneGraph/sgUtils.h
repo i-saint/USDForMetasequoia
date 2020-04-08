@@ -143,6 +143,14 @@ inline void transform_container(DstContainer& dst, SrcContainer& src, const Conv
     for (auto& v : src)
         c(*d++, v);
 }
+template<class DstContainer, class SrcContainer, class Convert>
+inline void transform_container(DstContainer& dst, const SrcContainer& src, const Convert& c)
+{
+    dst.resize(src.size());
+    auto d = dst.begin();
+    for (auto& v : src)
+        c(*d++, v);
+}
 
 template<class Container, class Condition>
 inline void erase_if(Container& dst, const Condition& cond)
