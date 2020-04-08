@@ -4,6 +4,24 @@
 #define sgabcAttrMaterialID         "MID"
 #define sgabcAttrMaterialBinding    "material:binding"
 
+#define mqabcMaterialTarget         "metasequoia"
+#define sgabcAttrUseVertexColor     "useVertexColor"
+#define sgabcAttrDoubleSided        "doubleSided"
+#define sgabcAttrDiffuseColor       "diffuseColor"
+#define sgabcAttrDiffuse            "diffuse"
+#define sgabcAttrOpacity            "opacity"
+#define sgabcAttrRoughness          "roughness"
+#define sgabcAttrAmbientColor       "ambientColor"
+#define sgabcAttrEmissiveColor      "emissiveColor"
+#define sgabcAttrSpecularColor      "specularColor"
+
+#define sgabcAttrDiffuseTexture     "diffuseColorTexture"
+#define sgabcAttrOpacityTexture     "opacityTexture"
+#define sgabcAttrBumpTexture        "bumpTexture"
+
+#define sgabcAttrWrapS              "wrapS"
+#define sgabcAttrWrapT              "wrapT"
+
 
 #include "../SceneGraph.h"
 #include "../sgUtils.h"

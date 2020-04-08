@@ -180,4 +180,9 @@ std::string SanitizeNodePath(const std::string& path);
 std::string GetParentPath(const std::string& path);
 const char* GetLeafName(const std::string& path);
 
+std::string ToString(ShaderType v);
+std::string ToString(WrapMode v);
+ShaderType ToShaderType(const std::string& v);
+WrapMode ToWrapMode(const std::string& v);
+
 } // namespace sg

@@ -74,23 +74,6 @@ template<class T> inline void GetValue(const T& src, std::string& v, UsdTimeCode
         }
     }
 }
-
-inline ShaderType ToShaderType(const std::string& v)
-{
-    if (v == sgusdShaderMQClassic)
-        return ShaderType::MQClassic;
-    else if (v == sgusdShaderMQConstant)
-        return ShaderType::MQConstant;
-    else if (v == sgusdShaderMQLambert)
-        return ShaderType::MQLambert;
-    else if (v == sgusdShaderMQPhong)
-        return ShaderType::MQPhong;
-    else if (v == sgusdShaderMQBlinn)
-        return ShaderType::MQBlinn;
-    else if (v == sgusdShaderMQHLSL)
-        return ShaderType::MQHLSL;
-    return ShaderType::Unknown;
-}
 template<class T> inline void GetValue(const T& src, ShaderType& v, UsdTimeCode t = { default_time })
 {
     if (src) {
@@ -98,19 +81,6 @@ template<class T> inline void GetValue(const T& src, ShaderType& v, UsdTimeCode 
         src.Get(&tmp, t);
         v = ToShaderType(tmp.GetString());
     }
-}
-
-inline WrapMode ToWrapMode(const std::string& v)
-{
-    if (v == sgusdWrapClamp)
-        return WrapMode::Clamp;
-    else if (v == sgusdWrapRepeat)
-        return WrapMode::Repeat;
-    else if (v == sgusdWrapMirror)
-        return WrapMode::Mirror;
-    else if (v == sgusdWrapBlack)
-        return WrapMode::Black;
-    return WrapMode::Clamp;
 }
 template<class T> inline void GetValue(const T& src, WrapMode& v, UsdTimeCode t = { default_time })
 {
@@ -157,33 +127,10 @@ template<class T> inline void SetValue(const T& dst, const std::string& v, UsdTi
             dst.Set(SdfAssetPath(v), t);
     }
 }
-
-inline std::string ToString(ShaderType v)
-{
-    switch (v) {
-    case ShaderType::MQClassic: return sgusdShaderMQClassic;
-    case ShaderType::MQConstant:return sgusdShaderMQConstant;
-    case ShaderType::MQLambert: return sgusdShaderMQLambert;
-    case ShaderType::MQPhong:   return sgusdShaderMQPhong;
-    case ShaderType::MQBlinn:   return sgusdShaderMQBlinn;
-    case ShaderType::MQHLSL:    return sgusdShaderMQHLSL;
-    default: return "";
-    }
-}
 template<class T> inline void SetValue(const T& dst, const ShaderType& v, UsdTimeCode t = { default_time })
 {
     if (dst)
         dst.Set(TfToken(ToString(v)), t);
-}
-
-inline std::string ToString(WrapMode v)
-{
-    switch (v) {
-    case WrapMode::Clamp:   return sgusdWrapClamp;
-    case WrapMode::Repeat:  return sgusdWrapRepeat;
-    case WrapMode::Mirror:  return sgusdWrapMirror;
-    default: return "";
-    }
 }
 template<class T> inline void SetValue(const T& dst, const WrapMode& v, UsdTimeCode t = { default_time })
 {

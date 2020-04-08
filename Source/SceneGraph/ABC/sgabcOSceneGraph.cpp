@@ -171,11 +171,38 @@ ABCOMaterialNode::ABCOMaterialNode(ABCONode* parent, Abc::OObject* obj)
 void ABCOMaterialNode::beforeWrite()
 {
     super::beforeWrite();
+    const auto& src = *getNode<MaterialNode>();
+
+    auto shader_type = ToString(src.shader_type);
+    m_schema.setShader(mqabcMaterialTarget, shader_type, src.getName());
+
+    auto params = m_schema.getShaderParameters(mqabcMaterialTarget, shader_type);
+    m_use_vertex_color_prop = Abc::OBoolProperty(params, sgabcAttrUseVertexColor, 1);
+    m_double_sided_prop = Abc::OBoolProperty(params, sgabcAttrDoubleSided, 1);
+    m_diffuse_color_prop = Abc::OC3fProperty(params, sgabcAttrDiffuseColor, 1);
+    m_diffuse_prop = Abc::OFloatProperty(params, sgabcAttrDiffuse, 1);
+    m_opacity_prop = Abc::OFloatProperty(params, sgabcAttrOpacity, 1);
+    m_roughness_prop = Abc::OFloatProperty(params, sgabcAttrRoughness, 1);
+    m_ambient_color_prop = Abc::OC3fProperty(params, sgabcAttrAmbientColor, 1);
+    m_specular_color_prop = Abc::OC3fProperty(params, sgabcAttrSpecularColor, 1);
+    m_emissive_color_prop = Abc::OC3fProperty(params, sgabcAttrEmissiveColor, 1);
+
 }
 
 void ABCOMaterialNode::write(double t)
 {
     super::write(t);
+    const auto& src = *getNode<MaterialNode>();
+
+    m_use_vertex_color_prop.set(src.use_vertex_color);
+    m_double_sided_prop.set(src.double_sided);
+    m_diffuse_color_prop.set((abcV3&)src.diffuse_color);
+    m_diffuse_prop.set(src.diffuse);
+    m_opacity_prop.set(src.opacity);
+    m_roughness_prop.set(src.roughness);
+    m_ambient_color_prop.set((abcV3&)src.ambient_color);
+    m_specular_color_prop.set((abcV3&)src.specular_color);
+    m_emissive_color_prop.set((abcV3&)src.emissive_color);
 }
 
 
@@ -259,12 +286,11 @@ void ABCOScene::write()
     g_current_scene = this;
     double time = m_scene->time_current;
 
-    if (m_write_count == 0) {
-        for (auto& n : m_nodes)
+    for (auto& n : m_nodes) {
+        if (n->m_write_count++ == 0)
             n->beforeWrite();
-    }
-    for (auto& n : m_nodes)
         n->write(time);
+    }
     ++m_write_count;
 
     if (!std::isnan(time)) {

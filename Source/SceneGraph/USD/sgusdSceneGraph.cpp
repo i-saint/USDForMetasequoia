@@ -1215,12 +1215,11 @@ void USDScene::write()
     g_current_scene = this;
     double time = m_scene->time_current;
 
-    if (m_write_count == 0) {
-        for (auto& n : m_nodes)
+    for (auto& n : m_nodes) {
+        if (n->m_write_count++ == 0)
             n->beforeWrite();
-    }
-    for (auto& n : m_nodes)
         n->write(time);
+    }
     ++m_write_count;
 
     if (!std::isnan(time) && time > m_max_time) {

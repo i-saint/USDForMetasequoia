@@ -247,14 +247,69 @@ ABCIMaterialNode::ABCIMaterialNode(ABCINode* parent, Abc::IObject& obj)
     setNode(CreateNode<MaterialNode>(parent, obj));
 }
 
+void ABCIMaterialNode::beforeRead()
+{
+    super::beforeRead();
+    auto& dst = *getNode<MaterialNode>();
+
+    std::vector<std::string> shader_types;
+    m_schema.getShaderTypesForTarget(mqabcMaterialTarget, shader_types);
+    if (!shader_types.empty()) {
+        ShaderType st = ToShaderType(shader_types.front());
+        if (st != ShaderType::Unknown) {
+            dst.shader_type = st;
+            auto params = m_schema.getShaderParameters(mqabcMaterialTarget, shader_types.front());
+            m_use_vertex_color_prop = Abc::IBoolProperty(params, sgabcAttrUseVertexColor, 1);
+            m_double_sided_prop = Abc::IBoolProperty(params, sgabcAttrDoubleSided, 1);
+            m_diffuse_color_prop = Abc::IC3fProperty(params, sgabcAttrDiffuseColor, 1);
+            m_diffuse_prop = Abc::IFloatProperty(params, sgabcAttrDiffuse, 1);
+            m_opacity_prop = Abc::IFloatProperty(params, sgabcAttrOpacity, 1);
+            m_roughness_prop = Abc::IFloatProperty(params, sgabcAttrRoughness, 1);
+            m_ambient_color_prop = Abc::IC3fProperty(params, sgabcAttrAmbientColor, 1);
+            m_specular_color_prop = Abc::IC3fProperty(params, sgabcAttrSpecularColor, 1);
+            m_emissive_color_prop = Abc::IC3fProperty(params, sgabcAttrEmissiveColor, 1);
+        }
+    }
+    read(default_time);
+}
+
+static inline void GetValue(const Abc::IBoolProperty& prop, bool& dst, const Abc::ISampleSelector& iss)
+{
+    if (!prop || prop.getNumSamples() == 0)
+        return;
+    Abc::bool_t tmp;
+    prop.get(tmp, iss);
+    dst = tmp;
+}
+static inline void GetValue(const Abc::IFloatProperty& prop, float& dst, const Abc::ISampleSelector& iss)
+{
+    if (!prop || prop.getNumSamples() == 0)
+        return;
+    prop.get(dst, iss);
+}
+static inline void GetValue(const Abc::IC3fProperty& prop, float3& dst, const Abc::ISampleSelector& iss)
+{
+    if (!prop || prop.getNumSamples() == 0)
+        return;
+    prop.get((abcC3&)dst, iss);
+}
+
 void ABCIMaterialNode::read(double time)
 {
     super::read(time);
+    auto& dst = *getNode<MaterialNode>();
 
     Abc::ISampleSelector iss(time);
-    // todo
+    GetValue(m_use_vertex_color_prop, dst.use_vertex_color, iss);
+    GetValue(m_double_sided_prop, dst.double_sided, iss);
+    GetValue(m_diffuse_color_prop, dst.diffuse_color, iss);
+    GetValue(m_diffuse_prop, dst.diffuse, iss);
+    GetValue(m_opacity_prop, dst.opacity, iss);
+    GetValue(m_roughness_prop, dst.roughness, iss);
+    GetValue(m_ambient_color_prop, dst.ambient_color, iss);
+    GetValue(m_specular_color_prop, dst.specular_color, iss);
+    GetValue(m_emissive_color_prop, dst.emissive_color, iss);
 }
-
 
 
 static thread_local ABCIScene* g_current_scene;

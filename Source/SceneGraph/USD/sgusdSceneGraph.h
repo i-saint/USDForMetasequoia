@@ -47,6 +47,7 @@ public:
     Node* m_node = nullptr;
     USDNode* m_parent = nullptr;
     std::vector<USDNode*> m_children;
+    uint32_t m_write_count = 0;
 };
 using USDNodePtr = std::shared_ptr<USDNode>;
 

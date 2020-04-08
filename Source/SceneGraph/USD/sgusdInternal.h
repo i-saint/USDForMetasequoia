@@ -3,18 +3,6 @@
 #define sgusdAttrMaterialIDs    TfToken("materialIds")
 #define sgusdAttrST             TfToken("st")
 
-#define sgusdShaderMQClassic    "mq:classic"
-#define sgusdShaderMQConstant   "mq:constant"
-#define sgusdShaderMQLambert    "mq:lambert"
-#define sgusdShaderMQPhong      "mq:phong"
-#define sgusdShaderMQBlinn      "mq:blinn"
-#define sgusdShaderMQHLSL       "mq:hlsl"
-
-#define sgusdWrapBlack  "black"
-#define sgusdWrapClamp  "clamp"
-#define sgusdWrapRepeat "repeat"
-#define sgusdWrapMirror "mirror"
-
 // Metasequoia-specific parameters
 #define sgusdAttrShaderType      TfToken("shaderType")
 #define sgusdAttrUseVertexColor  TfToken("useVertexColor")

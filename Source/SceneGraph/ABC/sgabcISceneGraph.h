@@ -89,18 +89,25 @@ class ABCIMaterialNode : public ABCINode
 using super = ABCINode;
 public:
     ABCIMaterialNode(ABCINode* parent, Abc::IObject& obj);
+    void beforeRead() override;
     void read(double time) override;
 
 protected:
     AbcMaterial::IMaterialSchema m_schema;
-    Abc::IBoolProperty m_use_vertex_color_prop;
-    Abc::IBoolProperty m_double_sided_prop;
-    Abc::IC3fProperty m_color_prop;
+
+    Abc::IBoolProperty  m_use_vertex_color_prop;
+    Abc::IBoolProperty  m_double_sided_prop;
+    Abc::IC3fProperty   m_diffuse_color_prop;
     Abc::IFloatProperty m_diffuse_prop;
-    Abc::IFloatProperty m_alpha_prop;
-    Abc::IC3fProperty m_ambient_prop;
-    Abc::IC3fProperty m_specular_prop;
-    Abc::IC3fProperty m_emission_prop;
+    Abc::IFloatProperty m_opacity_prop;
+    Abc::IFloatProperty m_roughness_prop;
+    Abc::IC3fProperty   m_ambient_color_prop;
+    Abc::IC3fProperty   m_specular_color_prop;
+    Abc::IC3fProperty   m_emissive_color_prop;
+
+    Abc::IStringProperty m_diffuse_texture_prop;
+    Abc::IStringProperty m_opacity_texture_prop;
+    Abc::IStringProperty m_bump_texture_prop;
 };
 
 

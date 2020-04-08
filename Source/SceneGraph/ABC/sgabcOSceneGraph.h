@@ -30,6 +30,7 @@ public:
     Node* m_node = nullptr;
     ABCONode* m_parent = nullptr;
     std::vector<ABCONode*> m_children;
+    uint32_t m_write_count = 0;
 };
 sgDeclPtr(ABCONode);
 
@@ -100,14 +101,20 @@ public:
 
 protected:
     AbcMaterial::OMaterialSchema m_schema;
-    Abc::OBoolProperty m_use_vertex_color_prop;
-    Abc::OBoolProperty m_double_sided_prop;
-    Abc::OC3fProperty m_color_prop;
+
+    Abc::OBoolProperty  m_use_vertex_color_prop;
+    Abc::OBoolProperty  m_double_sided_prop;
+    Abc::OC3fProperty   m_diffuse_color_prop;
     Abc::OFloatProperty m_diffuse_prop;
-    Abc::OFloatProperty m_alpha_prop;
-    Abc::OC3fProperty m_ambient_prop;
-    Abc::OC3fProperty m_specular_prop;
-    Abc::OC3fProperty m_emission_prop;
+    Abc::OFloatProperty m_opacity_prop;
+    Abc::OFloatProperty m_roughness_prop;
+    Abc::OC3fProperty   m_ambient_color_prop;
+    Abc::OC3fProperty   m_specular_color_prop;
+    Abc::OC3fProperty   m_emissive_color_prop;
+
+    Abc::OStringProperty m_diffuse_texture_prop;
+    Abc::OStringProperty m_opacity_texture_prop;
+    Abc::OStringProperty m_bump_texture_prop;
 };
 
 #undef DefSchemaTraits
