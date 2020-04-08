@@ -39,7 +39,7 @@ void USDNode::beforeRead()
 {
 }
 
-void USDNode::read(double time)
+void USDNode::read(UsdTimeCode t)
 {
 }
 
@@ -47,7 +47,7 @@ void USDNode::beforeWrite()
 {
 }
 
-void USDNode::write(double time)
+void USDNode::write(UsdTimeCode t)
 {
 
 }
@@ -90,11 +90,10 @@ USDXformNode::USDXformNode(Node* n, UsdPrim prim)
     m_xform = UsdGeomXformable(prim);
 }
 
-void USDXformNode::read(double time)
+void USDXformNode::read(UsdTimeCode t)
 {
-    super::read(time);
+    super::read(t);
     auto& dst = *getNode<XformNode>();
-    auto t = m_scene->toTimeCode(time);
 
     // visibility
     TfToken vis;
@@ -121,11 +120,10 @@ void USDXformNode::read(double time)
         dst.global_matrix = dst.local_matrix;
 }
 
-void USDXformNode::write(double time)
+void USDXformNode::write(UsdTimeCode t)
 {
-    super::write(time);
+    super::write(t);
     const auto& src = *getNode<XformNode>();
-    auto t = m_scene->toTimeCode(time);
 
     // visibility
     m_xform.GetVisibilityAttr().Set(src.visibility ? TfToken() : UsdGeomTokens->invisible, t);
@@ -261,11 +259,9 @@ void USDMeshNode::beforeRead()
     }
 }
 
-void USDMeshNode::read(double time)
+void USDMeshNode::read(UsdTimeCode t)
 {
-    super::read(time);
-
-    auto t = m_scene->toTimeCode(time);
+    super::read(t);
     auto& dst = *getNode<MeshNode>();
 
     // counts, indices, points
@@ -314,7 +310,7 @@ void USDMeshNode::read(double time)
 
     // blendshape weights
     if (m_animation && m_blendshapes.size() == m_blendshape_ids.size()) {
-        auto& data = m_animation->getBlendshapeData(time);
+        auto& data = m_animation->getBlendshapeData(t);
         auto get_weight = [&data](const std::string& id) {
             auto it = std::lower_bound(data.begin(), data.end(), id, [](auto* a, auto& b) {
                 return a->id < b;
@@ -427,12 +423,11 @@ void USDMeshNode::beforeWrite()
     }
 }
 
-void USDMeshNode::write(double time)
+void USDMeshNode::write(UsdTimeCode t)
 {
-    super::write(time);
-
-    auto t = m_scene->toTimeCode(time);
+    super::write(t);
     auto& src = *getNode<MeshNode>();
+
     {
         m_counts.assign(src.counts.begin(), src.counts.end());
         m_mesh.GetFaceVertexCountsAttr().Set(m_counts, t);
@@ -489,9 +484,9 @@ USDBlendshapeNode::USDBlendshapeNode(Node* n, UsdPrim prim)
     m_blendshape = UsdSkelBlendShape(prim);
 }
 
-void USDBlendshapeNode::read(double time)
+void USDBlendshapeNode::read(UsdTimeCode t)
 {
-    super::read(time);
+    super::read(t);
     auto& dst = *getNode<BlendshapeNode>();
 
     m_blendshape.GetPointIndicesAttr().Get(&m_point_indices);
@@ -641,11 +636,9 @@ void USDSkeletonNode::beforeRead()
     super::beforeRead();
 }
 
-void USDSkeletonNode::read(double time)
+void USDSkeletonNode::read(UsdTimeCode t)
 {
-    super::read(time);
-
-    auto t = m_scene->toTimeCode(time);
+    super::read(t);
     auto& dst = *getNode<SkeletonNode>();
 
     // bindpose
@@ -710,11 +703,9 @@ void USDSkeletonNode::beforeWrite()
     }
 }
 
-void USDSkeletonNode::write(double time)
+void USDSkeletonNode::write(UsdTimeCode t)
 {
-    super::write(time);
-
-    auto t = m_scene->toTimeCode(time);
+    super::write(t);
     // todo
 }
 
@@ -751,12 +742,10 @@ void USDSkelAnimationNode::beforeRead()
     }
 }
 
-std::vector<const USDSkelAnimationNode::BlendshapeData*>& USDSkelAnimationNode::getBlendshapeData(double time)
+std::vector<const USDSkelAnimationNode::BlendshapeData*>& USDSkelAnimationNode::getBlendshapeData(UsdTimeCode t)
 {
-    if (time != m_prev_read) {
-        m_prev_read = time;
-
-        auto t = m_scene->toTimeCode(time);
+    if (t != m_prev_read) {
+        m_prev_read = t;
         m_anim.GetBlendShapeWeightsAttr().Get(&m_bs_weights, t);
         if (m_bs_weights.size() == m_blendshapes.size()) {
             transform_container(m_blendshapes, m_bs_weights, [](auto& d, float s) {
@@ -798,11 +787,9 @@ void USDInstancerNode::beforeRead()
     }
 }
 
-void USDInstancerNode::read(double time)
+void USDInstancerNode::read(UsdTimeCode t)
 {
-    super::read(time);
-
-    auto t = m_scene->toTimeCode(time);
+    super::read(t);
     auto& dst = *getNode<InstancerNode>();
 
     m_instancer.GetProtoIndicesAttr().Get(&m_proto_indices, t);
@@ -828,11 +815,9 @@ void USDInstancerNode::beforeWrite()
     }
 }
 
-void USDInstancerNode::write(double time)
+void USDInstancerNode::write(UsdTimeCode t)
 {
-    super::write(time);
-
-    auto t = m_scene->toTimeCode(time);
+    super::write(t);
     const auto& src = *getNode<InstancerNode>();
 
     m_proto_indices.assign(src.proto_indices.begin(), src.proto_indices.end());
@@ -910,12 +895,11 @@ void USDMaterialNode::beforeRead()
     });
 }
 
-void USDMaterialNode::read(double time)
+void USDMaterialNode::read(UsdTimeCode t)
 {
-    super::read(time);
-
-    auto t = m_scene->toTimeCode(time);
+    super::read(t);
     auto& dst = *getNode<MaterialNode>();
+
     if (m_surface) {
         GetValue(m_in_use_vertex_color, dst.use_vertex_color, t);
         GetValue(m_in_double_sided, dst.double_sided, t);
@@ -1201,9 +1185,10 @@ void USDScene::read()
 {
     g_current_scene = this;
     double time = m_scene->time_current;
+    UsdTimeCode t = toTimeCode(time);
 
     for (auto& n : m_nodes)
-        n->read(time);
+        n->read(t);
     ++m_read_count;
 }
 
@@ -1211,11 +1196,12 @@ void USDScene::write()
 {
     g_current_scene = this;
     double time = m_scene->time_current;
+    UsdTimeCode t = toTimeCode(time);
 
     for (auto& n : m_nodes) {
         if (n->m_write_count++ == 0)
             n->beforeWrite();
-        n->write(time);
+        n->write(t);
     }
     ++m_write_count;
 

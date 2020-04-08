@@ -21,10 +21,10 @@ public:
     virtual ~USDNode();
 
     virtual void beforeRead();
-    virtual void read(double time);
+    virtual void read(UsdTimeCode t);
 
     virtual void beforeWrite();
-    virtual void write(double time);
+    virtual void write(UsdTimeCode t);
 
     void setNode(Node *node);
     std::string getPath() const;
@@ -72,8 +72,8 @@ public:
 
     USDXformNode(USDNode* parent, UsdPrim prim, bool create_node = true);
     USDXformNode(Node* n, UsdPrim prim);
-    void read(double time) override;
-    void write(double time) override;
+    void read(UsdTimeCode t) override;
+    void write(UsdTimeCode t) override;
 
 private:
     UsdGeomXformable m_xform;
@@ -89,7 +89,7 @@ public:
 
     USDBlendshapeNode(USDNode* parent, UsdPrim prim);
     USDBlendshapeNode(Node* n, UsdPrim prim);
-    void read(double time) override;
+    void read(UsdTimeCode t) override;
     void beforeWrite() override;
 
 private:
@@ -132,9 +132,9 @@ public:
     USDSkeletonNode(USDNode* parent, UsdPrim prim);
     USDSkeletonNode(Node* n, UsdPrim prim);
     void beforeRead() override;
-    void read(double time) override;
+    void read(UsdTimeCode t) override;
     void beforeWrite() override;
-    void write(double time) override;
+    void write(UsdTimeCode t) override;
 
 private:
     UsdSkelSkeleton m_skel;
@@ -161,11 +161,11 @@ public:
 
     // will be called from USDMeshNode. USDMeshNode's read() possibly be called before USDSkelAnimationNode's.
     // so this method will do read data from USD on-demand.
-    std::vector<const BlendshapeData*>& getBlendshapeData(double time);
+    std::vector<const BlendshapeData*>& getBlendshapeData(UsdTimeCode t);
 
 private:
     UsdSkelAnimation m_anim;
-    double m_prev_read = -1.0;
+    UsdTimeCode m_prev_read = UsdTimeCode(-1);
     std::vector<BlendshapeData> m_blendshapes;
     std::vector<const BlendshapeData*> m_blendshapes_sorted;
     VtArray<float> m_bs_weights;
@@ -174,16 +174,16 @@ private:
 
 class USDMeshNode : public USDXformNode
 {
-    using super = USDXformNode;
+using super = USDXformNode;
 public:
     DefSchemaTraits(UsdGeomMesh, "Mesh");
 
     USDMeshNode(USDNode* parent, UsdPrim prim);
     USDMeshNode(Node* n, UsdPrim prim);
     void beforeRead() override;
-    void read(double time) override;
+    void read(UsdTimeCode t) override;
     void beforeWrite() override;
-    void write(double time) override;
+    void write(UsdTimeCode t) override;
 
 public:
     UsdGeomMesh m_mesh;
@@ -234,9 +234,9 @@ public:
     USDInstancerNode(USDNode* parent, UsdPrim prim);
     USDInstancerNode(Node* n, UsdPrim prim);
     void beforeRead() override;
-    void read(double time) override;
+    void read(UsdTimeCode t) override;
     void beforeWrite() override;
-    void write(double time) override;
+    void write(UsdTimeCode t) override;
 
 public:
     UsdGeomPointInstancer m_instancer;
@@ -258,7 +258,7 @@ public:
     USDMaterialNode(USDNode* parent, UsdPrim prim);
     USDMaterialNode(Node* n, UsdPrim prim);
     void beforeRead() override;
-    void read(double time) override;
+    void read(UsdTimeCode t) override;
     void beforeWrite() override;
 
 public:
