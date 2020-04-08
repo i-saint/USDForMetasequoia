@@ -149,12 +149,13 @@ void ABCOMeshNode::write(double t)
         m_rgba_param.set(m_rgba);
     }
 
+
     for (auto& fs : src.facesets) {
         auto mat = fs->material;
         if (!mat)
             continue;
 
-        auto& data = m_facesets[mat->getName()];
+        auto& data = m_facesets[mat->id];
         if (!data.faceset) {
             auto ofs = m_schema.createFaceSet(mat->getName());
             data.faceset = ofs.getSchema();
@@ -171,7 +172,11 @@ void ABCOMeshNode::write(double t)
         PadSamples(data.faceset, wc, data.sample);
 
         data.sample.setFaces(Abc::Int32ArraySample(fs->faces.cdata(), fs->faces.size()));
+    }
+    for (auto& kvp : m_facesets) {
+        auto& data = kvp.second;
         data.faceset.set(data.sample);
+        data.sample = {};
     }
 }
 

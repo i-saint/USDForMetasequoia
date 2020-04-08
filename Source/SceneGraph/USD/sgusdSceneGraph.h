@@ -217,11 +217,11 @@ public:
     struct SubsetData
     {
         UsdGeomSubset subset;
-        VtArray<int> faces_sample;
+        VtArray<int> sample;
         FaceSetPtr dst;
     };
     std::vector<SubsetData> m_isubsets;
-    std::map<std::string, SubsetData> m_osubsets;
+    std::map<uint32_t, SubsetData> m_osubsets;
 };
 
 
@@ -316,6 +316,7 @@ public:
 
     UsdStageRefPtr& getStage();
     UsdTimeCode toTimeCode(double time) const;
+    UsdTimeCode getPrevTime() const;
     USDNode* findUSDNodeImpl(const std::string& path);
     Node* findNodeImpl(const std::string& path);
 
@@ -343,6 +344,7 @@ private:
     USDRootNode* m_root = nullptr;
 
     Scene* m_scene = nullptr;
+    UsdTimeCode m_prev_time;
     int m_read_count = 0;
     int m_write_count = 0;
     double m_frame_rate = 30.0;

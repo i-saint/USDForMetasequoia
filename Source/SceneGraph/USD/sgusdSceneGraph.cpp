@@ -253,7 +253,7 @@ void USDMeshNode::beforeRead()
         transform_container(m_isubsets, subsets, [this, &mbapi](SubsetData& data, UsdGeomSubset& subset) {
             data.subset = subset;
             data.dst = std::make_shared<FaceSet>();
-            if (auto mat = mbapi.ComputeBoundMaterial())
+            if (auto mat = UsdShadeMaterialBindingAPI(subset).ComputeBoundMaterial())
                 data.dst->material = m_scene->findNode<MaterialNode>(mat.GetPath().GetString());
         });
     }
@@ -353,8 +353,8 @@ void USDMeshNode::read(UsdTimeCode t)
     transform_container(dst.facesets, m_isubsets, [&dst, &t](FaceSetPtr& dfs, SubsetData& data) {
         auto& faces = data.dst->faces;
         if (data.subset) {
-            data.subset.GetIndicesAttr().Get(&data.faces_sample, t);
-            faces.share(data.faces_sample.cdata(), data.faces_sample.size());
+            data.subset.GetIndicesAttr().Get(&data.sample, t);
+            faces.share(data.sample.cdata(), data.sample.size());
         }
         else {
             // bound single material
@@ -451,20 +451,30 @@ void USDMeshNode::write(UsdTimeCode t)
         m_pv_colors.Set(m_colors, t);
     }
 
+    // subsets
     for (auto& fs : src.facesets) {
         auto mat = fs->material;
         if (!mat)
             continue;
 
-        auto& data = m_osubsets[mat->getName()];
+        auto& data = m_osubsets[mat->id];
         if (!data.subset) {
-            auto mbapi = UsdShadeMaterialBindingAPI(m_prim);
-            data.subset = mbapi.CreateMaterialBindSubset(TfToken(mat->getName()), VtArray<int>());
+            //std::string name = mu::Format("mat%8x", mat->id);
+            data.subset = UsdShadeMaterialBindingAPI(m_prim).CreateMaterialBindSubset(TfToken(mat->getName()), VtArray<int>());
             if (auto mat_node = static_cast<USDMaterialNode*>(mat->impl))
                 UsdShadeMaterialBindingAPI(data.subset.GetPrim()).Bind(mat_node->m_material);
+
+            // pad empty sample as default value
+            auto prev = m_scene->getPrevTime();
+            if (t != prev)
+                data.subset.GetIndicesAttr().Set(VtArray<int>(), prev);
         }
-        data.faces_sample.assign(fs->faces.begin(), fs->faces.end());
-        data.subset.GetIndicesAttr().Set(data.faces_sample, t);
+        data.sample.assign(fs->faces.begin(), fs->faces.end());
+    }
+    for (auto& kvp : m_osubsets) {
+        auto& data = kvp.second;
+        data.subset.GetIndicesAttr().Set(data.sample, t);
+        data.sample = {};
     }
 }
 
@@ -1197,6 +1207,8 @@ void USDScene::write()
     g_current_scene = this;
     double time = m_scene->time_current;
     UsdTimeCode t = toTimeCode(time);
+    if (m_write_count == 0)
+        m_prev_time = t;
 
     for (auto& n : m_nodes) {
         if (n->m_write_count++ == 0)
@@ -1204,6 +1216,7 @@ void USDScene::write()
         n->write(t);
     }
     ++m_write_count;
+    m_prev_time = t;
 
     if (!std::isnan(time) && time > m_max_time) {
         m_stage->SetEndTimeCode(time * m_frame_rate);
@@ -1297,6 +1310,11 @@ UsdStageRefPtr& USDScene::getStage()
 UsdTimeCode USDScene::toTimeCode(double time) const
 {
     return UsdTimeCode(time * m_frame_rate);
+}
+
+UsdTimeCode USDScene::getPrevTime() const
+{
+    return m_prev_time;
 }
 
 USDNode* USDScene::findUSDNodeImpl(const std::string& path)

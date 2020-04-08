@@ -86,7 +86,7 @@ protected:
         AbcGeom::OFaceSetSchema faceset;
         AbcGeom::OFaceSetSchema::Sample sample;
     };
-    std::map<std::string, FacesetData> m_facesets;
+    std::map<uint32_t, FacesetData> m_facesets;
 };
 
 

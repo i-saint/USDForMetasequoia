@@ -54,7 +54,7 @@ private:
     struct MaterialRecord
     {
         bool updated = false;
-        MaterialNode* material_data = nullptr;
+        MaterialNode* node = nullptr;
     };
 
     ObjectRecord* findRecord(UINT mqid);

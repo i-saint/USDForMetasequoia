@@ -201,13 +201,20 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
         each_material(doc, [this](MQMaterial mat, int mi) {
             auto& rec = m_material_records[mat->GetUniqueID()];
             rec.updated = true;
-            if (!rec.material_data)
-                rec.material_data = m_scene->createNode<MaterialNode>(m_root, GetName(mat).c_str());
-            rec.material_data->index = mi;
-            m_material_nodes[mi] = rec.material_data;
-            extractMaterial(mat, *rec.material_data);
+            if (!rec.node)
+                rec.node = m_scene->createNode<MaterialNode>(m_root, GetName(mat).c_str());
+            rec.node->index = mi;
+            m_material_nodes[mi] = rec.node;
+            extractMaterial(mat, *rec.node);
         });
-        erase_if(m_material_records, [](auto& rec) { return !rec.updated; });
+        erase_if(m_material_records, [](auto& rec) {
+            if (!rec.updated) {
+                if (rec.node)
+                    rec.node->removed = true;
+                return true;
+            }
+            return false;
+        });
     }
 
     // skeleton

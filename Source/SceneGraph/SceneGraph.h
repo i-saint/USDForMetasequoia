@@ -117,6 +117,7 @@ public:
 
     void* impl = nullptr;
     void* userdata = nullptr;
+    bool removed = false;
 };
 sgSerializable(Node);
 sgDeclPtr(Node);
