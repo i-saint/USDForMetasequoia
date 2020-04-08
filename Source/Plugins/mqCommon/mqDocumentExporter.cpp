@@ -294,6 +294,9 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst, XformNode& xf)
         dst.global_matrix = xf.global_matrix;
     }
 
+    // visibility
+    dst.visibility = obj->GetVisible() != 0;
+
 
     int nfaces = obj->GetFaceCount();
     int npoints = obj->GetVertexCount();

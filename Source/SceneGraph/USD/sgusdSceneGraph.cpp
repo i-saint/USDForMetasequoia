@@ -93,10 +93,23 @@ USDXformNode::USDXformNode(Node* n, UsdPrim prim)
 void USDXformNode::read(double time)
 {
     super::read(time);
-
-    auto t = m_scene->toTimeCode(time);
     auto& dst = *getNode<XformNode>();
+    auto t = m_scene->toTimeCode(time);
 
+    // visibility
+    TfToken vis;
+    if (m_xform.GetVisibilityAttr().Get(&vis, t)) {
+        if (vis == UsdGeomTokens->inherited) {
+            if (auto px = dst.parent->cast<XformNode>())
+                dst.visibility = px->visibility;
+            else
+                dst.visibility = true;
+        }
+        else
+            dst.visibility = vis != UsdGeomTokens->invisible;
+    }
+
+    // transform
     GfMatrix4d mat;
     bool reset_stack = false;
     m_xform.GetLocalTransformation(&mat, &reset_stack, t);
@@ -111,10 +124,13 @@ void USDXformNode::read(double time)
 void USDXformNode::write(double time)
 {
     super::write(time);
-
-    auto t = m_scene->toTimeCode(time);
     const auto& src = *getNode<XformNode>();
+    auto t = m_scene->toTimeCode(time);
 
+    // visibility
+    m_xform.GetVisibilityAttr().Set(src.visibility ? TfToken() : UsdGeomTokens->invisible, t);
+
+    // transform
     if (src.local_matrix != float4x4::identity()) {
         if (m_xf_ops.empty()) {
             m_xf_ops.push_back(m_xform.AddTransformOp());
@@ -574,7 +590,7 @@ void USDSkelRootNode::beforeRead()
             if (auto usd_anim = m_scene->findNode<USDSkelAnimationNode>(paths.front().GetString())) {
                 // update child meshes
                 eachChildR([usd_anim](USDNode* n) {
-                    if (auto usd_mesh = dynamic_cast<USDMeshNode*>(n))
+                    if (auto usd_mesh = n->cast<USDMeshNode>())
                         usd_mesh->m_animation = usd_anim;
                 });
             }
@@ -592,7 +608,7 @@ void USDSkelRootNode::beforeRead()
 
                 // update child meshes
                 eachChildR([usd_skel, skel](USDNode* n) {
-                    if (auto usd_mesh = dynamic_cast<USDMeshNode*>(n)) {
+                    if (auto usd_mesh = n->cast<USDMeshNode>()) {
                         usd_mesh->m_skeleton = usd_skel;
                         usd_mesh->getNode<MeshNode>()->skeleton = skel;
                     }

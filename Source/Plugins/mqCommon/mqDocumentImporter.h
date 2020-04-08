@@ -8,6 +8,7 @@ struct ImportOptions : public ConvertOptions
     bool import_blendshapes = true;
     bool import_skeletons = true;
     bool import_materials = true;
+    bool import_visibility = true;
     bool merge_meshes = false;
     bool bake_meshes = false;
 

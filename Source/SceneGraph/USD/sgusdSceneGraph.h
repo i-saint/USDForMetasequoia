@@ -29,6 +29,9 @@ public:
     void setNode(Node *node);
     std::string getPath() const;
 
+    template<class NodeT>
+    NodeT* cast() { return dynamic_cast<NodeT*>(this); }
+
     template<class Body>
     void eachChildR(const Body& body)
     {

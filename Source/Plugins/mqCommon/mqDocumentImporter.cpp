@@ -17,6 +17,7 @@ bool ImportOptions::operator==(const ImportOptions& v) const
         import_blendshapes == v.import_blendshapes &&
         import_skeletons == v.import_skeletons &&
         import_materials == v.import_materials &&
+        import_visibility == v.import_visibility &&
         merge_meshes == v.merge_meshes &&
         bake_meshes == v.bake_meshes;
 }
@@ -32,6 +33,7 @@ bool ImportOptions::mayChangeAffectsNodeStructure(const ImportOptions& v) const
         import_blendshapes != v.import_blendshapes ||
         import_skeletons != v.import_skeletons ||
         import_materials != v.import_materials ||
+        // ignore import_visibility
         merge_meshes != v.merge_meshes ||
         bake_meshes != v.bake_meshes;
 }
@@ -382,6 +384,11 @@ bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNo
         obj->SetTranslation(to_point(t));
         obj->SetRotation(to_angle(r));
         obj->SetScaling(to_point(s));
+    }
+
+    // visibility
+    if (m_options->import_visibility) {
+        obj->SetVisible(src.visibility ? 0xFFFFFFFF : 0);
     }
 
 

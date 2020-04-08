@@ -76,6 +76,9 @@ public:
     const std::string& getPath() const;
     std::string makeUniqueName(const char *name);
 
+    template<class NodeT>
+    NodeT* cast() { return dynamic_cast<NodeT*>(this); }
+
     template<class Body>
     void eachChild(const Body& body)
     {
@@ -150,6 +153,7 @@ public:
 
 public:
     // serializable
+    bool visibility = true;
     float4x4 local_matrix = float4x4::identity();
     float4x4 global_matrix = float4x4::identity();
 

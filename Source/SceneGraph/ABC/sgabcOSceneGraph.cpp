@@ -81,6 +81,8 @@ ABCOXformNode::ABCOXformNode(ABCONode* parent, Abc::OObject* obj)
 {
     m_schema = dynamic_cast<AbcGeom::OXform*>(m_obj)->getSchema();
     setNode(CreateNode<XformNode>(parent, obj));
+
+    m_visibility_prop = AbcGeom::CreateVisibilityProperty(*m_obj, 1);
 }
 
 void ABCOXformNode::write(double t)
@@ -88,6 +90,11 @@ void ABCOXformNode::write(double t)
     super::write(t);
     const auto& src = *getNode<XformNode>();
 
+    // visibility
+    int8_t vis = int8_t(src.visibility ? AbcGeom::kVisibilityVisible : AbcGeom::kVisibilityHidden);
+    m_visibility_prop.set(vis);
+
+    // transform
     double4x4 mat;
     mat.assign(src.local_matrix);
     m_sample.setMatrix((abcM44d&)mat);
@@ -100,6 +107,8 @@ ABCOMeshNode::ABCOMeshNode(ABCONode* parent, Abc::OObject* obj)
 {
     m_schema = dynamic_cast<AbcGeom::OPolyMesh*>(m_obj)->getSchema();
     setNode(CreateNode<MeshNode>(parent, obj));
+
+    m_visibility_prop = AbcGeom::CreateVisibilityProperty(*m_obj, 1);
 }
 
 void ABCOMeshNode::beforeWrite()
@@ -112,6 +121,10 @@ void ABCOMeshNode::write(double t)
     super::write(t);
     const auto& src = *getNode<MeshNode>();
     uint32_t wc = (uint32_t)m_schema.getNumSamples();
+
+    // visibility
+    int8_t vis = int8_t(src.visibility ? AbcGeom::kVisibilityVisible : AbcGeom::kVisibilityHidden);
+    m_visibility_prop.set(vis);
 
     m_sample.reset();
     m_sample.setFaceIndices(Abc::Int32ArraySample(src.indices.cdata(), src.indices.size()));

@@ -56,6 +56,7 @@ public:
 
 protected:
     AbcGeom::OXformSchema m_schema;
+    AbcGeom::OVisibilityProperty m_visibility_prop;
     AbcGeom::XformSample m_sample;
 };
 
@@ -72,6 +73,7 @@ public:
 
 protected:
     AbcGeom::OPolyMeshSchema m_schema;
+    AbcGeom::OVisibilityProperty m_visibility_prop;
     AbcGeom::OC4fGeomParam m_rgba_param;
     AbcGeom::OInt32ArrayProperty m_mids_prop;
 

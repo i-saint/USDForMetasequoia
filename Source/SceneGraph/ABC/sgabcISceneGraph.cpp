@@ -122,22 +122,29 @@ ABCIXformNode::ABCIXformNode(ABCINode* parent, Abc::IObject& obj)
 {
     m_schema = AbcGeom::IXform(m_obj).getSchema();
     setNode(CreateNode<XformNode>(parent, obj));
+
+    m_visibility_prop = AbcGeom::GetVisibilityProperty(m_obj);
 }
 
 void ABCIXformNode::read(double time)
 {
     super::read(time);
     auto& dst = *getNode<XformNode>();
-
-    if (m_schema.getNumSamples() == 0)
-        return;
-
     Abc::ISampleSelector iss(time);
-    m_schema.get(m_sample, iss);
 
-    auto matd = m_sample.getMatrix();
-    dst.local_matrix.assign((double4x4&)matd);
+    // visibility
+    if (m_visibility_prop && m_visibility_prop.getNumSamples() != 0) {
+        int8_t v;
+        m_visibility_prop.get(v, iss);
+        dst.visibility = v != AbcGeom::kVisibilityHidden;
+    }
 
+    // transform
+    if (m_schema.getNumSamples() != 0) {
+        m_schema.get(m_sample, iss);
+        auto matd = m_sample.getMatrix();
+        dst.local_matrix.assign((double4x4&)matd);
+    }
     UpdateGlobalMatrix(dst);
 }
 
@@ -147,6 +154,8 @@ ABCIMeshNode::ABCIMeshNode(ABCINode* parent, Abc::IObject& obj)
 {
     m_schema = AbcGeom::IPolyMesh(m_obj).getSchema();
     setNode(CreateNode<MeshNode>(parent, obj));
+
+    m_visibility_prop = AbcGeom::GetVisibilityProperty(m_obj);
 }
 
 void ABCIMeshNode::beforeRead()
@@ -189,15 +198,22 @@ void ABCIMeshNode::read(double time)
 {
     super::read(time);
     auto& dst = *getNode<MeshNode>();
+    Abc::ISampleSelector iss(time);
 
     // alembic's mesh is not xformable, but USD's and our intermediate data is.
     // so, need to update global matrix.
     UpdateGlobalMatrix(dst);
 
+    // visibility
+    if (m_visibility_prop && m_visibility_prop.getNumSamples() != 0) {
+        int8_t v;
+        m_visibility_prop.get(v, iss);
+        dst.visibility = v != AbcGeom::kVisibilityHidden;
+    }
+
     if (m_schema.getNumSamples() == 0)
         return;
 
-    Abc::ISampleSelector iss(time);
     m_schema.get(m_sample, iss);
 
     {

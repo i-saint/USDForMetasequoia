@@ -161,7 +161,7 @@ Node::Type RootNode::getType() const
 
 
 #define EachMember(F)\
-    F(local_matrix) F(global_matrix)
+    F(visibility) F(local_matrix) F(global_matrix)
 
 void XformNode::serialize(serializer& s)
 {
