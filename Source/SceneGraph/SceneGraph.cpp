@@ -909,7 +909,7 @@ Node::Type SkelRootNode::getType() const
 
 
 #define EachMember(F)\
-    F(path) F(display_name) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)
+    F(path) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)
 
 void Joint::serialize(serializer& s)
 {
@@ -955,11 +955,6 @@ Joint::Joint(SkeletonNode* s, const std::string& p)
 std::string Joint::getName() const
 {
     return GetLeafName(path);
-}
-
-std::string Joint::getDisplayName() const
-{
-    return display_name.empty() ? getName() : display_name;
 }
 
 std::tuple<float3, quatf, float3> Joint::getLocalTRS() const
@@ -1054,11 +1049,9 @@ void SkeletonNode::clear()
     joints.clear();
 }
 
-Joint* SkeletonNode::addJoint(const std::string& jpath_, const std::string& dname)
+Joint* SkeletonNode::addJoint(const std::string& jpath)
 {
-    auto jpath = EncodeNodePath(jpath_);
     auto ret = new Joint(this, jpath);
-    ret->display_name = dname;
     ret->index = (int)joints.size();
     joints.push_back(JointPtr(ret));
     return ret;

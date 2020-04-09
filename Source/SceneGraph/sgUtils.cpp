@@ -76,7 +76,9 @@ std::string EncodeNodePath(const std::string& v)
                 if (s[n] == '/' || s[n] == '\0')
                     break;
             }
-            EncodeNodeNameImpl(r, s, n);
+            std::string tmp;
+            EncodeNodeNameImpl(tmp, s, n);
+            r += tmp;
             s += n;
         }
         else
@@ -135,7 +137,9 @@ std::string DecodeNodePath(const std::string& v)
                 if (s[n] == '/' || s[n] == '\0')
                     break;
             }
-            DecodeNodeNameImpl(r, s, n);
+            std::string tmp;
+            DecodeNodeNameImpl(tmp, s, n);
+            r += tmp;
             s += n;
         }
         else

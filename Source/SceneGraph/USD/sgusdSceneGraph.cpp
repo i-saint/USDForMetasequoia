@@ -664,7 +664,7 @@ USDSkeletonNode::USDSkeletonNode(USDNode* parent, UsdPrim prim)
     VtArray<TfToken> data;
     m_skel.GetJointsAttr().Get(&data);
     for (auto& token : data)
-        dst.addJoint(token.GetString());
+        dst.addJoint(DecodeNodePath(token.GetString()));
 }
 
 USDSkeletonNode::USDSkeletonNode(Node* n, UsdPrim prim)
@@ -725,7 +725,7 @@ void USDSkeletonNode::beforeWrite()
     {
         VtArray<TfToken> data;
         transform_container(data, src.joints, [](TfToken& dst, auto& joint) {
-            dst = TfToken(joint->path);
+            dst = TfToken(EncodeNodePath(joint->path));
         });
         m_skel.GetJointsAttr().Set(data);
     }

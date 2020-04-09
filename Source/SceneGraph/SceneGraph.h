@@ -236,7 +236,6 @@ public:
     void resolve();
 
     std::string getName() const;
-    std::string getDisplayName() const;
     std::tuple<float3, quatf, float3> getLocalTRS() const;
     std::tuple<float3, quatf, float3> getGlobalTRS() const;
     void setLocalTRS(const float3& t, const quatf& r, const float3& s);
@@ -245,7 +244,6 @@ public:
 public:
     // serializable
     std::string path;
-    std::string display_name;
     int index = 0;
     float4x4 bindpose = float4x4::identity(); // world space. *not* inverted
     float4x4 restpose = float4x4::identity(); // default pose. local space
@@ -275,7 +273,7 @@ public:
     void convert(const ConvertOptions& opt) override;
 
     void clear();
-    Joint* addJoint(const std::string& path, const std::string& display_name = "");
+    Joint* addJoint(const std::string& path);
     void updateGlobalMatrices(const float4x4& base);
 
     Joint* findJointByPath(const std::string& path);
