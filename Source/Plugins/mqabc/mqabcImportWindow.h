@@ -46,6 +46,7 @@ private:
     MQCheckBox* m_check_flip_faces = nullptr;
 
     MQCheckBox* m_check_merge = nullptr;
+    MQCheckBox* m_check_merge_only_visible = nullptr;
     MQMemo* m_log = nullptr;
 
 

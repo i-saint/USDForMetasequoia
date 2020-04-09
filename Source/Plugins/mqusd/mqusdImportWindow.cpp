@@ -71,11 +71,20 @@ mqusdImportWindow::mqusdImportWindow(mqusdPlugin* plugin, MQWindowBase& parent)
         m_check_skeletons = CreateCheckBox(vf, L"Import Skeletons");
         m_check_skeletons->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
 
+        m_check_instancers = CreateCheckBox(vf, L"Import Instancers");
+        m_check_instancers->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
+
         m_check_bake = CreateCheckBox(vf, L"Bake Meshes");
         m_check_bake->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
 
         m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
         m_check_merge->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
+
+        hf = CreateHorizontalFrame(vf);
+        MQLabel* space = CreateLabel(hf, L" ");
+        space->SetWidth(32);
+        m_check_merge_only_visible = CreateCheckBox(hf, L"Only Visible");
+        m_check_merge_only_visible->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
     }
 
     {
@@ -170,8 +179,10 @@ BOOL mqusdImportWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     opt.flip_faces = m_check_flip_faces->GetChecked();
     opt.import_blendshapes = m_check_blendshapes->GetChecked();
     opt.import_skeletons = m_check_skeletons->GetChecked();
+    opt.import_instancers = m_check_instancers->GetChecked();
     opt.bake_meshes = m_check_bake->GetChecked();
     opt.merge_meshes = m_check_merge->GetChecked();
+    opt.merge_only_visible = m_check_merge_only_visible->GetChecked();
 
     Refresh(doc);
     return 0;
@@ -203,8 +214,10 @@ void mqusdImportWindow::SyncSettings()
     m_check_flip_faces->SetChecked(opt.flip_faces);
     m_check_blendshapes->SetChecked(opt.import_blendshapes);
     m_check_skeletons->SetChecked(opt.import_skeletons);
+    m_check_instancers->SetChecked(opt.import_instancers);
     m_check_bake->SetChecked(opt.bake_meshes);
     m_check_merge->SetChecked(opt.merge_meshes);
+    m_check_merge_only_visible->SetChecked(opt.merge_only_visible);
 
     UpdateRelations();
 }

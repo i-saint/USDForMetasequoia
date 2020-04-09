@@ -66,6 +66,12 @@ mqabcImportWindow::mqabcImportWindow(mqabcPlugin* plugin, MQWindowBase& parent)
 
         m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
         m_check_merge->AddChangedEvent(this, &mqabcImportWindow::OnSettingsUpdate);
+
+        hf = CreateHorizontalFrame(vf);
+        MQLabel* space = CreateLabel(hf, L" ");
+        space->SetWidth(32);
+        m_check_merge_only_visible = CreateCheckBox(hf, L"Only Visible");
+        m_check_merge_only_visible->AddChangedEvent(this, &mqabcImportWindow::OnSettingsUpdate);
     }
 
     {
@@ -157,6 +163,7 @@ BOOL mqabcImportWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     opt.flip_yz = m_check_flip_yz->GetChecked();
     opt.flip_faces = m_check_flip_faces->GetChecked();
     opt.merge_meshes = m_check_merge->GetChecked();
+    opt.merge_only_visible = m_check_merge_only_visible->GetChecked();
 
     Refresh(doc);
     return 0;
@@ -175,6 +182,7 @@ void mqabcImportWindow::SyncSettings()
     m_check_flip_yz->SetChecked(opt.flip_yz);
     m_check_flip_faces->SetChecked(opt.flip_faces);
     m_check_merge->SetChecked(opt.merge_meshes);
+    m_check_merge_only_visible->SetChecked(opt.merge_only_visible);
 }
 
 void mqabcImportWindow::LogInfo(const char* message)

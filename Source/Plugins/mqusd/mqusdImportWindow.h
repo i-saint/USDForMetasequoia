@@ -48,8 +48,10 @@ private:
 
     MQCheckBox* m_check_blendshapes = nullptr;
     MQCheckBox* m_check_skeletons = nullptr;
+    MQCheckBox* m_check_instancers = nullptr;
     MQCheckBox* m_check_bake = nullptr;
     MQCheckBox* m_check_merge = nullptr;
+    MQCheckBox* m_check_merge_only_visible = nullptr;
 
     MQMemo* m_log = nullptr;
 

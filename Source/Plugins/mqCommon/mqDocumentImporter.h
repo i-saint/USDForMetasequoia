@@ -5,13 +5,15 @@ namespace mqusd {
 
 struct ImportOptions : public ConvertOptions
 {
-    bool import_blendshapes = true;
-    bool import_skeletons = true;
-    bool import_materials = true;
     bool import_visibility = true;
+    bool import_transform = true;
+    bool import_blendshapes = false;
+    bool import_skeletons = true;
+    bool import_instancers = false;
+    bool import_materials = true;
+    bool bake_meshes = false;
     bool merge_meshes = false;
     bool merge_only_visible = true;
-    bool bake_meshes = false;
 
     ImportOptions();
     bool operator==(const ImportOptions& v) const;

@@ -14,12 +14,15 @@ bool ImportOptions::operator==(const ImportOptions& v) const
 {
     return
         ConvertOptions::operator==(v) &&
+        import_visibility == v.import_visibility &&
+        import_transform == v.import_transform &&
         import_blendshapes == v.import_blendshapes &&
         import_skeletons == v.import_skeletons &&
+        import_instancers == v.import_instancers &&
         import_materials == v.import_materials &&
-        import_visibility == v.import_visibility &&
+        bake_meshes == v.bake_meshes &&
         merge_meshes == v.merge_meshes &&
-        bake_meshes == v.bake_meshes;
+        merge_only_visible == v.merge_only_visible;
 }
 
 bool ImportOptions::operator!=(const ImportOptions& v) const
@@ -29,13 +32,14 @@ bool ImportOptions::operator!=(const ImportOptions& v) const
 
 bool ImportOptions::mayChangeAffectsNodeStructure(const ImportOptions& v) const
 {
+    // ignore import_visibility, import_transform, merge_only_visible
     return
         import_blendshapes != v.import_blendshapes ||
         import_skeletons != v.import_skeletons ||
+        import_instancers != v.import_instancers ||
         import_materials != v.import_materials ||
-        // ignore import_visibility
-        merge_meshes != v.merge_meshes ||
-        bake_meshes != v.bake_meshes;
+        bake_meshes != v.bake_meshes ||
+        merge_meshes != v.merge_meshes;
 }
 
 
@@ -81,7 +85,7 @@ bool DocumentImporter::initialize(MQDocument doc, bool additive)
         rec.node->userdata = &rec;
     });
 
-    read(doc, mqusd::default_time);
+    read(doc, m_scene->time_start);
     return true;
 }
 
@@ -93,6 +97,10 @@ void DocumentImporter::clearDocument(MQDocument doc)
     MQEachMaterial(doc, [doc](MQMaterial /*mat*/, int i) {
         doc->DeleteMaterial(i);
     });
+
+    // todo:
+    // as of 4.70, there is no way to clear bones...
+
     doc->Compact();
 }
 
@@ -271,9 +279,11 @@ bool DocumentImporter::read(MQDocument doc, double t)
                 }
             }
         }
-        for (auto& rec : m_inst_records) {
-            if (valid_node(rec.node))
-                rec.node->bake(m_merged_mesh, rec.node->global_matrix);
+        if (m_options->import_instancers) {
+            for (auto& rec : m_inst_records) {
+                if (valid_node(rec.node))
+                    rec.node->bake(m_merged_mesh, rec.node->global_matrix);
+            }
         }
         m_merged_mesh.validate();
 
@@ -335,11 +345,13 @@ bool DocumentImporter::read(MQDocument doc, double t)
             }
         }
 
-        for (auto& rec : m_inst_records) {
-            auto obj = handle_mqobject(rec);
-            rec.tmp_mesh.clear();
-            rec.node->bake(rec.tmp_mesh, rec.node->global_matrix);
-            updateMesh(doc, obj, rec.tmp_mesh);
+        if (m_options->import_instancers) {
+            for (auto& rec : m_inst_records) {
+                auto obj = handle_mqobject(rec);
+                rec.tmp_mesh.clear();
+                rec.node->bake(rec.tmp_mesh, rec.node->global_matrix);
+                updateMesh(doc, obj, rec.tmp_mesh);
+            }
         }
     }
 
@@ -355,7 +367,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
 bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNode& src)
 {
     // transform
-    {
+    if (m_options->import_transform) {
         float3 t; quatf r; float3 s;
         mu::extract_trs(src.global_matrix, t, r, s);
         obj->SetTranslation(to_point(t));
