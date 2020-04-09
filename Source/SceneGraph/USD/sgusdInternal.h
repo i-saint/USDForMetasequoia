@@ -1,5 +1,6 @@
 #pragma once
 
+#define sgusdAttrDisplayName    TfToken("displayName")
 #define sgusdAttrST             TfToken("st")
 
 // Metasequoia-specific parameters

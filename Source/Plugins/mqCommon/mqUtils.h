@@ -53,31 +53,11 @@ inline void each_material(MQDocument doc, const Body& body)
     }
 }
 
-inline std::string GetName(MQObject obj)
-{
-    char buf[256] = "";
-    obj->GetName(buf, sizeof(buf));
-    return buf;
-}
+std::string GetName(MQObject obj);
+std::string GetPath(MQDocument doc, MQObject obj);
+std::string GetName(MQMaterial obj);
 
-inline std::string GetPath(MQDocument doc, MQObject obj)
-{
-    std::string ret;
-    if (auto parent = doc->GetParentObject(obj))
-        ret += GetPath(doc, parent);
-    ret += '/';
-
-    char buf[256] = "";
-    obj->GetName(buf, sizeof(buf));
-    ret += buf;
-    return ret;
-}
-
-inline std::string GetName(MQMaterial obj)
-{
-    char buf[256] = "";
-    obj->GetName(buf, sizeof(buf));
-    return buf;
-}
+void SetName(MQObject obj, const std::string& name);
+void SetName(MQMaterial obj, const std::string& name);
 
 } // namespace mqusd

@@ -57,6 +57,8 @@ Node* DocumentExporter::findOrCreateNode(UINT mqid)
                 rec->mesh_data = std::make_shared<MeshNode>();
                 rec->xform = rec->mesh = rec->mesh_data.get();
                 rec->blendshape = m_scene->createNode<BlendshapeNode>(base_mesh, rec->name.c_str());
+                rec->blendshape->display_name = rec->name;
+
                 base_mesh->blendshapes.push_back(rec->blendshape);
             }
             ret = rec->blendshape;
@@ -74,6 +76,7 @@ Node* DocumentExporter::findOrCreateNode(UINT mqid)
                 else {
                     rec->xform = rec->mesh = m_scene->createNode<MeshNode>(parent, rec->name.c_str());
                 }
+                rec->mesh->display_name = rec->name;
             }
             ret = rec->xform;
         }
@@ -201,8 +204,11 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
         each_material(doc, [this](MQMaterial mat, int mi) {
             auto& rec = m_material_records[mat->GetUniqueID()];
             rec.updated = true;
-            if (!rec.node)
-                rec.node = m_scene->createNode<MaterialNode>(m_root, GetName(mat).c_str());
+            if (!rec.node) {
+                auto node_name = mu::Format("mqmat%08x", mat->GetUniqueID());
+                rec.node = m_scene->createNode<MaterialNode>(m_root, node_name.c_str());
+            }
+            rec.node->display_name = GetName(mat);
             rec.node->index = mi;
             m_material_nodes[mi] = rec.node;
             extractMaterial(mat, *rec.node);

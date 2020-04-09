@@ -53,4 +53,57 @@ const char* GetLeafName(const std::string& path)
         return path.c_str() + (pos + 1);
 }
 
+std::string GetName(MQObject obj)
+{
+#if MQPLUGIN_VERSION >= 0x0470
+    wchar_t buf[256] = L"";
+    obj->GetNameW(buf, sizeof(buf));
+    return mu::ToMBS(buf);
+#else
+    char buf[256] = "";
+    obj->GetName(buf, sizeof(buf));
+    return buf;
+#endif
+}
+
+std::string GetPath(MQDocument doc, MQObject obj)
+{
+    std::string ret;
+    if (auto parent = doc->GetParentObject(obj))
+        ret += GetPath(doc, parent);
+    ret += '/';
+    ret += GetName(obj);
+    return ret;
+}
+
+std::string GetName(MQMaterial obj)
+{
+#if MQPLUGIN_VERSION >= 0x0470
+    wchar_t buf[256] = L"";
+    obj->GetNameW(buf, sizeof(buf));
+    return mu::ToMBS(buf);
+#else
+    char buf[256] = "";
+    obj->GetName(buf, sizeof(buf));
+    return buf;
+#endif
+}
+
+void SetName(MQObject obj, const std::string& name)
+{
+#if MQPLUGIN_VERSION >= 0x0470
+    obj->SetName(mu::ToWCS(name).c_str());
+#else
+    obj->SetName(name.c_str());
+#endif
+}
+void SetName(MQMaterial obj, const std::string& name)
+{
+#if MQPLUGIN_VERSION >= 0x0470
+    obj->SetName(mu::ToWCS(name).c_str());
+#else
+    obj->SetName(name.c_str());
+#endif
+}
+
 } // namespace mqusd

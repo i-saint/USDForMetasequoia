@@ -321,7 +321,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
                 auto bs = findOrCreateMQObject(doc, rec.blendshape_ids[bi], rec.mqid, created);
                 updateMesh(doc, bs, rec.tmp_mesh);
                 if (created) {
-                    bs->SetName(makeUniqueObjectName(doc, blendshape->getName()).c_str());
+                    SetName(bs, makeUniqueObjectName(doc, blendshape->getDisplayName()).c_str());
                     bs->SetVisible(0);
 #if MQPLUGIN_VERSION >= 0x0470
                     m_morph_manager->BindTargetObject(obj, bs);
@@ -338,7 +338,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
             bool created;
             auto obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
             if (created)
-                obj->SetName(makeUniqueObjectName(doc, rec.node->getName()).c_str());
+                SetName(obj, makeUniqueObjectName(doc, rec.node->getDisplayName()).c_str());
             return obj;
         };
 
@@ -587,11 +587,11 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
         MQMaterial mqmat = rec.mqid != 0 ? doc->GetMaterialFromUniqueID(rec.mqid) : nullptr;
         if (!mqmat) {
             mqmat = MQ_CreateMaterial();
-            mqmat->SetName(makeUniqueMaterialName(doc, src.getName()).c_str());
             src.index = doc->AddMaterial(mqmat);
             rec.mqid = mqmat->GetUniqueID();
         }
 
+        SetName(mqmat, makeUniqueMaterialName(doc, src.getDisplayName()));
         mqmat->SetShader(ToMQShader(src.shader_type));
         mqmat->SetVertexColor(src.use_vertex_color ? MQMATERIAL_VERTEXCOLOR_DIFFUSE : MQMATERIAL_VERTEXCOLOR_DISABLE);
         mqmat->SetDoubleSided(src.double_sided);

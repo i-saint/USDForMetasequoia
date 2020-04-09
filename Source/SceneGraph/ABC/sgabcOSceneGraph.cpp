@@ -54,6 +54,15 @@ void ABCONode::beforeWrite()
 
 void ABCONode::write(double /*t*/)
 {
+    const auto& src = *getNode();
+
+    // display name
+    if (!src.display_name.empty() && !m_display_name_prop) {
+        m_display_name_prop = Abc::OStringProperty(m_obj->getProperties(), sgabcAttrDisplayName, 1);
+        PadSamples(m_display_name_prop, m_scene->getWriteCount());
+    }
+    if (m_display_name_prop)
+        m_display_name_prop.set(src.display_name);
 }
 
 void ABCONode::setNode(Node* node)

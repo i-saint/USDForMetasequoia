@@ -1,5 +1,6 @@
 #pragma once
 
+#define sgabcAttrDisplayName        "displayName"
 #define sgabcAttrVertexColor        "C"
 #define sgabcAttrMaterialBinding    "material:binding"
 

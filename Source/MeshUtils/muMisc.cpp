@@ -98,7 +98,29 @@ std::string ToUTF8(const char *src)
     return src;
 #endif
 }
+std::string ToUTF8(const wchar_t* src)
+{
+#ifdef _WIN32
+    // to UTF-8
+    int u8size = ::WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)src, -1, nullptr, 0, nullptr, nullptr);
+    if (u8size > 0)
+        --u8size; // remove last '\0'
+    std::string u8s;
+    u8s.resize(u8size);
+    ::WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)src, -1, (LPSTR)u8s.data(), u8size, nullptr, nullptr);
+    return u8s;
+#else
+    std::string ret;
+    ret.resize(std::wcslen(src) * 8);
+    ret.resize(std::wcstombs(&ret[0], src, ret.size()));
+    return ret;
+#endif
+}
 std::string ToUTF8(const std::string& src)
+{
+    return ToUTF8(src.c_str());
+}
+std::string ToUTF8(const std::wstring& src)
 {
     return ToUTF8(src.c_str());
 }
@@ -126,25 +148,61 @@ std::string ToANSI(const char *src)
     return src;
 #endif
 }
+
+std::string ToANSI(const wchar_t* src)
+{
+#ifdef _WIN32
+    // to ANSI
+    int u8size = ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)src, -1, nullptr, 0, nullptr, nullptr);
+    if (u8size > 0)
+        --u8size; // remove last '\0'
+    std::string u8s;
+    u8s.resize(u8size);
+    ::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)src, -1, (LPSTR)u8s.data(), u8size, nullptr, nullptr);
+    return u8s;
+#else
+    std::string ret;
+    ret.resize(std::wcslen(src) * 8);
+    ret.resize(std::wcstombs(&ret[0], src, ret.size()));
+    return ret;
+#endif
+}
+
 std::string ToANSI(const std::string& src)
+{
+    return ToANSI(src.c_str());
+}
+std::string ToANSI(const std::wstring& src)
 {
     return ToANSI(src.c_str());
 }
 
 std::string ToMBS(const wchar_t *src)
 {
-    using converter_t = std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>;
-    return converter_t().to_bytes(src);
+    return ToUTF8(src);
 }
 std::string ToMBS(const std::wstring& src)
 {
-    return ToMBS(src.c_str());
+    return ToUTF8(src);
 }
 
-std::wstring ToWCS(const char *src)
+std::wstring ToWCS(const char* src)
 {
-    using converter_t = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>;
-    return converter_t().from_bytes(src);
+#ifdef _WIN32
+    // to UTF-16
+    int wsize = ::MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)src, -1, nullptr, 0);
+    if (wsize > 0)
+        --wsize; // remove last '\0'
+    std::wstring ws;
+    ws.resize(wsize);
+    ::MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)src, -1, (LPWSTR)ws.data(), wsize);
+    return ws;
+#else
+    std::wstring ret;
+    ret.resize(std::strlen(src) * 8);
+    ret.resize(std::mbstowcs(&ret[0], src, ret.size()));
+    return ret;
+#endif
 }
 std::wstring ToWCS(const std::string& src)
 {

@@ -38,13 +38,18 @@ void Print(const char *fmt, ...);
 void Print(const wchar_t *fmt, ...);
 std::string Format(const char *fmt, ...);
 
-std::string ToUTF8(const char *src);
+std::string ToUTF8(const char* src);
+std::string ToUTF8(const wchar_t* src);
 std::string ToUTF8(const std::string& src);
-std::string ToANSI(const char *src);
+std::string ToUTF8(const std::wstring& src);
+std::string ToANSI(const char* src);
+std::string ToANSI(const wchar_t* src);
 std::string ToANSI(const std::string& src);
-std::string ToMBS(const wchar_t *src);
+std::string ToANSI(const std::wstring& src);
+
+std::string ToMBS(const wchar_t* src);
 std::string ToMBS(const std::wstring& src);
-std::wstring ToWCS(const char *src);
+std::wstring ToWCS(const char* src);
 std::wstring ToWCS(const std::string& src);
 
 void SanitizeNodeName(std::wstring& dst);
@@ -53,10 +58,10 @@ void SanitizeNodeName(char *dst);
 std::string SanitizeFileName(const std::string& src);
 std::string GetDirectory(const char* src);
 std::string GetDirectory(const wchar_t* src);
-std::string GetFilename(const char *src);
-std::string GetFilename(const wchar_t *src);
-std::string GetFilename_NoExtension(const char *src);
-std::string GetFilename_NoExtension(const wchar_t *src);
+std::string GetFilename(const char* src);
+std::string GetFilename(const wchar_t* src);
+std::string GetFilename_NoExtension(const char* src);
+std::string GetFilename_NoExtension(const wchar_t* src);
 
 std::string GetCurrentModuleDirectory();
 

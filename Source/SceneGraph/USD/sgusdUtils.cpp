@@ -47,4 +47,17 @@ void PrintPrim(UsdPrim prim, PrintFlags flags)
 }
 
 
+void GetString(UsdAttribute& attr, std::string& v, UsdTimeCode t)
+{
+    VtArray<byte> tmp;
+    attr.Get(&tmp, t);
+    v.assign(tmp.begin(), tmp.end());
+}
+
+void SetString(UsdAttribute& attr, const std::string& v, UsdTimeCode t)
+{
+    VtArray<byte> tmp(v.begin(), v.end());
+    attr.Set(tmp, t);
+}
+
 } // namespace sg

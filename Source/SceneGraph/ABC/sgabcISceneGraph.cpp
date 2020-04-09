@@ -36,33 +36,33 @@ static bool FindProperty(PropT& dst, const Abc::ICompoundProperty& parent, const
     return false;
 }
 
-static void GetValue(const Abc::IBoolProperty& prop, bool& dst, const Abc::ISampleSelector& iss)
+static void GetValue(const Abc::IBoolProperty& prop, bool& dst, abcss t)
 {
     if (!prop || prop.getNumSamples() == 0)
         return;
     Abc::bool_t tmp;
-    prop.get(tmp, iss);
+    prop.get(tmp, t);
     dst = tmp;
 }
-static void GetValue(const Abc::IFloatProperty& prop, float& dst, const Abc::ISampleSelector& iss)
+static void GetValue(const Abc::IFloatProperty& prop, float& dst, abcss t)
 {
     if (!prop || prop.getNumSamples() == 0)
         return;
-    prop.get(dst, iss);
+    prop.get(dst, t);
 }
-static void GetValue(const Abc::IC3fProperty& prop, float3& dst, const Abc::ISampleSelector& iss)
+static void GetValue(const Abc::IC3fProperty& prop, float3& dst, abcss t)
 {
     if (!prop || prop.getNumSamples() == 0)
         return;
-    prop.get((abcC3&)dst, iss);
+    prop.get((abcC3&)dst, t);
 }
-static void GetValue(const Abc::IStringProperty& prop, TexturePtr& dst, const Abc::ISampleSelector& iss)
+static void GetValue(const Abc::IStringProperty& prop, TexturePtr& dst, abcss t)
 {
     if (!prop || prop.getNumSamples() == 0)
         return;
     if (!dst)
         dst = std::make_shared<Texture>();
-    prop.get(dst->file_path, iss);
+    prop.get(dst->file_path, t);
 }
 
 static void UpdateGlobalMatrix(XformNode& n)
@@ -92,10 +92,14 @@ ABCINode::~ABCINode()
 
 void ABCINode::beforeRead()
 {
+    FindProperty(m_display_name_prop, m_obj.getProperties(), sgabcAttrDisplayName);
 }
 
-void ABCINode::read(double /*time*/)
+void ABCINode::read(abcss t)
 {
+    auto& dst = *getNode();
+    if (m_display_name_prop)
+        m_display_name_prop.get(dst.display_name, t);
 }
 
 void ABCINode::setNode(Node* node)
@@ -126,22 +130,21 @@ ABCIXformNode::ABCIXformNode(ABCINode* parent, Abc::IObject& obj)
     m_visibility_prop = AbcGeom::GetVisibilityProperty(m_obj);
 }
 
-void ABCIXformNode::read(double time)
+void ABCIXformNode::read(abcss t)
 {
-    super::read(time);
+    super::read(t);
     auto& dst = *getNode<XformNode>();
-    Abc::ISampleSelector iss(time);
 
     // visibility
     if (m_visibility_prop && m_visibility_prop.getNumSamples() != 0) {
         int8_t v;
-        m_visibility_prop.get(v, iss);
+        m_visibility_prop.get(v, t);
         dst.visibility = v != AbcGeom::kVisibilityHidden;
     }
 
     // transform
     if (m_schema.getNumSamples() != 0) {
-        m_schema.get(m_sample, iss);
+        m_schema.get(m_sample, t);
         auto matd = m_sample.getMatrix();
         dst.local_matrix.assign((double4x4&)matd);
     }
@@ -193,11 +196,10 @@ void ABCIMeshNode::beforeRead()
     }
 }
 
-void ABCIMeshNode::read(double time)
+void ABCIMeshNode::read(abcss t)
 {
-    super::read(time);
+    super::read(t);
     auto& dst = *getNode<MeshNode>();
-    Abc::ISampleSelector iss(time);
 
     // alembic's mesh is not xformable, but USD's and our intermediate data is.
     // so, need to update global matrix.
@@ -206,14 +208,14 @@ void ABCIMeshNode::read(double time)
     // visibility
     if (m_visibility_prop && m_visibility_prop.getNumSamples() != 0) {
         int8_t v;
-        m_visibility_prop.get(v, iss);
+        m_visibility_prop.get(v, t);
         dst.visibility = v != AbcGeom::kVisibilityHidden;
     }
 
     if (m_schema.getNumSamples() == 0)
         return;
 
-    m_schema.get(m_sample, iss);
+    m_schema.get(m_sample, t);
 
     {
         // m_sample holds counts/indices/points sample pointers. so, no need to hold these by myself.
@@ -227,7 +229,7 @@ void ABCIMeshNode::read(double time)
         dst.points.share((float3*)points->get(), points->size());
     }
 
-    auto get_expanded_data = [this, &iss, &dst](auto param, auto& sample, auto& dst_data) -> bool {
+    auto get_expanded_data = [this, &t, &dst](auto param, auto& sample, auto& dst_data) -> bool {
         if (!param || param.getNumSamples() == 0)
             return false;
 
@@ -235,7 +237,7 @@ void ABCIMeshNode::read(double time)
         using dst_t = typename std::remove_reference_t<decltype(dst_data)>::value_type;
         static_assert(sizeof(src_t) == sizeof(dst_t), "data size mismatch");
 
-        param.getExpanded(sample, iss);
+        param.getExpanded(sample, t);
         const auto& values = *sample.getVals();
 
         size_t nindices = dst.indices.size();
@@ -269,8 +271,8 @@ void ABCIMeshNode::read(double time)
 
     // facesets
     dst.facesets.resize(m_facesets.size());
-    each_with_index(m_facesets, [&dst, &iss](auto& fs, int i) {
-        fs.faceset.get(fs.sample, iss);
+    each_with_index(m_facesets, [&dst, &t](auto& fs, int i) {
+        fs.faceset.get(fs.sample, t);
         auto sp = fs.sample.getFaces();
         fs.dst->faces.share(sp->get(), sp->size());
         dst.facesets[i] = fs.dst;
@@ -323,28 +325,27 @@ void ABCIMaterialNode::beforeRead()
     }
 }
 
-void ABCIMaterialNode::read(double time)
+void ABCIMaterialNode::read(abcss t)
 {
-    super::read(time);
+    super::read(t);
     auto& dst = *getNode<MaterialNode>();
 
     if (!m_shader_params)
         return;
 
-    Abc::ISampleSelector iss(time);
-    GetValue(m_use_vertex_color_prop, dst.use_vertex_color, iss);
-    GetValue(m_double_sided_prop, dst.double_sided, iss);
-    GetValue(m_diffuse_color_prop, dst.diffuse_color, iss);
-    GetValue(m_diffuse_prop, dst.diffuse, iss);
-    GetValue(m_opacity_prop, dst.opacity, iss);
-    GetValue(m_roughness_prop, dst.roughness, iss);
-    GetValue(m_ambient_color_prop, dst.ambient_color, iss);
-    GetValue(m_specular_color_prop, dst.specular_color, iss);
-    GetValue(m_emissive_color_prop, dst.emissive_color, iss);
+    GetValue(m_use_vertex_color_prop, dst.use_vertex_color, t);
+    GetValue(m_double_sided_prop, dst.double_sided, t);
+    GetValue(m_diffuse_color_prop, dst.diffuse_color, t);
+    GetValue(m_diffuse_prop, dst.diffuse, t);
+    GetValue(m_opacity_prop, dst.opacity, t);
+    GetValue(m_roughness_prop, dst.roughness, t);
+    GetValue(m_ambient_color_prop, dst.ambient_color, t);
+    GetValue(m_specular_color_prop, dst.specular_color, t);
+    GetValue(m_emissive_color_prop, dst.emissive_color, t);
 
-    GetValue(m_diffuse_texture_prop, dst.diffuse_texture, iss);
-    GetValue(m_opacity_texture_prop, dst.opacity_texture, iss);
-    GetValue(m_bump_texture_prop, dst.bump_texture, iss);
+    GetValue(m_diffuse_texture_prop, dst.diffuse_texture, t);
+    GetValue(m_opacity_texture_prop, dst.opacity_texture, t);
+    GetValue(m_bump_texture_prop, dst.bump_texture, t);
 }
 
 
@@ -468,8 +469,9 @@ void ABCIScene::read()
     if (IsDefaultTime(time))
         time = 0.0;
 
+    Abc::ISampleSelector t(time);
     for (auto& n : m_nodes)
-        n->read(time);
+        n->read(t);
     ++m_read_count;
 }
 

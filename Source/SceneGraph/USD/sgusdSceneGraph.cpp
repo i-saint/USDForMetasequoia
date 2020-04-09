@@ -35,12 +35,24 @@ USDNode::~USDNode()
 {
 }
 
+template<class T>
+void USDNode::padSample(UsdAttribute& attr, UsdTimeCode t, const T default_sample)
+{
+    auto prev = m_scene->getPrevTime();
+    if (t != prev)
+        attr.Set(default_sample, prev);
+}
+
 void USDNode::beforeRead()
 {
+    m_attr_display_name = m_prim.GetAttribute(sgusdAttrDisplayName);
 }
 
 void USDNode::read(UsdTimeCode t)
 {
+    auto& dst = *getNode();
+    if (m_attr_display_name)
+        GetString(m_attr_display_name, dst.display_name, t);
 }
 
 void USDNode::beforeWrite()
@@ -49,7 +61,13 @@ void USDNode::beforeWrite()
 
 void USDNode::write(UsdTimeCode t)
 {
-
+    const auto& src = *getNode();
+    if (!src.display_name.empty() && !m_attr_display_name) {
+        m_attr_display_name = m_prim.CreateAttribute(sgusdAttrDisplayName, SdfValueTypeNames->UCharArray, false);
+        padSample(m_attr_display_name, t, VtArray<byte>());
+    }
+    if (m_attr_display_name)
+        SetString(m_attr_display_name, src.display_name, t);
 }
 
 void USDNode::setNode(Node* node)
@@ -371,6 +389,8 @@ void USDMeshNode::read(UsdTimeCode t)
 
 void USDMeshNode::beforeWrite()
 {
+    super::beforeWrite();
+
     // create attributes
     auto pvapi = UsdGeomPrimvarsAPI(m_prim);
     m_pv_st = pvapi.CreatePrimvar(sgusdAttrST, SdfValueTypeNames->TexCoord2fArray);
@@ -459,15 +479,12 @@ void USDMeshNode::write(UsdTimeCode t)
 
         auto& data = m_osubsets[mat->id];
         if (!data.subset) {
-            //std::string name = mu::Format("mat%8x", mat->id);
             data.subset = UsdShadeMaterialBindingAPI(m_prim).CreateMaterialBindSubset(TfToken(mat->getName()), VtArray<int>());
             if (auto mat_node = static_cast<USDMaterialNode*>(mat->impl))
                 UsdShadeMaterialBindingAPI(data.subset.GetPrim()).Bind(mat_node->m_material);
 
             // pad empty sample as default value
-            auto prev = m_scene->getPrevTime();
-            if (t != prev)
-                data.subset.GetIndicesAttr().Set(VtArray<int>(), prev);
+            padSample(data.subset.GetIndicesAttr(), t, VtArray<int>());
         }
         data.sample.assign(fs->faces.begin(), fs->faces.end());
     }
@@ -686,6 +703,7 @@ void USDSkeletonNode::read(UsdTimeCode t)
 
 void USDSkeletonNode::beforeWrite()
 {
+    super::beforeWrite();
     const auto& src = *getNode<SkeletonNode>();
     size_t njoints = src.joints.size();
 
@@ -871,6 +889,8 @@ USDMaterialNode::USDMaterialNode(Node* n, UsdPrim prim)
 
 void USDMaterialNode::beforeRead()
 {
+    super::beforeRead();
+
     EachChild(m_prim, [this](UsdPrim& c) {
         UsdShadeShader sh(c);
         if (!sh)
@@ -945,6 +965,7 @@ void USDMaterialNode::read(UsdTimeCode t)
 
 void USDMaterialNode::beforeWrite()
 {
+    super::beforeWrite();
     const auto& src = *getNode<MaterialNode>();
 
     // setup

@@ -13,8 +13,11 @@ enum PrintFlags
     PF_NonPath = 0x0e,
     PF_Full = 0x0f,
 };
-
 void PrintPrim(UsdPrim prim, PrintFlags flags = PF_Path);
+
+void GetString(UsdAttribute& attr, std::string& v, UsdTimeCode t);
+void SetString(UsdAttribute& attr, const std::string& v, UsdTimeCode t);
+
 
 template<class Body>
 inline void EachChild(UsdPrim prim, const Body& body)

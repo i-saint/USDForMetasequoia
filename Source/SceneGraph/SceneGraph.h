@@ -73,6 +73,7 @@ public:
     virtual void convert(const ConvertOptions& opt);
 
     std::string getName() const;
+    std::string getDisplayName() const;
     const std::string& getPath() const;
     std::string makeUniqueName(const char *name);
 
@@ -108,6 +109,7 @@ public:
 public:
     // serializable
     std::string path;
+    std::string display_name;
     uint32_t id = 0;
 
     // non-serializable

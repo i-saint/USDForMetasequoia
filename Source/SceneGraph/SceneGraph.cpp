@@ -37,30 +37,6 @@ bool ConvertOptions::operator!=(const ConvertOptions& v) const
 }
 
 
-#define EachMember(F)\
-    F(path) F(id)
-
-void Node::serialize(serializer& s)
-{
-    auto type = getType();
-    write(s, type);
-    EachMember(sgSerialize)
-}
-
-void Node::deserialize(deserializer& d)
-{
-    // type will be consumed by create()
-    EachMember(sgDeserialize)
-}
-void Node::resolve()
-{
-    children.clear();
-    parent = scene->findNodeByPath(GetParentPath(path));
-    if (parent)
-        parent->children.push_back(this);
-}
-#undef EachMember
-
 void Node::deserialize(deserializer& d, NodePtr& ret)
 {
     Type type;
@@ -85,6 +61,30 @@ void Node::deserialize(deserializer& d, NodePtr& ret)
     if (ret)
         ret->deserialize(d);
 }
+
+#define EachMember(F)\
+    F(path) F(display_name) F(id)
+
+void Node::serialize(serializer& s)
+{
+    auto type = getType();
+    write(s, type);
+    EachMember(sgSerialize)
+}
+
+void Node::deserialize(deserializer& d)
+{
+    // type will be consumed by create()
+    EachMember(sgDeserialize)
+}
+void Node::resolve()
+{
+    children.clear();
+    parent = scene->findNodeByPath(GetParentPath(path));
+    if (parent)
+        parent->children.push_back(this);
+}
+#undef EachMember
 
 Node::Node(Node* p, const char* name)
     : parent(p)
@@ -119,6 +119,14 @@ void Node::convert(const ConvertOptions& /*opt*/)
 std::string Node::getName() const
 {
     return GetLeafName(path);
+}
+
+std::string Node::getDisplayName() const
+{
+    if (!display_name.empty())
+        return display_name;
+    else
+        return getName();
 }
 
 const std::string& Node::getPath() const

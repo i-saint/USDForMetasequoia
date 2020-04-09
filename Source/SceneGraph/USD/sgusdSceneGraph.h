@@ -44,6 +44,9 @@ public:
     template<class NodeT = Node, sgEnableIf(std::is_base_of<Node, NodeT>::value)>
     NodeT* getNode() { return static_cast<NodeT*>(m_node); }
 
+    template<class T>
+    void padSample(UsdAttribute& attr, UsdTimeCode t, const T default_sample = {});
+
 public:
     UsdPrim m_prim;
     USDScene* m_scene = nullptr;
@@ -51,6 +54,8 @@ public:
     USDNode* m_parent = nullptr;
     std::vector<USDNode*> m_children;
     uint32_t m_write_count = 0;
+
+    UsdAttribute m_attr_display_name;
 };
 using USDNodePtr = std::shared_ptr<USDNode>;
 

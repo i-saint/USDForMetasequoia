@@ -31,6 +31,8 @@ public:
     ABCONode* m_parent = nullptr;
     std::vector<ABCONode*> m_children;
     uint32_t m_write_count = 0;
+
+    Abc::OStringProperty m_display_name_prop;
 };
 sgDeclPtr(ABCONode);
 

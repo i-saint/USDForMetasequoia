@@ -4,6 +4,7 @@
 namespace sg {
 
 class ABCIScene;
+using abcss = const Abc::ISampleSelector&;
 
 class ABCINode
 {
@@ -11,7 +12,7 @@ public:
     ABCINode(ABCINode* parent, Abc::IObject& obj, bool create_node);
     virtual ~ABCINode();
     virtual void beforeRead();
-    virtual void read(double time);
+    virtual void read(abcss t);
 
     void setNode(Node* node);
     std::string getPath() const;
@@ -25,6 +26,8 @@ public:
     Node* m_node = nullptr;
     ABCINode* m_parent = nullptr;
     std::vector<ABCINode*> m_children;
+
+    Abc::IStringProperty m_display_name_prop;
 };
 sgDeclPtr(ABCINode);
 
@@ -44,7 +47,7 @@ class ABCIXformNode : public ABCINode
 using super = ABCINode;
 public:
     ABCIXformNode(ABCINode* parent, Abc::IObject& obj);
-    void read(double time) override;
+    void read(abcss t) override;
 
 protected:
     AbcGeom::IXformSchema m_schema;
@@ -59,7 +62,7 @@ using super = ABCINode;
 public:
     ABCIMeshNode(ABCINode* parent, Abc::IObject& obj);
     void beforeRead() override;
-    void read(double time) override;
+    void read(abcss t) override;
 
 protected:
     AbcGeom::IPolyMeshSchema m_schema;
@@ -91,7 +94,7 @@ using super = ABCINode;
 public:
     ABCIMaterialNode(ABCINode* parent, Abc::IObject& obj);
     void beforeRead() override;
-    void read(double time) override;
+    void read(abcss t) override;
 
 protected:
     AbcMaterial::IMaterialSchema m_schema;
