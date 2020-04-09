@@ -563,6 +563,9 @@ void MeshNode::merge(const MeshNode& v, const float4x4& trans)
     joint_indices.clear();
     joint_weights.clear();
     bind_transform = float4x4::identity();
+    skeleton = nullptr;
+    joints.clear();
+    joint_matrices.clear();
 
     // handle offset
     if (vertex_offset > 0) {
@@ -617,7 +620,7 @@ void MeshNode::bake(MeshNode& dst, const float4x4& trans)
     }
 
     // skeleton
-    if (skeleton)
+    if (isSkinned())
         applySkinning(dst_points, dst_normals);
 
     if (trans != float4x4::identity()) {
@@ -668,6 +671,14 @@ void MeshNode::validate()
         colors.clear();
     if (!material_ids.empty() && material_ids.size() != nfaces)
         material_ids.clear();
+}
+
+bool MeshNode::isSkinned() const
+{
+    return joints_per_vertex != 0 &&
+        joint_indices.size() == points.size() * joints_per_vertex &&
+        joint_weights.size() == points.size() * joints_per_vertex &&
+        !joints.empty() && skeleton;
 }
 
 int MeshNode::getMaxMaterialID() const

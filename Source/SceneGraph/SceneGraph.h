@@ -337,6 +337,7 @@ public:
     void applySkinning(float3* dst_points, float3* dst_normals);
     void validate();
 
+    bool isSkinned() const;
     int getMaxMaterialID() const;
 
     template<class Body>

@@ -10,6 +10,7 @@ struct ImportOptions : public ConvertOptions
     bool import_materials = true;
     bool import_visibility = true;
     bool merge_meshes = false;
+    bool merge_only_visible = true;
     bool bake_meshes = false;
 
     ImportOptions();

@@ -244,34 +244,36 @@ bool DocumentImporter::read(MQDocument doc, double t)
     }
 
     auto bake_mesh = [](MeshNode& dst, MeshNode* n) {
-        if (n) {
-            if (!n->skeleton)
-                n->toWorldSpace();
-            n->bake(dst);
-        }
-    };
-
-    auto merge_mesh = [](MeshNode& dst, MeshNode* n) {
-        if (n) {
+        if (!n->isSkinned())
             n->toWorldSpace();
-            dst.merge(*n);
-        }
+        n->bake(dst);
     };
 
     // update mq object
     if (m_options->merge_meshes) {
         // build merged mesh
         m_merged_mesh.clear();
+
+        auto valid_node = [this](XformNode* n) {
+            return n && (n->visibility || !m_options->merge_only_visible);
+        };
         if (m_options->bake_meshes) {
-            for (auto n : m_mesh_nodes)
-                bake_mesh(m_merged_mesh, n);
+            for (auto n : m_mesh_nodes) {
+                if (valid_node(n))
+                    bake_mesh(m_merged_mesh, n);
+            }
         }
         else {
-            for (auto n : m_mesh_nodes)
-                merge_mesh(m_merged_mesh, n);
+            for (auto n : m_mesh_nodes) {
+                if (valid_node(n)) {
+                    n->toWorldSpace();
+                    m_merged_mesh.merge(*n);
+                }
+            }
         }
         for (auto& rec : m_inst_records) {
-            rec.node->bake(m_merged_mesh, rec.node->global_matrix);
+            if (valid_node(rec.node))
+                rec.node->bake(m_merged_mesh, rec.node->global_matrix);
         }
         m_merged_mesh.validate();
 
@@ -320,6 +322,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
             auto obj = handle_mqobject(rec);
             if (m_options->bake_meshes) {
                 rec.tmp_mesh.clear();
+                rec.tmp_mesh.visibility = rec.node->visibility;
                 bake_mesh(rec.tmp_mesh, rec.node);
                 updateMesh(doc, obj, rec.tmp_mesh);
             }
@@ -442,7 +445,7 @@ bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNo
 
 #if MQPLUGIN_VERSION >= 0x0470
     // bone weights
-    if (!m_options->bake_meshes && m_options->import_skeletons && src.skeleton) {
+    if (!m_options->bake_meshes && m_options->import_skeletons && src.isSkinned()) {
         m_bone_manager->AddSkinObject(obj);
 
         std::vector<UINT> joint_ids;
