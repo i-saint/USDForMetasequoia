@@ -75,7 +75,6 @@ public:
     std::string getName() const;
     std::string getDisplayName() const;
     const std::string& getPath() const;
-    std::string makeUniqueName(const char *name);
 
     template<class NodeT>
     NodeT* cast() { return dynamic_cast<NodeT*>(this); }

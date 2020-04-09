@@ -43,32 +43,6 @@ template<class Body, class A1, class A2, sgEnableIf(lambda_traits<Body>::arity =
 inline auto invoke(const Body& body, A1& a1, A2& a2) { return body(a1, a2); }
 
 
-
-template<class Body, class A1, sgEnableIf(std::is_same<typename lambda_traits<Body>::return_type, bool>::value)>
-inline bool invoke_false(const Body& body, A1& a1)
-{
-    return body(a1) == false;
-}
-template<class Body, class A1, sgEnableIf(!std::is_same<typename lambda_traits<Body>::return_type, bool>::value)>
-inline bool invoke_false(const Body& body, A1& a1)
-{
-    body(a1);
-    return false;
-}
-
-template<class Body, class A1, class A2, sgEnableIf(std::is_same<typename lambda_traits<Body>::return_type, bool>::value)>
-inline bool invoke_false(const Body& body, A1& a1, A2& a2)
-{
-    return invoke(body, a1, a2) == false;
-}
-template<class Body, class A1, class A2, sgEnableIf(!std::is_same<typename lambda_traits<Body>::return_type, bool>::value)>
-inline bool invoke_false(const Body& body, A1& a1, A2& a2)
-{
-    invoke(body, a1, a2);
-    return false;
-}
-
-
 template<class Container, class Body>
 inline void each(Container& dst, const Body& body)
 {
@@ -209,6 +183,22 @@ inline auto get_max(const Container& src, const Getter& getter)
     for (size_t i = 1; i < n; ++i)
         r = std::max(r, getter(src[i]));
     return r;
+}
+
+// Validator: [](const std::string&) -> bool
+template<class Validate>
+inline std::string MakeUniqueName(const std::string& name, const Validate& validate)
+{
+    std::string ret = name;
+    for (int i = 1; ; ++i) {
+        if (validate(ret))
+            break;
+
+        char buf[16];
+        snprintf(buf, sizeof(buf), "_%d", i);
+        ret = name + buf;
+    }
+    return ret;
 }
 
 std::string FromBinary(const std::string& v);

@@ -76,17 +76,26 @@ void USDNode::setNode(Node* node)
     m_node->impl = this;
 }
 
-std::string USDNode::getName() const
+const std::string& USDNode::getName() const
 {
     return m_prim.GetName().GetString();
 }
 
-std::string USDNode::getPath() const
+const std::string& USDNode::getPath() const
 {
     return m_prim.GetPath().GetString();
 }
 
-
+std::string USDNode::makeUniqueName(const std::string& name) const
+{
+    return MakeUniqueName(name, [this](const std::string& n) {
+        for (auto c : m_children) {
+            if (n == c->getName())
+                return false;
+        }
+        return true;
+    });
+}
 
 USDRootNode::USDRootNode(UsdPrim prim)
     : super(nullptr, prim, false)
@@ -484,7 +493,7 @@ void USDMeshNode::write(UsdTimeCode t)
 
         auto& data = m_osubsets[mat->id];
         if (!data.subset) {
-            auto subset_name = GetUSDNodeName(mat);
+            auto subset_name = GetUSDName(mat);
             data.subset = UsdShadeMaterialBindingAPI(m_prim).CreateMaterialBindSubset(TfToken(subset_name), VtArray<int>());
             if (auto mat_node = static_cast<USDMaterialNode*>(mat->impl))
                 UsdShadeMaterialBindingAPI(data.subset.GetPrim()).Bind(mat_node->m_material);
@@ -1265,17 +1274,21 @@ USDNode* USDScene::createNodeImpl(USDNode* parent, std::string path)
     return nullptr;
 }
 
-Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
+Node* USDScene::createNode(Node* parent, const char* name_, Node::Type type)
 {
     g_current_scene = this;
 
     std::string path;
     if (parent) {
-        path = parent->getPath();
+        path = GetUSDPath(parent);
         if (path != "/")
             path += '/';
     }
-    path += EncodeNodeName(name);
+
+    std::string name = EncodeNodeName(name_);
+    if (parent)
+        name = GetUSDNode(parent)->makeUniqueName(name);
+    path += name;
 
     USDNode* ret = nullptr;
     USDNode* usd_parent = parent ? (USDNode*)parent->impl : nullptr;

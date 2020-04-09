@@ -30,6 +30,22 @@ static inline void PadSamples(T& dst, uint32_t n, const typename T::Sample& defa
         dst.set(default_sample);
 }
 
+static ABCONode* GetABCNode(Node* n)
+{
+    return static_cast<ABCONode*>(n->impl);
+}
+
+static std::string GetABCName(Node* n)
+{
+    return GetABCNode(n)->getName();
+}
+
+static std::string GetABCPath(Node* n)
+{
+    return GetABCNode(n)->getPath();
+}
+
+
 
 ABCONode::ABCONode(ABCONode* parent, Abc::OObject* obj, bool create_node)
     : m_obj(obj)
@@ -77,6 +93,18 @@ const std::string& ABCONode::getName() const
 const std::string& ABCONode::getPath() const
 {
     return m_obj->getFullName();
+}
+
+
+std::string ABCONode::makeUniqueName(const std::string& name) const
+{
+    return MakeUniqueName(name, [this](const std::string& n) {
+        for (auto c : m_children) {
+            if (n == c->getName())
+                return false;
+        }
+        return true;
+    });
 }
 
 
@@ -169,12 +197,12 @@ void ABCOMeshNode::write(double t)
 
         auto& data = m_facesets[mat->id];
         if (!data.faceset) {
-            auto ofs = m_schema.createFaceSet(mat->getName());
+            auto ofs = m_schema.createFaceSet(GetABCName(mat));
             data.faceset = ofs.getSchema();
             data.faceset.setTimeSampling(1);
 
             auto binding = AbcGeom::OStringProperty(data.faceset.getArbGeomParams(), sgabcAttrMaterialBinding, 1);
-            binding.set(mat->path);
+            binding.set(GetABCPath(mat));
         }
 
         // first sample of OFaceSet must contain faces. so, add dummy.
@@ -367,9 +395,13 @@ void ABCOScene::registerNode(ABCONode* n)
 }
 
 template<class NodeT>
-inline ABCONode* ABCOScene::createNodeImpl(ABCONode* parent, const char* name)
+inline ABCONode* ABCOScene::createNodeImpl(ABCONode* parent, const char* name_)
 {
-    auto abc = std::make_shared<typename NodeT::AbcType>(*parent->m_obj, parent->m_node->makeUniqueName(name), 1);
+    std::string name = EncodeNodeName(name_);
+    if (parent)
+        name = parent->makeUniqueName(name);
+
+    auto abc = std::make_shared<typename NodeT::AbcType>(*parent->m_obj, name, 1);
     if (abc->valid()) {
         m_objects.push_back(abc);
         return new NodeT(parent, abc.get());

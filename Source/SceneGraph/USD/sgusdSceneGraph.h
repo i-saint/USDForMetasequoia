@@ -27,8 +27,9 @@ public:
     virtual void write(UsdTimeCode t);
 
     void setNode(Node *node);
-    std::string getName() const;
-    std::string getPath() const;
+    const std::string& getName() const;
+    const std::string& getPath() const;
+    std::string makeUniqueName(const std::string& name) const;
 
     template<class NodeT>
     NodeT* cast() { return dynamic_cast<NodeT*>(this); }

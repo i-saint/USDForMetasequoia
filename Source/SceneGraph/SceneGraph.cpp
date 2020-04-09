@@ -131,28 +131,6 @@ const std::string& Node::getPath() const
     return path;
 }
 
-std::string Node::makeUniqueName(const char* name)
-{
-    std::string base = EncodeNodeName(name);
-    std::string ret = base;
-    for (int i = 1; ; ++i) {
-        bool ok = true;
-        for (auto c : children) {
-            if (ret == GetLeafName(c->path)) {
-                ok = false;
-                break;
-            }
-        }
-        if (ok)
-            break;
-
-        char buf[16];
-        sprintf(buf, "_%d", i);
-        ret = base + buf;
-    }
-    return ret;
-}
-
 
 RootNode::RootNode()
     : super(nullptr, "/")

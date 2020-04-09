@@ -144,7 +144,7 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
         if (!obj)
             continue;
 
-        rec.name = GetName(obj);
+        rec.name = MQGetName(obj);
         rec.mqid = obj->GetUniqueID();
         if (auto parent = doc->GetParentObject(obj))
             rec.mqparentid = parent->GetUniqueID();
@@ -199,7 +199,7 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
 
         for (auto& kvp : m_material_records)
             kvp.second.updated = false;
-        each_material(doc, [this](MQMaterial mat, int mi) {
+        MQEachMaterial(doc, [this](MQMaterial mat, int mi) {
             auto& rec = m_material_records[mat->GetUniqueID()];
             rec.updated = true;
 
@@ -209,11 +209,11 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
                     std::string node_name = mu::Format("mqmat%08x", mat->GetUniqueID());
                     rec.node = m_scene->createNode<MaterialNode>(m_root, node_name.c_str());
                 }
-                rec.node->display_name = GetName(mat);
+                rec.node->display_name = MQGetName(mat);
             }
             else {
                 if (!rec.node)
-                    rec.node = m_scene->createNode<MaterialNode>(m_root, GetName(mat).c_str());
+                    rec.node = m_scene->createNode<MaterialNode>(m_root, MQGetName(mat).c_str());
             }
             rec.node->index = mi;
             m_material_nodes[mi] = rec.node;

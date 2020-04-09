@@ -21,13 +21,13 @@ std::string FromBinary(const std::string& v)
 
 std::string ToBinary(const std::string& v)
 {
-    char buf[4];
+    char buf[8];
     size_t n = v.size();
     auto* c = (const byte*)v.data();
 
     std::string r;
     for (size_t i = 0; i < n; ++i) {
-        sprintf(buf, "%02x", (int)*c);
+        snprintf(buf, sizeof(buf), "%02x", (int)*c);
         r += buf;
         ++c;
     }
@@ -44,7 +44,7 @@ static void EncodeNodeNameImpl(std::string& dst, const char *src, size_t n)
     for (size_t i = 0; i < n; ++i) {
         char c = *src++;
         if (!std::isalnum(c) && c != '_') {
-            sprintf(buf, "0x%02x", (int)(uint8_t&)c);
+            snprintf(buf, sizeof(buf), "0x%02x", (int)(uint8_t&)c);
             dst += buf;
         }
         else {

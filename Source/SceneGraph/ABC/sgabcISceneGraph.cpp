@@ -8,7 +8,7 @@ static inline NodeT* CreateNode(ABCINode* parent, Abc::IObject obj)
 {
     return new NodeT(
         parent ? parent->m_node : nullptr,
-        obj.getName().c_str());
+        DecodeNodeName(obj.getName()).c_str());
 }
 
 template<class NodeT>

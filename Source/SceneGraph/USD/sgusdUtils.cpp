@@ -46,10 +46,19 @@ void PrintPrim(UsdPrim prim, PrintFlags flags)
     }
 }
 
-std::string GetUSDNodeName(Node* n)
+USDNode* GetUSDNode(Node* n)
 {
-    auto un = static_cast<USDNode*>(n->impl);
-    return un->getName();
+    return static_cast<USDNode*>(n->impl);
+}
+
+std::string GetUSDName(Node* n)
+{
+    return GetUSDNode(n)->getName();
+}
+
+std::string GetUSDPath(Node* n)
+{
+    return GetUSDNode(n)->getPath();
 }
 
 void GetBinary(UsdAttribute& attr, std::string& v, UsdTimeCode t)

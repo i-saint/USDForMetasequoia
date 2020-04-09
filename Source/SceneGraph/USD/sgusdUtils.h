@@ -17,7 +17,9 @@ enum PrintFlags
 };
 void PrintPrim(UsdPrim prim, PrintFlags flags = PF_Path);
 
-std::string GetUSDNodeName(Node* n);
+USDNode* GetUSDNode(Node* n);
+std::string GetUSDName(Node* n);
+std::string GetUSDPath(Node* n);
 void GetBinary(UsdAttribute& attr, std::string& v, UsdTimeCode t);
 void SetBinary(UsdAttribute& attr, const std::string& v, UsdTimeCode t);
 

@@ -21,6 +21,7 @@ public:
     void setNode(Node* node);
     const std::string& getName() const;
     const std::string& getPath() const;
+    std::string makeUniqueName(const std::string& name) const;
 
     template<class NodeT = Node, sgEnableIf(std::is_base_of<Node, NodeT>::value)>
     NodeT* getNode() { return static_cast<NodeT*>(m_node); }

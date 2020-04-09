@@ -30,34 +30,30 @@ inline MQAngle to_angle(const quatf& q)
 
 
 template<class Body>
-inline void each_object(MQDocument doc, const Body& body)
+inline void MQEachObject(MQDocument doc, const Body& body)
 {
     int n = doc->GetObjectCount();
     for (int i = 0; i < n; ++i) {
-        if (auto obj = doc->GetObject(i)) {
-            if (invoke_false(body, obj, i))
-                break;
-        }
+        if (auto obj = doc->GetObject(i))
+            invoke(body, obj, i);
     }
 }
 
 template<class Body>
-inline void each_material(MQDocument doc, const Body& body)
+inline void MQEachMaterial(MQDocument doc, const Body& body)
 {
     int n = doc->GetMaterialCount();
     for (int i = 0; i < n; ++i) {
-        if (auto obj = doc->GetMaterial(i)) {
-            if (invoke_false(body, obj, i))
-                break;
-        }
+        if (auto obj = doc->GetMaterial(i))
+            invoke(body, obj, i);
     }
 }
 
-std::string GetName(MQObject obj);
-std::string GetPath(MQDocument doc, MQObject obj);
-std::string GetName(MQMaterial obj);
+std::string MQGetName(MQObject obj);
+std::string MQGetPath(MQDocument doc, MQObject obj);
+std::string MQGetName(MQMaterial obj);
 
-void SetName(MQObject obj, const std::string& name);
-void SetName(MQMaterial obj, const std::string& name);
+void MQSetName(MQObject obj, const std::string& name);
+void MQSetName(MQMaterial obj, const std::string& name);
 
 } // namespace mqusd

@@ -87,10 +87,10 @@ bool DocumentImporter::initialize(MQDocument doc, bool additive)
 
 void DocumentImporter::clearDocument(MQDocument doc)
 {
-    each_object(doc, [doc](MQObject /*obj*/, int i) {
+    MQEachObject(doc, [doc](MQObject /*obj*/, int i) {
         doc->DeleteObject(i);
     });
-    each_material(doc, [doc](MQMaterial /*mat*/, int i) {
+    MQEachMaterial(doc, [doc](MQMaterial /*mat*/, int i) {
         doc->DeleteMaterial(i);
     });
     doc->Compact();
@@ -98,58 +98,26 @@ void DocumentImporter::clearDocument(MQDocument doc)
 
 std::string DocumentImporter::makeUniqueObjectName(MQDocument doc, const std::string& name, MQObject ignored)
 {
-    std::string base = name;
-    std::string ret = base;
-    for (int i = 1; ; ++i) {
-        bool ok = true;
-        each_object(doc, [&ret, &ok, ignored](MQObject obj) {
-            if (obj == ignored)
-                return true;
-
-            char buf[512];
-            obj->GetName(buf, sizeof(buf));
-            if (ret == buf) {
-                ok = false;
-                return false;
-            }
-            return true;
+    return MakeUniqueName(name, [this, doc, ignored](const std::string& n) {
+        bool valid = true;
+        MQEachObject(doc, [&n, ignored, &valid](MQObject obj) {
+            if (obj != ignored && n == MQGetName(obj))
+                valid = false;
         });
-        if (ok)
-            break;
-
-        char buf[16];
-        sprintf(buf, "_%d", i);
-        ret = base + buf;
-    }
-    return ret;
+        return valid;
+    });
 }
 
 std::string DocumentImporter::makeUniqueMaterialName(MQDocument doc, const std::string& name, MQMaterial ignored)
 {
-    std::string base = name;
-    std::string ret = base;
-    for (int i = 1; ; ++i) {
-        bool ok = true;
-        each_material(doc, [&ret, &ok, ignored](MQMaterial obj) {
-            if (obj == ignored)
-                return true;
-
-            char buf[512];
-            obj->GetName(buf, sizeof(buf));
-            if (ret == buf) {
-                ok = false;
-                return false;
-            }
-            return true;
+    return MakeUniqueName(name, [this, doc, ignored](const std::string& n) {
+        bool valid = true;
+        MQEachMaterial(doc, [&n, ignored, &valid](MQMaterial obj) {
+            if (obj != ignored && n == MQGetName(obj))
+                valid = false;
         });
-        if (ok)
-            break;
-
-        char buf[16];
-        sprintf(buf, "_%d", i);
-        ret = base + buf;
-    }
-    return ret;
+        return valid;
+    });
 }
 
 DocumentImporter::ObjectRecord* DocumentImporter::findRecord(UINT mqid)
@@ -327,7 +295,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
                 MQObject bs = findOrCreateMQObject(doc, rec.blendshape_ids[bi], rec.mqid, created);
                 updateMesh(doc, bs, rec.tmp_mesh);
                 if (created) {
-                    SetName(bs, makeUniqueObjectName(doc, blendshape->getDisplayName(), bs).c_str());
+                    MQSetName(bs, makeUniqueObjectName(doc, blendshape->getDisplayName(), bs).c_str());
                     bs->SetVisible(0);
 #if MQPLUGIN_VERSION >= 0x0470
                     m_morph_manager->BindTargetObject(obj, bs);
@@ -344,7 +312,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
             bool created;
             MQObject obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
             if (created)
-                SetName(obj, makeUniqueObjectName(doc, rec.node->getDisplayName(), obj).c_str());
+                MQSetName(obj, makeUniqueObjectName(doc, rec.node->getDisplayName(), obj).c_str());
             return obj;
         };
 
@@ -597,7 +565,7 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
             rec.mqid = mqmat->GetUniqueID();
         }
 
-        SetName(mqmat, makeUniqueMaterialName(doc, src.getDisplayName(), mqmat));
+        MQSetName(mqmat, makeUniqueMaterialName(doc, src.getDisplayName(), mqmat));
         mqmat->SetShader(ToMQShader(src.shader_type));
         mqmat->SetVertexColor(src.use_vertex_color ? MQMATERIAL_VERTEXCOLOR_DIFFUSE : MQMATERIAL_VERTEXCOLOR_DISABLE);
         mqmat->SetDoubleSided(src.double_sided);
@@ -622,7 +590,7 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
     }
 
     // update indices
-    each_material(doc, [this](MQMaterial mat, int mi) {
+    MQEachMaterial(doc, [this](MQMaterial mat, int mi) {
         UINT mqid = mat->GetUniqueID();
         for (auto& rec : m_material_records) {
             if (rec.mqid == mqid) {
