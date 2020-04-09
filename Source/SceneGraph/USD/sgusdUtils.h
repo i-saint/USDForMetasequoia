@@ -15,8 +15,8 @@ enum PrintFlags
 };
 void PrintPrim(UsdPrim prim, PrintFlags flags = PF_Path);
 
-void GetString(UsdAttribute& attr, std::string& v, UsdTimeCode t);
-void SetString(UsdAttribute& attr, const std::string& v, UsdTimeCode t);
+void GetBinary(UsdAttribute& attr, std::string& v, UsdTimeCode t);
+void SetBinary(UsdAttribute& attr, const std::string& v, UsdTimeCode t);
 
 
 template<class Body>

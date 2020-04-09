@@ -38,6 +38,8 @@ USDNode::~USDNode()
 template<class T>
 void USDNode::padSample(UsdAttribute& attr, UsdTimeCode t, const T default_sample)
 {
+    if (t.IsDefault())
+        return;
     auto prev = m_scene->getPrevTime();
     if (t != prev)
         attr.Set(default_sample, prev);
@@ -52,7 +54,7 @@ void USDNode::read(UsdTimeCode t)
 {
     auto& dst = *getNode();
     if (m_attr_display_name)
-        GetString(m_attr_display_name, dst.display_name, t);
+        GetBinary(m_attr_display_name, dst.display_name, t);
 }
 
 void USDNode::beforeWrite()
@@ -62,12 +64,10 @@ void USDNode::beforeWrite()
 void USDNode::write(UsdTimeCode t)
 {
     const auto& src = *getNode();
-    if (!src.display_name.empty() && !m_attr_display_name) {
-        m_attr_display_name = m_prim.CreateAttribute(sgusdAttrDisplayName, SdfValueTypeNames->UCharArray, false);
-        padSample(m_attr_display_name, t, VtArray<byte>());
-    }
+    if (!m_attr_display_name && !src.display_name.empty() && src.display_name != m_prim.GetName().GetText())
+        m_attr_display_name = m_prim.CreateAttribute(sgusdAttrDisplayName, SdfValueTypeNames->String, false);
     if (m_attr_display_name)
-        SetString(m_attr_display_name, src.display_name, t);
+        SetBinary(m_attr_display_name, src.display_name, t);
 }
 
 void USDNode::setNode(Node* node)

@@ -19,7 +19,8 @@ public:
     virtual void write(double t);
 
     void setNode(Node* node);
-    std::string getPath() const;
+    const std::string& getName() const;
+    const std::string& getPath() const;
 
     template<class NodeT = Node, sgEnableIf(std::is_base_of<Node, NodeT>::value)>
     NodeT* getNode() { return static_cast<NodeT*>(m_node); }

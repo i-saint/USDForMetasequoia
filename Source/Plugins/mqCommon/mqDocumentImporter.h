@@ -60,8 +60,8 @@ private:
     };
 
     void clearDocument(MQDocument doc);
-    std::string makeUniqueObjectName(MQDocument doc, const std::string& name);
-    std::string makeUniqueMaterialName(MQDocument doc, const std::string& name);
+    std::string makeUniqueObjectName(MQDocument doc, const std::string& name, MQObject ignored = nullptr);
+    std::string makeUniqueMaterialName(MQDocument doc, const std::string& name, MQMaterial ignored = nullptr);
     ObjectRecord* findRecord(UINT mqid);
     MQObject findOrCreateMQObject(MQDocument doc, UINT& id, UINT parent_id, bool& created);
     bool deleteMQObject(MQDocument doc, UINT id);

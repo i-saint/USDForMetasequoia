@@ -96,13 +96,16 @@ void DocumentImporter::clearDocument(MQDocument doc)
     doc->Compact();
 }
 
-std::string DocumentImporter::makeUniqueObjectName(MQDocument doc, const std::string& name)
+std::string DocumentImporter::makeUniqueObjectName(MQDocument doc, const std::string& name, MQObject ignored)
 {
     std::string base = name;
     std::string ret = base;
     for (int i = 1; ; ++i) {
         bool ok = true;
-        each_object(doc, [&ret, &ok](MQObject obj) {
+        each_object(doc, [&ret, &ok, ignored](MQObject obj) {
+            if (obj == ignored)
+                return true;
+
             char buf[512];
             obj->GetName(buf, sizeof(buf));
             if (ret == buf) {
@@ -121,13 +124,16 @@ std::string DocumentImporter::makeUniqueObjectName(MQDocument doc, const std::st
     return ret;
 }
 
-std::string DocumentImporter::makeUniqueMaterialName(MQDocument doc, const std::string& name)
+std::string DocumentImporter::makeUniqueMaterialName(MQDocument doc, const std::string& name, MQMaterial ignored)
 {
     std::string base = name;
     std::string ret = base;
     for (int i = 1; ; ++i) {
         bool ok = true;
-        each_material(doc, [&ret, &ok](MQMaterial obj) {
+        each_material(doc, [&ret, &ok, ignored](MQMaterial obj) {
+            if (obj == ignored)
+                return true;
+
             char buf[512];
             obj->GetName(buf, sizeof(buf));
             if (ret == buf) {
@@ -302,10 +308,10 @@ bool DocumentImporter::read(MQDocument doc, double t)
         m_merged_mesh.validate();
 
         bool created;
-        auto obj = findOrCreateMQObject(doc, m_merged_mqobj_id, 0, created);
+        MQObject obj = findOrCreateMQObject(doc, m_merged_mqobj_id, 0, created);
         if (created) {
             auto name = mu::GetFilename_NoExtension(m_scene->path.c_str());
-            obj->SetName(makeUniqueObjectName(doc, name).c_str());
+            obj->SetName(makeUniqueObjectName(doc, name, obj).c_str());
         }
 
         updateMesh(doc, obj, m_merged_mesh);
@@ -318,10 +324,10 @@ bool DocumentImporter::read(MQDocument doc, double t)
                 blendshape->makeMesh(rec.tmp_mesh, *rec.node);
 
                 bool created;
-                auto bs = findOrCreateMQObject(doc, rec.blendshape_ids[bi], rec.mqid, created);
+                MQObject bs = findOrCreateMQObject(doc, rec.blendshape_ids[bi], rec.mqid, created);
                 updateMesh(doc, bs, rec.tmp_mesh);
                 if (created) {
-                    SetName(bs, makeUniqueObjectName(doc, blendshape->getDisplayName()).c_str());
+                    SetName(bs, makeUniqueObjectName(doc, blendshape->getDisplayName(), bs).c_str());
                     bs->SetVisible(0);
 #if MQPLUGIN_VERSION >= 0x0470
                     m_morph_manager->BindTargetObject(obj, bs);
@@ -336,9 +342,9 @@ bool DocumentImporter::read(MQDocument doc, double t)
                 parent_id = ((ObjectRecord*)pmesh->userdata)->mqid;
 
             bool created;
-            auto obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
+            MQObject obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
             if (created)
-                SetName(obj, makeUniqueObjectName(doc, rec.node->getDisplayName()).c_str());
+                SetName(obj, makeUniqueObjectName(doc, rec.node->getDisplayName(), obj).c_str());
             return obj;
         };
 
@@ -591,7 +597,7 @@ bool DocumentImporter::updateMaterials(MQDocument doc)
             rec.mqid = mqmat->GetUniqueID();
         }
 
-        SetName(mqmat, makeUniqueMaterialName(doc, src.getDisplayName()));
+        SetName(mqmat, makeUniqueMaterialName(doc, src.getDisplayName(), mqmat));
         mqmat->SetShader(ToMQShader(src.shader_type));
         mqmat->SetVertexColor(src.use_vertex_color ? MQMATERIAL_VERTEXCOLOR_DIFFUSE : MQMATERIAL_VERTEXCOLOR_DISABLE);
         mqmat->SetDoubleSided(src.double_sided);

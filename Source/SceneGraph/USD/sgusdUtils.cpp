@@ -47,16 +47,33 @@ void PrintPrim(UsdPrim prim, PrintFlags flags)
 }
 
 
-void GetString(UsdAttribute& attr, std::string& v, UsdTimeCode t)
+void GetBinary(UsdAttribute& attr, std::string& v, UsdTimeCode t)
 {
-    VtArray<byte> tmp;
+    std::string tmp;
     attr.Get(&tmp, t);
-    v.assign(tmp.begin(), tmp.end());
+
+    v.clear();
+    size_t n = tmp.size() / 2;
+    const char* buf = tmp.data();
+    for (size_t i = 0; i < n; ++i) {
+        int c;
+        sscanf(buf, "%02x", &c);
+        v += (char)c;
+        buf += 2;
+    }
 }
 
-void SetString(UsdAttribute& attr, const std::string& v, UsdTimeCode t)
+void SetBinary(UsdAttribute& attr, const std::string& v, UsdTimeCode t)
 {
-    VtArray<byte> tmp(v.begin(), v.end());
+    std::string tmp;
+    char buf[4];
+    size_t n = v.size();
+    auto* c = (const byte*)v.data();
+    for (size_t i = 0; i < n; ++i) {
+        sprintf(buf, "%02x", (int)*c);
+        ++c;
+        tmp += buf;
+    }
     attr.Set(tmp, t);
 }
 

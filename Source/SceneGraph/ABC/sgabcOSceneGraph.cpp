@@ -12,18 +12,16 @@ static inline NodeT* CreateNode(ABCONode* parent, Abc::OObject* obj)
 }
 
 template<class T>
-static inline void PadSamples(Abc::OTypedScalarProperty<T>& dst, uint32_t n)
+static inline void PadSamples(Abc::OTypedScalarProperty<T>& dst, uint32_t n, const typename Abc::OTypedScalarProperty<T>::value_type& default_sample = {})
 {
-    using SampleT = typename Abc::OTypedScalarProperty<T>::value_type;
     while (dst.getNumSamples() < n)
-        dst.set(SampleT());
+        dst.set(default_sample);
 }
 template<class T>
-static inline void PadSamples(Abc::OTypedArrayProperty<T>& dst, uint32_t n)
+static inline void PadSamples(Abc::OTypedArrayProperty<T>& dst, uint32_t n, const typename Abc::OTypedArrayProperty<T>::sample_type& default_sample = {})
 {
-    using SampleT = typename Abc::OTypedArrayProperty<T>::sample_type;
     while (dst.getNumSamples() < n)
-        dst.set(SampleT());
+        dst.set(default_sample);
 }
 template<class T>
 static inline void PadSamples(T& dst, uint32_t n, const typename T::Sample& default_sample = {})
@@ -57,9 +55,9 @@ void ABCONode::write(double /*t*/)
     const auto& src = *getNode();
 
     // display name
-    if (!src.display_name.empty() && !m_display_name_prop) {
+    if (!m_display_name_prop && !src.display_name.empty() && src.display_name != getName()) {
         m_display_name_prop = Abc::OStringProperty(m_obj->getProperties(), sgabcAttrDisplayName, 1);
-        PadSamples(m_display_name_prop, m_scene->getWriteCount());
+        PadSamples(m_display_name_prop, m_scene->getWriteCount(), src.display_name);
     }
     if (m_display_name_prop)
         m_display_name_prop.set(src.display_name);
@@ -71,7 +69,12 @@ void ABCONode::setNode(Node* node)
     m_node->impl = this;
 }
 
-std::string ABCONode::getPath() const
+const std::string& ABCONode::getName() const
+{
+    return m_obj->getName();
+}
+
+const std::string& ABCONode::getPath() const
 {
     return m_obj->getFullName();
 }
