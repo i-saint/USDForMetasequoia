@@ -211,8 +211,13 @@ inline auto get_max(const Container& src, const Getter& getter)
     return r;
 }
 
-std::string SanitizeNodeName(const std::string& name);
-std::string SanitizeNodePath(const std::string& path);
+std::string FromBinary(const std::string& v);
+std::string ToBinary(const std::string& v);
+
+std::string EncodeNodeName(const std::string& name);
+std::string EncodeNodePath(const std::string& path);
+std::string DecodeNodeName(const std::string& name);
+std::string DecodeNodePath(const std::string& path);
 std::string GetParentPath(const std::string& path);
 const char* GetLeafName(const std::string& path);
 

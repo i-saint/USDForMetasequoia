@@ -46,35 +46,22 @@ void PrintPrim(UsdPrim prim, PrintFlags flags)
     }
 }
 
+std::string GetUSDNodeName(Node* n)
+{
+    auto un = static_cast<USDNode*>(n->impl);
+    return un->getName();
+}
 
 void GetBinary(UsdAttribute& attr, std::string& v, UsdTimeCode t)
 {
     std::string tmp;
     attr.Get(&tmp, t);
-
-    v.clear();
-    size_t n = tmp.size() / 2;
-    const char* buf = tmp.data();
-    for (size_t i = 0; i < n; ++i) {
-        int c;
-        sscanf(buf, "%02x", &c);
-        v += (char)c;
-        buf += 2;
-    }
+    v = FromBinary(tmp);
 }
 
 void SetBinary(UsdAttribute& attr, const std::string& v, UsdTimeCode t)
 {
-    std::string tmp;
-    char buf[4];
-    size_t n = v.size();
-    auto* c = (const byte*)v.data();
-    for (size_t i = 0; i < n; ++i) {
-        sprintf(buf, "%02x", (int)*c);
-        ++c;
-        tmp += buf;
-    }
-    attr.Set(tmp, t);
+    attr.Set(ToBinary(v), t);
 }
 
 } // namespace sg

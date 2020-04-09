@@ -3,6 +3,8 @@
 
 namespace sg {
 
+class USDNode;
+
 enum PrintFlags
 {
     PF_Path = 0x01,
@@ -15,6 +17,7 @@ enum PrintFlags
 };
 void PrintPrim(UsdPrim prim, PrintFlags flags = PF_Path);
 
+std::string GetUSDNodeName(Node* n);
 void GetBinary(UsdAttribute& attr, std::string& v, UsdTimeCode t);
 void SetBinary(UsdAttribute& attr, const std::string& v, UsdTimeCode t);
 
@@ -31,7 +34,7 @@ inline NodeT* CreateNode(USDNode* parent, UsdPrim prim)
 {
     return new NodeT(
         parent ? parent->m_node : nullptr,
-        prim.GetName().GetText());
+        DecodeNodeName(prim.GetName().GetText()).c_str());
 }
 
 template<class T> inline void GetValue(const T& src, float& v, UsdTimeCode t = { default_time })

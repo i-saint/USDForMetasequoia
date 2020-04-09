@@ -52,9 +52,6 @@ std::string ToMBS(const std::wstring& src);
 std::wstring ToWCS(const char* src);
 std::wstring ToWCS(const std::string& src);
 
-void SanitizeNodeName(std::wstring& dst);
-void SanitizeNodeName(std::string& dst);
-void SanitizeNodeName(char *dst);
 std::string SanitizeFileName(const std::string& src);
 std::string GetDirectory(const char* src);
 std::string GetDirectory(const wchar_t* src);

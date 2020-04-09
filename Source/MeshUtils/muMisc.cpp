@@ -209,33 +209,6 @@ std::wstring ToWCS(const std::string& src)
     return ToWCS(src.c_str());
 }
 
-void SanitizeNodeName(std::wstring& dst)
-{
-    for (auto& c : dst) {
-        if (c == L'/' || c == L'\\')
-            c = L'_';
-    }
-}
-
-void SanitizeNodeName(std::string& dst)
-{
-    for (auto& c : dst) {
-        if (c == '/' || c == '\\')
-            c = '_';
-    }
-}
-
-void SanitizeNodeName(char *dst)
-{
-    if (!dst)
-        return;
-    for (int i = 0; dst[i] != '\0'; ++i) {
-        auto& c = dst[i];
-        if (c == '/' || c == '\\')
-            c = '_';
-    }
-}
-
 std::string SanitizeFileName(const std::string& src)
 {
     std::string ret = src;

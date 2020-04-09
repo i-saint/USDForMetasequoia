@@ -76,6 +76,11 @@ void USDNode::setNode(Node* node)
     m_node->impl = this;
 }
 
+std::string USDNode::getName() const
+{
+    return m_prim.GetName().GetString();
+}
+
 std::string USDNode::getPath() const
 {
     return m_prim.GetPath().GetString();
@@ -479,7 +484,8 @@ void USDMeshNode::write(UsdTimeCode t)
 
         auto& data = m_osubsets[mat->id];
         if (!data.subset) {
-            data.subset = UsdShadeMaterialBindingAPI(m_prim).CreateMaterialBindSubset(TfToken(mat->getName()), VtArray<int>());
+            auto subset_name = GetUSDNodeName(mat);
+            data.subset = UsdShadeMaterialBindingAPI(m_prim).CreateMaterialBindSubset(TfToken(subset_name), VtArray<int>());
             if (auto mat_node = static_cast<USDMaterialNode*>(mat->impl))
                 UsdShadeMaterialBindingAPI(data.subset.GetPrim()).Bind(mat_node->m_material);
 
@@ -1269,7 +1275,7 @@ Node* USDScene::createNode(Node* parent, const char* name, Node::Type type)
         if (path != "/")
             path += '/';
     }
-    path += SanitizeNodeName(name);
+    path += EncodeNodeName(name);
 
     USDNode* ret = nullptr;
     USDNode* usd_parent = parent ? (USDNode*)parent->impl : nullptr;
@@ -1288,7 +1294,7 @@ template<class NodeT>
 USDNode* USDScene::wrapNodeImpl(Node* node)
 {
     USDNode* usd_parent = nullptr;
-    std::string path = SanitizeNodePath(node->getPath());
+    std::string path = EncodeNodePath(node->getPath());
 
     UsdPrim prim;
     if (path == "/")

@@ -123,10 +123,7 @@ std::string Node::getName() const
 
 std::string Node::getDisplayName() const
 {
-    if (!display_name.empty())
-        return display_name;
-    else
-        return getName();
+    return display_name.empty() ? getName() : display_name;
 }
 
 const std::string& Node::getPath() const
@@ -136,7 +133,7 @@ const std::string& Node::getPath() const
 
 std::string Node::makeUniqueName(const char* name)
 {
-    std::string base = SanitizeNodeName(name);
+    std::string base = EncodeNodeName(name);
     std::string ret = base;
     for (int i = 1; ; ++i) {
         bool ok = true;
@@ -934,7 +931,7 @@ Node::Type SkelRootNode::getType() const
 
 
 #define EachMember(F)\
-    F(path) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)
+    F(path) F(display_name) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)
 
 void Joint::serialize(serializer& s)
 {
@@ -980,6 +977,11 @@ Joint::Joint(SkeletonNode* s, const std::string& p)
 std::string Joint::getName() const
 {
     return GetLeafName(path);
+}
+
+std::string Joint::getDisplayName() const
+{
+    return display_name.empty() ? getName() : display_name;
 }
 
 std::tuple<float3, quatf, float3> Joint::getLocalTRS() const
@@ -1074,10 +1076,11 @@ void SkeletonNode::clear()
     joints.clear();
 }
 
-Joint* SkeletonNode::addJoint(const std::string& jpath_)
+Joint* SkeletonNode::addJoint(const std::string& jpath_, const std::string& dname)
 {
-    auto jpath = SanitizeNodePath(jpath_);
+    auto jpath = EncodeNodePath(jpath_);
     auto ret = new Joint(this, jpath);
+    ret->display_name = dname;
     ret->index = (int)joints.size();
     joints.push_back(JointPtr(ret));
     return ret;

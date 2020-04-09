@@ -27,6 +27,7 @@ public:
     virtual void write(UsdTimeCode t);
 
     void setNode(Node *node);
+    std::string getName() const;
     std::string getPath() const;
 
     template<class NodeT>

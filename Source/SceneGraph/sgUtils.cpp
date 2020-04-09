@@ -4,35 +4,146 @@
 
 namespace sg {
 
-std::string SanitizeNodeName(const std::string& name)
+std::string FromBinary(const std::string& v)
 {
-    std::string ret = name;
+    size_t n = v.size() / 2;
+    const char* buf = v.data();
 
+    std::string r;
+    for (size_t i = 0; i < n; ++i) {
+        int c;
+        sscanf(buf, "%02x", &c);
+        r += (char)c;
+        buf += 2;
+    }
+    return r;
+}
+
+std::string ToBinary(const std::string& v)
+{
+    char buf[4];
+    size_t n = v.size();
+    auto* c = (const byte*)v.data();
+
+    std::string r;
+    for (size_t i = 0; i < n; ++i) {
+        sprintf(buf, "%02x", (int)*c);
+        r += buf;
+        ++c;
+    }
+    return r;
+}
+
+
+static void EncodeNodeNameImpl(std::string& dst, const char *src, size_t n)
+{
     // USD allows only alphabet, digit and '_' for node name.
     // in addition, the first character must not be a digit.
 
-    if (ret.empty() || std::isdigit(ret.front()))
-        ret = "_" + ret;
-
-    for (auto& c : ret) {
-        if (!std::isalnum(c) && c != '_')
-            c = '_';
+    char buf[8];
+    for (size_t i = 0; i < n; ++i) {
+        char c = *src++;
+        if (!std::isalnum(c) && c != '_') {
+            sprintf(buf, "0x%02x", (int)(uint8_t&)c);
+            dst += buf;
+        }
+        else {
+            dst += c;
+        }
     }
-
-    return ret;
+    if (dst.empty() || std::isdigit(dst.front()))
+        dst = "_" + dst;
 }
 
-std::string SanitizeNodePath(const std::string& path)
+std::string EncodeNodeName(const std::string& v)
 {
-    std::string ret = path;
-    for (auto& c : ret) {
-        if (c == '/')
-            continue;
-        if (!std::isalnum(c) && c != '_')
-            c = '_';
-    }
-    return ret;
+    std::string r;
+    EncodeNodeNameImpl(r, v.data(), v.size());
+    return r;
 }
+
+std::string EncodeNodePath(const std::string& v)
+{
+    std::string r;
+
+    const char* s = v.data();
+    for (;;) {
+        if (*s == '/') {
+            r += *s++;
+
+            size_t n = 0;
+            for (; ; ++n) {
+                if (s[n] == '/' || s[n] == '\0')
+                    break;
+            }
+            EncodeNodeNameImpl(r, s, n);
+            s += n;
+        }
+        else
+            break;
+    }
+    return r;
+}
+
+
+static void DecodeNodeNameImpl(std::string& dst, const char* s, size_t n)
+{
+    if (n >= 2) {
+        // skip first '_'. see EncodeNodeNameImpl()
+        if (s[0] == '_' && std::isdigit(s[1])) {
+            ++s;
+            --n;
+        }
+    }
+
+    int c;
+    for (;;) {
+        if (n < 4) {
+            dst.insert(dst.end(), s, s + n);
+            break;
+        }
+        else if (sscanf(s, "0x%02x", &c) == 1) {
+            dst += (char)c;
+            s += 4;
+            n -= 4;
+        }
+        else {
+            dst += *s++;
+            --n;
+        }
+    }
+}
+
+std::string DecodeNodeName(const std::string& v)
+{
+    std::string r;
+    DecodeNodeNameImpl(r, v.data(), v.size());
+    return r;
+}
+
+std::string DecodeNodePath(const std::string& v)
+{
+    std::string r;
+
+    const char* s = v.data();
+    for (;;) {
+        if (*s == '/') {
+            r += *s++;
+
+            size_t n = 0;
+            for (; ; ++n) {
+                if (s[n] == '/' || s[n] == '\0')
+                    break;
+            }
+            DecodeNodeNameImpl(r, s, n);
+            s += n;
+        }
+        else
+            break;
+    }
+    return r;
+}
+
 
 std::string GetParentPath(const std::string& path)
 {
