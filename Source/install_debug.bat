@@ -23,8 +23,10 @@ IF NOT EXIST "%USDCORE_DIR32%" (
 
 del "%DST_DIR64%\mqabc.dll"
 del "%DST_DIR64%\mqusd.dll"
+del "%DST_DIR64%\mudbg.dll"
 mklink "%DST_DIR64%\mqabc.dll" "%SRC_DIR64%\470\mqabc.dll"
 mklink "%DST_DIR64%\mqusd.dll" "%SRC_DIR64%\470\mqusd.dll"
+mklink "%DST_DIR64%\mudbg.dll" "%SRC_DIR64%\mudbg.dll"
 IF NOT EXIST "%USDCORE_DIR64%" (
     mkdir %USDCORE_DIR64%
     mklink "%USDCORE_DIR64%\SceneGraphUSD.dll" "%SRC_DIR64%\SceneGraphUSD.dll"

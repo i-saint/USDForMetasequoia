@@ -32,6 +32,7 @@ mqabcPlugin::mqabcPlugin()
 // デストラクタ
 mqabcPlugin::~mqabcPlugin()
 {
+    muvgPrintRecords();
 }
 
 #if defined(__APPLE__) || defined(__linux__)

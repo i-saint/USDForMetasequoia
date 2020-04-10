@@ -21,6 +21,7 @@ mqusdPlugin::mqusdPlugin()
 // デストラクタ
 mqusdPlugin::~mqusdPlugin()
 {
+    muvgPrintRecords();
 }
 
 #if defined(__APPLE__) || defined(__linux__)

@@ -91,19 +91,18 @@ public:
 
     T& at(size_t i) { return m_data[i]; }
     const T& at(size_t i) const { return m_data[i]; }
-    const T& cat(size_t i) const { return m_data[i]; }
-    T& operator[](size_t i) { return at(i); }
-    const T& operator[](size_t i) const { return at(i); }
+    T& operator[](size_t i) { return m_data[i]; }
+    const T& operator[](size_t i) const { return m_data[i]; }
 
     T& front() { return m_data[0]; }
+    T& back()  { return m_data[m_size - 1]; }
     const T& front() const { return m_data[0]; }
-    T& back() { return m_data[m_size - 1]; }
-    const T& back() const { return m_data[m_size - 1]; }
+    const T& back() const  { return m_data[m_size - 1]; }
 
     iterator begin() { return m_data; }
+    iterator end()   { return m_data + m_size; }
     const_iterator begin() const { return m_data; }
-    iterator end() { return m_data + m_size; }
-    const_iterator end() const { return m_data + m_size; }
+    const_iterator end() const   { return m_data + m_size; }
 
     static void* allocate(size_t size) { return muMalloc(size, alignment); }
     static void deallocate(void *addr, size_t /*size*/) { muFree(addr); }
@@ -164,6 +163,15 @@ public:
         m_size = s;
     }
 
+    void resize(size_t s, const T& v)
+    {
+        size_t pos = size();
+        resize(s);
+        // std::fill() can be significantly slower than plain copy
+        for (size_t i = pos; i < s; ++i)
+            m_data[i] = v;
+    }
+
     void resize_discard(size_t s)
     {
         reserve_discard(s);
@@ -174,16 +182,6 @@ public:
     {
         resize_discard(s);
         zeroclear();
-    }
-
-    void resize(size_t s, const T& v)
-    {
-        size_t pos = size();
-        resize(s);
-        // std::fill() can be significantly slower than plain copy
-        for (size_t i = pos; i < s; ++i) {
-            m_data[i] = v;
-        }
     }
 
     void clear()
@@ -381,17 +379,15 @@ public:
 
     ~SharedVector()
     {
-        if (!is_shared()) {
-            clear();
-            shrink_to_fit();
-        }
+        clear();
+        shrink_to_fit();
     }
 
     bool empty() const { return m_size == 0; }
     size_t size() const { return m_size; }
     size_t capacity() const { return m_capacity; }
-    size_t size_in_byte() const { return sizeof(T)*m_size; }
-    size_t capacity_in_byte() const { return sizeof(T)*m_capacity; }
+    size_t size_in_byte() const { return sizeof(T) * m_size; }
+    size_t capacity_in_byte() const { return sizeof(T) * m_capacity; }
 
     T* data() { detach(); return m_data; }
     const T* data() const { return m_data; }
@@ -399,37 +395,37 @@ public:
 
     T& at(size_t i) { detach(); return m_data[i]; }
     const T& at(size_t i) const { return m_data[i]; }
-    const T& cat(size_t i) const { return m_data[i]; }
-    T& operator[](size_t i) { detach(); return at(i); }
-    const T& operator[](size_t i) const { return at(i); }
+    T& operator[](size_t i) { detach(); return m_data[i]; }
+    const T& operator[](size_t i) const { return m_data[i]; }
 
     T& front() { detach(); return m_data[0]; }
+    T& back()  { detach(); return m_data[m_size - 1]; }
     const T& front() const { return m_data[0]; }
-    T& back() { detach(); return m_data[m_size - 1]; }
-    const T& back() const { return m_data[m_size - 1]; }
+    const T& back() const  { return m_data[m_size - 1]; }
 
     iterator begin() { detach(); return m_data; }
+    iterator end()   { detach(); return m_data + m_size; }
     const_iterator begin() const { return m_data; }
-    iterator end() { detach(); return m_data + m_size; }
-    const_iterator end() const { return m_data + m_size; }
+    const_iterator end() const   { return m_data + m_size; }
 
     static void* allocate(size_t size) { return muMalloc(size, alignment); }
     static void deallocate(void *addr, size_t /*size*/) { muFree(addr); }
 
     void share(const_pointer data, size_t size)
     {
+        clear();
+        shrink_to_fit();
+
         // just share data. no copy at this point.
         m_data = (pointer)data;
         m_shared_data = data;
         m_size = m_capacity = size;
     }
-    void share(const RawVector<T, Align>& c)
+
+    template<class Container>
+    void share(const Container& c)
     {
-        share(c.cdata(), c.size());
-    }
-    void share(const SharedVector& c)
-    {
-        share(c.cdata(), c.size());
+        share(c.data(), c.size());
     }
 
     void reserve(size_t s)
@@ -450,7 +446,7 @@ public:
 
     void reserve_discard(size_t s)
     {
-        detach_clear();
+        unshare();
         if (s > m_capacity) {
             s = std::max<size_t>(s, m_size * 2);
             size_t newsize = sizeof(T) * s;
@@ -493,6 +489,15 @@ public:
         m_size = s;
     }
 
+    void resize(size_t s, const T& v)
+    {
+        size_t pos = size();
+        resize(s);
+        // std::fill() can be significantly slower than plain copy
+        for (size_t i = pos; i < s; ++i)
+            m_data[i] = v;
+    }
+
     void resize_discard(size_t s)
     {
         reserve_discard(s);
@@ -505,18 +510,9 @@ public:
         zeroclear();
     }
 
-    void resize(size_t s, const T& v)
-    {
-        size_t pos = size();
-        resize(s);
-        // std::fill() can be significantly slower than plain copy
-        for (size_t i = pos; i < s; ++i) {
-            m_data[i] = v;
-        }
-    }
-
     void clear()
     {
+        unshare();
         m_size = 0;
     }
 
@@ -661,24 +657,22 @@ public:
 
     void detach()
     {
-        if (!m_shared_data)
-            return;
-
-        size_t size = sizeof(T) * m_size;
-        m_data = (T*)allocate(size);
-        memcpy(m_data, m_shared_data, size);
-        m_shared_data = nullptr;
-        m_capacity = m_size;
+        if (m_shared_data) {
+            size_t size = sizeof(T) * m_size;
+            m_data = (T*)allocate(size);
+            memcpy(m_data, m_shared_data, size);
+            m_shared_data = nullptr;
+            m_capacity = m_size;
+        }
     }
 
-    void detach_clear()
+    void unshare()
     {
-        if (!m_shared_data)
-            return;
-
-        m_data = nullptr;
-        m_shared_data = nullptr;
-        m_capacity = m_size = 0;
+        if (m_shared_data) {
+            m_data = nullptr;
+            m_shared_data = nullptr;
+            m_capacity = m_size = 0;
+        }
     }
 
     const RawVector<T, Align>& as_raw() const
