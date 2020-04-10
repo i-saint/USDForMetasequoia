@@ -8,6 +8,7 @@
     #include <unistd.h>
     #include <sys/mman.h>
     #include <dlfcn.h>
+    #include <execinfo.h>
     #ifdef __APPLE__
         #include <mach-o/dyld.h>
     #else
@@ -64,7 +65,7 @@ void Print(const char *fmt, ...)
 #ifdef _WIN32
         ::OutputDebugStringA(buf);
 #else
-        printf(buf);
+        printf("%s", buf);
 #endif
     }
 }
@@ -85,7 +86,7 @@ void Print(const wchar_t *fmt, ...)
 #ifdef _WIN32
         ::OutputDebugStringW(buf);
 #else
-        wprintf(buf);
+        wprintf(L"%s", buf);
 #endif
     }
 }
@@ -464,12 +465,12 @@ void* FindSymbolByName(const char *name, const char *module_name)
 
 int CaptureCallstack(void** dst, size_t dst_len)
 {
-#ifdef _WIN32
     std::fill_n(dst, dst_len, nullptr);
+#ifdef _WIN32
     return CaptureStackBackTrace(2, (DWORD)dst_len, dst, nullptr);
 #else
-    return 0;
-#endif //_WIN32
+    return ::backtrace(dst, (int)dst_len);
+#endif
 }
 
 void AddressToSymbolName(char *dst, size_t dst_len, void* address)
@@ -510,7 +511,24 @@ void AddressToSymbolName(char *dst, size_t dst_len, void* address)
         snprintf(dst, dst_len, "%s(%d): %s!%s + 0x%x [0x%p]",
             line.FileName, line.LineNumber, mod.ModuleName, imageSymbol->Name, distance, address);
     }
+#else //_WIN32
+
+    char** s = backtrace_symbols(&address, 1);
+    if (s) {
+        std::strncpy(dst, s[0], dst_len);
+        ::free(s);
+    }
+
 #endif //_WIN32
+}
+
+void DbgBreak()
+{
+#ifdef _WIN32
+    ::DebugBreak();
+#else
+    __builtin_trap();
+#endif
 }
 
 void SetMemoryProtection(void *addr, size_t size, MemoryFlags flags)
@@ -523,7 +541,7 @@ void SetMemoryProtection(void *addr, size_t size, MemoryFlags flags)
     case MemoryFlags::ExecuteReadWrite: flag = PAGE_EXECUTE_READWRITE; break;
     }
     DWORD old_flag;
-    VirtualProtect(addr, size, flag, &old_flag);
+    ::VirtualProtect(addr, size, flag, &old_flag);
 #else
     int flag = 0;
     switch (flags) {

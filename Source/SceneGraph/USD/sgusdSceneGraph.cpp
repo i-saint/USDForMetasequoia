@@ -36,7 +36,7 @@ USDNode::~USDNode()
 }
 
 template<class T>
-void USDNode::padSample(UsdAttribute& attr, UsdTimeCode t, const T default_sample)
+void USDNode::padSample(const UsdAttribute& attr, UsdTimeCode t, const T& default_sample)
 {
     if (t.IsDefault())
         return;

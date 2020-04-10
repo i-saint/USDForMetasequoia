@@ -47,7 +47,7 @@ public:
     NodeT* getNode() { return static_cast<NodeT*>(m_node); }
 
     template<class T>
-    void padSample(UsdAttribute& attr, UsdTimeCode t, const T default_sample = {});
+    void padSample(const UsdAttribute& attr, UsdTimeCode t, const T& default_sample = {});
 
 public:
     UsdPrim m_prim;

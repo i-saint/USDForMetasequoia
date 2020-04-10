@@ -185,6 +185,36 @@ inline auto get_max(const Container& src, const Getter& getter)
     return r;
 }
 
+
+
+template<class Container>
+inline void append_element(Container& dst, const Container& src, size_t element_size_before, size_t element_size_after, typename Container::value_type default_value = {})
+{
+    size_t num_elements = src.size() / element_size_before;
+    size_t pos = dst.size();
+    dst.resize(pos + num_elements * element_size_after, default_value);
+
+    auto* s = src.data();
+    auto* d = dst.data() + pos;
+    size_t element_size = std::min(element_size_before, element_size_after);
+    for (size_t i = 0; i < num_elements; ++i) {
+        for (size_t ei = 0; ei < element_size; ++ei)
+            d[ei] = s[ei];
+        s += element_size_before;
+        d += element_size_after;
+    }
+}
+template<class Container>
+inline Container resize_element(const Container& src, size_t element_size_before, size_t element_size_after, typename Container::value_type default_value = {})
+{
+    if (element_size_before == element_size_after)
+        return src;
+
+    Container ret;
+    append_element(ret, src, element_size_before, element_size_after, default_value);
+    return ret;
+}
+
 // Validator: [](const std::string&) -> bool
 template<class Validate>
 inline std::string MakeUniqueName(const std::string& name, const Validate& validate)
@@ -201,8 +231,8 @@ inline std::string MakeUniqueName(const std::string& name, const Validate& valid
     return ret;
 }
 
-std::string FromBinary(const std::string& v);
-std::string ToBinary(const std::string& v);
+std::string BinaryEncode(const std::string& v);
+std::string BinaryDecode(const std::string& v);
 
 std::string EncodeNodeName(const std::string& name);
 std::string EncodeNodePath(const std::string& path);

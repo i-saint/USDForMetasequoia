@@ -65,12 +65,12 @@ void GetBinary(UsdAttribute& attr, std::string& v, UsdTimeCode t)
 {
     std::string tmp;
     attr.Get(&tmp, t);
-    v = FromBinary(tmp);
+    v = BinaryDecode(tmp);
 }
 
 void SetBinary(UsdAttribute& attr, const std::string& v, UsdTimeCode t)
 {
-    attr.Set(ToBinary(v), t);
+    attr.Set(BinaryEncode(v), t);
 }
 
 } // namespace sg

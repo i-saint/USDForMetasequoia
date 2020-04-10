@@ -13,7 +13,7 @@ void  muFree(void* addr);
 
 void muvgInitialize();
 bool muvgEnabled();
-void muvgReportCorruption();
+void muvgReportError();
 void muvgPrintRecords();
 
 // simpler version of std::vector.

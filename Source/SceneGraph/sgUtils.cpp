@@ -4,33 +4,43 @@
 
 namespace sg {
 
-std::string FromBinary(const std::string& v)
+static void BinaryEncodeImpl(std::string& dst, const char* src, size_t n)
 {
-    size_t n = v.size() / 2;
-    const char* buf = v.data();
-
-    std::string r;
+    char buf[8];
     for (size_t i = 0; i < n; ++i) {
-        int c;
-        sscanf(buf, "%02x", &c);
-        r += (char)c;
-        buf += 2;
+        snprintf(buf, sizeof(buf), "0x%02x", (int)(uint8_t&)src[i]);
+        dst += buf;
     }
+}
+
+static void BinaryDecodeImpl(std::string& dst, const char* s, size_t n)
+{
+    int c;
+    for (;;) {
+        if (n < 4) {
+            break;
+        }
+        else if (sscanf(s, "0x%02x", &c) == 1) {
+            dst += (char)c;
+            s += 4; n -= 4;
+        }
+        else {
+            ++s; --n;
+        }
+    }
+}
+
+std::string BinaryEncode(const std::string& v)
+{
+    std::string r;
+    BinaryEncodeImpl(r, v.data(), v.size());
     return r;
 }
 
-std::string ToBinary(const std::string& v)
+std::string BinaryDecode(const std::string& v)
 {
-    char buf[8];
-    size_t n = v.size();
-    auto* c = (const byte*)v.data();
-
     std::string r;
-    for (size_t i = 0; i < n; ++i) {
-        snprintf(buf, sizeof(buf), "%02x", (int)*c);
-        r += buf;
-        ++c;
-    }
+    BinaryDecodeImpl(r, v.data(), v.size());
     return r;
 }
 
@@ -93,8 +103,7 @@ static void DecodeNodeNameImpl(std::string& dst, const char* s, size_t n)
     if (n >= 2) {
         // skip first '_'. see EncodeNodeNameImpl()
         if (s[0] == '_' && std::isdigit(s[1])) {
-            ++s;
-            --n;
+            ++s; --n;
         }
     }
 
@@ -106,12 +115,11 @@ static void DecodeNodeNameImpl(std::string& dst, const char* s, size_t n)
         }
         else if (sscanf(s, "0x%02x", &c) == 1) {
             dst += (char)c;
-            s += 4;
-            n -= 4;
+            s += 4; n -= 4;
         }
         else {
-            dst += *s++;
-            --n;
+            dst += *s;
+            ++s; --n;
         }
     }
 }

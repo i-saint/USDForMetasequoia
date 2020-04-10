@@ -20,3 +20,5 @@ if(ENABLE_ISPC)
     add_definitions(-DmuEnableISPC)
     target_include_directories(MeshUtils PUBLIC ${MUISPC_OUTDIR})
 endif()
+
+add_subdirectory(mudbg)

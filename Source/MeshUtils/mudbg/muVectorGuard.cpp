@@ -2,33 +2,35 @@
 #include "mudbg.h"
 #include "../muMisc.h"
 
-class muAllocTable
+#define muvgMaxCallstack 44
+#define muvgFillPattern 0xaa
+
+namespace mu {
+
+class AllocTable
 {
 public:
-    static const int sentinel_pattern = 0xaa;
-
     struct muAllocRecord
     {
         size_t index;
         size_t size_alloc;
         size_t size_required;
         void* addr;
-        void* callstack[32];
+        void* callstack[muvgMaxCallstack];
     };
+    using lock_t = std::lock_guard<std::mutex>;
 
-    static muAllocTable& getInstance();
+    static AllocTable& getInstance();
     void append(void* addr, size_t size_alloc, size_t size_required);
     void erase(void* addr);
 
-    void print(muAllocRecord& rec);
-    void checkAndReport(muAllocRecord& rec);
-    void reportCorruption();
+    void reportError();
     void printRecords();
 
 private:
-    using lock_t = std::lock_guard<std::mutex>;
-
-    muAllocTable();
+    AllocTable();
+    void print(muAllocRecord& rec);
+    void checkAndReport(muAllocRecord& rec);
 
     std::map<void*, muAllocRecord> m_records;
     std::mutex m_mutex;
@@ -36,18 +38,18 @@ private:
 };
 
 
-muAllocTable& muAllocTable::getInstance()
+AllocTable& AllocTable::getInstance()
 {
-    static muAllocTable s_inst;
+    static AllocTable s_inst;
     return s_inst;
 }
 
-muAllocTable::muAllocTable()
+AllocTable::AllocTable()
 {
     mu::InitializeSymbols();
 }
 
-void muAllocTable::append(void* addr, size_t size_alloc, size_t size_required)
+void AllocTable::append(void* addr, size_t size_alloc, size_t size_required)
 {
     muAllocRecord* rec = nullptr;
     {
@@ -60,13 +62,13 @@ void muAllocTable::append(void* addr, size_t size_alloc, size_t size_required)
     rec->size_required = size_required;
 
     size_t sentinel_size = size_alloc - size_required;
-    byte* sentinel = (byte*)addr + size_required;
-    memset(sentinel, sentinel_pattern, sentinel_size);
+    uint8_t* sentinel = (uint8_t*)addr + size_required;
+    memset(sentinel, muvgFillPattern, sentinel_size);
 
-    mu::CaptureCallstack(rec->callstack, _countof(rec->callstack));
+    mu::CaptureCallstack(rec->callstack, muvgMaxCallstack);
 }
 
-void muAllocTable::erase(void* addr)
+void AllocTable::erase(void* addr)
 {
     if (!addr)
         return;
@@ -75,7 +77,7 @@ void muAllocTable::erase(void* addr)
     auto it = m_records.find(addr);
     if (it == m_records.end()) {
         mu::Print("muAllocTable::erase()\n");
-        ::DebugBreak();
+        mu::DbgBreak();
     }
     else {
         checkAndReport(it->second);
@@ -83,7 +85,7 @@ void muAllocTable::erase(void* addr)
     }
 }
 
-void muAllocTable::print(muAllocRecord& rec)
+void AllocTable::print(muAllocRecord& rec)
 {
     mu::Print("Alloc Record %d\n", (uint32_t)rec.index);
     mu::Print("  Address 0x%p \n", rec.addr);
@@ -92,7 +94,7 @@ void muAllocTable::print(muAllocRecord& rec)
     mu::Print("  Callstack:\n");
 
     char buf[2048];
-    for (int i = 0; i < _countof(rec.callstack); ++i) {
+    for (int i = 0; i < muvgMaxCallstack; ++i) {
         void* addr = rec.callstack[i];
         if (!addr)
             break;
@@ -101,51 +103,53 @@ void muAllocTable::print(muAllocRecord& rec)
     }
 }
 
-void muAllocTable::checkAndReport(muAllocRecord& rec)
+void AllocTable::checkAndReport(muAllocRecord& rec)
 {
     size_t sentinel_size = rec.size_alloc - rec.size_required;
-    byte* sentinel = (byte*)rec.addr + rec.size_required;
+    uint8_t* sentinel = (uint8_t*)rec.addr + rec.size_required;
     for (int i = 0; i < sentinel_size; ++i) {
-        if (sentinel[i] != sentinel_pattern) {
+        if (sentinel[i] != muvgFillPattern) {
             mu::Print("muAllocTable::reportCorruption()\n");
             print(rec);
-            ::DebugBreak();
+            mu::DbgBreak();
             break;
         }
     }
 }
 
-void muAllocTable::reportCorruption()
+void AllocTable::reportError()
 {
     lock_t l(m_mutex);
     for (auto& kvp : m_records)
         checkAndReport(kvp.second);
 }
 
-void muAllocTable::printRecords()
+void AllocTable::printRecords()
 {
     lock_t l(m_mutex);
     for (auto& kvp : m_records)
         print(kvp.second);
 }
 
+} // namespace mu
+
 
 mudbgAPI void muvgOnAllocate(void* addr, size_t size_alloc, size_t size_required)
 {
-    muAllocTable::getInstance().append(addr, size_alloc, size_required);
+    mu::AllocTable::getInstance().append(addr, size_alloc, size_required);
 }
 
 mudbgAPI void muvgOnFree(void* addr)
 {
-    muAllocTable::getInstance().erase(addr);
+    mu::AllocTable::getInstance().erase(addr);
 }
 
-mudbgAPI void muvgReportCorruption()
+mudbgAPI void muvgReportError()
 {
-    muAllocTable::getInstance().reportCorruption();
+    mu::AllocTable::getInstance().reportError();
 }
 
 mudbgAPI void muvgPrintRecords()
 {
-    muAllocTable::getInstance().printRecords();
+    mu::AllocTable::getInstance().printRecords();
 }

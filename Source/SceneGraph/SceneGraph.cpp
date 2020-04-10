@@ -554,6 +554,9 @@ void MeshNode::merge(const MeshNode& v, const float4x4& trans)
     append(points, v.points);
     append(counts, v.counts);
     append(indices, v.indices);
+    if (vertex_offset > 0)
+        add(indices.data() + index_offset, v.indices.size(), vertex_offset);
+
     append_padded(normals, v.normals, index_offset, float3::zero());
     append_padded(uvs,     v.uvs,     index_offset, float2::zero());
     append_padded(colors,  v.colors,  index_offset, float4::one());
@@ -566,11 +569,6 @@ void MeshNode::merge(const MeshNode& v, const float4x4& trans)
     skeleton = nullptr;
     joints.clear();
     joint_matrices.clear();
-
-    // handle offset
-    if (vertex_offset > 0) {
-        add(indices.data() + index_offset, v.indices.size(), vertex_offset);
-    }
 
     // handle materials & facesets
     append(materials, v.materials);

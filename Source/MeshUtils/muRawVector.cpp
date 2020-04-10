@@ -13,7 +13,7 @@
 static void* g_mudbg_module;
 void (*_muvgOnAllocate)(void* addr, size_t size_alloc, size_t size_required);
 void (*_muvgOnFree)(void* addr);
-void (*_muvgReportCorruption)();
+void (*_muvgReportError)();
 void (*_muvgPrintRecords)();
 
 static void muvgInitializeImpl()
@@ -32,7 +32,7 @@ static void muvgInitializeImpl()
 #define GetSym(Name) (void*&)_##Name = mu::GetSymbol(g_mudbg_module, #Name)
         GetSym(muvgOnAllocate);
         GetSym(muvgOnFree);
-        GetSym(muvgReportCorruption);
+        GetSym(muvgReportError);
         GetSym(muvgPrintRecords);
 #undef GetSym
     }
@@ -98,11 +98,11 @@ bool muvgEnabled()
 #endif
 }
 
-void muvgReportCorruption()
+void muvgReportError()
 {
 #ifdef muDbgVectorGuard
-    if (_muvgReportCorruption)
-        _muvgReportCorruption();
+    if (_muvgReportError)
+        _muvgReportError();
 #endif
 }
 
