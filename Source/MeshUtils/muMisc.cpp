@@ -24,6 +24,24 @@ nanosec Now()
 }
 
 static std::function<void(const char*)> g_print_handler;
+static std::function<void(const wchar_t*)> g_wprint_handler;
+static const int g_print_buf_size = 1024 * 4;
+static thread_local char* g_print_buf;
+static thread_local wchar_t* g_wprint_buf;
+
+static char* GetPrintBuffer()
+{
+    if (!g_print_buf)
+        g_print_buf = new char[g_print_buf_size];
+    return g_print_buf;
+}
+
+static wchar_t* GetWPrintBuffer()
+{
+    if (!g_wprint_buf)
+        g_wprint_buf = new wchar_t[g_print_buf_size];
+    return g_wprint_buf;
+}
 
 void SetPrintHandler(const PrintHandler& v)
 {
@@ -32,10 +50,11 @@ void SetPrintHandler(const PrintHandler& v)
 
 void Print(const char *fmt, ...)
 {
-    char buf[1024];
+    char* buf = GetPrintBuffer();
+
     va_list args;
     va_start(args, fmt);
-    vsnprintf(buf, sizeof(buf), fmt, args);
+    vsnprintf(buf, g_print_buf_size, fmt, args);
     va_end(args);
 
     if (g_print_handler) {
@@ -52,24 +71,32 @@ void Print(const char *fmt, ...)
 
 void Print(const wchar_t *fmt, ...)
 {
+    wchar_t* buf = GetWPrintBuffer();
+
     va_list args;
     va_start(args, fmt);
-#ifdef _WIN32
-    wchar_t buf[1024];
-    _vsnwprintf(buf, sizeof(buf), fmt, args);
-    ::OutputDebugStringW(buf);
-#else
-    vwprintf(fmt, args);
-#endif
+    vswprintf(buf, g_print_buf_size, fmt, args);
     va_end(args);
+
+    if (g_wprint_handler) {
+        g_wprint_handler(buf);
+    }
+    else {
+#ifdef _WIN32
+        ::OutputDebugStringW(buf);
+#else
+        wprintf(buf);
+#endif
+    }
 }
 
 std::string Format(const char *fmt, ...)
 {
+    char* buf = GetPrintBuffer();
+
     va_list args;
     va_start(args, fmt);
-    char buf[1024];
-    vsnprintf(buf, sizeof(buf), fmt, args);
+    vsnprintf(buf, g_print_buf_size, fmt, args);
     va_end(args);
 
     return buf;
@@ -375,27 +402,16 @@ void* GetSymbol(void* module, const char* name)
 }
 
 
-void InitializeSymbols(const char *path)
+void InitializeSymbols(const char *path_)
 {
 #ifdef _WIN32
-    char tmp[MAX_PATH];
-    if (!path) {
-        auto ret = ::GetModuleFileNameA(::GetModuleHandleA(nullptr), (LPSTR)tmp, sizeof(tmp));
-        for (int i = ret - 1; i > 0; --i) {
-            if (tmp[i] == '\\') {
-                tmp[i] = '\0';
-                break;
-            }
-        }
-        path = tmp;
-    }
+    auto path = path_ ? path_ : GetCurrentModuleDirectory();
 
     DWORD opt = ::SymGetOptions();
-    opt |= SYMOPT_DEBUG;
     opt |= SYMOPT_DEFERRED_LOADS;
     opt &= ~SYMOPT_UNDNAME;
     ::SymSetOptions(opt);
-    ::SymInitialize(::GetCurrentProcess(), path, TRUE);
+    ::SymInitialize(::GetCurrentProcess(), path.c_str(), TRUE);
 #else  // _WIN32
 #endif //_WIN32
 }
@@ -426,14 +442,13 @@ struct cbEnumSymbolsCtx
 BOOL CALLBACK cbEnumSymbols(PCSTR SymbolName, DWORD64 SymbolAddress, ULONG /*SymbolSize*/, PVOID UserContext)
 {
     auto ctx = (cbEnumSymbolsCtx*)UserContext;
-    if (strcmp(SymbolName, ctx->name) == 0) {
+    if (std::strcmp(SymbolName, ctx->name) == 0) {
         ctx->ret = (void*)SymbolAddress;
         return FALSE;
     }
     return TRUE;
 
 }
-
 #endif //_WIN32
 
 void* FindSymbolByName(const char *name, const char *module_name)
@@ -444,6 +459,57 @@ void* FindSymbolByName(const char *name, const char *module_name)
     return ctx.ret;
 #else  // _WIN32
     return nullptr;
+#endif //_WIN32
+}
+
+int CaptureCallstack(void** dst, size_t dst_len)
+{
+#ifdef _WIN32
+    std::fill_n(dst, dst_len, nullptr);
+    return CaptureStackBackTrace(2, (DWORD)dst_len, dst, nullptr);
+#else
+    return 0;
+#endif //_WIN32
+}
+
+void AddressToSymbolName(char *dst, size_t dst_len, void* address)
+{
+#ifdef _WIN32
+#ifdef _WIN64
+    using DWORDX = DWORD64;
+    using PDWORDX = PDWORD64;
+#else
+    using DWORDX = DWORD;
+    using PDWORDX = PDWORD;
+#endif
+
+    HANDLE proc = ::GetCurrentProcess();
+    IMAGEHLP_MODULE mod = { sizeof(IMAGEHLP_MODULE) };
+    IMAGEHLP_LINE line = { sizeof(IMAGEHLP_LINE) };
+    DWORDX disp_sym = 0;
+    DWORD disp_line = 0;
+
+    char symbolBuffer[sizeof(IMAGEHLP_SYMBOL) + MAX_PATH] = { 0 };
+    IMAGEHLP_SYMBOL* imageSymbol = (IMAGEHLP_SYMBOL*)symbolBuffer;
+    imageSymbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
+    imageSymbol->MaxNameLength = MAX_PATH;
+
+    if (!::SymGetModuleInfo(proc, (DWORDX)address, &mod)) {
+        snprintf(dst, dst_len, "[0x%p]", address);
+    }
+    else if (!::SymGetSymFromAddr(proc, (DWORDX)address, &disp_sym, imageSymbol)) {
+        uint32_t distance = (uint32_t)((size_t)address - (size_t)mod.BaseOfImage);
+        snprintf(dst, dst_len, "%s + 0x%x [0x%p]", mod.ModuleName, distance, address);
+    }
+    else if (!::SymGetLineFromAddr(proc, (DWORDX)address, &disp_line, &line)) {
+        uint32_t distance = (uint32_t)((size_t)address - (size_t)imageSymbol->Address);
+        snprintf(dst, dst_len, "%s!%s + 0x%x [0x%p]", mod.ModuleName, imageSymbol->Name, distance, address);
+    }
+    else {
+        uint32_t distance = (uint32_t)((size_t)address - (size_t)imageSymbol->Address);
+        snprintf(dst, dst_len, "%s(%d): %s!%s + 0x%x [0x%p]",
+            line.FileName, line.LineNumber, mod.ModuleName, imageSymbol->Name, distance, address);
+    }
 #endif //_WIN32
 }
 

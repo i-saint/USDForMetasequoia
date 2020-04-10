@@ -136,3 +136,15 @@ TestCase(Test_Limits)
     Test_Limits_Impl<double3x3>();
     Test_Limits_Impl<double4x4>();
 }
+
+
+TestCase(Test_Corruption)
+{
+    if (muVectorGuardEnabled()) {
+        RawVector<int> hoge;
+        hoge.resize(1);
+        hoge[1] = 0; // corrupt
+
+        // will be reported
+    }
+}

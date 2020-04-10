@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClInclude Include="MeshUtils_impl.h" />
     <ClInclude Include="muAlgorithm.h" />
-    <ClInclude Include="muAllocator.h" />
     <ClInclude Include="ampmath.h" />
     <ClInclude Include="ampmath_impl.h" />
     <ClInclude Include="muColor.h" />
@@ -48,11 +47,11 @@
     <ClInclude Include="muVertex.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="muAllocator.cpp" />
     <ClCompile Include="muCompression.cpp" />
     <ClCompile Include="muDebugTimer.cpp" />
     <ClCompile Include="muMeshRefiner.cpp" />
     <ClCompile Include="muMisc.cpp" />
+    <ClCompile Include="muRawVector.cpp" />
     <ClCompile Include="muStream.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -110,7 +109,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <AdditionalIncludeDirectories>$(IntDir)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>msDebug;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>muDebug;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>

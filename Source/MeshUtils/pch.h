@@ -15,6 +15,7 @@
 #include <cfloat>
 #include <string>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <numeric>
 #include <chrono>
@@ -22,6 +23,7 @@
 #include <locale>
 #include <type_traits>
 #include <functional>
+#include <mutex>
 
 #include "muConfig.h"
 

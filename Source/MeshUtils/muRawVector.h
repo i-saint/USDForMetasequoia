@@ -4,11 +4,16 @@
 #include <cstring>
 #include <algorithm>
 #include <initializer_list>
-#include "muAllocator.h"
 
 template<class T, int Align = 0x40> class RawVector;
 template<class T, int Align = 0x40> class SharedVector;
 
+void* muMalloc(size_t size, size_t alignment);
+void  muFree(void* addr);
+
+bool muVectorGuardEnabled();
+void muReportCorruption();
+void muReportRecords();
 
 // simpler version of std::vector.
 // T must be POD types because its constructor and destructor are never called.
@@ -99,8 +104,8 @@ public:
     iterator end() { return m_data + m_size; }
     const_iterator end() const { return m_data + m_size; }
 
-    static void* allocate(size_t size) { return AlignedMalloc(size, alignment); }
-    static void deallocate(void *addr, size_t /*size*/) { AlignedFree(addr); }
+    static void* allocate(size_t size) { return muMalloc(size, alignment); }
+    static void deallocate(void *addr, size_t /*size*/) { muFree(addr); }
 
     void reserve(size_t s)
     {
@@ -407,8 +412,8 @@ public:
     iterator end() { detach(); return m_data + m_size; }
     const_iterator end() const { return m_data + m_size; }
 
-    static void* allocate(size_t size) { return AlignedMalloc(size, alignment); }
-    static void deallocate(void *addr, size_t /*size*/) { AlignedFree(addr); }
+    static void* allocate(size_t size) { return muMalloc(size, alignment); }
+    static void deallocate(void *addr, size_t /*size*/) { muFree(addr); }
 
     void share(const_pointer data, size_t size)
     {

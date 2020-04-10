@@ -70,6 +70,9 @@ void* GetSymbol(void *module, const char *name);
 void InitializeSymbols(const char *path = nullptr);
 void* FindSymbolByName(const char *name);
 void* FindSymbolByName(const char *name, const char *module_name);
+int CaptureCallstack(void** dst, size_t dst_len);
+void AddressToSymbolName(char* dst, size_t dst_len, void* address);
+
 
 
 enum class MemoryFlags
