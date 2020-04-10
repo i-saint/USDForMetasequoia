@@ -73,7 +73,6 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    sg::SetUSDModuleDir(mu::GetCurrentModuleDirectory());
     auto scene = sg::CreateUSDScene();
     if (!scene)
         return 1;

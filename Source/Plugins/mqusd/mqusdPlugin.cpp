@@ -15,6 +15,9 @@ static mqusdPlugin g_plugin;
 mqusdPlugin::mqusdPlugin()
 {
     muvgInitialize();
+#ifdef _WIN32
+    sg::SetUSDModuleDir(GetPluginsDir() + "Misc" muPathSep "mqusd");
+#endif
 }
 
 // Destructor
