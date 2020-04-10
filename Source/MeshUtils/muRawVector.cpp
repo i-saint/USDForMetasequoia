@@ -1,143 +1,65 @@
 #include "pch.h"
 #include "muRawVector.h"
 
-//#if defined(muDebug) && defined(_WIN32)
-//    #define muDbgVectorGuard
-//#endif
+#ifdef muDebug
+    #define muDbgVectorGuard
+#endif
 
 #ifdef muDbgVectorGuard
 #include "muMisc.h"
 
-class muAllocTable
+#define mudbgDll muDLLPrefix "mudbg" muDLLSuffix
+
+static void* g_mudbg_module;
+void (*_muvgOnAllocate)(void* addr, size_t size_alloc, size_t size_required);
+void (*_muvgOnFree)(void* addr);
+void (*_muvgReportCorruption)();
+void (*_muvgPrintRecords)();
+
+static void muvgInitializeImpl()
 {
-public:
-    static const int sentinel_pattern = 0xaa;
-    static const int sentinel_size = 4;
+    if (g_mudbg_module)
+        return;
 
-    struct muAllocRecord
-    {
-        size_t index;
-        size_t size_alloc;
-        size_t size_required;
-        void* addr;
-        void* callstack[32];
-    };
-
-    static muAllocTable& getInstance();
-    void append(void* addr, size_t size_alloc, size_t size_required);
-    void erase(void* addr);
-
-    void print(muAllocRecord& rec);
-    void checkAndReport(muAllocRecord& rec);
-    void reportCorruption();
-    void printRecords();
-
-private:
-    using lock_t = std::lock_guard<std::mutex>;
-
-    muAllocTable();
-
-    std::map<void*, muAllocRecord> m_records;
-    std::mutex m_mutex;
-    size_t m_index = 0;
-};
-
-muAllocTable& muAllocTable::getInstance()
-{
-    static muAllocTable s_inst;
-    return s_inst;
-}
-
-muAllocTable::muAllocTable()
-{
-    mu::InitializeSymbols();
-}
-
-void muAllocTable::append(void* addr, size_t size_alloc, size_t size_required)
-{
-    muAllocRecord* rec = nullptr;
-    {
-        lock_t l(m_mutex);
-        rec = &m_records[addr];
+    g_mudbg_module = mu::GetModule(mudbgDll);
+    if (!g_mudbg_module) {
+        std::string path = mu::GetCurrentModuleDirectory();
+        path += muPathSep;
+        path += mudbgDll;
+        g_mudbg_module = mu::LoadModule(path.c_str());
     }
-    rec->addr = addr;
-    rec->index = m_index++;
-    rec->size_alloc = size_alloc;
-    rec->size_required = size_required;
-
-    byte* sentinel = (byte*)addr + size_required;
-    memset(sentinel, sentinel_pattern, sentinel_size);
-
-    mu::CaptureCallstack(rec->callstack, _countof(rec->callstack));
-}
-
-void muAllocTable::erase(void* addr)
-{
-    lock_t l(m_mutex);
-    auto it = m_records.find(addr);
-    if (it == m_records.end()) {
-        mu::Print("muAllocTable::erase()\n");
-        ::DebugBreak();
-    }
-    else {
-        checkAndReport(it->second);
-        m_records.erase(it);
+    if (g_mudbg_module) {
+#define GetSym(Name) (void*&)_##Name = mu::GetSymbol(g_mudbg_module, #Name)
+        GetSym(muvgOnAllocate);
+        GetSym(muvgOnFree);
+        GetSym(muvgReportCorruption);
+        GetSym(muvgPrintRecords);
+#undef GetSym
     }
 }
+#endif // muDbgVectorGuard
 
-void muAllocTable::print(muAllocRecord& rec)
+void muvgInitialize()
 {
-    mu::Print("Alloc Record %d\n", (uint32_t)rec.index);
-    mu::Print("  Address 0x%p \n", rec.addr);
-    mu::Print("  Size Allocated %d \n", (uint32_t)rec.size_alloc);
-    mu::Print("  Size Requested %d \n", (uint32_t)rec.size_required);
-    mu::Print("  Callstack:\n");
-
-    char buf[2048];
-    for (int i = 0; i < _countof(rec.callstack); ++i) {
-        void* addr = rec.callstack[i];
-        if (!addr)
-            break;
-        mu::AddressToSymbolName(buf, sizeof(buf), rec.callstack[i]);
-        mu::Print("    %s\n", buf);
-    }
-}
-
-void muAllocTable::checkAndReport(muAllocRecord& rec)
-{
-    byte* sentinel = (byte*)rec.addr + rec.size_required;
-    for (int i = 0; i < sentinel_size; ++i) {
-        if (sentinel[i] != sentinel_pattern) {
-            mu::Print("muAllocTable::reportCorruption()\n");
-            print(rec);
-            ::DebugBreak();
-            break;
-        }
-    }
-}
-
-void muAllocTable::reportCorruption()
-{
-    lock_t l(m_mutex);
-    for (auto& kvp : m_records)
-        checkAndReport(kvp.second);
-}
-
-void muAllocTable::printRecords()
-{
-    lock_t l(m_mutex);
-    for (auto& kvp : m_records)
-        print(kvp.second);
-}
+#ifdef muDbgVectorGuard
+    static std::once_flag s_once;
+    std::call_once(s_once, []() { muvgInitializeImpl(); });
 #endif
+}
+
+
 
 void* muMalloc(size_t size_required, size_t alignment)
 {
-    size_t mask = alignment - 1;
-    size_t size_alloc = (size_required + mask) & (~mask);
 #ifdef muDbgVectorGuard
-    size_alloc += muAllocTable::sentinel_size;
+    muvgInitialize();
+    size_t pad = 16;
+#else
+    size_t pad = 0;
 #endif
+
+    size_t mask = alignment - 1;
+    size_t size_alloc = (size_required + pad + mask) & (~mask);
 
 #ifdef _WIN32
     void* ret = _mm_malloc(size_alloc, alignment);
@@ -147,7 +69,8 @@ void* muMalloc(size_t size_required, size_t alignment)
 #endif
 
 #ifdef muDbgVectorGuard
-    muAllocTable::getInstance().append(ret, size_alloc, size_required);
+    if (_muvgOnAllocate)
+        _muvgOnAllocate(ret, size_alloc, size_required);
 #endif
     return ret;
 }
@@ -155,8 +78,8 @@ void* muMalloc(size_t size_required, size_t alignment)
 void muFree(void *addr)
 {
 #ifdef muDbgVectorGuard
-    if (addr)
-        muAllocTable::getInstance().erase(addr);
+    if (_muvgOnFree)
+        _muvgOnFree(addr);
 #endif
 
 #ifdef _WIN32
@@ -166,7 +89,7 @@ void muFree(void *addr)
 #endif
 }
 
-bool muVectorGuardEnabled()
+bool muvgEnabled()
 {
 #ifdef muDbgVectorGuard
     return true;
@@ -175,16 +98,18 @@ bool muVectorGuardEnabled()
 #endif
 }
 
-void muReportCorruption()
+void muvgReportCorruption()
 {
 #ifdef muDbgVectorGuard
-    muAllocTable::getInstance().reportCorruption();
+    if (_muvgReportCorruption)
+        _muvgReportCorruption();
 #endif
 }
 
-void muReportRecords()
+void muvgPrintRecords()
 {
 #ifdef muDbgVectorGuard
-    muAllocTable::getInstance().printRecords();
+    if (_muvgPrintRecords)
+        _muvgPrintRecords();
 #endif
 }

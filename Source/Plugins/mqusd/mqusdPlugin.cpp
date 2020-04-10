@@ -14,6 +14,7 @@ static mqusdPlugin g_plugin;
 // コンストラクタ
 mqusdPlugin::mqusdPlugin()
 {
+    muvgInitialize();
 }
 
 // Destructor

@@ -11,9 +11,10 @@ template<class T, int Align = 0x40> class SharedVector;
 void* muMalloc(size_t size, size_t alignment);
 void  muFree(void* addr);
 
-bool muVectorGuardEnabled();
-void muReportCorruption();
-void muReportRecords();
+void muvgInitialize();
+bool muvgEnabled();
+void muvgReportCorruption();
+void muvgPrintRecords();
 
 // simpler version of std::vector.
 // T must be POD types because its constructor and destructor are never called.

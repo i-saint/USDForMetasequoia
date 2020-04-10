@@ -140,7 +140,7 @@ TestCase(Test_Limits)
 
 TestCase(Test_Corruption)
 {
-    if (muVectorGuardEnabled()) {
+    if (muvgEnabled()) {
         RawVector<int> hoge;
         hoge.resize(1);
         hoge[1] = 0; // corrupt

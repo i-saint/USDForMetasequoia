@@ -25,6 +25,7 @@ static mqabcPlugin g_plugin;
 // コンストラクタ
 mqabcPlugin::mqabcPlugin()
 {
+    muvgInitialize();
 }
 
 // Destructor
