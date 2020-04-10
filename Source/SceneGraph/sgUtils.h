@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 
 #define sgEnableIf(...) std::enable_if_t<__VA_ARGS__, bool> = true
 

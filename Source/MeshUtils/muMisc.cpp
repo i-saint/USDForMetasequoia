@@ -250,8 +250,8 @@ std::string SanitizeFileName(const std::string& src)
 std::string GetDirectory(const char* src)
 {
     int last_separator = 0;
-    for (int i = 0; src[i] != L'\0'; ++i) {
-        if (src[i] == L'\\' || src[i] == L'/')
+    for (int i = 0; src[i] != '\0'; ++i) {
+        if (src[i] == '\\' || src[i] == '/')
             last_separator = i;
     }
     return std::string(src, last_separator);
@@ -264,6 +264,16 @@ std::string GetDirectory(const wchar_t* src)
             last_separator = i;
     }
     return ToMBS(std::wstring(src, last_separator));
+}
+
+std::string GetParentDirectory(const char* src)
+{
+    int last_separator = 0;
+    for (int i = 0; src[i] != '\0'; ++i) {
+        if ((src[i] == '\\' || src[i] == '/') && src[i + 1] != '\0')
+            last_separator = i;
+    }
+    return std::string(src, last_separator);
 }
 
 std::string GetFilename(const char *src)
@@ -370,36 +380,36 @@ void* GetModule(const char *module_name)
 
 #elif defined(__APPLE__)
 
-    uint32_t n = _dyld_image_count();
+    uint32_t n = ::_dyld_image_count();
     for (uint32_t i = 0; i < n; ++i) {
-        auto* path = _dyld_get_image_name(i);
+        auto* path = ::_dyld_get_image_name(i);
         if (std::strstr(path, module_name))
-            return dlopen(path, RTLD_LAZY);
+            return ::dlopen(path, RTLD_LAZY);
     }
     return nullptr;
 
-#else
+#else // linux
 
-    auto* mod = dlopen(nullptr, RTLD_LAZY);
+    auto* mod ::= dlopen(nullptr, RTLD_LAZY);
     link_map* it = nullptr;
-    dlinfo(mod, RTLD_DI_LINKMAP, &it);
+    ::dlinfo(mod, RTLD_DI_LINKMAP, &it);
     while (it) {
         if (std::strstr(it->l_name, module_name))
-            return dlopen(it->l_name, RTLD_LAZY);
+            return ::dlopen(it->l_name, RTLD_LAZY);
         it = it->l_next;
     }
     return nullptr;
 
-#endif //_WIN32
+#endif
 }
 
 void* GetSymbol(void* module, const char* name)
 {
 #ifdef _WIN32
     return ::GetProcAddress((HMODULE)module, name);
-#else  // _WIN32
+#else // posix
     return ::dlsym(module, name);
-#endif //_WIN32
+#endif
 }
 
 
@@ -413,8 +423,8 @@ void InitializeSymbols(const char *path_)
     opt &= ~SYMOPT_UNDNAME;
     ::SymSetOptions(opt);
     ::SymInitialize(::GetCurrentProcess(), path.c_str(), TRUE);
-#else  // _WIN32
-#endif //_WIN32
+#else
+#endif
 }
 
 void* FindSymbolByName(const char *name)
@@ -428,9 +438,10 @@ void* FindSymbolByName(const char *name)
         return nullptr;
     }
     return (void*)sinfo->Address;
-#else  // _WIN32
+#else
+    // todo
     return nullptr;
-#endif //_WIN32
+#endif 
 }
 
 
@@ -450,24 +461,25 @@ BOOL CALLBACK cbEnumSymbols(PCSTR SymbolName, DWORD64 SymbolAddress, ULONG /*Sym
     return TRUE;
 
 }
-#endif //_WIN32
+#endif
 
 void* FindSymbolByName(const char *name, const char *module_name)
 {
 #ifdef _WIN32
     cbEnumSymbolsCtx ctx{ name, nullptr };
-    SymEnumerateSymbols64(::GetCurrentProcess(), (ULONG64)GetModuleHandleA(module_name), cbEnumSymbols, &ctx);
+    ::SymEnumerateSymbols64(::GetCurrentProcess(), (ULONG64)GetModuleHandleA(module_name), cbEnumSymbols, &ctx);
     return ctx.ret;
-#else  // _WIN32
+#else
+    // todo
     return nullptr;
-#endif //_WIN32
+#endif 
 }
 
 int CaptureCallstack(void** dst, size_t dst_len)
 {
     std::fill_n(dst, dst_len, nullptr);
 #ifdef _WIN32
-    return CaptureStackBackTrace(2, (DWORD)dst_len, dst, nullptr);
+    return ::CaptureStackBackTrace(2, (DWORD)dst_len, dst, nullptr);
 #else
     return ::backtrace(dst, (int)dst_len);
 #endif
@@ -513,7 +525,7 @@ void AddressToSymbolName(char *dst, size_t dst_len, void* address)
     }
 #else //_WIN32
 
-    char** s = backtrace_symbols(&address, 1);
+    char** s = ::backtrace_symbols(&address, 1);
     if (s) {
         std::strncpy(dst, s[0], dst_len);
         ::free(s);
@@ -527,7 +539,7 @@ void DbgBreak()
 #ifdef _WIN32
     ::DebugBreak();
 #else
-    __builtin_trap();
+    ::__builtin_trap();
 #endif
 }
 
@@ -550,7 +562,7 @@ void SetMemoryProtection(void *addr, size_t size, MemoryFlags flags)
     case MemoryFlags::ExecuteReadWrite: flag = PROT_EXEC | PROT_READ | PROT_WRITE; break;
     }
     void *page = (void*)((size_t)addr - ((size_t)addr % getpagesize()));
-    mprotect(page, size, flag);
+    ::mprotect(page, size, flag);
 #endif
 }
 

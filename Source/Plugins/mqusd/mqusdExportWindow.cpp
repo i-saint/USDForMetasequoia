@@ -154,6 +154,9 @@ BOOL mqusdExportWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument doc)
             m_exporter->write(doc, true);
             SetVisible(false);
         }
+        else {
+
+        }
     }
 
     return 0;

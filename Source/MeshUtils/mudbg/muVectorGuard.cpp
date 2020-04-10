@@ -20,7 +20,7 @@ public:
     };
     using lock_t = std::lock_guard<std::mutex>;
 
-    static AllocTable& getInstance();
+    static AllocTable* getInstance();
     void append(void* addr, size_t size_alloc, size_t size_required);
     void erase(void* addr);
 
@@ -38,9 +38,9 @@ private:
 };
 
 
-AllocTable& AllocTable::getInstance()
+AllocTable* AllocTable::getInstance()
 {
-    static AllocTable s_inst;
+    static AllocTable* s_inst = new AllocTable(); // never destroyed
     return s_inst;
 }
 
@@ -136,20 +136,20 @@ void AllocTable::printRecords()
 
 mudbgAPI void muvgOnAllocate(void* addr, size_t size_alloc, size_t size_required)
 {
-    mu::AllocTable::getInstance().append(addr, size_alloc, size_required);
+    mu::AllocTable::getInstance()->append(addr, size_alloc, size_required);
 }
 
 mudbgAPI void muvgOnFree(void* addr)
 {
-    mu::AllocTable::getInstance().erase(addr);
+    mu::AllocTable::getInstance()->erase(addr);
 }
 
 mudbgAPI void muvgReportError()
 {
-    mu::AllocTable::getInstance().reportError();
+    mu::AllocTable::getInstance()->reportError();
 }
 
 mudbgAPI void muvgPrintRecords()
 {
-    mu::AllocTable::getInstance().printRecords();
+    mu::AllocTable::getInstance()->printRecords();
 }

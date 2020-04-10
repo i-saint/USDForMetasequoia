@@ -25,7 +25,7 @@ static std::string GetDefaultModulePath()
 
 void SetUSDModuleDir(const std::string& v) { g_usd_module_dir = v; }
 
-static void LoadCoreModule()
+bool LoadUSDModule()
 {
     static std::once_flag s_flag;
     std::call_once(s_flag, []() {
@@ -43,6 +43,7 @@ static void LoadCoreModule()
             (void*&)g_sgusdCreateSceneInterface = mu::GetSymbol(g_core_module, "sgusdCreateSceneInterface");
         }
     });
+    return g_core_module != nullptr;
 }
 
 ScenePtr CreateUSDScene()
@@ -50,7 +51,7 @@ ScenePtr CreateUSDScene()
 #if defined(_WIN32) && defined(_M_IX86)
     return CreateUSDScenePipe();
 #else
-    LoadCoreModule();
+    LoadUSDModule();
     if (g_sgusdCreateSceneInterface) {
         auto ret = new Scene();
         ret->impl.reset(g_sgusdCreateSceneInterface(ret));

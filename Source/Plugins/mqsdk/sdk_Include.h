@@ -1,4 +1,7 @@
 #pragma once
+#ifdef _WIN32
+    #define _WINDOWS
+#endif
 
 #include "MQPlugin.h"
 #include "MQBasePlugin.h"

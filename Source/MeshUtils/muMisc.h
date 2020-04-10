@@ -18,6 +18,8 @@
     #define muPathListSep   ":"
 #endif
 
+#include <functional>
+
 namespace mu {
 
 template < typename T, size_t N >
@@ -55,6 +57,7 @@ std::wstring ToWCS(const std::string& src);
 std::string SanitizeFileName(const std::string& src);
 std::string GetDirectory(const char* src);
 std::string GetDirectory(const wchar_t* src);
+std::string GetParentDirectory(const char* src);
 std::string GetFilename(const char* src);
 std::string GetFilename(const wchar_t* src);
 std::string GetFilename_NoExtension(const char* src);
