@@ -28,6 +28,7 @@
 #else
     #define mqusdAPI extern "C" __attribute__((visibility("default")))
 #endif
+#define mqabcAPI mqusdAPI
 
 #ifdef mqusdDebug
     #define mqusdDbgPrint(...) mu::Print(__VA_ARGS__)

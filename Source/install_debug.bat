@@ -18,11 +18,20 @@ mkdir %DST_EXPORT64%
 mkdir %DST_STATION32%
 mkdir %DST_STATION64%
 
-echo %SRC_DIR32%
+del "%DST_STATION32%\mudbg.dll"
 del "%DST_STATION32%\mqabc.dll"
 del "%DST_STATION32%\mqusd.dll"
+del "%DST_IMPORT32%\mqabcImport.dll"
+del "%DST_IMPORT32%\mqusdImport.dll"
+del "%DST_EXPORT32%\mqabcExport.dll"
+del "%DST_EXPORT32%\mqusdExport.dll"
+mklink "%DST_STATION32%\mudbg.dll" "%SRC_DIR32%\mudbg.dll"
 mklink "%DST_STATION32%\mqabc.dll" "%SRC_DIR32%\470\mqabc.dll"
 mklink "%DST_STATION32%\mqusd.dll" "%SRC_DIR32%\470\mqusd.dll"
+mklink "%DST_IMPORT32%\mqabcImport.dll" "%SRC_DIR32%\470\mqabcImport.dll"
+mklink "%DST_IMPORT32%\mqusdImport.dll" "%SRC_DIR32%\470\mqusdImport.dll"
+mklink "%DST_EXPORT32%\mqabcExport.dll" "%SRC_DIR32%\470\mqabcExport.dll"
+mklink "%DST_EXPORT32%\mqusdExport.dll" "%SRC_DIR32%\470\mqusdExport.dll"
 IF NOT EXIST "%USDCORE_DIR32%" (
     mkdir %USDCORE_DIR32%
     mklink "%USDCORE_DIR32%\SceneGraphUSD.exe" "%SRC_DIR64%\SceneGraphUSD.exe"
@@ -32,18 +41,20 @@ IF NOT EXIST "%USDCORE_DIR32%" (
     xcopy /EIY "%EXT_DIR64%\usd" "%USDCORE_DIR32%\usd"
 )
 
+del "%DST_STATION64%\mudbg.dll"
 del "%DST_STATION64%\mqabc.dll"
 del "%DST_STATION64%\mqusd.dll"
-del "%DST_STATION64%\mudbg.dll"
+del "%DST_IMPORT64%\mqabcImport.dll"
 del "%DST_IMPORT64%\mqusdImport.dll"
+del "%DST_EXPORT64%\mqabcExport.dll"
 del "%DST_EXPORT64%\mqusdExport.dll"
-
+mklink "%DST_STATION64%\mudbg.dll" "%SRC_DIR64%\mudbg.dll"
 mklink "%DST_STATION64%\mqabc.dll" "%SRC_DIR64%\470\mqabc.dll"
 mklink "%DST_STATION64%\mqusd.dll" "%SRC_DIR64%\470\mqusd.dll"
-mklink "%DST_STATION64%\mudbg.dll" "%SRC_DIR64%\mudbg.dll"
+mklink "%DST_IMPORT64%\mqabcImport.dll" "%SRC_DIR64%\470\mqabcImport.dll"
 mklink "%DST_IMPORT64%\mqusdImport.dll" "%SRC_DIR64%\470\mqusdImport.dll"
+mklink "%DST_EXPORT64%\mqabcExport.dll" "%SRC_DIR64%\470\mqabcExport.dll"
 mklink "%DST_EXPORT64%\mqusdExport.dll" "%SRC_DIR64%\470\mqusdExport.dll"
-
 IF NOT EXIST "%USDCORE_DIR64%" (
     mkdir %USDCORE_DIR64%
     mklink "%USDCORE_DIR64%\SceneGraphUSD.dll" "%SRC_DIR64%\SceneGraphUSD.dll"

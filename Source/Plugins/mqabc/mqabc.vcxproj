@@ -19,7 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="mqabcExportPlugin.cpp" />
     <ClCompile Include="mqabcExportWindow.cpp" />
+    <ClCompile Include="mqabcImportPlugin.cpp" />
     <ClCompile Include="mqabcImportWindow.cpp" />
     <ClCompile Include="mqabcPlugin.cpp" />
     <ClCompile Include="mqabcRecorderWindow.cpp" />
