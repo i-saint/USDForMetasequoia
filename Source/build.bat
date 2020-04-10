@@ -18,11 +18,11 @@ exit /B 0
         exit /B 1
     )
 
-    set DIST_DIR32="_dist\mqusd_Windows_32bit"
-    set DIST_IMPORT32="%DIST_DIR32%\Import"
-    set DIST_EXPORT32="%DIST_DIR32%\Export"
-    set DIST_STATION32="%DIST_DIR32%\Station"
-    set CORE_DIR32="%DIST_STATION32%\mqusdCore"
+    set DIST_DIR32=_dist\mqusd_Windows_32bit
+    set DIST_IMPORT32=%DIST_DIR32%\Import
+    set DIST_EXPORT32=%DIST_DIR32%\Export
+    set DIST_STATION32=%DIST_DIR32%\Station
+    set CORE_DIR32=%DIST_STATION32%\mqusdCore
     mkdir "%DIST_IMPORT32%"
     mkdir "%DIST_EXPORT32%"
     mkdir "%DIST_STATION32%"
@@ -39,11 +39,11 @@ exit /B 0
     copy Externals\x64\lib\usd_ms.dll "%CORE_DIR32%"
     xcopy /EIY Externals\x64\lib\usd "%CORE_DIR32%\usd"
 
-    set DIST_DIR64="_dist\mqusd_Windows_64bit"
-    set DIST_IMPORT64="%DIST_DIR64%\Import"
-    set DIST_EXPORT64="%DIST_DIR64%\Export"
-    set DIST_STATION64="%DIST_DIR64%\Station"
-    set CORE_DIR64="%DIST_STATION64%\mqusdCore"
+    set DIST_DIR64=_dist\mqusd_Windows_64bit
+    set DIST_IMPORT64=%DIST_DIR64%\Import
+    set DIST_EXPORT64=%DIST_DIR64%\Export
+    set DIST_STATION64=%DIST_DIR64%\Station
+    set CORE_DIR64=%DIST_STATION64%\mqusdCore
     mkdir "%DIST_IMPORT64%"
     mkdir "%DIST_EXPORT64%"
     mkdir "%DIST_STATION64%"
@@ -58,4 +58,7 @@ exit /B 0
     copy Externals\x64\lib\tbb.dll "%CORE_DIR64%"
     copy Externals\x64\lib\usd_ms.dll "%CORE_DIR64%"
     xcopy /EIY Externals\x64\lib\usd "%CORE_DIR64%\usd"
+
+    copy Scripts\install_Windows.bat _dist\
+    copy Scripts\install_Mac.sh _dist\
     exit /B 0
