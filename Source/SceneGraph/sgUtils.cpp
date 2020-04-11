@@ -137,21 +137,20 @@ std::string DecodeNodePath(const std::string& v)
 
     const char* s = v.data();
     for (;;) {
-        if (*s == '/') {
-            r += *s++;
-
-            size_t n = 0;
-            for (; ; ++n) {
-                if (s[n] == '/' || s[n] == '\0')
-                    break;
-            }
-            std::string tmp;
-            DecodeNodeNameImpl(tmp, s, n);
-            r += tmp;
-            s += n;
-        }
-        else
+        if (*s == '\0')
             break;
+
+        if (*s == '/')
+            r += *s++;
+        size_t n = 0;
+        for (; ; ++n) {
+            if (s[n] == '/' || s[n] == '\0')
+                break;
+        }
+        std::string tmp;
+        DecodeNodeNameImpl(tmp, s, n);
+        r += tmp;
+        s += n;
     }
     return r;
 }
