@@ -7,6 +7,7 @@ namespace mqusd {
 class mqusdImportPlugin : public MQImportPlugin
 {
 public:
+    mqusdImportPlugin();
     void GetPlugInID(DWORD* Product, DWORD* ID) override;
     const char* GetPlugInName(void) override;
     const char* EnumFileType(int index) override;
@@ -14,6 +15,11 @@ public:
     BOOL ImportFile(int index, const wchar_t* filename, MQDocument doc) override;
 };
 
+
+mqusdImportPlugin::mqusdImportPlugin()
+{
+    mqusd::mqusdInitialize();
+}
 
 void mqusdImportPlugin::GetPlugInID(DWORD* Product, DWORD* ID)
 {

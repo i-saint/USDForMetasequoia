@@ -2,10 +2,9 @@
 #include "MQWidget.h"
 #include "mqCommon/mqTWindow.h"
 #include "mqCommon/mqDocumentImporter.h"
+#include "mqabcInternal.h"
 
 namespace mqusd {
-
-class mqabcPlugin;
 
 class mqabcImportWindow : public mqTWindow<mqabcImportWindow>
 {

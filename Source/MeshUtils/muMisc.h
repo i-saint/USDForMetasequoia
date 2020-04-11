@@ -67,7 +67,9 @@ std::string GetCurrentModuleDirectory();
 
 void SetEnv(const char* name, const char* value);
 void* LoadModule(const char *path);
+void* GetMainModule();
 void* GetModule(const char *module_name);
+std::string GetModuleName(void *mod);
 void* GetSymbol(void *module, const char *name);
 
 void InitializeSymbols(const char *path = nullptr);

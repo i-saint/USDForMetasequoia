@@ -7,10 +7,7 @@ namespace mqusd {
 
 mqusdRecorderPlugin::mqusdRecorderPlugin()
 {
-    muvgInitialize();
-#ifdef _WIN32
-    sg::SetUSDModuleDir(GetPluginsDir() + "Misc" muPathSep "mqusd");
-#endif
+    mqusd::mqusdInitialize();
 }
 
 mqusdRecorderPlugin::~mqusdRecorderPlugin()
@@ -33,18 +30,18 @@ void mqusdRecorderPlugin::GetPlugInID(DWORD *Product, DWORD *ID)
 
 const char *mqusdRecorderPlugin::GetPlugInName(void)
 {
-    return "USD For Metasequoia (version " mqusdVersionString ") " mqusdCopyRight;
+    return "USD Recorder (version " mqusdVersionString ") " mqusdCopyRight;
 }
 
 #if MQPLUGIN_VERSION >= 0x0470
 const wchar_t *mqusdRecorderPlugin::EnumString(void)
 {
-    return L"USD For Metasequoia";
+    return L"USD Recorder";
 }
 #else
 const char *mqusdRecorderPlugin::EnumString(void)
 {
-    return "USD For Metasequoia";
+    return "USD Recorder";
 }
 #endif
 
@@ -61,8 +58,6 @@ const wchar_t *mqusdRecorderPlugin::GetSubCommandString(int index)
 
 BOOL mqusdRecorderPlugin::Initialize()
 {
-    if (!m_window)
-        m_window = mqusdRecorderWindow::create(this);
     return TRUE;
 }
 
@@ -75,6 +70,8 @@ void mqusdRecorderPlugin::Exit()
 BOOL mqusdRecorderPlugin::Activate(MQDocument doc, BOOL flag)
 {
     bool active = flag ? true : false;
+    if (!m_window)
+        m_window = mqusdRecorderWindow::create(this);
     if (m_window)
         m_window->SetVisible(active);
     return active;
@@ -91,7 +88,8 @@ void mqusdRecorderPlugin::OnMinimize(MQDocument doc, BOOL flag)
 
 void mqusdRecorderPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int height)
 {
-    m_window->CaptureFrame(doc);
+    if (m_window)
+        m_window->CaptureFrame(doc);
 }
 
 
@@ -99,7 +97,8 @@ void mqusdRecorderPlugin::OnNewDocument(MQDocument doc, const char *filename, NE
 {
     m_mqo_path = filename ? filename : "";
 
-    m_window->MarkSceneDirty();
+    if (m_window)
+        m_window->MarkSceneDirty();
 }
 
 void mqusdRecorderPlugin::OnEndDocument(MQDocument doc)
@@ -114,19 +113,22 @@ void mqusdRecorderPlugin::OnSaveDocument(MQDocument doc, const char *filename, S
 
 BOOL mqusdRecorderPlugin::OnUndo(MQDocument doc, int undo_state)
 {
-    m_window->MarkSceneDirty();
+    if (m_window)
+        m_window->MarkSceneDirty();
     return TRUE;
 }
 
 BOOL mqusdRecorderPlugin::OnRedo(MQDocument doc, int redo_state)
 {
-    m_window->MarkSceneDirty();
+    if (m_window)
+        m_window->MarkSceneDirty();
     return TRUE;
 }
 
 void mqusdRecorderPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo_size)
 {
-    m_window->MarkSceneDirty();
+    if (m_window)
+        m_window->MarkSceneDirty();
 }
 
 bool mqusdRecorderPlugin::ExecuteCallback(MQDocument /*doc*/, void* /*option*/)
@@ -157,7 +159,7 @@ void mqusdLog(const char* fmt, ...)
 } // namespace mqusd
 
 
-mqusdAPI MQBasePlugin* mqusdGetRecordingPlugin()
+mqusdAPI MQBasePlugin* mqusdGetRecorderPlugin()
 {
     static mqusd::mqusdRecorderPlugin s_inst;
     return &s_inst;

@@ -7,6 +7,8 @@ namespace mqusd {
 class mqabcImportPlugin : public MQImportPlugin
 {
 public:
+    mqabcImportPlugin();
+    ~mqabcImportPlugin();
     void GetPlugInID(DWORD* Product, DWORD* ID) override;
     const char* GetPlugInName(void) override;
     const char* EnumFileType(int index) override;
@@ -14,6 +16,16 @@ public:
     BOOL ImportFile(int index, const wchar_t* filename, MQDocument doc) override;
 };
 
+
+mqabcImportPlugin::mqabcImportPlugin()
+{
+    mqabcInitialize();
+}
+
+mqabcImportPlugin::~mqabcImportPlugin()
+{
+    mqabcFinalize();
+}
 
 void mqabcImportPlugin::GetPlugInID(DWORD* Product, DWORD* ID)
 {

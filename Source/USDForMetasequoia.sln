@@ -43,6 +43,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqabcImport", "Plugins\mqab
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqusdRecorder", "Plugins\mqusdRecorder\mqusdRecorder.vcxproj", "{1BB03EDA-14D3-40C0-A8A2-0BC01DC60001}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqabcRecorder", "Plugins\mqabcRecorder\mqabcRecorder.vcxproj", "{A4D2B98A-A8FF-4933-A160-9BF4720A3495}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -182,6 +184,14 @@ Global
 		{1BB03EDA-14D3-40C0-A8A2-0BC01DC60001}.Release|Win32.Build.0 = Release|Win32
 		{1BB03EDA-14D3-40C0-A8A2-0BC01DC60001}.Release|x64.ActiveCfg = Release|x64
 		{1BB03EDA-14D3-40C0-A8A2-0BC01DC60001}.Release|x64.Build.0 = Release|x64
+		{A4D2B98A-A8FF-4933-A160-9BF4720A3495}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A4D2B98A-A8FF-4933-A160-9BF4720A3495}.Debug|Win32.Build.0 = Debug|Win32
+		{A4D2B98A-A8FF-4933-A160-9BF4720A3495}.Debug|x64.ActiveCfg = Debug|x64
+		{A4D2B98A-A8FF-4933-A160-9BF4720A3495}.Debug|x64.Build.0 = Debug|x64
+		{A4D2B98A-A8FF-4933-A160-9BF4720A3495}.Release|Win32.ActiveCfg = Release|Win32
+		{A4D2B98A-A8FF-4933-A160-9BF4720A3495}.Release|Win32.Build.0 = Release|Win32
+		{A4D2B98A-A8FF-4933-A160-9BF4720A3495}.Release|x64.ActiveCfg = Release|x64
+		{A4D2B98A-A8FF-4933-A160-9BF4720A3495}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -203,6 +213,7 @@ Global
 		{6B78EB43-1F85-46C8-8921-7923F1E61245} = {9690B35A-E676-4F27-A6DB-27F20F55E855}
 		{EF21F62F-9C37-4041-9F2C-0DB552AE3407} = {9690B35A-E676-4F27-A6DB-27F20F55E855}
 		{1BB03EDA-14D3-40C0-A8A2-0BC01DC60001} = {9690B35A-E676-4F27-A6DB-27F20F55E855}
+		{A4D2B98A-A8FF-4933-A160-9BF4720A3495} = {9690B35A-E676-4F27-A6DB-27F20F55E855}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD5D498C-17E2-4E12-92D6-2AFE96005329}

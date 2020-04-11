@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqusdPlugin.h"
 #include "mqusdImportWindow.h"
 
 namespace mqusd {

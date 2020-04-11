@@ -2,10 +2,9 @@
 #include "MQWidget.h"
 #include "mqCommon/mqTWindow.h"
 #include "mqCommon/mqDocumentExporter.h"
+#include "mqabcInternal.h"
 
 namespace mqusd {
-
-class mqabcPlugin;
 
 class mqabcRecorderWindow : public mqTWindow<mqabcRecorderWindow>
 {
@@ -31,7 +30,7 @@ public:
     bool IsRecording() const;
 
 private:
-    mqabcPlugin* m_plugin = nullptr;
+    mqabcRecorderPlugin* m_plugin = nullptr;
 
     MQFrame* m_frame_settings = nullptr;
     MQEdit* m_edit_interval = nullptr;

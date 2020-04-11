@@ -7,6 +7,7 @@ namespace mqusd {
 class mqusdExportPlugin : public MQExportPlugin
 {
 public:
+    mqusdExportPlugin();
     void GetPlugInID(DWORD* Product, DWORD* ID) override;
     const char* GetPlugInName(void) override;
     const char* EnumFileType(int index) override;
@@ -14,6 +15,11 @@ public:
     BOOL ExportFile(int index, const wchar_t* filename, MQDocument doc) override;
 };
 
+
+mqusdExportPlugin::mqusdExportPlugin()
+{
+    mqusd::mqusdInitialize();
+}
 
 void mqusdExportPlugin::GetPlugInID(DWORD* Product, DWORD* ID)
 {
@@ -47,7 +53,7 @@ const char* mqusdExportPlugin::EnumFileExt(int index)
     }
 }
 
-BOOL mqusdExportPlugin::ExportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
+BOOL mqusdExportPlugin::ExportFile(int /*index*/, const wchar_t* filename, MQDocument /*doc*/)
 {
     auto w = mqusdExportWindow::create(this);
     w->SetOutputPath(filename);

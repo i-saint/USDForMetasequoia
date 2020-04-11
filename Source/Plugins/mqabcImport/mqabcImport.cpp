@@ -1,16 +1,15 @@
 #include "mqusd.h"
-#include "mqsdk/sdk_Include.h"
-#include "MeshUtils/MeshUtils.h"
+#include "mqCommon/mqDummyPlugins.h"
 
 MQBasePlugin* (*_mqabcGetImportPlugin)();
 
 MQBasePlugin* GetPluginClass()
 {
     if (!_mqabcGetImportPlugin) {
-        auto mod = mu::GetModule(mqabcPluginFile);
+        auto mod = mu::GetModule(mqabcModuleFile);
         if (!mod) {
-            std::string path = mqusd::GetPluginsDir();
-            path += "Misc" muPathSep mqabcPluginFile;
+            std::string path = mqusd::GetMiscDir();
+            path += mqabcModuleFile;
             mod = mu::LoadModule(path.c_str());
         }
         if (mod) {

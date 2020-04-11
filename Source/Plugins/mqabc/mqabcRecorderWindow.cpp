@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "mqabcPlugin.h"
+#include "mqabcRecorderPlugin.h"
 #include "mqabcRecorderWindow.h"
 #include "SceneGraph/ABC/sgabc.h"
 
@@ -8,7 +8,7 @@ namespace mqusd {
 mqabcRecorderWindow::mqabcRecorderWindow(MQBasePlugin* plugin, MQWindowBase& parent)
     : super(parent)
 {
-    m_plugin = dynamic_cast<mqabcPlugin*>(plugin);
+    m_plugin = dynamic_cast<mqabcRecorderPlugin*>(plugin);
 
     m_options.merge_meshes = true;
     m_options.export_blendshapes = false;

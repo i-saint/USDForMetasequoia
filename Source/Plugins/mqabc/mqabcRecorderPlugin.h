@@ -1,14 +1,13 @@
 ﻿#pragma once
+#include "mqabcInternal.h"
 
 namespace mqusd {
 
-class mqabcWindow;
-
-class mqabcPlugin : public MQStationPlugin
+class mqabcRecorderPlugin : public MQStationPlugin
 {
 public:
-    mqabcPlugin();
-    virtual ~mqabcPlugin();
+    mqabcRecorderPlugin();
+    virtual ~mqabcRecorderPlugin();
 
 #if defined(__APPLE__) || defined(__linux__)
     MQBasePlugin *CreateNewPlugin() override;
@@ -46,7 +45,7 @@ public:
     const std::string& GetMQOPath() const;
 
 private:
-    mqabcWindow* m_window = nullptr;
+    mqabcRecorderWindow* m_window = nullptr;
     std::string m_mqo_path;
 };
 

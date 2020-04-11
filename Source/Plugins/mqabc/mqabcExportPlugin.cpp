@@ -7,6 +7,8 @@ namespace mqusd {
 class mqabcExportPlugin : public MQExportPlugin
 {
 public:
+    mqabcExportPlugin();
+    ~mqabcExportPlugin();
     void GetPlugInID(DWORD* Product, DWORD* ID) override;
     const char* GetPlugInName(void) override;
     const char* EnumFileType(int index) override;
@@ -14,6 +16,16 @@ public:
     BOOL ExportFile(int index, const wchar_t* filename, MQDocument doc) override;
 };
 
+
+mqabcExportPlugin::mqabcExportPlugin()
+{
+    mqabcInitialize();
+}
+
+mqabcExportPlugin::~mqabcExportPlugin()
+{
+    mqabcFinalize();
+}
 
 void mqabcExportPlugin::GetPlugInID(DWORD* Product, DWORD* ID)
 {

@@ -1,23 +1,23 @@
 #include "mqusd.h"
 #include "mqCommon/mqDummyPlugins.h"
 
-MQBasePlugin* (*_mqusdGetRecorderPlugin)();
+MQBasePlugin* (*_mqabcGetRecorderPlugin)();
 
 MQBasePlugin* GetPluginClass()
 {
-    if (!_mqusdGetRecorderPlugin) {
-        auto mod = mu::GetModule(mqusdModuleFile);
+    if (!_mqabcGetRecorderPlugin) {
+        auto mod = mu::GetModule(mqabcModuleFile);
         if (!mod) {
             std::string path = mqusd::GetMiscDir();
-            path += mqusdModuleFile;
+            path += mqabcModuleFile;
             mod = mu::LoadModule(path.c_str());
         }
         if (mod) {
-            (void*&)_mqusdGetRecorderPlugin = mu::GetSymbol(mod, "mqusdGetRecorderPlugin");
+            (void*&)_mqabcGetRecorderPlugin = mu::GetSymbol(mod, "mqabcGetRecorderPlugin");
         }
     }
-    if (_mqusdGetRecorderPlugin)
-        return _mqusdGetRecorderPlugin();
+    if (_mqabcGetRecorderPlugin)
+        return _mqabcGetRecorderPlugin();
     return &mqusd::DummyStationPlugin::getInstance();
 }
 

@@ -19,8 +19,8 @@
 #else
     #define mqPluginExt ".plugin"
 #endif
-#define mqusdPluginFile "mqusd" mqPluginExt
-#define mqabcPluginFile "mqabc" mqPluginExt
+#define mqusdModuleFile "mqusd" mqPluginExt
+#define mqabcModuleFile "mqabc" mqPluginExt
 
 
 #ifdef _WIN32
@@ -42,6 +42,7 @@
 #include "SceneGraph/SceneGraph.h"
 #include "SceneGraph/SceneGraphRemote.h"
 #include "SceneGraph/sgUtils.h"
+#include "mqsdk/sdk_Include.h"
 
 namespace mqusd {
 

@@ -19,45 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqabcExportPlugin.cpp" />
-    <ClCompile Include="mqabcExportWindow.cpp" />
-    <ClCompile Include="mqabcImportPlugin.cpp" />
-    <ClCompile Include="mqabcImportWindow.cpp" />
-    <ClCompile Include="mqabcInternal.cpp" />
-    <ClCompile Include="mqabcRecorderPlugin.cpp" />
-    <ClCompile Include="mqabcRecorderWindow.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader>Create</PrecompiledHeader>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\mqusd.h" />
-    <ClInclude Include="mqabcExportWindow.h" />
-    <ClInclude Include="mqabcImportWindow.h" />
-    <ClInclude Include="mqabcInternal.h" />
-    <ClInclude Include="mqabcRecorderPlugin.h" />
-    <ClInclude Include="mqabcRecorderWindow.h" />
-    <ClInclude Include="pch.h" />
+    <ClCompile Include="mqabcRecorder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MeshUtils\MeshUtils.vcxproj">
       <Project>{fd3fe1ff-abe5-40db-b867-144e9dd9b23c}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SceneGraph\ABC\SceneGraphABC.vcxproj">
-      <Project>{6f1f478f-29ee-46f0-8ab1-75e5b77ca021}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SceneGraph\SceneGraph.vcxproj">
-      <Project>{0945d37c-f1f1-4b88-b738-85816e37d9af}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\mqCommon\mqCommon.vcxproj">
-      <Project>{b970a73a-2b06-41ad-8870-266153e82d21}</Project>
     </ProjectReference>
     <ProjectReference Include="..\mqsdk\mqsdk.vcxproj">
       <Project>{d28511e8-4687-434e-8c18-c23fe683af2f}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{B25F40AC-A6B2-4C76-B527-8CBFCE605CFE}</ProjectGuid>
+    <ProjectGuid>{A4D2B98A-A8FF-4933-A160-9BF4720A3495}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -77,8 +50,6 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -92,8 +63,6 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Zo %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>

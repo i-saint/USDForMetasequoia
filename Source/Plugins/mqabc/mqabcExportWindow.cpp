@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "mqabcPlugin.h"
 #include "mqabcExportWindow.h"
 #include "SceneGraph/ABC/sgabc.h"
 

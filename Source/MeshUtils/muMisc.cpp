@@ -372,6 +372,15 @@ void* LoadModule(const char *path)
 #endif //_WIN32
 }
 
+void* GetMainModule()
+{
+#if defined(_WIN32)
+    return ::GetModuleHandleA(nullptr);
+#else
+    return ::dlopen(nullptr, RTLD_LAZY);
+#endif
+}
+
 void* GetModule(const char *module_name)
 {
 #if defined(_WIN32)
@@ -390,7 +399,7 @@ void* GetModule(const char *module_name)
 
 #else // linux
 
-    auto* mod ::= dlopen(nullptr, RTLD_LAZY);
+    auto* mod = ::dlopen(nullptr, RTLD_LAZY);
     link_map* it = nullptr;
     ::dlinfo(mod, RTLD_DI_LINKMAP, &it);
     while (it) {
@@ -402,6 +411,36 @@ void* GetModule(const char *module_name)
 
 #endif
 }
+
+std::string GetModuleName(void* mod)
+{
+#if defined(_WIN32)
+
+    char buf[1024];
+    ::GetModuleFileNameA((HMODULE)mod, buf, sizeof(buf));
+    return buf;
+
+#elif defined(__APPLE__)
+
+    uint32_t n = ::_dyld_image_count();
+    for (uint32_t i = 0; i < n; ++i) {
+        auto* path = ::_dyld_get_image_name(i);
+        if (::dlopen(path, RTLD_LAZY) == mod)
+            return path;
+    }
+    return "";
+
+#else // linux
+
+    link_map* it = nullptr;
+    ::dlinfo(mod, RTLD_DI_LINKMAP, &it);
+    if (it)
+        return it->l_name;
+    return "";
+
+#endif
+}
+
 
 void* GetSymbol(void* module, const char* name)
 {
