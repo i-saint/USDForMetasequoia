@@ -17,12 +17,6 @@ struct serializable_pod
 };
 
 template<class T>
-struct serializable_obj
-{
-    static constexpr bool value = false;
-};
-
-template<class T>
 struct serializable
 {
     static constexpr bool value = false;
@@ -89,35 +83,23 @@ inline void read(deserializer& d, T* v, uint32_t n)
     read_align(d, sizeof(T) * n);
 }
 
-// other generic types
-template<class T, sgEnableIf(serializable_obj<T>::value)>
-inline void write(serializer& s, const T& v)
-{
-    serializable_obj<T>::serialize(s, v);
-}
-template<class T, sgEnableIf(serializable_obj<T>::value)>
-inline void read(deserializer& d, T& v)
-{
-    serializable_obj<T>::deserialize(d, v);
-}
-
-// serializable
+// serializable obj
 template<class T, sgEnableIf(serializable<T>::value)>
 inline void write(serializer& s, const T& v)
 {
-    const_cast<T&>(v).serialize(s);
+    serializable<T>::serialize(s, v);
 }
 template<class T, sgEnableIf(serializable<T>::value)>
 inline void read(deserializer& d, T& v)
 {
-    v.deserialize(d);
+    serializable<T>::deserialize(d, v);
 }
 
 
 // specializations
 
 template<class T>
-struct serializable_obj<std::shared_ptr<T>>
+struct serializable<std::shared_ptr<T>>
 {
     static constexpr bool value = true;
 
@@ -134,14 +116,14 @@ struct serializable_obj<std::shared_ptr<T>>
         int is_null;
         read(d, is_null);
         if (is_null != 0)
-            T::deserialize(d, v);
+            T::create(d, v);
         else
             v = {};
     }
 };
 
 template<class T>
-struct serializable_obj<std::basic_string<T>>
+struct serializable<std::basic_string<T>>
 {
     static constexpr bool value = true;
 
@@ -162,7 +144,7 @@ struct serializable_obj<std::basic_string<T>>
 };
 
 template<class T>
-struct serializable_obj<std::vector<T>>
+struct serializable<std::vector<T>>
 {
     static constexpr bool value = true;
 
@@ -185,7 +167,7 @@ struct serializable_obj<std::vector<T>>
 };
 
 template<class T>
-struct serializable_obj<SharedVector<T>>
+struct serializable<SharedVector<T>>
 {
     static constexpr bool value = true;
 
@@ -217,7 +199,14 @@ struct serializable_obj<SharedVector<T>>
 } // namespace sg
 
 #define sgDeclPtr(T) using T##Ptr = std::shared_ptr<T>
-#define sgSerializable(T) template<> struct serializable<T> { static constexpr bool value = true; };
+#define sgSerializable(T) \
+    template<>\
+    struct serializable<T>\
+    {\
+        static constexpr bool value = true;\
+        static void serialize(serializer& s, const T& v) { const_cast<T&>(v).serialize(s); }\
+        static void deserialize(deserializer& d, T& v) { v.deserialize(d); }\
+    }
 
-#define sgSerialize(V) sg::write(s, V);
-#define sgDeserialize(V) sg::read(d, V);
+#define sgWrite(V) sg::write(s, V);
+#define sgRead(V) sg::read(d, V);

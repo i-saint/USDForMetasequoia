@@ -147,6 +147,15 @@ inline void erase_if(std::map<K, V>& dst, const Condition& cond)
 }
 
 template<class Container>
+inline void sort_and_unique(Container& dst)
+{
+    std::sort(dst.begin(), dst.end());
+    dst.erase(
+        std::unique(dst.begin(), dst.end()),
+        dst.end());
+}
+
+template<class Container>
 inline auto append(Container& dst, const Container& src)
 {
     size_t pos = dst.size();

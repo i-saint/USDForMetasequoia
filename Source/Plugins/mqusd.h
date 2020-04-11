@@ -66,4 +66,11 @@ inline std::string GetPluginsDir()
     return std::string(path.data(), pos + 8);
 }
 
+inline std::string GetMiscDir()
+{
+    std::string path = GetPluginsDir();
+    path += "Misc" muPathSep;
+    return path;
+}
+
 } // namespace mqusd

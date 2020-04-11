@@ -37,10 +37,13 @@ bool ConvertOptions::operator!=(const ConvertOptions& v) const
 }
 
 
-void Node::deserialize(deserializer& d, NodePtr& ret)
+void Node::create(deserializer& d, NodePtr& ret)
 {
     Type type;
     read(d, type);
+
+    if (ret && ret->getType() != type)
+        ret = nullptr;
 
     if (!ret) {
         switch (type) {
@@ -69,13 +72,13 @@ void Node::serialize(serializer& s)
 {
     auto type = getType();
     write(s, type);
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 
 void Node::deserialize(deserializer& d)
 {
     // type will be consumed by create()
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 }
 void Node::resolve()
 {
@@ -149,13 +152,13 @@ Node::Type RootNode::getType() const
 void XformNode::serialize(serializer& s)
 {
     super::serialize(s);
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 
 void XformNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 }
 
 void XformNode::resolve()
@@ -216,7 +219,7 @@ void XformNode::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 }
 
 
-void FaceSet::deserialize(deserializer& d, FaceSetPtr& v)
+void FaceSet::create(deserializer& d, FaceSetPtr& v)
 {
     if (!v)
         v = std::make_shared<FaceSet>();
@@ -229,11 +232,11 @@ void FaceSet::deserialize(deserializer& d, FaceSetPtr& v)
 void FaceSet::serialize(serializer& s)
 {
     material_path = material ? material->getPath() : "";
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 void FaceSet::deserialize(deserializer& d)
 {
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 }
 #undef EachMember
 
@@ -300,13 +303,13 @@ void MeshNode::serialize(serializer& s)
         d = s->path;
     });
 
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 
 void MeshNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 }
 void MeshNode::resolve()
 {
@@ -689,7 +692,7 @@ int MeshNode::getMaxMaterialID() const
 
 
 
-void BlendshapeTarget::deserialize(deserializer& d, BlendshapeTargetPtr& v)
+void BlendshapeTarget::create(deserializer& d, BlendshapeTargetPtr& v)
 {
     if (!v)
         v = std::make_shared<BlendshapeTarget>();
@@ -701,12 +704,12 @@ void BlendshapeTarget::deserialize(deserializer& d, BlendshapeTargetPtr& v)
 
 void BlendshapeTarget::serialize(serializer& s)
 {
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 
 void BlendshapeTarget::deserialize(deserializer& d)
 {
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 }
 #undef EachMember
 
@@ -717,13 +720,13 @@ void BlendshapeTarget::deserialize(deserializer& d)
 void BlendshapeNode::serialize(serializer& s)
 {
     super::serialize(s);
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 
 void BlendshapeNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 }
 #undef EachMember
 
@@ -889,13 +892,13 @@ void SkelRootNode::serialize(serializer& s)
     if (skeleton)
         skeleton_path = skeleton->path;
 
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 
 void SkelRootNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 }
 
 void SkelRootNode::resolve()
@@ -922,12 +925,12 @@ Node::Type SkelRootNode::getType() const
 
 void Joint::serialize(serializer& s)
 {
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 
 void Joint::deserialize(deserializer& d)
 {
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 }
 
 void Joint::resolve()
@@ -940,7 +943,7 @@ void Joint::resolve()
 }
 #undef EachMember
 
-void Joint::deserialize(deserializer& d, JointPtr& ret)
+void Joint::create(deserializer& d, JointPtr& ret)
 {
     if (!ret)
         ret = std::make_shared<Joint>();
@@ -992,13 +995,13 @@ void Joint::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 void SkeletonNode::serialize(serializer& s)
 {
     super::serialize(s);
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 
 void SkeletonNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 }
 void SkeletonNode::resolve()
 {
@@ -1106,13 +1109,13 @@ void InstancerNode::serialize(serializer& s)
         d = s->path;
     });
 
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 
 void InstancerNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 }
 
 void InstancerNode::resolve()
@@ -1258,7 +1261,7 @@ const float4 Texture::default_fallback = { 0.0f, 0.0f, 0.0f, 1.0f };
 #define EachMember(F)\
     F(file_path) F(st) F(wrap_s) F(wrap_t) F(fallback)
 
-void Texture::deserialize(deserializer& d, TexturePtr& v)
+void Texture::create(deserializer& d, TexturePtr& v)
 {
     if (!v)
         v = std::make_shared<Texture>();
@@ -1267,12 +1270,12 @@ void Texture::deserialize(deserializer& d, TexturePtr& v)
 
 void Texture::serialize(serializer& s)
 {
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 
 void Texture::deserialize(deserializer& d)
 {
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 }
 
 #undef EachMember
@@ -1292,13 +1295,13 @@ Texture::operator bool() const
 void MaterialNode::serialize(serializer& s)
 {
     super::serialize(s);
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 
 void MaterialNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 }
 #undef EachMember
 
@@ -1331,12 +1334,12 @@ Scene* Scene::getCurrent()
 
 void Scene::serialize(serializer& s)
 {
-    EachMember(sgSerialize)
+    EachMember(sgWrite)
 }
 
 void Scene::deserialize(deserializer& d)
 {
-    EachMember(sgDeserialize)
+    EachMember(sgRead)
 
     for (auto& n : nodes)
         n->resolve();

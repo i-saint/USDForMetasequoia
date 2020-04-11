@@ -27,6 +27,8 @@ public:
     ABCINode* m_parent = nullptr;
     std::vector<ABCINode*> m_children;
 
+    size_t m_num_samples = 0;
+    Abc::TimeSamplingPtr m_timesampling;
     Abc::IStringProperty m_display_name_prop;
 };
 sgDeclPtr(ABCINode);
@@ -163,7 +165,7 @@ private:
 
     Scene* m_scene = nullptr;
     int m_read_count = 0;
-    double m_max_time = 0.0;
+    RawVector<double> m_times;
 };
 
 SceneInterface* CreateABCIScene(Scene* scene);

@@ -62,7 +62,7 @@ public:
         Material,
         Scope,
     };
-    static void deserialize(deserializer& d, std::shared_ptr<Node>& v);
+    static void create(deserializer& d, std::shared_ptr<Node>& v);
 
     Node(Node* parent = nullptr, const char *name = nullptr);
     virtual ~Node();
@@ -170,7 +170,7 @@ struct BlendshapeTarget
     SharedVector<float3> normal_offsets;
     float weight = 0.0f;
 
-    static void deserialize(deserializer& d, std::shared_ptr<BlendshapeTarget>& v);
+    static void create(deserializer& d, std::shared_ptr<BlendshapeTarget>& v);
     void serialize(serializer& s);
     void deserialize(deserializer& d);
 };
@@ -227,7 +227,7 @@ public:
 class Joint
 {
 public:
-    static void deserialize(deserializer& d, std::shared_ptr<Joint>& v);
+    static void create(deserializer& d, std::shared_ptr<Joint>& v);
 
     Joint();
     Joint(SkeletonNode* skel, const std::string& path);
@@ -287,7 +287,7 @@ public:
 class FaceSet
 {
 public:
-    static void deserialize(deserializer& d, std::shared_ptr<FaceSet>& v);
+    static void create(deserializer& d, std::shared_ptr<FaceSet>& v);
     void serialize(serializer& s);
     void deserialize(deserializer& d);
     void resolve();
@@ -440,7 +440,7 @@ class Texture
 {
 public:
     static const float4 default_fallback;
-    static void deserialize(deserializer& d, std::shared_ptr<Texture>& v);
+    static void create(deserializer& d, std::shared_ptr<Texture>& v);
 
     void serialize(serializer& s);
     void deserialize(deserializer& d);

@@ -21,57 +21,34 @@ namespace mqusd {
 
 static mqabcPlugin g_plugin;
 
-// Constructor
-// コンストラクタ
 mqabcPlugin::mqabcPlugin()
 {
     muvgInitialize();
 }
 
-// Destructor
-// デストラクタ
 mqabcPlugin::~mqabcPlugin()
 {
     muvgPrintRecords();
 }
 
 #if defined(__APPLE__) || defined(__linux__)
-// Create a new plugin class for another document.
-// 別のドキュメントのための新しいプラグインクラスを作成する。
 MQBasePlugin* mqabcPlugin::CreateNewPlugin()
 {
     return new mqabcPlugin();
 }
 #endif
 
-//---------------------------------------------------------------------------
-//  GetPlugInID
-//    プラグインIDを返す。
-//    この関数は起動時に呼び出される。
-//---------------------------------------------------------------------------
 void mqabcPlugin::GetPlugInID(DWORD *Product, DWORD *ID)
 {
-    // プロダクト名(制作者名)とIDを、全部で64bitの値として返す
-    // 値は他と重複しないようなランダムなもので良い
     *Product = mqabcPluginProduct;
     *ID = mqabcPluginID;
 }
 
-//---------------------------------------------------------------------------
-//  GetPlugInName
-//    プラグイン名を返す。
-//    この関数は[プラグインについて]表示時に呼び出される。
-//---------------------------------------------------------------------------
 const char *mqabcPlugin::GetPlugInName(void)
 {
     return "Alembic for Metasequoia (version " mqusdVersionString ") " mqusdCopyRight;
 }
 
-//---------------------------------------------------------------------------
-//  EnumString
-//    ポップアップメニューに表示される文字列を返す。
-//    この関数は起動時に呼び出される。
-//---------------------------------------------------------------------------
 #if MQPLUGIN_VERSION >= 0x0470
 const wchar_t *mqabcPlugin::EnumString(void)
 {
@@ -85,11 +62,6 @@ const char *mqabcPlugin::EnumString(void)
 #endif
 
 
-
-//---------------------------------------------------------------------------
-//  EnumSubCommand
-//    サブコマンド前を列挙
-//---------------------------------------------------------------------------
 const char *mqabcPlugin::EnumSubCommand(int index)
 {
     switch (index) {
@@ -101,10 +73,6 @@ const char *mqabcPlugin::EnumSubCommand(int index)
     }
 }
 
-//---------------------------------------------------------------------------
-//  GetSubCommandString
-//    サブコマンドの文字列を列挙
-//---------------------------------------------------------------------------
 const wchar_t *mqabcPlugin::GetSubCommandString(int index)
 {
     switch (index) {
@@ -116,10 +84,6 @@ const wchar_t *mqabcPlugin::GetSubCommandString(int index)
     }
 }
 
-//---------------------------------------------------------------------------
-//  Initialize
-//    アプリケーションの初期化
-//---------------------------------------------------------------------------
 BOOL mqabcPlugin::Initialize()
 {
     if (!m_window) {
@@ -129,10 +93,6 @@ BOOL mqabcPlugin::Initialize()
     return TRUE;
 }
 
-//---------------------------------------------------------------------------
-//  Exit
-//    アプリケーションの終了
-//---------------------------------------------------------------------------
 void mqabcPlugin::Exit()
 {
     mqabcImportWindow::each([](auto* w) { delete w; });
@@ -142,10 +102,6 @@ void mqabcPlugin::Exit()
     m_window = nullptr;
 }
 
-//---------------------------------------------------------------------------
-//  Activate
-//    表示・非表示切り替え要求
-//---------------------------------------------------------------------------
 BOOL mqabcPlugin::Activate(MQDocument doc, BOOL flag)
 {
     bool active = flag ? true : false;
@@ -154,46 +110,20 @@ BOOL mqabcPlugin::Activate(MQDocument doc, BOOL flag)
     return active;
 }
 
-//---------------------------------------------------------------------------
-//  IsActivated
-//    表示・非表示状態の返答
-//---------------------------------------------------------------------------
 BOOL mqabcPlugin::IsActivated(MQDocument doc)
 {
     return m_window && m_window->GetVisible();
 }
 
-//---------------------------------------------------------------------------
-//  OnMinimize
-//    ウインドウの最小化への返答
-//---------------------------------------------------------------------------
 void mqabcPlugin::OnMinimize(MQDocument doc, BOOL flag)
 {
 }
 
-//---------------------------------------------------------------------------
-//  OnReceiveUserMessage
-//    プラグイン独自のメッセージの受け取り
-//---------------------------------------------------------------------------
-int mqabcPlugin::OnReceiveUserMessage(MQDocument doc, DWORD src_product, DWORD src_id, const char *description, void *message)
-{
-    return 0;
-}
-
-//---------------------------------------------------------------------------
-//  OnSubCommand
-//    A message for calling a sub comand
-//    サブコマンドの呼び出し
-//---------------------------------------------------------------------------
 BOOL mqabcPlugin::OnSubCommand(MQDocument doc, int index)
 {
     return FALSE;
 }
 
-//---------------------------------------------------------------------------
-//  OnDraw
-//    描画時の処理
-//---------------------------------------------------------------------------
 void mqabcPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int height)
 {
     mqabcRecorderWindow::each([doc](auto* w) {
@@ -202,10 +132,6 @@ void mqabcPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int height)
 }
 
 
-//---------------------------------------------------------------------------
-//  OnNewDocument
-//    ドキュメント初期化時
-//---------------------------------------------------------------------------
 void mqabcPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUMENT_PARAM& param)
 {
     m_mqo_path = filename ? filename : "";
@@ -215,28 +141,16 @@ void mqabcPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUME
     });
 }
 
-//---------------------------------------------------------------------------
-//  OnEndDocument
-//    ドキュメント終了時
-//---------------------------------------------------------------------------
 void mqabcPlugin::OnEndDocument(MQDocument doc)
 {
     m_mqo_path.clear();
 }
 
-//---------------------------------------------------------------------------
-//  OnSaveDocument
-//    ドキュメント保存時
-//---------------------------------------------------------------------------
 void mqabcPlugin::OnSaveDocument(MQDocument doc, const char *filename, SAVE_DOCUMENT_PARAM& param)
 {
     m_mqo_path = filename ? filename : "";
 }
 
-//---------------------------------------------------------------------------
-//  OnUndo
-//    アンドゥ実行時
-//---------------------------------------------------------------------------
 BOOL mqabcPlugin::OnUndo(MQDocument doc, int undo_state)
 {
     mqabcRecorderWindow::each([doc](auto* w) {
@@ -245,10 +159,6 @@ BOOL mqabcPlugin::OnUndo(MQDocument doc, int undo_state)
     return TRUE;
 }
 
-//---------------------------------------------------------------------------
-//  OnRedo
-//    リドゥ実行時
-//---------------------------------------------------------------------------
 BOOL mqabcPlugin::OnRedo(MQDocument doc, int redo_state)
 {
     mqabcRecorderWindow::each([doc](auto* w) {
@@ -257,10 +167,6 @@ BOOL mqabcPlugin::OnRedo(MQDocument doc, int redo_state)
     return TRUE;
 }
 
-//---------------------------------------------------------------------------
-//  OnUpdateUndo
-//    アンドゥ状態更新時
-//---------------------------------------------------------------------------
 void mqabcPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo_size)
 {
     mqabcRecorderWindow::each([doc](auto* w) {
@@ -268,70 +174,9 @@ void mqabcPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo_size)
     });
 }
 
-//---------------------------------------------------------------------------
-//  OnObjectModified
-//    オブジェクトの編集時
-//---------------------------------------------------------------------------
-void mqabcPlugin::OnObjectModified(MQDocument doc)
+bool mqabcPlugin::ExecuteCallback(MQDocument /*doc*/, void* /*option*/)
 {
-}
-
-//---------------------------------------------------------------------------
-//  OnObjectSelected
-//    オブジェクトの選択状態の変更時
-//---------------------------------------------------------------------------
-void mqabcPlugin::OnObjectSelected(MQDocument doc)
-{
-}
-
-//---------------------------------------------------------------------------
-//  OnUpdateObjectList
-//    カレントオブジェクトの変更時
-//---------------------------------------------------------------------------
-void mqabcPlugin::OnUpdateObjectList(MQDocument doc)
-{
-}
-
-//---------------------------------------------------------------------------
-//  OnMaterialModified
-//    マテリアルのパラメータ変更時
-//---------------------------------------------------------------------------
-void mqabcPlugin::OnMaterialModified(MQDocument doc)
-{
-}
-
-//---------------------------------------------------------------------------
-//  OnUpdateMaterialList
-//    カレントマテリアルの変更時
-//---------------------------------------------------------------------------
-void mqabcPlugin::OnUpdateMaterialList(MQDocument doc)
-{
-}
-
-//---------------------------------------------------------------------------
-//  OnUpdateScene
-//    シーン情報の変更時
-//---------------------------------------------------------------------------
-void mqabcPlugin::OnUpdateScene(MQDocument doc, MQScene scene)
-{
-}
-
-//---------------------------------------------------------------------------
-//  ExecuteCallback
-//    コールバックに対する実装部
-//---------------------------------------------------------------------------
-bool mqabcPlugin::ExecuteCallback(MQDocument doc, void *option)
-{
-    CallbackInfo *info = (CallbackInfo*)option;
-    return ((*this).*info->proc)(doc);
-}
-
-// コールバックの呼び出し
-void mqabcPlugin::Execute(ExecuteCallbackProc proc)
-{
-    CallbackInfo info;
-    info.proc = proc;
-    BeginCallback(&info);
+    return false;
 }
 
 void mqabcPlugin::LogInfo(const char* message)
@@ -361,4 +206,11 @@ void mqusdLog(const char* fmt, ...)
 MQBasePlugin* GetPluginClass()
 {
     return &mqusd::g_plugin;
+}
+
+
+mqusdAPI MQBasePlugin* mqusdGetStationPlugin()
+{
+    static mqusd::mqabcPlugin s_inst;
+    return &s_inst;
 }

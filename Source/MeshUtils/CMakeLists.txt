@@ -1,5 +1,3 @@
-project(MeshUtils)
-
 if(ENABLE_ISPC)
     setup_ispc()
     set(MUISPC_OUTDIR ${CMAKE_CURRENT_BINARY_DIR}/ISPC)

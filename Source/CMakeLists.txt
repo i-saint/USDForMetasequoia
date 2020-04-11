@@ -1,5 +1,7 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
-PROJECT(AlembicForMetasequoia)
+cmake_minimum_required(VERSION 3.5)
+project(USDForMetasequoia)
+
+option(BUILD_TESTS "Build tests" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 if(APPLE)
@@ -15,7 +17,6 @@ find_package(OpenEXR REQUIRED)
 find_package(Alembic REQUIRED)
 include(ISPC)
 
-
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE PATH "" FORCE)
 endif()
@@ -23,8 +24,8 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/_dist" CACHE PATH "" FORCE)
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -fvisibility=hidden -std=c++14 -Wno-deprecated")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -fvisibility=hidden")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fvisibility=hidden -std=c++14 -Wno-deprecated -fpermissive")
 
 function(add_subdirectory_link to from)
     if(NOT EXISTS "${CMAKE_SOURCE_DIR}/${to}")
@@ -36,5 +37,6 @@ endfunction()
 add_subdirectory(MeshUtils)
 add_subdirectory(SceneGraph)
 add_subdirectory_link(Plugins470 Plugins)
-
-add_subdirectory(Test)
+if (BUILD_TESTS)
+    add_subdirectory(Test)
+endif()

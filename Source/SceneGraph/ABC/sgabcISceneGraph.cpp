@@ -127,6 +127,8 @@ ABCIXformNode::ABCIXformNode(ABCINode* parent, Abc::IObject& obj)
     m_schema = AbcGeom::IXform(m_obj).getSchema();
     setNode(CreateNode<XformNode>(parent, obj));
 
+    m_num_samples = m_schema.getNumSamples();
+    m_timesampling = m_schema.getTimeSampling();
     m_visibility_prop = AbcGeom::GetVisibilityProperty(m_obj);
 }
 
@@ -158,6 +160,8 @@ ABCIMeshNode::ABCIMeshNode(ABCINode* parent, Abc::IObject& obj)
     m_schema = AbcGeom::IPolyMesh(m_obj).getSchema();
     setNode(CreateNode<MeshNode>(parent, obj));
 
+    m_num_samples = m_schema.getNumSamples();
+    m_timesampling = m_schema.getTimeSampling();
     m_visibility_prop = AbcGeom::GetVisibilityProperty(m_obj);
 }
 
@@ -505,62 +509,109 @@ Node* ABCIScene::findNodeImpl(const std::string& path)
     return nullptr;
 }
 
+struct TimeSamplingData
+{
+    Abc::TimeSampling* timesampling = nullptr;
+    size_t num_samples = 0;
+    double time_start = -1.0;
+    double time_end = -1.0;
+    double frame_rate = 1.0;
+    RawVector<double> times;
+};
+
 void ABCIScene::setupTimeRange()
 {
-    bool first = true;
+    // note: Abc::IArchive::getMaxNumSamplesForTimeSamplingIndex() may return absurd value.
+    // (on alembic_octopus.abc, it returns 0x7fffffff. actual sample count is 31)
+    // so calculate by myself...
 
     uint32_t nt = m_archive.getNumTimeSamplings();
-    for (uint32_t ti = 1; ti < nt; ++ti) {
-        double time_start = -1.0;
-        double time_end = -1.0;
-        double frame_rate = 1.0;
 
-        auto ts = m_archive.getTimeSampling(ti);
+    std::vector<TimeSamplingData> table;
+    table.resize(nt);
+    for (uint32_t ti = 0; ti < nt; ++ti)
+        table[ti].timesampling = m_archive.getTimeSampling(ti).get();
+
+    auto get_record = [&table](Abc::TimeSampling* ts) -> TimeSamplingData& {
+        return *std::find_if(table.begin(), table.end(), [ts](auto& rec) {
+            return rec.timesampling == ts;
+        });
+    };
+    for (auto& n : m_nodes) {
+        auto ts = n->m_timesampling.get();
+        auto& rec = get_record(ts);
+        rec.num_samples = std::max(n->m_num_samples, rec.num_samples);
+    }
+
+
+    bool first = true;
+
+    for (uint32_t ti = 1; ti < nt; ++ti) {
+        auto& rec = table[ti];
+        auto ts = m_archive.getTimeSampling(ti).get();
         auto tst = ts->getTimeSamplingType();
         if (tst.isUniform() || tst.isCyclic()) {
             auto start = ts->getStoredTimes()[0];
-            auto max_num_samples = m_archive.getMaxNumSamplesForTimeSamplingIndex(ti);
-            auto samples_per_cycle = tst.getNumSamplesPerCycle();
-            auto time_per_cycle = tst.getTimePerCycle();
-            auto num_cycles = max_num_samples / samples_per_cycle;
+            uint32_t num_samples = (uint32_t)rec.num_samples;
+            uint32_t samples_per_cycle = tst.getNumSamplesPerCycle();
+            double time_per_cycle = tst.getTimePerCycle();
+            uint32_t num_cycles = num_samples / samples_per_cycle;
 
             if (tst.isUniform()) {
-                time_start = start;
-                time_end = num_cycles > 0 ? start + (time_per_cycle * (num_cycles - 1)) : start;
-                frame_rate = 1.0 / time_per_cycle;
+                rec.time_start = start;
+                rec.time_end = num_cycles > 0 ? start + (time_per_cycle * (num_cycles - 1)) : start;
+                rec.frame_rate = 1.0 / time_per_cycle;
+
+                rec.times.resize_discard(num_samples);
+                each_with_index(rec.times, [&rec, time_per_cycle](double& t, int i) {
+                    t = time_per_cycle * i + rec.time_start;
+                });
             }
             else if (tst.isCyclic()) {
-                auto& s = ts->getStoredTimes();
-                if (!s.empty()) {
-                    time_start = start + (s.front() - time_per_cycle);
-                    time_end = start + (s.back() - time_per_cycle) + (time_per_cycle * num_cycles);
-                    frame_rate = (double)(s.size() * num_cycles) / (time_end - time_start);
+                auto& times = ts->getStoredTimes();
+                if (!times.empty()) {
+                    size_t ntimes = times.size();
+                    rec.time_start = start + (times.front() - time_per_cycle);
+                    rec.time_end = start + (times.back() - time_per_cycle) + (time_per_cycle * num_cycles);
+                    rec.frame_rate = (double)(times.size() * num_cycles) / (rec.time_end - rec.time_start);
+
+                    rec.times.resize_discard(num_samples);
+                    for (uint32_t i = 0; i < num_samples; /**/) {
+                        double base = time_per_cycle * i + rec.time_start;
+                        for (uint32_t j = 0; j < ntimes && i < num_samples; ++j)
+                            rec.times[i++] = times[j] + base;
+                    }
                 }
             }
         }
         else if (tst.isAcyclic()) {
             auto& s = ts->getStoredTimes();
             if (!s.empty()) {
-                time_start = s.front();
-                time_end = s.back();
-                frame_rate = (double)s.size() / (time_end - time_start);
+                rec.time_start = s.front();
+                rec.time_end = s.back();
+                rec.frame_rate = (double)s.size() / (rec.time_end - rec.time_start);
+
+                rec.times.insert(rec.times.end(), s.begin(), s.begin() + std::min(rec.num_samples, s.size()));
             }
         }
 
-        if (time_start != -1.0) {
+        if (rec.time_start != -1.0) {
             if (first) {
                 first = false;
-                m_scene->time_start = time_start;
-                m_scene->time_end = time_end;
-                m_scene->frame_rate = frame_rate;
+                m_scene->time_start = rec.time_start;
+                m_scene->time_end = rec.time_end;
+                m_scene->frame_rate = rec.frame_rate;
             }
             else {
-                m_scene->time_start = std::min(m_scene->time_start, time_start);
-                m_scene->time_end = std::max(m_scene->time_end, time_end);
-                m_scene->frame_rate = std::max(m_scene->frame_rate, frame_rate);
+                m_scene->time_start = std::min(m_scene->time_start, rec.time_start);
+                m_scene->time_end = std::max(m_scene->time_end, rec.time_end);
+                m_scene->frame_rate = std::max(m_scene->frame_rate, rec.frame_rate);
             }
         }
+
+        m_times.insert(m_times.end(), rec.times.begin(), rec.times.end());
     }
+    sort_and_unique(m_times);
 }
 
 void ABCIScene::registerNode(ABCINode* n)
