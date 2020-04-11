@@ -6,12 +6,12 @@
 
 namespace mqusd {
 
-class mqusdImportWindow : public mqTWindow<mqusdImportWindow>
+class mqusdImporterWindow : public mqTWindow<mqusdImporterWindow>
 {
-using super = mqTWindow<mqusdImportWindow>;
-friend mqusdImportWindow* super::create(MQBasePlugin* plugin);
+using super = mqTWindow<mqusdImporterWindow>;
+friend mqusdImporterWindow* super::create(MQBasePlugin* plugin);
 protected:
-    mqusdImportWindow(MQBasePlugin* plugin, MQWindowBase& parent);
+    mqusdImporterWindow(MQBasePlugin* plugin, MQWindowBase& parent);
 
 public:
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);

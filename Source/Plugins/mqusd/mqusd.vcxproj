@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqusdExportPlugin.cpp" />
-    <ClCompile Include="mqusdExportWindow.cpp" />
-    <ClCompile Include="mqusdImportPlugin.cpp" />
-    <ClCompile Include="mqusdImportWindow.cpp" />
+    <ClCompile Include="mqusdExporterPlugin.cpp" />
+    <ClCompile Include="mqusdExporterWindow.cpp" />
+    <ClCompile Include="mqusdImporterPlugin.cpp" />
+    <ClCompile Include="mqusdImporterWindow.cpp" />
     <ClCompile Include="mqusdInternal.cpp" />
     <ClCompile Include="mqusdRecorderPlugin.cpp" />
     <ClCompile Include="mqusdRecorderWindow.cpp" />
@@ -32,8 +32,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\mqusd.h" />
-    <ClInclude Include="mqusdExportWindow.h" />
-    <ClInclude Include="mqusdImportWindow.h" />
+    <ClInclude Include="mqusdExporterWindow.h" />
+    <ClInclude Include="mqusdImporterWindow.h" />
     <ClInclude Include="mqusdInternal.h" />
     <ClInclude Include="mqusdRecorderPlugin.h" />
     <ClInclude Include="mqusdRecorderWindow.h" />

@@ -1,10 +1,10 @@
 #include "pch.h"
-#include "mqabcImportWindow.h"
+#include "mqabcImporterWindow.h"
 #include "SceneGraph/ABC/sgabc.h"
 
 namespace mqusd {
 
-mqabcImportWindow::mqabcImportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
+mqabcImporterWindow::mqabcImporterWindow(MQBasePlugin* plugin, MQWindowBase& parent)
     : super(parent)
 {
     m_plugin = plugin;
@@ -27,10 +27,10 @@ mqabcImportWindow::mqabcImportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
         m_edit_time = CreateEdit(hf);
         m_edit_time->SetNumeric(MQEdit::NUMERIC_INT);
         m_edit_time->SetText(L"0");
-        m_edit_time->AddChangedEvent(this, &mqabcImportWindow::OnSampleEdit);
+        m_edit_time->AddChangedEvent(this, &mqabcImporterWindow::OnSampleEdit);
 
         m_slider_time = CreateSlider(vf);
-        m_slider_time->AddChangingEvent(this, &mqabcImportWindow::OnSampleSlide);
+        m_slider_time->AddChangingEvent(this, &mqabcImporterWindow::OnSampleSlide);
     }
     {
         MQFrame* vf = CreateVerticalFrame(this);
@@ -41,25 +41,25 @@ mqabcImportWindow::mqabcImportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
         CreateLabel(hf, L"Scale Factor");
         m_edit_scale = CreateEdit(hf);
         m_edit_scale->SetNumeric(MQEdit::NUMERIC_DOUBLE);
-        m_edit_scale->AddChangedEvent(this, &mqabcImportWindow::OnSettingsUpdate);
+        m_edit_scale->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
 
         m_check_flip_x = CreateCheckBox(vf, L"Flip X");
-        m_check_flip_x->AddChangedEvent(this, &mqabcImportWindow::OnSettingsUpdate);
+        m_check_flip_x->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
 
         m_check_flip_yz = CreateCheckBox(vf, L"Flip YZ");
-        m_check_flip_yz->AddChangedEvent(this, &mqabcImportWindow::OnSettingsUpdate);
+        m_check_flip_yz->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
 
         m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
-        m_check_flip_faces->AddChangedEvent(this, &mqabcImportWindow::OnSettingsUpdate);
+        m_check_flip_faces->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
 
         m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
-        m_check_merge->AddChangedEvent(this, &mqabcImportWindow::OnSettingsUpdate);
+        m_check_merge->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
 
         hf = CreateHorizontalFrame(vf);
         MQLabel* space = CreateLabel(hf, L" ");
         space->SetWidth(32);
         m_check_merge_only_visible = CreateCheckBox(hf, L"Only Visible");
-        m_check_merge_only_visible->AddChangedEvent(this, &mqabcImportWindow::OnSettingsUpdate);
+        m_check_merge_only_visible->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
     }
 
     {
@@ -72,24 +72,24 @@ mqabcImportWindow::mqabcImportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
         m_log->SetVertBarStatus(MQMemo::SCROLLBAR_OFF);
     }
 
-    this->AddShowEvent(this, &mqabcImportWindow::OnShow);
-    this->AddHideEvent(this, &mqabcImportWindow::OnHide);
+    this->AddShowEvent(this, &mqabcImporterWindow::OnShow);
+    this->AddHideEvent(this, &mqabcImporterWindow::OnHide);
 }
 
-BOOL mqabcImportWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
+BOOL mqabcImporterWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 {
     m_log->SetText(L"");
     SyncSettings();
     return 0;
 }
 
-BOOL mqabcImportWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
+BOOL mqabcImporterWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
     Close();
     return 0;
 }
 
-BOOL mqabcImportWindow::OnSampleEdit(MQWidgetBase* sender, MQDocument doc)
+BOOL mqabcImporterWindow::OnSampleEdit(MQWidgetBase* sender, MQDocument doc)
 {
     auto str = mu::ToMBS(m_edit_time->GetText());
     auto value = std::atof(str.c_str());
@@ -100,7 +100,7 @@ BOOL mqabcImportWindow::OnSampleEdit(MQWidgetBase* sender, MQDocument doc)
     return 0;
 }
 
-BOOL mqabcImportWindow::OnSampleSlide(MQWidgetBase* sender, MQDocument doc)
+BOOL mqabcImporterWindow::OnSampleSlide(MQWidgetBase* sender, MQDocument doc)
 {
     const size_t buf_len = 128;
     wchar_t buf[buf_len];
@@ -113,7 +113,7 @@ BOOL mqabcImportWindow::OnSampleSlide(MQWidgetBase* sender, MQDocument doc)
     return 0;
 }
 
-BOOL mqabcImportWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
+BOOL mqabcImporterWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
 {
     auto& opt = m_options;
 
@@ -134,7 +134,7 @@ BOOL mqabcImportWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     return 0;
 }
 
-void mqabcImportWindow::SyncSettings()
+void mqabcImporterWindow::SyncSettings()
 {
     const size_t buf_len = 128;
     wchar_t buf[buf_len];
@@ -150,14 +150,14 @@ void mqabcImportWindow::SyncSettings()
     m_check_merge_only_visible->SetChecked(opt.merge_only_visible);
 }
 
-void mqabcImportWindow::LogInfo(const char* message)
+void mqabcImporterWindow::LogInfo(const char* message)
 {
     if (m_log) {
         m_log->SetText(mu::ToWCS(message));
     }
 }
 
-bool mqabcImportWindow::Open(MQDocument doc, const std::string& path)
+bool mqabcImporterWindow::Open(MQDocument doc, const std::string& path)
 {
     Close();
 
@@ -184,7 +184,7 @@ bool mqabcImportWindow::Open(MQDocument doc, const std::string& path)
     return true;
 }
 
-bool mqabcImportWindow::Close()
+bool mqabcImporterWindow::Close()
 {
     m_importer = {};
     m_scene = {};
@@ -192,7 +192,7 @@ bool mqabcImportWindow::Close()
     return true;
 }
 
-void mqabcImportWindow::Seek(MQDocument doc, double t)
+void mqabcImporterWindow::Seek(MQDocument doc, double t)
 {
     if (!m_importer)
         return;
@@ -204,17 +204,17 @@ void mqabcImportWindow::Seek(MQDocument doc, double t)
     MQ_RefreshView(nullptr);
 }
 
-void mqabcImportWindow::Refresh(MQDocument doc)
+void mqabcImporterWindow::Refresh(MQDocument doc)
 {
     Seek(doc, m_seek_time);
 }
 
-bool mqabcImportWindow::IsOpened() const
+bool mqabcImporterWindow::IsOpened() const
 {
     return m_scene != nullptr;
 }
 
-double mqabcImportWindow::GetTimeRange() const
+double mqabcImporterWindow::GetTimeRange() const
 {
     return m_scene ? m_scene->time_end - m_scene->time_start : 0.0;
 }

@@ -4,10 +4,10 @@
 
 namespace mqusd {
 
-class mqusdExportPlugin;
-class mqusdExportWindow;
-class mqusdImportPlugin;
-class mqusdImportWindow;
+class mqusdExporterPlugin;
+class mqusdExporterWindow;
+class mqusdImporterPlugin;
+class mqusdImporterWindow;
 class mqusdRecorderPlugin;
 class mqusdRecorderWindow;
 

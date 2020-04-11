@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqusdExport.cpp" />
+    <ClCompile Include="mqabcExporter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MeshUtils\MeshUtils.vcxproj">
@@ -30,7 +30,7 @@
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{E392E1C7-4846-423D-8FB5-6F2D790B62CB}</ProjectGuid>
+    <ProjectGuid>{6B78EB43-1F85-46C8-8921-7923F1E61245}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

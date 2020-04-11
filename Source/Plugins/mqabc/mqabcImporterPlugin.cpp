@@ -1,14 +1,14 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqabcImportWindow.h"
+#include "mqabcImporterWindow.h"
 
 namespace mqusd {
 
-class mqabcImportPlugin : public MQImportPlugin
+class mqabcImporterPlugin : public MQImportPlugin
 {
 public:
-    mqabcImportPlugin();
-    ~mqabcImportPlugin();
+    mqabcImporterPlugin();
+    ~mqabcImporterPlugin();
     void GetPlugInID(DWORD* Product, DWORD* ID) override;
     const char* GetPlugInName(void) override;
     const char* EnumFileType(int index) override;
@@ -17,28 +17,28 @@ public:
 };
 
 
-mqabcImportPlugin::mqabcImportPlugin()
+mqabcImporterPlugin::mqabcImporterPlugin()
 {
     mqabcInitialize();
 }
 
-mqabcImportPlugin::~mqabcImportPlugin()
+mqabcImporterPlugin::~mqabcImporterPlugin()
 {
     mqabcFinalize();
 }
 
-void mqabcImportPlugin::GetPlugInID(DWORD* Product, DWORD* ID)
+void mqabcImporterPlugin::GetPlugInID(DWORD* Product, DWORD* ID)
 {
     *Product = mqabcPluginProduct;
     *ID = mqabcImportPluginID;
 }
 
-const char* mqabcImportPlugin::GetPlugInName(void)
+const char* mqabcImporterPlugin::GetPlugInName(void)
 {
     return "Alembic Importer (version " mqusdVersionString ") " mqusdCopyRight;
 }
 
-const char* mqabcImportPlugin::EnumFileType(int index)
+const char* mqabcImporterPlugin::EnumFileType(int index)
 {
     switch (index) {
     case 0: return "Alembic (*.abc)";
@@ -46,7 +46,7 @@ const char* mqabcImportPlugin::EnumFileType(int index)
     }
 }
 
-const char* mqabcImportPlugin::EnumFileExt(int index)
+const char* mqabcImporterPlugin::EnumFileExt(int index)
 {
     switch (index) {
     case 0: return "abc";
@@ -54,16 +54,16 @@ const char* mqabcImportPlugin::EnumFileExt(int index)
     }
 }
 
-BOOL mqabcImportPlugin::ImportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
+BOOL mqabcImporterPlugin::ImportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
 {
-    auto w = mqabcImportWindow::create(this);
+    auto w = mqabcImporterWindow::create(this);
     return w->Open(doc, mu::ToMBS(filename).c_str());
 }
 
 } // namespace mqusd
 
-mqabcAPI MQBasePlugin* mqabcGetImportPlugin()
+mqabcAPI MQBasePlugin* mqabcGetImporterPlugin()
 {
-    static mqusd::mqabcImportPlugin s_inst;
+    static mqusd::mqabcImporterPlugin s_inst;
     return &s_inst;
 }

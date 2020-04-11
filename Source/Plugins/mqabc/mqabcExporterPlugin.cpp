@@ -1,14 +1,14 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqabcExportWindow.h"
+#include "mqabcExporterWindow.h"
 
 namespace mqusd {
 
-class mqabcExportPlugin : public MQExportPlugin
+class mqabcExporterPlugin : public MQExportPlugin
 {
 public:
-    mqabcExportPlugin();
-    ~mqabcExportPlugin();
+    mqabcExporterPlugin();
+    ~mqabcExporterPlugin();
     void GetPlugInID(DWORD* Product, DWORD* ID) override;
     const char* GetPlugInName(void) override;
     const char* EnumFileType(int index) override;
@@ -17,28 +17,28 @@ public:
 };
 
 
-mqabcExportPlugin::mqabcExportPlugin()
+mqabcExporterPlugin::mqabcExporterPlugin()
 {
     mqabcInitialize();
 }
 
-mqabcExportPlugin::~mqabcExportPlugin()
+mqabcExporterPlugin::~mqabcExporterPlugin()
 {
     mqabcFinalize();
 }
 
-void mqabcExportPlugin::GetPlugInID(DWORD* Product, DWORD* ID)
+void mqabcExporterPlugin::GetPlugInID(DWORD* Product, DWORD* ID)
 {
     *Product = mqabcPluginProduct;
     *ID = mqabcExportPluginID;
 }
 
-const char* mqabcExportPlugin::GetPlugInName(void)
+const char* mqabcExporterPlugin::GetPlugInName(void)
 {
     return "Alembic Exporter (version " mqusdVersionString ") " mqusdCopyRight;
 }
 
-const char* mqabcExportPlugin::EnumFileType(int index)
+const char* mqabcExporterPlugin::EnumFileType(int index)
 {
     // note: USDZ is not supported for export
     switch (index) {
@@ -47,7 +47,7 @@ const char* mqabcExportPlugin::EnumFileType(int index)
     }
 }
 
-const char* mqabcExportPlugin::EnumFileExt(int index)
+const char* mqabcExporterPlugin::EnumFileExt(int index)
 {
     switch (index) {
     case 0: return "abc";
@@ -55,17 +55,17 @@ const char* mqabcExportPlugin::EnumFileExt(int index)
     }
 }
 
-BOOL mqabcExportPlugin::ExportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
+BOOL mqabcExporterPlugin::ExportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
 {
-    auto w = mqabcExportWindow::create(this);
+    auto w = mqabcExporterWindow::create(this);
     w->SetOutputPath(filename);
     return true;
 }
 
 } // namespace mqusd
 
-mqabcAPI MQBasePlugin* mqabcGetExportPlugin()
+mqabcAPI MQBasePlugin* mqabcGetExporterPlugin()
 {
-    static mqusd::mqabcExportPlugin s_inst;
+    static mqusd::mqabcExporterPlugin s_inst;
     return &s_inst;
 }

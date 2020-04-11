@@ -40,7 +40,7 @@ class DummyStationPlugin : public MQStationPlugin
 {
 public:
 #if defined(__APPLE__) || defined(__linux__)
-    MQBasePlugin* CreateNewPlugin() override;
+    MQBasePlugin* CreateNewPlugin() override { return nullptr; }
 #endif
     void GetPlugInID(DWORD* Product, DWORD* ID) override {}
     const char* GetPlugInName(void) override { return ""; }

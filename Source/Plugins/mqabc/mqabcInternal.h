@@ -4,10 +4,10 @@
 
 namespace mqusd {
 
-class mqabcExportPlugin;
-class mqabcExportWindow;
-class mqabcImportPlugin;
-class mqabcImportWindow;
+class mqabcExporterPlugin;
+class mqabcExporterWindow;
+class mqabcImporterPlugin;
+class mqabcImporterWindow;
 class mqabcRecorderPlugin;
 class mqabcRecorderWindow;
 

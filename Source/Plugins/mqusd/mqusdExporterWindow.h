@@ -2,16 +2,16 @@
 #include "MQWidget.h"
 #include "mqCommon/mqTWindow.h"
 #include "mqCommon/mqDocumentExporter.h"
-#include "mqabcInternal.h"
+#include "mqusdInternal.h"
 
 namespace mqusd {
 
-class mqabcExportWindow : public mqTWindow<mqabcExportWindow>
+class mqusdExporterWindow : public mqTWindow<mqusdExporterWindow>
 {
-using super = mqTWindow<mqabcExportWindow>;
-friend mqabcExportWindow* super::create(MQBasePlugin* plugin);
+using super = mqTWindow<mqusdExporterWindow>;
+friend mqusdExporterWindow* super::create(MQBasePlugin* plugin);
 protected:
-    mqabcExportWindow(MQBasePlugin* plugin, MQWindowBase& parent);
+    mqusdExporterWindow(MQBasePlugin* plugin, MQWindowBase& parent);
 
 public:
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
@@ -20,14 +20,14 @@ public:
     BOOL OnExportClicked(MQWidgetBase* sender, MQDocument doc);
 
     void SyncSettings();
+    void LogInfo(const char *message);
+
     void SetOutputPath(const std::wstring& path);
     bool DoExport(MQDocument doc);
-    void LogInfo(const char* message);
 
 private:
     MQBasePlugin* m_plugin = nullptr;
 
-    MQFrame* m_frame_settings = nullptr;
     MQEdit* m_edit_scale = nullptr;
 
     MQCheckBox* m_check_mirror = nullptr;
@@ -37,6 +37,8 @@ private:
     MQCheckBox* m_check_normals = nullptr;
     MQCheckBox* m_check_colors = nullptr;
     MQCheckBox* m_check_mids = nullptr;
+    MQCheckBox* m_check_blendshapes = nullptr;
+    MQCheckBox* m_check_skeletons = nullptr;
 
     MQCheckBox* m_check_flip_x = nullptr;
     MQCheckBox* m_check_flip_yz = nullptr;

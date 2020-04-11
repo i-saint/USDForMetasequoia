@@ -1,11 +1,11 @@
 #include "mqusd.h"
 #include "mqCommon/mqDummyPlugins.h"
 
-MQBasePlugin* (*_mqusdGetExportPlugin)();
+MQBasePlugin* (*entrypoint)();
 
 MQBasePlugin* GetPluginClass()
 {
-    if (!_mqusdGetExportPlugin) {
+    if (!entrypoint) {
         auto mod = mu::GetModule(mqusdModuleFile);
         if (!mod) {
             std::string path = mqusd::GetMiscDir();
@@ -13,11 +13,11 @@ MQBasePlugin* GetPluginClass()
             mod = mu::LoadModule(path.c_str());
         }
         if (mod) {
-            (void*&)_mqusdGetExportPlugin = mu::GetSymbol(mod, "mqusdGetExportPlugin");
+            (void*&)entrypoint = mu::GetSymbol(mod, "mqusdGetExporterPlugin");
         }
     }
-    if (_mqusdGetExportPlugin)
-        return _mqusdGetExportPlugin();
+    if (entrypoint)
+        return entrypoint();
     return &mqusd::DummyExportPlugin::getInstance();
 }
 

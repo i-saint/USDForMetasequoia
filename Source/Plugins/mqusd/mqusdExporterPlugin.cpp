@@ -1,13 +1,13 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqusdExportWindow.h"
+#include "mqusdExporterWindow.h"
 
 namespace mqusd {
 
-class mqusdExportPlugin : public MQExportPlugin
+class mqusdExporterPlugin : public MQExportPlugin
 {
 public:
-    mqusdExportPlugin();
+    mqusdExporterPlugin();
     void GetPlugInID(DWORD* Product, DWORD* ID) override;
     const char* GetPlugInName(void) override;
     const char* EnumFileType(int index) override;
@@ -16,23 +16,23 @@ public:
 };
 
 
-mqusdExportPlugin::mqusdExportPlugin()
+mqusdExporterPlugin::mqusdExporterPlugin()
 {
     mqusd::mqusdInitialize();
 }
 
-void mqusdExportPlugin::GetPlugInID(DWORD* Product, DWORD* ID)
+void mqusdExporterPlugin::GetPlugInID(DWORD* Product, DWORD* ID)
 {
     *Product = mqusdPluginProduct;
     *ID = mqusdExportPluginID;
 }
 
-const char* mqusdExportPlugin::GetPlugInName(void)
+const char* mqusdExporterPlugin::GetPlugInName(void)
 {
     return "USD Exporter (version " mqusdVersionString ") " mqusdCopyRight;
 }
 
-const char* mqusdExportPlugin::EnumFileType(int index)
+const char* mqusdExporterPlugin::EnumFileType(int index)
 {
     // note: USDZ is not supported for export
     switch (index) {
@@ -43,7 +43,7 @@ const char* mqusdExportPlugin::EnumFileType(int index)
     }
 }
 
-const char* mqusdExportPlugin::EnumFileExt(int index)
+const char* mqusdExporterPlugin::EnumFileExt(int index)
 {
     switch (index) {
     case 0: return "usd";
@@ -53,17 +53,17 @@ const char* mqusdExportPlugin::EnumFileExt(int index)
     }
 }
 
-BOOL mqusdExportPlugin::ExportFile(int /*index*/, const wchar_t* filename, MQDocument /*doc*/)
+BOOL mqusdExporterPlugin::ExportFile(int /*index*/, const wchar_t* filename, MQDocument /*doc*/)
 {
-    auto w = mqusdExportWindow::create(this);
+    auto w = mqusdExporterWindow::create(this);
     w->SetOutputPath(filename);
     return true;
 }
 
 } // namespace mqusd
 
-mqusdAPI MQBasePlugin* mqusdGetExportPlugin()
+mqusdAPI MQBasePlugin* mqusdGetExporterPlugin()
 {
-    static mqusd::mqusdExportPlugin s_inst;
+    static mqusd::mqusdExporterPlugin s_inst;
     return &s_inst;
 }

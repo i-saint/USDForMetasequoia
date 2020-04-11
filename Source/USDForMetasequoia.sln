@@ -33,13 +33,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Foundation", "Foundation", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mudbg", "MeshUtils\mudbg\mudbg.vcxproj", "{849196DF-ED2A-4AB0-8EFE-1A7320127363}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqusdImport", "Plugins\mqusdImport\mqusdImport.vcxproj", "{75538242-3D88-4ADC-92C1-AD5B1FDC07DC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqusdImporter", "Plugins\mqusdImporter\mqusdImporter.vcxproj", "{75538242-3D88-4ADC-92C1-AD5B1FDC07DC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqusdExport", "Plugins\mqusdExport\mqusdExport.vcxproj", "{E392E1C7-4846-423D-8FB5-6F2D790B62CB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqusdExporter", "Plugins\mqusdExporter\mqusdExporter.vcxproj", "{E392E1C7-4846-423D-8FB5-6F2D790B62CB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqabcExport", "Plugins\mqabcExport\mqabcExport.vcxproj", "{6B78EB43-1F85-46C8-8921-7923F1E61245}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqabcExporter", "Plugins\mqabcExporter\mqabcExporter.vcxproj", "{6B78EB43-1F85-46C8-8921-7923F1E61245}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqabcImport", "Plugins\mqabcImport\mqabcImport.vcxproj", "{EF21F62F-9C37-4041-9F2C-0DB552AE3407}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqabcImporter", "Plugins\mqabcImporter\mqabcImporter.vcxproj", "{EF21F62F-9C37-4041-9F2C-0DB552AE3407}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqusdRecorder", "Plugins\mqusdRecorder\mqusdRecorder.vcxproj", "{1BB03EDA-14D3-40C0-A8A2-0BC01DC60001}"
 EndProject

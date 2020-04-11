@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqusdImportWindow.h"
+#include "mqusdImporterWindow.h"
 
 namespace mqusd {
 
-mqusdImportWindow::mqusdImportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
+mqusdImporterWindow::mqusdImporterWindow(MQBasePlugin* plugin, MQWindowBase& parent)
     : super(parent)
 {
     setlocale(LC_ALL, "");
@@ -28,10 +28,10 @@ mqusdImportWindow::mqusdImportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
         m_edit_time = CreateEdit(hf);
         m_edit_time->SetNumeric(MQEdit::NUMERIC_INT);
         m_edit_time->SetText(L"0");
-        m_edit_time->AddChangedEvent(this, &mqusdImportWindow::OnSampleEdit);
+        m_edit_time->AddChangedEvent(this, &mqusdImporterWindow::OnSampleEdit);
 
         m_slider_time = CreateSlider(vf);
-        m_slider_time->AddChangingEvent(this, &mqusdImportWindow::OnSampleSlide);
+        m_slider_time->AddChangingEvent(this, &mqusdImporterWindow::OnSampleSlide);
     }
     {
         MQFrame* vf = CreateVerticalFrame(this);
@@ -42,37 +42,37 @@ mqusdImportWindow::mqusdImportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
         CreateLabel(hf, L"Scale Factor");
         m_edit_scale = CreateEdit(hf);
         m_edit_scale->SetNumeric(MQEdit::NUMERIC_DOUBLE);
-        m_edit_scale->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
+        m_edit_scale->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
 
         m_check_flip_x = CreateCheckBox(vf, L"Flip X");
-        m_check_flip_x->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
+        m_check_flip_x->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
 
         m_check_flip_yz = CreateCheckBox(vf, L"Flip YZ");
-        m_check_flip_yz->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
+        m_check_flip_yz->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
 
         m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
-        m_check_flip_faces->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
+        m_check_flip_faces->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
 
         m_check_blendshapes = CreateCheckBox(vf, L"Import Blendshapes");
-        m_check_blendshapes->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
+        m_check_blendshapes->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
 
         m_check_skeletons = CreateCheckBox(vf, L"Import Skeletons");
-        m_check_skeletons->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
+        m_check_skeletons->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
 
         m_check_instancers = CreateCheckBox(vf, L"Import Instancers");
-        m_check_instancers->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
+        m_check_instancers->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
 
         m_check_bake = CreateCheckBox(vf, L"Bake Meshes");
-        m_check_bake->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
+        m_check_bake->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
 
         m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
-        m_check_merge->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
+        m_check_merge->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
 
         hf = CreateHorizontalFrame(vf);
         MQLabel* space = CreateLabel(hf, L" ");
         space->SetWidth(32);
         m_check_merge_only_visible = CreateCheckBox(hf, L"Only Visible");
-        m_check_merge_only_visible->AddChangedEvent(this, &mqusdImportWindow::OnSettingsUpdate);
+        m_check_merge_only_visible->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
     }
 
     {
@@ -85,24 +85,24 @@ mqusdImportWindow::mqusdImportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
         m_log->SetVertBarStatus(MQMemo::SCROLLBAR_OFF);
     }
 
-    this->AddShowEvent(this, &mqusdImportWindow::OnShow);
-    this->AddHideEvent(this, &mqusdImportWindow::OnHide);
+    this->AddShowEvent(this, &mqusdImporterWindow::OnShow);
+    this->AddHideEvent(this, &mqusdImporterWindow::OnHide);
 }
 
-BOOL mqusdImportWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
+BOOL mqusdImporterWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 {
     m_log->SetText(L"");
     SyncSettings();
     return 0;
 }
 
-BOOL mqusdImportWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
+BOOL mqusdImporterWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
     Close();
     return 0;
 }
 
-BOOL mqusdImportWindow::OnSampleEdit(MQWidgetBase* sender, MQDocument doc)
+BOOL mqusdImporterWindow::OnSampleEdit(MQWidgetBase* sender, MQDocument doc)
 {
     auto str = mu::ToMBS(m_edit_time->GetText());
     auto value = std::atof(str.c_str());
@@ -113,7 +113,7 @@ BOOL mqusdImportWindow::OnSampleEdit(MQWidgetBase* sender, MQDocument doc)
     return 0;
 }
 
-BOOL mqusdImportWindow::OnSampleSlide(MQWidgetBase* sender, MQDocument doc)
+BOOL mqusdImporterWindow::OnSampleSlide(MQWidgetBase* sender, MQDocument doc)
 {
     const size_t buf_len = 128;
     wchar_t buf[buf_len];
@@ -126,7 +126,7 @@ BOOL mqusdImportWindow::OnSampleSlide(MQWidgetBase* sender, MQDocument doc)
     return 0;
 }
 
-BOOL mqusdImportWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
+BOOL mqusdImporterWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
 {
     UpdateRelations();
 
@@ -153,7 +153,7 @@ BOOL mqusdImportWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     return 0;
 }
 
-void mqusdImportWindow::UpdateRelations()
+void mqusdImporterWindow::UpdateRelations()
 {
     if (m_check_bake->GetChecked() || m_check_merge->GetChecked()) {
         m_check_blendshapes->SetEnabled(false);
@@ -165,7 +165,7 @@ void mqusdImportWindow::UpdateRelations()
     }
 }
 
-void mqusdImportWindow::SyncSettings()
+void mqusdImporterWindow::SyncSettings()
 {
     const size_t buf_len = 128;
     wchar_t buf[buf_len];
@@ -187,7 +187,7 @@ void mqusdImportWindow::SyncSettings()
     UpdateRelations();
 }
 
-void mqusdImportWindow::LogInfo(const char* message)
+void mqusdImporterWindow::LogInfo(const char* message)
 {
     if (m_log) {
         m_log->SetText(mu::ToWCS(message));
@@ -195,7 +195,7 @@ void mqusdImportWindow::LogInfo(const char* message)
 }
 
 
-bool mqusdImportWindow::Open(MQDocument doc, const std::string& path)
+bool mqusdImporterWindow::Open(MQDocument doc, const std::string& path)
 {
     Close();
 
@@ -222,7 +222,7 @@ bool mqusdImportWindow::Open(MQDocument doc, const std::string& path)
     return true;
 }
 
-bool mqusdImportWindow::Close()
+bool mqusdImporterWindow::Close()
 {
     m_importer = {};
     m_scene = {};
@@ -230,7 +230,7 @@ bool mqusdImportWindow::Close()
     return true;
 }
 
-void mqusdImportWindow::Seek(MQDocument doc, double t)
+void mqusdImporterWindow::Seek(MQDocument doc, double t)
 {
     if (!m_importer)
         return;
@@ -242,17 +242,17 @@ void mqusdImportWindow::Seek(MQDocument doc, double t)
     MQ_RefreshView(nullptr);
 }
 
-void mqusdImportWindow::Refresh(MQDocument doc)
+void mqusdImporterWindow::Refresh(MQDocument doc)
 {
     Seek(doc, m_seek_time);
 }
 
-bool mqusdImportWindow::IsOpened() const
+bool mqusdImporterWindow::IsOpened() const
 {
     return m_scene != nullptr;
 }
 
-double mqusdImportWindow::GetTimeRange() const
+double mqusdImporterWindow::GetTimeRange() const
 {
     return m_scene ? m_scene->time_end - m_scene->time_start : 0.0;
 }

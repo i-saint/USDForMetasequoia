@@ -1,10 +1,10 @@
 #include "pch.h"
-#include "mqabcExportWindow.h"
+#include "mqabcExporterWindow.h"
 #include "SceneGraph/ABC/sgabc.h"
 
 namespace mqusd {
 
-mqabcExportWindow::mqabcExportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
+mqabcExporterWindow::mqabcExporterWindow(MQBasePlugin* plugin, MQWindowBase& parent)
     : super(parent)
 {
     m_plugin = plugin;
@@ -31,38 +31,38 @@ mqabcExportWindow::mqabcExportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
             CreateLabel(hf, L"Scale Factor");
             m_edit_scale = CreateEdit(hf);
             m_edit_scale->SetNumeric(MQEdit::NUMERIC_DOUBLE);
-            m_edit_scale->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
+            m_edit_scale->AddChangedEvent(this, &mqabcExporterWindow::OnSettingsUpdate);
         }
 
         m_check_normals = CreateCheckBox(vf, L"Export Normals");
-        m_check_normals->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
+        m_check_normals->AddChangedEvent(this, &mqabcExporterWindow::OnSettingsUpdate);
 
         m_check_colors = CreateCheckBox(vf, L"Export Vertex Colors");
-        m_check_colors->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
+        m_check_colors->AddChangedEvent(this, &mqabcExporterWindow::OnSettingsUpdate);
 
         m_check_mids = CreateCheckBox(vf, L"Export Material IDs");
-        m_check_mids->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
+        m_check_mids->AddChangedEvent(this, &mqabcExporterWindow::OnSettingsUpdate);
 
         m_check_mirror = CreateCheckBox(vf, L"Freeze Mirror");
-        m_check_mirror->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
+        m_check_mirror->AddChangedEvent(this, &mqabcExporterWindow::OnSettingsUpdate);
 
         m_check_lathe = CreateCheckBox(vf, L"Freeze Lathe");
-        m_check_lathe->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
+        m_check_lathe->AddChangedEvent(this, &mqabcExporterWindow::OnSettingsUpdate);
 
         m_check_subdiv = CreateCheckBox(vf, L"Freeze Subdiv");
-        m_check_subdiv->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
+        m_check_subdiv->AddChangedEvent(this, &mqabcExporterWindow::OnSettingsUpdate);
 
         m_check_flip_x = CreateCheckBox(vf, L"Flip X");
-        m_check_flip_x->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
+        m_check_flip_x->AddChangedEvent(this, &mqabcExporterWindow::OnSettingsUpdate);
 
         m_check_flip_yz = CreateCheckBox(vf, L"Flip YZ");
-        m_check_flip_yz->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
+        m_check_flip_yz->AddChangedEvent(this, &mqabcExporterWindow::OnSettingsUpdate);
 
         m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
-        m_check_flip_faces->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
+        m_check_flip_faces->AddChangedEvent(this, &mqabcExporterWindow::OnSettingsUpdate);
 
         m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
-        m_check_merge->AddChangedEvent(this, &mqabcExportWindow::OnSettingsUpdate);
+        m_check_merge->AddChangedEvent(this, &mqabcExporterWindow::OnSettingsUpdate);
     }
 
     {
@@ -71,7 +71,7 @@ mqabcExportWindow::mqabcExportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
         vf->SetInSpace(inner_margin);
 
         m_button_export = CreateButton(vf, L"Export");
-        m_button_export->AddClickEvent(this, &mqabcExportWindow::OnExportClicked);
+        m_button_export->AddClickEvent(this, &mqabcExporterWindow::OnExportClicked);
     }
 
     {
@@ -84,22 +84,22 @@ mqabcExportWindow::mqabcExportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
         m_log->SetVertBarStatus(MQMemo::SCROLLBAR_OFF);
     }
 
-    this->AddShowEvent(this, &mqabcExportWindow::OnShow);
-    this->AddHideEvent(this, &mqabcExportWindow::OnHide);
+    this->AddShowEvent(this, &mqabcExporterWindow::OnShow);
+    this->AddHideEvent(this, &mqabcExporterWindow::OnHide);
 }
 
-BOOL mqabcExportWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
+BOOL mqabcExporterWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 {
     SyncSettings();
     return 0;
 }
 
-BOOL mqabcExportWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
+BOOL mqabcExporterWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
     return 0;
 }
 
-BOOL mqabcExportWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
+BOOL mqabcExporterWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
 {
     auto& opt = m_options;
     {
@@ -123,7 +123,7 @@ BOOL mqabcExportWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     return 0;
 }
 
-BOOL mqabcExportWindow::OnExportClicked(MQWidgetBase* sender, MQDocument doc)
+BOOL mqabcExporterWindow::OnExportClicked(MQWidgetBase* sender, MQDocument doc)
 {
     if (DoExport(doc)) {
         SetVisible(false);
@@ -132,7 +132,7 @@ BOOL mqabcExportWindow::OnExportClicked(MQWidgetBase* sender, MQDocument doc)
     return false;
 }
 
-void mqabcExportWindow::SyncSettings()
+void mqabcExporterWindow::SyncSettings()
 {
     const size_t buf_len = 128;
     wchar_t buf[buf_len];
@@ -156,12 +156,12 @@ void mqabcExportWindow::SyncSettings()
 }
 
 
-void mqabcExportWindow::SetOutputPath(const std::wstring& path)
+void mqabcExporterWindow::SetOutputPath(const std::wstring& path)
 {
     m_out_path = path;
 }
 
-bool mqabcExportWindow::DoExport(MQDocument doc)
+bool mqabcExporterWindow::DoExport(MQDocument doc)
 {
     auto scene = CreateABCOScene();
     if (!scene) {
@@ -182,7 +182,7 @@ bool mqabcExportWindow::DoExport(MQDocument doc)
     return true;
 }
 
-void mqabcExportWindow::LogInfo(const char* message)
+void mqabcExporterWindow::LogInfo(const char* message)
 {
     if (m_log && message)
         m_log->SetText(mu::ToWCS(message));

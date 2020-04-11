@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqabcExportPlugin.cpp" />
-    <ClCompile Include="mqabcExportWindow.cpp" />
-    <ClCompile Include="mqabcImportPlugin.cpp" />
-    <ClCompile Include="mqabcImportWindow.cpp" />
+    <ClCompile Include="mqabcExporterPlugin.cpp" />
+    <ClCompile Include="mqabcExporterWindow.cpp" />
+    <ClCompile Include="mqabcImporterPlugin.cpp" />
+    <ClCompile Include="mqabcImporterWindow.cpp" />
     <ClCompile Include="mqabcInternal.cpp" />
     <ClCompile Include="mqabcRecorderPlugin.cpp" />
     <ClCompile Include="mqabcRecorderWindow.cpp" />
@@ -32,8 +32,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\mqusd.h" />
-    <ClInclude Include="mqabcExportWindow.h" />
-    <ClInclude Include="mqabcImportWindow.h" />
+    <ClInclude Include="mqabcExporterWindow.h" />
+    <ClInclude Include="mqabcImporterWindow.h" />
     <ClInclude Include="mqabcInternal.h" />
     <ClInclude Include="mqabcRecorderPlugin.h" />
     <ClInclude Include="mqabcRecorderWindow.h" />

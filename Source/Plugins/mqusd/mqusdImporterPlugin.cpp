@@ -1,13 +1,13 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqusdImportWindow.h"
+#include "mqusdImporterWindow.h"
 
 namespace mqusd {
 
-class mqusdImportPlugin : public MQImportPlugin
+class mqusdImporterPlugin : public MQImportPlugin
 {
 public:
-    mqusdImportPlugin();
+    mqusdImporterPlugin();
     void GetPlugInID(DWORD* Product, DWORD* ID) override;
     const char* GetPlugInName(void) override;
     const char* EnumFileType(int index) override;
@@ -16,23 +16,23 @@ public:
 };
 
 
-mqusdImportPlugin::mqusdImportPlugin()
+mqusdImporterPlugin::mqusdImporterPlugin()
 {
     mqusd::mqusdInitialize();
 }
 
-void mqusdImportPlugin::GetPlugInID(DWORD* Product, DWORD* ID)
+void mqusdImporterPlugin::GetPlugInID(DWORD* Product, DWORD* ID)
 {
     *Product = mqusdPluginProduct;
     *ID = mqusdImportPluginID;
 }
 
-const char* mqusdImportPlugin::GetPlugInName(void)
+const char* mqusdImporterPlugin::GetPlugInName(void)
 {
     return "USD Importer (version " mqusdVersionString ") " mqusdCopyRight;
 }
 
-const char* mqusdImportPlugin::EnumFileType(int index)
+const char* mqusdImporterPlugin::EnumFileType(int index)
 {
     switch (index) {
     case 0: return "USD (*.usd)";
@@ -43,7 +43,7 @@ const char* mqusdImportPlugin::EnumFileType(int index)
     }
 }
 
-const char* mqusdImportPlugin::EnumFileExt(int index)
+const char* mqusdImporterPlugin::EnumFileExt(int index)
 {
     switch (index) {
     case 0: return "usd";
@@ -54,16 +54,16 @@ const char* mqusdImportPlugin::EnumFileExt(int index)
     }
 }
 
-BOOL mqusdImportPlugin::ImportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
+BOOL mqusdImporterPlugin::ImportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
 {
-    auto w = mqusdImportWindow::create(this);
+    auto w = mqusdImporterWindow::create(this);
     return w->Open(doc, mu::ToMBS(filename).c_str());
 }
 
 } // namespace mqusd
 
-mqusdAPI MQBasePlugin* mqusdGetImportPlugin()
+mqusdAPI MQBasePlugin* mqusdGetImporterPlugin()
 {
-    static mqusd::mqusdImportPlugin s_inst;
+    static mqusd::mqusdImporterPlugin s_inst;
     return &s_inst;
 }
