@@ -1437,6 +1437,13 @@ Node* Scene::findNodeByPath(const std::string& npath)
     return it == nodes.end() ? nullptr : it->get();
 }
 
+bool Scene::isNodeTypeSupported(Node::Type type) const
+{
+    if (impl)
+        return impl->isNodeTypeSupported(type);
+    return true;
+}
+
 Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
 {
     g_current_scene = this;

@@ -409,6 +409,18 @@ inline ABCONode* ABCOScene::createNodeImpl(ABCONode* parent, const char* name_)
     return nullptr;
 }
 
+bool ABCOScene::isNodeTypeSupported(Node::Type type)
+{
+    switch (type) {
+    case Node::Type::Mesh:     // 
+    case Node::Type::Xform:    // 
+    case Node::Type::Material: // fall through
+        return true;
+    default:
+        return false;
+    }
+}
+
 Node* ABCOScene::createNode(Node* parent_, const char* name, Node::Type type)
 {
     auto parent = parent_ ? (ABCONode*)parent_->impl : nullptr;

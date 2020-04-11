@@ -50,7 +50,7 @@ DocumentImporter::DocumentImporter(MQBasePlugin* plugin, Scene* scene, const Imp
 {
 }
 
-bool DocumentImporter::initialize(MQDocument doc, bool additive)
+bool DocumentImporter::initialize(MQDocument /*doc*/)
 {
     m_mesh_nodes = m_scene->getNodes<MeshNode>();
     transform_container(m_obj_records, m_mesh_nodes, [](auto& rec, MeshNode* node) {

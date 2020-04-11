@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqCommon/mqDocumentExporter.h"
-#include "SceneGraph/ABC/sgabc.h"
+#include "mqabcExportWindow.h"
 
 namespace mqusd {
 
@@ -46,18 +45,8 @@ const char* mqabcExportPlugin::EnumFileExt(int index)
 
 BOOL mqabcExportPlugin::ExportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
 {
-    ScenePtr scene = CreateABCOScene();
-    if (!scene)
-        return false;
-
-    if (!scene->create(mu::ToMBS(filename).c_str()))
-        return false;
-
-    ExportOptions options;
-    auto exporter = std::make_shared<DocumentExporter>(this, scene.get(), &options);
-    exporter->initialize(doc);
-    exporter->write(doc, true);
-
+    auto w = mqabcExportWindow::create(this);
+    w->SetOutputPath(filename);
     return true;
 }
 

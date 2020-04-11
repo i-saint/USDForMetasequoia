@@ -25,7 +25,7 @@ class DocumentImporter
 {
 public:
     DocumentImporter(MQBasePlugin* plugin, Scene* scene, const ImportOptions* options);
-    bool initialize(MQDocument doc, bool additive);
+    bool initialize(MQDocument doc);
     bool read(MQDocument doc, double t);
 
 private:

@@ -13,6 +13,7 @@ mqabcRecorderWindow::mqabcRecorderWindow(MQBasePlugin* plugin, MQWindowBase& par
     m_options.merge_meshes = true;
     m_options.export_blendshapes = false;
     m_options.export_skeletons = false;
+    m_options.separate_xform = true;
 
     setlocale(LC_ALL, "");
     SetTitle(L"Recording Alembic");

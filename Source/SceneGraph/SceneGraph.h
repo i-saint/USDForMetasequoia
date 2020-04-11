@@ -517,6 +517,7 @@ public:
     virtual void read() = 0;
     virtual void write() = 0;
 
+    virtual bool isNodeTypeSupported(Node::Type type) = 0;
     virtual Node* createNode(Node* parent, const char* name, Node::Type type) = 0;
     virtual bool wrapNode(Node* node) = 0;
 };
@@ -542,13 +543,20 @@ public:
 
     Node* findNodeByID(uint32_t id);
     Node* findNodeByPath(const std::string& path);
+    bool isNodeTypeSupported(Node::Type type) const;
     Node* createNode(Node* parent, const char* name, Node::Type type);
     void registerNode(Node* n);
 
     template<class NodeT>
+    bool isNodeTypeSupported() const
+    {
+        return isNodeTypeSupported(NodeT::node_type);
+    }
+
+    template<class NodeT>
     NodeT* createNode(Node* parent, const char* name)
     {
-        return static_cast<NodeT*>(createNode(parent, name, NodeT::node_type));
+        return dynamic_cast<NodeT*>(createNode(parent, name, NodeT::node_type));
     }
 
     template<class Body>

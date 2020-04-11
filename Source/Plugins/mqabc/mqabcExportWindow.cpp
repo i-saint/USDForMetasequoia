@@ -10,6 +10,10 @@ mqabcExportWindow::mqabcExportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
 {
     m_plugin = plugin;
 
+    m_options.export_blendshapes = false;
+    m_options.export_skeletons = false;
+    m_options.separate_xform = true;
+
     setlocale(LC_ALL, "");
     SetTitle(L"Export Alembic");
     SetOutSpace(0.4);

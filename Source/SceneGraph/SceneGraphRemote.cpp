@@ -77,6 +77,7 @@ public:
     void read() override;
     void write() override;
 
+    bool isNodeTypeSupported(Node::Type type) override;
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
     bool wrapNode(Node* node) override;
 
@@ -198,6 +199,11 @@ void USDScenePipe::read()
 void USDScenePipe::write()
 {
     m_scene->serialize(*m_pipe);
+}
+
+bool USDScenePipe::isNodeTypeSupported(Node::Type /*type*/)
+{
+    return true;
 }
 
 Node* USDScenePipe::createNode(Node* parent, const char* name, Node::Type type)

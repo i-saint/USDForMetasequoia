@@ -140,6 +140,8 @@ public:
     void close() override;
     void read() override;
     void write() override;
+
+    bool isNodeTypeSupported(Node::Type type) override;
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
     bool wrapNode(Node* node) override;
 

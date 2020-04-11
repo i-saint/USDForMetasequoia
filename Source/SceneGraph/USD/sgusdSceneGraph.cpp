@@ -1274,6 +1274,17 @@ USDNode* USDScene::createNodeImpl(USDNode* parent, std::string path)
     return nullptr;
 }
 
+bool USDScene::isNodeTypeSupported(Node::Type type)
+{
+    switch (type) {
+#define Case(E, T) case Node::Type::E: return true;
+        EachNodeType(Case)
+#undef Case
+
+    default: return false;
+    }
+}
+
 Node* USDScene::createNode(Node* parent, const char* name_, Node::Type type)
 {
     g_current_scene = this;

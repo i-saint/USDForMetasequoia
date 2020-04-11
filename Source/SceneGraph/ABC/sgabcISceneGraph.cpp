@@ -484,6 +484,11 @@ void ABCIScene::write()
     // not supported
 }
 
+bool ABCIScene::isNodeTypeSupported(Node::Type /*type*/)
+{
+    return false;
+}
+
 Node* ABCIScene::createNode(Node* /*parent*/, const char* /*name*/, Node::Type /*type*/)
 {
     // not supported
