@@ -1,127 +1,206 @@
 #pragma once
+#include <iostream>
+#include <string>
+#include <vector>
+#include <type_traits>
+#include "sgUtils.h"
 
 namespace sg {
 
 using serializer = std::ostream;
 using deserializer = std::istream;
 
-template<class T> struct serializable { static const bool value = false; };
-
-template<class T, bool hs = serializable<T>::value> struct write_impl2;
-template<class T> struct write_impl2<T, true>
+template<class T>
+struct serializable_pod
 {
-    void operator()(serializer& s, T& v) const { v.serialize(s); }
+    static constexpr bool value = std::is_pod<T>::value && !std::is_pointer<T>::value;
 };
-template<class T> struct write_impl2<T, false>
-{
-    void operator()(serializer& s, T& v) const
-    {
-        static_assert(sizeof(T) % 4 == 0, "");
-        s.write((const char*)&v, sizeof(T));
-    }
-};
-
-template<class T, bool hs = serializable<T>::value> struct read_impl2;
-template<class T> struct read_impl2<T, true> {
-    void operator()(deserializer& d, T& v) const { v.deserialize(d); }
-};
-template<class T> struct read_impl2<T, false> {
-    void operator()(deserializer& d, T& v) const { d.read((char*)&v, sizeof(T)); }
-};
-
 
 template<class T>
-struct write_impl
+struct serializable_obj
 {
-    void operator()(serializer& s, T& v) const
-    {
-        write_impl2<T>()(s, v);
-    }
-};
-template<class T>
-struct read_impl
-{
-    void operator()(deserializer& d, T& v) const
-    {
-        read_impl2<T>()(d, v);
-    }
+    static constexpr bool value = false;
 };
 
+template<class T>
+struct serializable
+{
+    static constexpr bool value = false;
+};
+
+
+
+// align
+static const int serialize_align = 4;
 
 inline void write_align(serializer& s, size_t written_size)
 {
     const int zero = 0;
-    if (written_size % 4 != 0)
-        s.write((const char*)&zero, 4 - (written_size % 4));
+    if (written_size % serialize_align != 0)
+        s.write((const char*)&zero, serialize_align - (written_size % serialize_align));
 }
 inline void read_align(deserializer& d, size_t read_size)
 {
     int dummy = 0;
-    if (read_size % 4 != 0)
-        d.read((char*)&dummy, 4 - (read_size % 4));
+    if (read_size % serialize_align != 0)
+        d.read((char*)&dummy, serialize_align - (read_size % serialize_align));
+}
+
+template<size_t n, sgEnableIf(n % serialize_align == 0)> inline void write_align(serializer&) {}
+template<size_t n, sgEnableIf(n % serialize_align != 0)> inline void write_align(serializer& s)
+{
+    const int zero = 0;
+    s.write((const char*)&zero, serialize_align - (n % serialize_align));
+}
+
+template<size_t n, sgEnableIf(n % serialize_align == 0)> inline void read_align(deserializer&) {}
+template<size_t n, sgEnableIf(n % serialize_align != 0)> inline void read_align(deserializer& d)
+{
+    int dummy = 0;
+    d.read((char*)&dummy, serialize_align - (n % serialize_align));
 }
 
 
-template<>
-struct write_impl<bool>
+// POD
+template<class T, sgEnableIf(serializable_pod<T>::value)>
+inline void write(serializer& s, const T& v)
 {
-    void operator()(serializer& s, const bool& v) const
-    {
-        s.write((const char*)&v, sizeof(v));
-        write_align(s, sizeof(v)); // keep 4 byte alignment
-    }
-};
-template<>
-struct read_impl<bool>
+    s.write((const char*)&v, sizeof(T));
+    write_align<sizeof(T)>(s);
+}
+template<class T, sgEnableIf(serializable_pod<T>::value)>
+inline void read(deserializer& d, T& v)
 {
-    void operator()(deserializer& d, bool& v) const
-    {
-        d.read((char*)&v, sizeof(v));
-        read_align(d, sizeof(v)); // align
-    }
-};
+    d.read((char*)&v, sizeof(T));
+    read_align<sizeof(T)>(d);
+}
+
+// POD array
+template<class T, sgEnableIf(serializable_pod<T>::value)>
+inline void write(serializer& s, const T* v, uint32_t n)
+{
+    s.write((const char*)v, sizeof(T) * n);
+    write_align(s, sizeof(T) * n);
+}
+template<class T, sgEnableIf(serializable_pod<T>::value)>
+inline void read(deserializer& d, T* v, uint32_t n)
+{
+    d.read((char*)v, sizeof(T) * n);
+    read_align(d, sizeof(T) * n);
+}
+
+// other generic types
+template<class T, sgEnableIf(serializable_obj<T>::value)>
+inline void write(serializer& s, const T& v)
+{
+    serializable_obj<T>::serialize(s, v);
+}
+template<class T, sgEnableIf(serializable_obj<T>::value)>
+inline void read(deserializer& d, T& v)
+{
+    serializable_obj<T>::deserialize(d, v);
+}
+
+// serializable
+template<class T, sgEnableIf(serializable<T>::value)>
+inline void write(serializer& s, const T& v)
+{
+    const_cast<T&>(v).serialize(s);
+}
+template<class T, sgEnableIf(serializable<T>::value)>
+inline void read(deserializer& d, T& v)
+{
+    v.deserialize(d);
+}
+
+
+// specializations
 
 template<class T>
-struct write_impl<std::shared_ptr<T>>
+struct serializable_obj<std::shared_ptr<T>>
 {
-    void operator()(serializer& s, const std::shared_ptr<T>& v) const
+    static constexpr bool value = true;
+
+    static void serialize(serializer& s, const std::shared_ptr<T>& v)
     {
-        int flag = v ? ~0 : 0;
-        s.write((const char*)&flag, sizeof(flag));
+        // flag to distinct from null
+        write(s, v ? 1 : 0);
         if (v)
-            v->serialize(s);
+            write(s, *v);
     }
-};
-template<class T>
-struct read_impl<std::shared_ptr<T>>
-{
-    void operator()(deserializer& d, std::shared_ptr<T>& v) const
+
+    static void deserialize(deserializer& d, std::shared_ptr<T>& v)
     {
-        int flag;
-        d.read((char*)&flag, sizeof(flag));
-        if (flag != 0)
+        int is_null;
+        read(d, is_null);
+        if (is_null != 0)
             T::deserialize(d, v);
+        else
+            v = {};
     }
 };
 
 template<class T>
-struct write_impl<SharedVector<T>>
+struct serializable_obj<std::basic_string<T>>
 {
-    void operator()(serializer& s, const SharedVector<T>& v) const
+    static constexpr bool value = true;
+
+    static void serialize(serializer& s, const std::basic_string<T>& v)
     {
-        auto size = (uint32_t)v.size();
-        s.write((const char*)&size, sizeof(size));
-        s.write((const char*)v.cdata(), sizeof(T) * size);
+        uint32_t size = (uint32_t)v.size();
+        write(s, size);
+        write(s, v.data(), size);
+    }
+
+    static void deserialize(deserializer& d, std::basic_string<T>& v)
+    {
+        uint32_t size;
+        read(d, size);
+        v.resize(size);
+        read(d, v.data(), size);
+    }
+};
+
+template<class T>
+struct serializable_obj<std::vector<T>>
+{
+    static constexpr bool value = true;
+
+    static void serialize(serializer& s, const std::vector<T>& v)
+    {
+        uint32_t size = (uint32_t)v.size();
+        write(s, size);
+        for (const auto& e : v)
+            write(s, e);
+    }
+
+    static void deserialize(deserializer& d, std::vector<T>& v)
+    {
+        uint32_t size;
+        read(d, size);
+        v.resize(size);
+        for (auto& e : v)
+            read(d, e);
+    }
+};
+
+template<class T>
+struct serializable_obj<SharedVector<T>>
+{
+    static constexpr bool value = true;
+
+    static void serialize(serializer& s, const SharedVector<T>& v)
+    {
+        uint32_t size = (uint32_t)v.size();
+        write(s, size);
+        write(s, v.cdata(), size);
         write_align(s, sizeof(T) * size); // keep 4 byte alignment
     }
-};
-template<class T>
-struct read_impl<SharedVector<T>>
-{
-    void operator()(deserializer& d, SharedVector<T>& v) const
+
+    static void deserialize(deserializer& d, SharedVector<T>& v)
     {
-        uint32_t size = 0;
-        d.read((char*)&size, sizeof(size));
+        uint32_t size;
+        read(d, size);
         if (typeid(d) == typeid(mu::MemoryStream)) {
             // just share buffer (no copy)
             auto& ms = static_cast<mu::MemoryStream&>(d);
@@ -129,67 +208,16 @@ struct read_impl<SharedVector<T>>
         }
         else {
             v.resize_discard(size);
-            d.read((char*)v.data(), sizeof(T) * size);
+            read(d, v.data(), size);
         }
         read_align(d, sizeof(T) * size); // align
     }
 };
 
-template<>
-struct write_impl<std::string>
-{
-    void operator()(serializer& s, const std::string& v) const
-    {
-        auto size = (uint32_t)v.size();
-        s.write((const char*)&size, 4);
-        s.write((const char*)v.data(), size);
-        write_align(s, size); // keep 4 byte alignment
-    }
-};
-template<>
-struct read_impl<std::string>
-{
-    void operator()(deserializer& d, std::string& v) const
-    {
-        uint32_t size = 0;
-        d.read((char*)&size, 4);
-        v.resize(size);
-        d.read((char*)v.data(), size);
-        read_align(d, size); // align
-    }
-};
-
-template<class T>
-struct write_impl<std::vector<T>>
-{
-    void operator()(serializer& s, const std::vector<T>& v) const
-    {
-        auto size = (uint32_t)v.size();
-        s.write((const char*)&size, 4);
-        for (const auto& e : v)
-            write_impl<T>()(s, e);
-    }
-};
-template<class T>
-struct read_impl<std::vector<T>>
-{
-    void operator()(deserializer& d, std::vector<T>& v) const
-    {
-        uint32_t size = 0;
-        d.read((char*)&size, 4);
-        v.resize(size);
-        for (auto& e : v)
-            read_impl<T>()(d, e);
-    }
-};
-
-template<class T> inline void write(serializer& s, T& v) { return write_impl<T>()(s, v); }
-template<class T> inline void read(deserializer& d, T& v) { return read_impl<T>()(d, v); }
-
 } // namespace sg
 
 #define sgDeclPtr(T) using T##Ptr = std::shared_ptr<T>
-#define sgSerializable(T) template<> struct serializable<T> { static const bool value = true; };
+#define sgSerializable(T) template<> struct serializable<T> { static constexpr bool value = true; };
 
 #define sgSerialize(V) sg::write(s, V);
 #define sgDeserialize(V) sg::read(d, V);

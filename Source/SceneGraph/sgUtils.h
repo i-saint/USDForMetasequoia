@@ -242,6 +242,8 @@ std::string DecodeNodePath(const std::string& path);
 std::string GetParentPath(const std::string& path);
 const char* GetLeafName(const std::string& path);
 
+enum class ShaderType;
+enum class WrapMode;
 std::string ToString(ShaderType v);
 std::string ToString(WrapMode v);
 ShaderType ToShaderType(const std::string& v);
