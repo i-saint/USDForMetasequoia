@@ -54,6 +54,13 @@ inline void write_align(serializer& s, size_t written_size)
     if (written_size % 4 != 0)
         s.write((const char*)&zero, 4 - (written_size % 4));
 }
+inline void read_align(deserializer& d, size_t read_size)
+{
+    int dummy = 0;
+    if (read_size % 4 != 0)
+        d.read((char*)&dummy, 4 - (read_size % 4));
+}
+
 
 template<>
 struct write_impl<bool>
@@ -64,57 +71,6 @@ struct write_impl<bool>
         write_align(s, sizeof(v)); // keep 4 byte alignment
     }
 };
-template<class T>
-struct write_impl<std::shared_ptr<T>>
-{
-    void operator()(serializer& s, const std::shared_ptr<T>& v) const
-    {
-        v->serialize(s);
-    }
-};
-template<class T>
-struct write_impl<SharedVector<T>>
-{
-    void operator()(serializer& s, const SharedVector<T>& v) const
-    {
-        auto size = (uint32_t)v.size();
-        s.write((const char*)&size, sizeof(size));
-        s.write((const char*)v.cdata(), sizeof(T) * size);
-        write_align(s, sizeof(T) * size); // keep 4 byte alignment
-    }
-};
-template<>
-struct write_impl<std::string>
-{
-    void operator()(serializer& s, const std::string& v) const
-    {
-        auto size = (uint32_t)v.size();
-        s.write((const char*)&size, 4);
-        s.write((const char*)v.data(), size);
-        write_align(s, size); // keep 4 byte alignment
-    }
-};
-template<class T>
-struct write_impl<std::vector<T>>
-{
-    void operator()(serializer& s, const std::vector<T>& v) const
-    {
-        auto size = (uint32_t)v.size();
-        s.write((const char*)&size, 4);
-        for (const auto& e : v)
-            write_impl<T>()(s, e);
-    }
-};
-
-
-
-inline void read_align(deserializer& d, size_t read_size)
-{
-    int dummy = 0;
-    if (read_size % 4 != 0)
-        d.read((char*)&dummy, 4 - (read_size % 4));
-}
-
 template<>
 struct read_impl<bool>
 {
@@ -124,12 +80,39 @@ struct read_impl<bool>
         read_align(d, sizeof(v)); // align
     }
 };
+
+template<class T>
+struct write_impl<std::shared_ptr<T>>
+{
+    void operator()(serializer& s, const std::shared_ptr<T>& v) const
+    {
+        int flag = v ? ~0 : 0;
+        s.write((const char*)&flag, sizeof(flag));
+        if (v)
+            v->serialize(s);
+    }
+};
 template<class T>
 struct read_impl<std::shared_ptr<T>>
 {
     void operator()(deserializer& d, std::shared_ptr<T>& v) const
     {
-        T::deserialize(d, v);
+        int flag;
+        d.read((char*)&flag, sizeof(flag));
+        if (flag != 0)
+            T::deserialize(d, v);
+    }
+};
+
+template<class T>
+struct write_impl<SharedVector<T>>
+{
+    void operator()(serializer& s, const SharedVector<T>& v) const
+    {
+        auto size = (uint32_t)v.size();
+        s.write((const char*)&size, sizeof(size));
+        s.write((const char*)v.cdata(), sizeof(T) * size);
+        write_align(s, sizeof(T) * size); // keep 4 byte alignment
     }
 };
 template<class T>
@@ -151,6 +134,18 @@ struct read_impl<SharedVector<T>>
         read_align(d, sizeof(T) * size); // align
     }
 };
+
+template<>
+struct write_impl<std::string>
+{
+    void operator()(serializer& s, const std::string& v) const
+    {
+        auto size = (uint32_t)v.size();
+        s.write((const char*)&size, 4);
+        s.write((const char*)v.data(), size);
+        write_align(s, size); // keep 4 byte alignment
+    }
+};
 template<>
 struct read_impl<std::string>
 {
@@ -161,6 +156,18 @@ struct read_impl<std::string>
         v.resize(size);
         d.read((char*)v.data(), size);
         read_align(d, size); // align
+    }
+};
+
+template<class T>
+struct write_impl<std::vector<T>>
+{
+    void operator()(serializer& s, const std::vector<T>& v) const
+    {
+        auto size = (uint32_t)v.size();
+        s.write((const char*)&size, 4);
+        for (const auto& e : v)
+            write_impl<T>()(s, e);
     }
 };
 template<class T>
