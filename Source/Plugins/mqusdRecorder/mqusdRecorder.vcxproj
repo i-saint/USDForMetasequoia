@@ -19,37 +19,26 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\mqusd.h" />
-    <ClInclude Include="mqDocumentExporter.h" />
-    <ClInclude Include="mqDocumentImporter.h" />
-    <ClInclude Include="mqDummyPlugins.h" />
-    <ClInclude Include="mqTWindow.h" />
-    <ClInclude Include="mqUtils.h" />
-    <ClInclude Include="pch.h" />
+    <ClCompile Include="mqusdRecorder.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mqDocumentExporter.cpp" />
-    <ClCompile Include="mqDocumentImporter.cpp" />
-    <ClCompile Include="mqUtils.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader>Create</PrecompiledHeader>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\setup.vcxproj">
-      <Project>{1c5de91b-7ae9-4304-9fa1-0de1aba8c02d}</Project>
+    <ProjectReference Include="..\..\MeshUtils\MeshUtils.vcxproj">
+      <Project>{fd3fe1ff-abe5-40db-b867-144e9dd9b23c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\mqsdk\mqsdk.vcxproj">
+      <Project>{d28511e8-4687-434e-8c18-c23fe683af2f}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{B970A73A-2B06-41AD-8870-266153E82D21}</ProjectGuid>
+    <ProjectGuid>{1BB03EDA-14D3-40C0-A8A2-0BC01DC60001}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Release'">
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -57,56 +46,40 @@
     <IncludePath>$(SolutionDir);$(SolutionDir)Plugins;$(MQ_SDK_DIR);$(SolutionDir)Externals\$(Platform)\include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(MQ_VERSION)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(Platform)_$(Configuration)\$(ProjectName)$(MQ_VERSION)\</IntDir>
+    <LibraryPath>$(SolutionDir)Externals\$(Platform)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
-      <Optimization>Disabled</Optimization>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level4</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
-      <AdditionalIncludeDirectories>$(IntDir)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>mqusdDebug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>mqusdDebug;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Windows</SubSystem>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <MapExports>true</MapExports>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/Zo %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level4</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>false</OmitFramePointers>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <WarningLevel>Level3</WarningLevel>
       <StringPooling>true</StringPooling>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <ControlFlowGuard>false</ControlFlowGuard>
-      <FloatingPointExceptions>false</FloatingPointExceptions>
-      <AdditionalIncludeDirectories>$(IntDir)</AdditionalIncludeDirectories>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

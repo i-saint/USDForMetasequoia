@@ -2,6 +2,7 @@
 #include "MQWidget.h"
 #include "mqCommon/mqTWindow.h"
 #include "mqCommon/mqDocumentExporter.h"
+#include "mqusdInternal.h"
 
 namespace mqusd {
 

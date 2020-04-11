@@ -23,9 +23,9 @@
     <ClCompile Include="mqusdExportWindow.cpp" />
     <ClCompile Include="mqusdImportPlugin.cpp" />
     <ClCompile Include="mqusdImportWindow.cpp" />
-    <ClCompile Include="mqusdPlugin.cpp" />
+    <ClCompile Include="mqusdInternal.cpp" />
+    <ClCompile Include="mqusdRecorderPlugin.cpp" />
     <ClCompile Include="mqusdRecorderWindow.cpp" />
-    <ClCompile Include="mqusdWindow.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -34,9 +34,9 @@
     <ClInclude Include="..\mqusd.h" />
     <ClInclude Include="mqusdExportWindow.h" />
     <ClInclude Include="mqusdImportWindow.h" />
-    <ClInclude Include="mqusdPlugin.h" />
+    <ClInclude Include="mqusdInternal.h" />
+    <ClInclude Include="mqusdRecorderPlugin.h" />
     <ClInclude Include="mqusdRecorderWindow.h" />
-    <ClInclude Include="mqusdWindow.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

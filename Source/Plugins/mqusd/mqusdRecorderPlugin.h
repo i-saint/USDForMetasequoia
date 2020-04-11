@@ -1,14 +1,13 @@
 ﻿#pragma once
+#include "mqusdInternal.h"
 
 namespace mqusd {
 
-class mqusdWindow;
-
-class mqusdPlugin : public MQStationPlugin
+class mqusdRecorderPlugin : public MQStationPlugin
 {
 public:
-    mqusdPlugin();
-    virtual ~mqusdPlugin();
+    mqusdRecorderPlugin();
+    virtual ~mqusdRecorderPlugin();
 
 #if defined(__APPLE__) || defined(__linux__)
     MQBasePlugin *CreateNewPlugin() override;
@@ -29,8 +28,6 @@ public:
     BOOL Activate(MQDocument doc, BOOL flag) override;
     BOOL IsActivated(MQDocument doc) override;
     void OnMinimize(MQDocument doc, BOOL flag) override;
-    int OnReceiveUserMessage(MQDocument doc, DWORD src_product, DWORD src_id, const char *description, void *message) override;
-    BOOL OnSubCommand(MQDocument doc, int index) override;
     void OnDraw(MQDocument doc, MQScene scene, int width, int height) override;
 
     void OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUMENT_PARAM& param) override;
@@ -49,7 +46,7 @@ public:
 
 
 private:
-    mqusdWindow* m_window = nullptr;
+    mqusdRecorderWindow* m_window = nullptr;
     std::string m_mqo_path;
 };
 

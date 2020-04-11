@@ -10,7 +10,7 @@ MQBasePlugin* GetPluginClass()
         auto mod = mu::GetModule(mqabcPluginFile);
         if (!mod) {
             std::string path = mqusd::GetPluginsDir();
-            path += "Station" muPathSep mqabcPluginFile;
+            path += "Misc" muPathSep mqabcPluginFile;
             mod = mu::LoadModule(path.c_str());
         }
         if (mod) {

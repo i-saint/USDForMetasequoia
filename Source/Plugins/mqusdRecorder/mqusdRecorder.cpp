@@ -3,11 +3,11 @@
 #include "mqCommon/mqDummyPlugins.h"
 #include "MeshUtils/MeshUtils.h"
 
-MQBasePlugin* (*_mqusdGetImportPlugin)();
+MQBasePlugin* (*_mqusdGetRecorderPlugin)();
 
 MQBasePlugin* GetPluginClass()
 {
-    if (!_mqusdGetImportPlugin) {
+    if (!_mqusdGetRecorderPlugin) {
         auto mod = mu::GetModule(mqusdPluginFile);
         if (!mod) {
             std::string path = mqusd::GetPluginsDir();
@@ -15,12 +15,12 @@ MQBasePlugin* GetPluginClass()
             mod = mu::LoadModule(path.c_str());
         }
         if (mod) {
-            (void*&)_mqusdGetImportPlugin = mu::GetSymbol(mod, "mqusdGetImportPlugin");
+            (void*&)_mqusdGetRecorderPlugin = mu::GetSymbol(mod, "mqusdGetRecorderPlugin");
         }
     }
-    if (_mqusdGetImportPlugin)
-        return _mqusdGetImportPlugin();
-    return &mqusd::DummyImportPlugin::getInstance();
+    if (_mqusdGetRecorderPlugin)
+        return _mqusdGetRecorderPlugin();
+    return &mqusd::DummyStationPlugin::getInstance();
 }
 
 mqusdAPI void mqusdDummy()

@@ -1,5 +1,6 @@
 #include "mqusd.h"
 #include "mqsdk/sdk_Include.h"
+#include "mqCommon/mqDummyPlugins.h"
 #include "MeshUtils/MeshUtils.h"
 
 MQBasePlugin* (*_mqusdGetExportPlugin)();
@@ -10,7 +11,7 @@ MQBasePlugin* GetPluginClass()
         auto mod = mu::GetModule(mqusdPluginFile);
         if (!mod) {
             std::string path = mqusd::GetPluginsDir();
-            path += "Station" muPathSep mqusdPluginFile;
+            path += "Misc" muPathSep mqusdPluginFile;
             mod = mu::LoadModule(path.c_str());
         }
         if (mod) {
@@ -19,7 +20,7 @@ MQBasePlugin* GetPluginClass()
     }
     if (_mqusdGetExportPlugin)
         return _mqusdGetExportPlugin();
-    return nullptr;
+    return &mqusd::DummyExportPlugin::getInstance();
 }
 
 mqusdAPI void mqusdDummy()

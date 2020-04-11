@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqusdPlugin.h"
+#include "mqusdRecorderPlugin.h"
 #include "mqusdRecorderWindow.h"
 
 namespace mqusd {
@@ -8,7 +8,7 @@ namespace mqusd {
 mqusdRecorderWindow::mqusdRecorderWindow(MQBasePlugin* plugin, MQWindowBase& parent)
     : super(parent)
 {
-    m_plugin = dynamic_cast<mqusdPlugin*>(plugin);
+    m_plugin = dynamic_cast<mqusdRecorderPlugin*>(plugin);
 
     m_options.merge_meshes = true;
     m_options.export_blendshapes = false;

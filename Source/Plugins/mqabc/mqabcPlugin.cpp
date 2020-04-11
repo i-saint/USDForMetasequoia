@@ -64,24 +64,12 @@ const char *mqabcPlugin::EnumString(void)
 
 const char *mqabcPlugin::EnumSubCommand(int index)
 {
-    switch (index) {
-    case 0: return "Import Alembic";
-    case 1: return "Insert Alembic";
-    case 2: return "Export Alembic";
-    case 3: return "Recording Alembic";
-    default: return nullptr;
-    }
+    return nullptr;
 }
 
 const wchar_t *mqabcPlugin::GetSubCommandString(int index)
 {
-    switch (index) {
-    case 0: return L"Import Alembic";
-    case 1: return L"Insert Alembic";
-    case 2: return L"Export Alembic";
-    case 3: return L"Recording Alembic";
-    default: return nullptr;
-    }
+    return nullptr;
 }
 
 BOOL mqabcPlugin::Initialize()

@@ -41,8 +41,6 @@ public:
 
     bool ExecuteCallback(MQDocument doc, void* option) override;
 
-
-
     void LogInfo(const char* message);
 
     const std::string& GetMQOPath() const;

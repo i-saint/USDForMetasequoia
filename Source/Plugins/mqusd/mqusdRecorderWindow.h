@@ -2,6 +2,7 @@
 #include "MQWidget.h"
 #include "mqCommon/mqDocumentExporter.h"
 #include "mqCommon/mqTWindow.h"
+#include "mqusdInternal.h"
 
 namespace mqusd {
 
@@ -29,7 +30,7 @@ public:
     bool IsRecording() const;
 
 private:
-    mqusdPlugin* m_plugin = nullptr;
+    mqusdRecorderPlugin* m_plugin = nullptr;
 
     MQFrame* m_frame_settings = nullptr;
     MQEdit* m_edit_interval = nullptr;
