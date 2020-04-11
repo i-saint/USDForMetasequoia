@@ -513,9 +513,9 @@ struct TimeSamplingData
 {
     Abc::TimeSampling* timesampling = nullptr;
     size_t num_samples = 0;
-    double time_start = -1.0;
-    double time_end = -1.0;
-    double frame_rate = 1.0;
+    double time_start = 0.0;
+    double time_end = 0.0;
+    double frame_rate = 0.0;
     RawVector<double> times;
 };
 
@@ -525,6 +525,7 @@ void ABCIScene::setupTimeRange()
     // (on alembic_octopus.abc, it returns 0x7fffffff. actual sample count is 31)
     // so calculate by myself...
 
+    auto& dst = *m_scene;
     uint32_t nt = m_archive.getNumTimeSamplings();
 
     std::vector<TimeSamplingData> table;
@@ -595,23 +596,25 @@ void ABCIScene::setupTimeRange()
             }
         }
 
-        if (rec.time_start != -1.0) {
+        if (!rec.times.empty()) {
             if (first) {
                 first = false;
-                m_scene->time_start = rec.time_start;
-                m_scene->time_end = rec.time_end;
-                m_scene->frame_rate = rec.frame_rate;
+                dst.time_start = rec.time_start;
+                dst.time_end = rec.time_end;
+                dst.frame_rate = rec.frame_rate;
             }
             else {
-                m_scene->time_start = std::min(m_scene->time_start, rec.time_start);
-                m_scene->time_end = std::max(m_scene->time_end, rec.time_end);
-                m_scene->frame_rate = std::max(m_scene->frame_rate, rec.frame_rate);
+                dst.time_start = std::min(m_scene->time_start, rec.time_start);
+                dst.time_end = std::max(m_scene->time_end, rec.time_end);
+                dst.frame_rate = std::max(m_scene->frame_rate, rec.frame_rate);
             }
         }
 
         m_times.insert(m_times.end(), rec.times.begin(), rec.times.end());
     }
     sort_and_unique(m_times);
+
+    dst.frame_count = (int)m_times.size();
 }
 
 void ABCIScene::registerNode(ABCINode* n)

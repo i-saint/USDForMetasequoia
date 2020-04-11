@@ -5,10 +5,10 @@
 
 namespace mqusd {
 
-mqabcRecorderWindow::mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& parent)
+mqabcRecorderWindow::mqabcRecorderWindow(MQBasePlugin* plugin, MQWindowBase& parent)
     : super(parent)
 {
-    m_plugin = plugin;
+    m_plugin = dynamic_cast<mqabcPlugin*>(plugin);
 
     m_options.merge_meshes = true;
     m_options.export_blendshapes = false;

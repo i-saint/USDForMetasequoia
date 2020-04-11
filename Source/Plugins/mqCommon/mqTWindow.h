@@ -22,8 +22,7 @@ public:
             body(i);
     }
 
-    template<class PluginT>
-    static WindowT* create(PluginT* plugin)
+    static WindowT* create(MQBasePlugin* plugin)
     {
         WindowT* ret = nullptr;
         for (auto* w : getInstances()) {

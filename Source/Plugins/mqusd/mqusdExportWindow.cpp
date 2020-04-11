@@ -5,13 +5,12 @@
 
 namespace mqusd {
 
-mqusdExportWindow::mqusdExportWindow(mqusdPlugin* plugin, MQWindowBase& parent)
+mqusdExportWindow::mqusdExportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
     : super(parent)
 {
-    setlocale(LC_ALL, "");
-
     m_plugin = plugin;
 
+    setlocale(LC_ALL, "");
     SetTitle(L"Export USD");
     SetOutSpace(0.4);
 
@@ -74,7 +73,7 @@ mqusdExportWindow::mqusdExportWindow(mqusdPlugin* plugin, MQWindowBase& parent)
         vf->SetInSpace(inner_margin);
 
         m_button_export = CreateButton(vf, L"Export");
-        m_button_export->AddClickEvent(this, &mqusdExportWindow::OnRecordingClicked);
+        m_button_export->AddClickEvent(this, &mqusdExportWindow::OnExportClicked);
     }
 
     {
@@ -100,7 +99,6 @@ BOOL mqusdExportWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqusdExportWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
-    Close();
     return 0;
 }
 
@@ -130,36 +128,13 @@ BOOL mqusdExportWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     return 0;
 }
 
-BOOL mqusdExportWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument doc)
+BOOL mqusdExportWindow::OnExportClicked(MQWidgetBase* sender, MQDocument doc)
 {
-    MQSaveFileDialog dlg(*this);
-    dlg.AddFilter(L"USD File (*.usd)|*.usd");
-    dlg.AddFilter(L"USD ASCII File (*.usda)|*.usda");
-    dlg.SetDefaultExt(L"usd");
-
-    auto& mqo_path = m_plugin->GetMQOPath();
-    auto dir = mu::GetDirectory(mqo_path.c_str());
-    auto filename = mu::GetFilename_NoExtension(mqo_path.c_str());
-    if (filename.empty())
-        filename = "Untitled";
-    filename += ".usd";
-
-    if (!dir.empty())
-        dlg.SetInitialDir(mu::ToWCS(dir));
-    dlg.SetFileName(mu::ToWCS(filename));
-
-    if (dlg.Execute()) {
-        auto path = dlg.GetFileName();
-        if (Open(doc, mu::ToMBS(path))) {
-            m_exporter->write(doc, true);
-            SetVisible(false);
-        }
-        else {
-
-        }
+    if (DoExport(doc)) {
+        SetVisible(false);
+        return true;
     }
-
-    return 0;
+    return false;
 }
 
 void mqusdExportWindow::SyncSettings()
@@ -187,34 +162,35 @@ void mqusdExportWindow::SyncSettings()
     m_check_merge->SetChecked(opt.merge_meshes);
 }
 
+void mqusdExportWindow::SetOutputPath(const std::wstring& path)
+{
+    m_out_path = path;
+}
+
+bool mqusdExportWindow::DoExport(MQDocument doc)
+{
+    auto scene = CreateUSDScene();
+    if (!scene) {
+        // todo: log
+        return false;
+    }
+
+    if (!scene->create(mu::ToMBS(m_out_path).c_str())) {
+        scene = {};
+        // todo: log
+        return false;
+    }
+
+    auto exporter = std::make_shared<DocumentExporter>(m_plugin, scene.get(), &m_options);
+    exporter->initialize(doc);
+    exporter->write(doc, true);
+    return true;
+}
+
 void mqusdExportWindow::LogInfo(const char* message)
 {
     if (m_log && message)
         m_log->SetText(mu::ToWCS(message));
-}
-
-
-bool mqusdExportWindow::Open(MQDocument doc, const std::string& path)
-{
-    m_scene = CreateUSDScene();
-    if (!m_scene)
-        return false;
-
-    if (!m_scene->create(path.c_str())) {
-        m_scene = {};
-        return false;
-    }
-
-    m_exporter.reset(new DocumentExporter(m_plugin, m_scene.get(), &m_options));
-    m_exporter->initialize(doc);
-    return true;
-}
-
-bool mqusdExportWindow::Close()
-{
-    m_exporter = {};
-    m_scene = {};
-    return true;
 }
 
 } // namespace mqusd

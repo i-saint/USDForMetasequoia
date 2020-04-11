@@ -5,17 +5,18 @@
 
 namespace mqusd {
 
+class mqabcPlugin;
+
 class mqabcImportWindow : public mqTWindow<mqabcImportWindow>
 {
 using super = mqTWindow<mqabcImportWindow>;
-friend mqabcImportWindow* super::create(mqabcPlugin* plugin);
+friend mqabcImportWindow* super::create(MQBasePlugin* plugin);
 protected:
-    mqabcImportWindow(mqabcPlugin* plugin, MQWindowBase& parent);
+    mqabcImportWindow(MQBasePlugin* plugin, MQWindowBase& parent);
 
 public:
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
-    BOOL OnOpenClicked(MQWidgetBase* sender, MQDocument doc);
     BOOL OnSampleEdit(MQWidgetBase* sender, MQDocument doc);
     BOOL OnSampleSlide(MQWidgetBase* sender, MQDocument doc);
     BOOL OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc);
@@ -32,11 +33,8 @@ public:
     double GetTimeRange() const;
 
 private:
-    mqabcPlugin* m_plugin = nullptr;
+    MQBasePlugin* m_plugin = nullptr;
 
-    MQFrame* m_frame_open = nullptr;
-    MQButton* m_button_open = nullptr;
-    MQFrame* m_frame_play = nullptr;
     MQEdit* m_edit_time = nullptr;
     MQSlider* m_slider_time = nullptr;
     MQEdit* m_edit_scale = nullptr;

@@ -8,24 +8,24 @@ namespace mqusd {
 class mqusdExportWindow : public mqTWindow<mqusdExportWindow>
 {
 using super = mqTWindow<mqusdExportWindow>;
-friend mqusdExportWindow* super::create(mqusdPlugin* plugin);
+friend mqusdExportWindow* super::create(MQBasePlugin* plugin);
 protected:
-    mqusdExportWindow(mqusdPlugin* plugin, MQWindowBase& parent);
+    mqusdExportWindow(MQBasePlugin* plugin, MQWindowBase& parent);
 
 public:
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
     BOOL OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc);
-    BOOL OnRecordingClicked(MQWidgetBase* sender, MQDocument doc);
+    BOOL OnExportClicked(MQWidgetBase* sender, MQDocument doc);
 
     void SyncSettings();
     void LogInfo(const char *message);
 
-    bool Open(MQDocument doc, const std::string& v);
-    bool Close();
+    void SetOutputPath(const std::wstring& path);
+    bool DoExport(MQDocument doc);
 
 private:
-    mqusdPlugin* m_plugin = nullptr;
+    MQBasePlugin* m_plugin = nullptr;
 
     MQEdit* m_edit_scale = nullptr;
 
@@ -48,9 +48,8 @@ private:
     MQMemo* m_log = nullptr;
 
 
-    ScenePtr m_scene;
     ExportOptions m_options;
-    DocumentExporterPtr m_exporter;
+    std::wstring m_out_path;
 };
 
 } // namespace mqusd

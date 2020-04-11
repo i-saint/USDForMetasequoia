@@ -1330,7 +1330,7 @@ Scene* Scene::getCurrent()
 
 #define EachMember(F)\
     F(path) F(nodes) F(up_axis)\
-    F(frame_rate) F(frame_start) F(frame_end) F(time_start) F(time_end) F(time_current)
+    F(frame_rate) F(frame_count) F(time_start) F(time_end) F(time_current)
 
 void Scene::serialize(serializer& s)
 {

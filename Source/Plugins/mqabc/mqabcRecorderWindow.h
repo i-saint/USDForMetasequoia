@@ -10,9 +10,9 @@ class mqabcPlugin;
 class mqabcRecorderWindow : public mqTWindow<mqabcRecorderWindow>
 {
 using super = mqTWindow<mqabcRecorderWindow>;
-friend mqabcRecorderWindow* super::create(mqabcPlugin* plugin);
+friend mqabcRecorderWindow* super::create(MQBasePlugin* plugin);
 protected:
-    mqabcRecorderWindow(mqabcPlugin* plugin, MQWindowBase& parent);
+    mqabcRecorderWindow(MQBasePlugin* plugin, MQWindowBase& parent);
 
 public:
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);

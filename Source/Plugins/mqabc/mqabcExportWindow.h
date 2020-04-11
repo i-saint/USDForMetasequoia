@@ -5,30 +5,26 @@
 
 namespace mqusd {
 
-class mqabcPlugin;
-
 class mqabcExportWindow : public mqTWindow<mqabcExportWindow>
 {
 using super = mqTWindow<mqabcExportWindow>;
-friend mqabcExportWindow* super::create(mqabcPlugin* plugin);
+friend mqabcExportWindow* super::create(MQBasePlugin* plugin);
 protected:
-    mqabcExportWindow(mqabcPlugin* plugin, MQWindowBase& parent);
+    mqabcExportWindow(MQBasePlugin* plugin, MQWindowBase& parent);
 
 public:
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
     BOOL OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc);
-    BOOL OnRecordingClicked(MQWidgetBase* sender, MQDocument doc);
+    BOOL OnExportClicked(MQWidgetBase* sender, MQDocument doc);
 
     void SyncSettings();
-    void LogInfo(const char *message);
-
-    bool Open(MQDocument doc, const std::string& v);
-    bool Close();
-    void CaptureFrame(MQDocument doc);
+    void SetOutputPath(const std::wstring& path);
+    bool DoExport(MQDocument doc);
+    void LogInfo(const char* message);
 
 private:
-    mqabcPlugin* m_plugin = nullptr;
+    MQBasePlugin* m_plugin = nullptr;
 
     MQFrame* m_frame_settings = nullptr;
     MQEdit* m_edit_scale = nullptr;
@@ -50,9 +46,8 @@ private:
     MQMemo* m_log = nullptr;
 
 
-    ScenePtr m_scene;
     ExportOptions m_options;
-    DocumentExporterPtr m_exporter;
+    std::wstring m_out_path;
 };
 
 } // namespace mqusd

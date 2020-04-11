@@ -8,9 +8,9 @@ namespace mqusd {
 class mqusdRecorderWindow : public mqTWindow<mqusdRecorderWindow>
 {
 using super = mqTWindow<mqusdRecorderWindow>;
-friend mqusdRecorderWindow* super::create(mqusdPlugin* plugin);
+friend mqusdRecorderWindow* super::create(MQBasePlugin* plugin);
 protected:
-    mqusdRecorderWindow(mqusdPlugin* plugin, MQWindowBase& parent);
+    mqusdRecorderWindow(MQBasePlugin* plugin, MQWindowBase& parent);
 
 public:
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);

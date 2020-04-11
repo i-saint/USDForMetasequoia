@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqCommon/mqDocumentImporter.h"
-#include "SceneGraph/ABC/sgabc.h"
+#include "mqabcImportWindow.h"
 
 namespace mqusd {
 
@@ -45,19 +44,8 @@ const char* mqabcImportPlugin::EnumFileExt(int index)
 
 BOOL mqabcImportPlugin::ImportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
 {
-    ScenePtr scene = CreateABCIScene();
-    if (!scene)
-        return false;
-
-    if (!scene->open(mu::ToMBS(filename).c_str()))
-        return false;
-
-    ImportOptions options;
-    auto importer = std::make_shared<DocumentImporter>(this, scene.get(), &options);
-    importer->initialize(doc, true);
-    importer->read(doc, scene->time_start);
-
-    return true;
+    auto w = mqabcImportWindow::create(this);
+    return w->Open(doc, mu::ToMBS(filename).c_str());
 }
 
 } // namespace mqusd

@@ -5,7 +5,7 @@
 
 namespace mqusd {
 
-mqusdImportWindow::mqusdImportWindow(mqusdPlugin* plugin, MQWindowBase& parent)
+mqusdImportWindow::mqusdImportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
     : super(parent)
 {
     setlocale(LC_ALL, "");
@@ -23,17 +23,6 @@ mqusdImportWindow::mqusdImportWindow(mqusdPlugin* plugin, MQWindowBase& parent)
         MQFrame* vf = CreateVerticalFrame(this);
         vf->SetOutSpace(outer_margin);
         vf->SetInSpace(inner_margin);
-        m_frame_open = vf;
-
-        m_button_open = CreateButton(vf, L"Open");
-        m_button_open->AddClickEvent(this, &mqusdImportWindow::OnOpenClicked);
-    }
-    {
-        MQFrame* vf = CreateVerticalFrame(this);
-        vf->SetOutSpace(outer_margin);
-        vf->SetInSpace(inner_margin);
-        vf->SetVisible(false);
-        m_frame_play = vf;
 
         MQFrame* hf = CreateHorizontalFrame(vf);
         CreateLabel(hf, L"Time");
@@ -103,8 +92,6 @@ mqusdImportWindow::mqusdImportWindow(mqusdPlugin* plugin, MQWindowBase& parent)
 
 BOOL mqusdImportWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 {
-    m_frame_open->SetVisible(true);
-    m_frame_play->SetVisible(false);
     m_log->SetText(L"");
     SyncSettings();
     return 0;
@@ -113,27 +100,6 @@ BOOL mqusdImportWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 BOOL mqusdImportWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
     Close();
-    return 0;
-}
-
-BOOL mqusdImportWindow::OnOpenClicked(MQWidgetBase* sender, MQDocument doc)
-{
-    if (!IsOpened()) {
-        MQOpenFileDialog dlg(*this);
-        dlg.AddFilter(L"USD Files (*.usd;*.usda;*.usdc;*.usdz)|*.usd;*.usda;*.usdc;*.usdz");
-        dlg.AddFilter(L"All Files (*.*)|*.*");
-        dlg.SetDefaultExt(L"usd");
-        if (dlg.Execute()) {
-            auto path = dlg.GetFileName();
-            if (Open(doc, mu::ToMBS(path))) {
-                m_slider_time->SetMin(0.0);
-                m_slider_time->SetMax(GetTimeRange());
-
-                m_frame_open->SetVisible(false);
-                m_frame_play->SetVisible(true);
-            }
-        }
-    }
     return 0;
 }
 
@@ -258,6 +224,10 @@ bool mqusdImportWindow::Open(MQDocument doc, const std::string& path)
 
     m_importer.reset(new DocumentImporter(m_plugin, m_scene.get(), &m_options));
     m_importer->initialize(doc, m_additive);
+    m_importer->read(doc, m_scene->time_start);
+
+    m_slider_time->SetMin(0.0);
+    m_slider_time->SetMax(GetTimeRange());
 
     return true;
 }

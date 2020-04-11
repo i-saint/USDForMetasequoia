@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqCommon/mqDocumentImporter.h"
+#include "mqusdImportWindow.h"
 
 namespace mqusd {
 
@@ -50,19 +50,8 @@ const char* mqusdImportPlugin::EnumFileExt(int index)
 
 BOOL mqusdImportPlugin::ImportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
 {
-    ScenePtr scene = CreateUSDScene();
-    if (!scene)
-        return false;
-
-    if (!scene->open(mu::ToMBS(filename).c_str()))
-        return false;
-
-    ImportOptions options;
-    auto importer = std::make_shared<DocumentImporter>(this, scene.get(), &options);
-    importer->initialize(doc, true);
-    importer->read(doc, scene->time_start);
-
-    return true;
+    auto w = mqusdImportWindow::create(this);
+    return w->Open(doc, mu::ToMBS(filename).c_str());
 }
 
 } // namespace mqusd

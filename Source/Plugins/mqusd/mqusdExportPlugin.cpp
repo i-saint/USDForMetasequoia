@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "mqusd.h"
-#include "mqCommon/mqDocumentExporter.h"
+#include "mqusdExportWindow.h"
 
 namespace mqusd {
 
@@ -49,18 +49,8 @@ const char* mqusdExportPlugin::EnumFileExt(int index)
 
 BOOL mqusdExportPlugin::ExportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
 {
-    ScenePtr scene = CreateUSDScene();
-    if (!scene)
-        return false;
-
-    if (!scene->create(mu::ToMBS(filename).c_str()))
-        return false;
-
-    ExportOptions options;
-    auto exporter = std::make_shared<DocumentExporter>(this, scene.get(), &options);
-    exporter->initialize(doc);
-    exporter->write(doc, true);
-
+    auto w = mqusdExportWindow::create(this);
+    w->SetOutputPath(filename);
     return true;
 }
 

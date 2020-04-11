@@ -5,13 +5,12 @@
 
 namespace mqusd {
 
-mqabcExportWindow::mqabcExportWindow(mqabcPlugin* plugin, MQWindowBase& parent)
+mqabcExportWindow::mqabcExportWindow(MQBasePlugin* plugin, MQWindowBase& parent)
     : super(parent)
 {
-    setlocale(LC_ALL, "");
-
     m_plugin = plugin;
 
+    setlocale(LC_ALL, "");
     SetTitle(L"Export Alembic");
     SetOutSpace(0.4);
 
@@ -69,7 +68,7 @@ mqabcExportWindow::mqabcExportWindow(mqabcPlugin* plugin, MQWindowBase& parent)
         vf->SetInSpace(inner_margin);
 
         m_button_export = CreateButton(vf, L"Export");
-        m_button_export->AddClickEvent(this, &mqabcExportWindow::OnRecordingClicked);
+        m_button_export->AddClickEvent(this, &mqabcExportWindow::OnExportClicked);
     }
 
     {
@@ -94,7 +93,6 @@ BOOL mqabcExportWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqabcExportWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
-    Close();
     return 0;
 }
 
@@ -122,31 +120,13 @@ BOOL mqabcExportWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     return 0;
 }
 
-BOOL mqabcExportWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument doc)
+BOOL mqabcExportWindow::OnExportClicked(MQWidgetBase* sender, MQDocument doc)
 {
-    MQSaveFileDialog dlg(*this);
-    dlg.AddFilter(L"Alembic File (*.abc)|*.abc");
-    dlg.SetDefaultExt(L"usd");
-
-    auto& mqo_path = m_plugin->GetMQOPath();
-    auto dir = mu::GetDirectory(mqo_path.c_str());
-    auto filename = mu::GetFilename_NoExtension(mqo_path.c_str());
-    if (filename.empty())
-        filename = "Untitled";
-    filename += ".abc";
-
-    if (!dir.empty())
-        dlg.SetInitialDir(mu::ToWCS(dir));
-    dlg.SetFileName(mu::ToWCS(filename));
-
-    if (dlg.Execute()) {
-        auto path = dlg.GetFileName();
-        if (Open(doc, mu::ToMBS(path))) {
-            m_exporter->write(doc, true);
-            SetVisible(false);
-        }
+    if (DoExport(doc)) {
+        SetVisible(false);
+        return true;
     }
-    return 0;
+    return false;
 }
 
 void mqabcExportWindow::SyncSettings()
@@ -172,37 +152,37 @@ void mqabcExportWindow::SyncSettings()
     m_check_merge->SetChecked(opt.merge_meshes);
 }
 
+
+void mqabcExportWindow::SetOutputPath(const std::wstring& path)
+{
+    m_out_path = path;
+}
+
+bool mqabcExportWindow::DoExport(MQDocument doc)
+{
+    auto scene = CreateABCOScene();
+    if (!scene) {
+        // todo: log
+        return false;
+    }
+
+    if (!scene->create(mu::ToMBS(m_out_path).c_str())) {
+        scene = {};
+        // todo: log
+        return false;
+    }
+
+    auto exporter = std::make_shared<DocumentExporter>(m_plugin, scene.get(), &m_options);
+    exporter->initialize(doc);
+    exporter->write(doc, true);
+
+    return true;
+}
+
 void mqabcExportWindow::LogInfo(const char* message)
 {
     if (m_log && message)
         m_log->SetText(mu::ToWCS(message));
-}
-
-
-bool mqabcExportWindow::Open(MQDocument doc, const std::string& path)
-{
-    Close();
-
-    m_scene = CreateABCOScene();
-    if (!m_scene)
-        return false;
-
-    if (!m_scene->create(path.c_str())) {
-        m_scene = {};
-        return false;
-    }
-
-    m_exporter.reset(new DocumentExporter(m_plugin, m_scene.get(), &m_options));
-    m_exporter->initialize(doc);
-
-    return true;
-}
-
-bool mqabcExportWindow::Close()
-{
-    m_exporter = {};
-    m_scene = {};
-    return true;
 }
 
 } // namespace mqusd

@@ -8,9 +8,9 @@ namespace mqusd {
 class mqusdImportWindow : public mqTWindow<mqusdImportWindow>
 {
 using super = mqTWindow<mqusdImportWindow>;
-friend mqusdImportWindow* super::create(mqusdPlugin* plugin);
+friend mqusdImportWindow* super::create(MQBasePlugin* plugin);
 protected:
-    mqusdImportWindow(mqusdPlugin* plugin, MQWindowBase& parent);
+    mqusdImportWindow(MQBasePlugin* plugin, MQWindowBase& parent);
 
 public:
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
@@ -33,11 +33,8 @@ public:
     double GetTimeRange() const;
 
 private:
-    mqusdPlugin* m_plugin = nullptr;
+    MQBasePlugin* m_plugin = nullptr;
 
-    MQFrame* m_frame_open = nullptr;
-    MQButton* m_button_open = nullptr;
-    MQFrame* m_frame_play = nullptr;
     MQEdit* m_edit_time = nullptr;
     MQSlider* m_slider_time = nullptr;
     MQEdit* m_edit_scale = nullptr;
