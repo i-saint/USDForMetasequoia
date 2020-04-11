@@ -39,6 +39,10 @@ public:
     {
         operator=(v);
     }
+    RawVector(const SharedVector<T, Align>& v)
+    {
+        operator=(v);
+    }
     RawVector(RawVector&& v)
     {
         swap(v);
@@ -53,6 +57,11 @@ public:
     }
     explicit RawVector(size_t initial_size) { resize(initial_size); }
     RawVector& operator=(const RawVector& v)
+    {
+        assign(v.begin(), v.end());
+        return *this;
+    }
+    RawVector& operator=(const SharedVector<T, Align>& v)
     {
         assign(v.begin(), v.end());
         return *this;
@@ -678,15 +687,6 @@ public:
     const RawVector<T, Align>& as_raw() const
     {
         return reinterpret_cast<const RawVector<T, Align>&>(*this);
-    }
-    const RawVector<T, Align>& as_craw() const
-    {
-        return reinterpret_cast<const RawVector<T, Align>&>(*this);
-    }
-    RawVector<T, Align>& as_raw()
-    {
-        detach();
-        return reinterpret_cast<RawVector<T, Align>&>(*this);
     }
 
 

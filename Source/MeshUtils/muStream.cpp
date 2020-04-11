@@ -185,12 +185,12 @@ int PipeStreamBufBase::close()
 
 std::streamsize PipeStreamBuf::xsputn(const char_type* s, std::streamsize n)
 {
-    return ::fwrite(s, 1, n, m_pipe);
+    return ::fwrite(s, 1, (size_t)n, m_pipe);
 }
 
 std::streamsize PipeStreamBuf::xsgetn(char_type* s, std::streamsize n)
 {
-    return ::fread(s, 1, n, m_pipe);
+    return ::fread(s, 1, (size_t)n, m_pipe);
 }
 
 
@@ -248,7 +248,7 @@ int PipeStreamBufBuffered::underflow()
 int PipeStreamBufBuffered::sync()
 {
     if (m_mode & std::ios::out) {
-        auto n = uint64_t(this->pptr() - this->pbase());
+        auto n = size_t(this->pptr() - this->pbase());
         ::fwrite(m_pbuf.data(), 1, n, m_pipe);
         this->pbump(0);
     }

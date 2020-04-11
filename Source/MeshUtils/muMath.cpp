@@ -122,24 +122,21 @@ void MinMax_Generic(const float4 *src, size_t num, float4& dst_min, float4& dst_
 bool NearEqual_Generic(const float *src1, const float *src2, size_t num, float eps)
 {
     for (size_t i = 0; i < num; ++i) {
-        if (!near_equal(src1[i], src2[i], eps)) {
+        if (!near_equal(src1[i], src2[i], eps))
             return false;
-        }
     }
     return true;
 }
 
 void MulPoints_Generic(const float4x4& m, const float3 src[], float3 dst[], size_t num_data)
 {
-    for (size_t i = 0; i < num_data; ++i) {
+    for (size_t i = 0; i < num_data; ++i)
         dst[i] = mul_p(m, src[i]);
-    }
 }
 void MulVectors_Generic(const float4x4& m, const float3 src[], float3 dst[], size_t num_data)
 {
-    for (size_t i = 0; i < num_data; ++i) {
+    for (size_t i = 0; i < num_data; ++i)
         dst[i] = mul_v(m, src[i]);
-    }
 }
 
 int RayTrianglesIntersectionIndexed_Generic(float3 pos, float3 dir, const float3 *vertices, const int *indices, int num_triangles, int& tindex, float& distance)

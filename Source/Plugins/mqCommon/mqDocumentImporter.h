@@ -35,6 +35,7 @@ private:
         UINT mqid = 0;
         std::vector<UINT> blendshape_ids;
         MeshNode tmp_mesh;
+        RawVector<int> prev_indices;
     };
 
     struct InstancerRecord
@@ -42,6 +43,7 @@ private:
         InstancerNode* node = nullptr;
         UINT mqid = 0;
         MeshNode tmp_mesh;
+        RawVector<int> prev_indices;
     };
 
     struct JointRecord
@@ -68,7 +70,7 @@ private:
     ObjectRecord* findRecord(UINT mqid);
     MQObject findOrCreateMQObject(MQDocument doc, UINT& id, UINT parent_id, bool& created);
     bool deleteMQObject(MQDocument doc, UINT id);
-    bool updateMesh(MQDocument doc, MQObject obj, const MeshNode& src);
+    bool updateMesh(MQDocument doc, MQObject obj, const MeshNode& src, const RawVector<int>& prev_indices);
     bool updateSkeleton(MQDocument doc, const SkeletonNode& src);
     bool updateMaterials(MQDocument doc);
 
@@ -90,6 +92,7 @@ private:
 
     UINT m_merged_mqobj_id = 0;
     MeshNode m_merged_mesh;
+    RawVector<int> m_merged_indices_prev;
 
     double m_prev_time = mqusd::default_time;
     ImportOptions m_prev_options;

@@ -294,7 +294,8 @@ bool DocumentImporter::read(MQDocument doc, double t)
             obj->SetName(makeUniqueObjectName(doc, name, obj).c_str());
         }
 
-        updateMesh(doc, obj, m_merged_mesh);
+        updateMesh(doc, obj, m_merged_mesh, m_merged_indices_prev);
+        m_merged_indices_prev = m_merged_mesh.indices;
     }
     else {
         auto handle_blendshape = [this, doc](ObjectRecord& rec, MQObject obj) {
@@ -305,7 +306,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
 
                 bool created;
                 MQObject bs = findOrCreateMQObject(doc, rec.blendshape_ids[bi], rec.mqid, created);
-                updateMesh(doc, bs, rec.tmp_mesh);
+                updateMesh(doc, bs, rec.tmp_mesh, rec.prev_indices);
                 if (created) {
                     MQSetName(bs, makeUniqueObjectName(doc, blendshape->getDisplayName(), bs).c_str());
                     bs->SetVisible(0);
@@ -334,14 +335,16 @@ bool DocumentImporter::read(MQDocument doc, double t)
                 rec.tmp_mesh.clear();
                 rec.tmp_mesh.visibility = rec.node->visibility;
                 bake_mesh(rec.tmp_mesh, rec.node);
-                updateMesh(doc, obj, rec.tmp_mesh);
+                updateMesh(doc, obj, rec.tmp_mesh, rec.prev_indices);
+                rec.prev_indices = rec.tmp_mesh.indices;
             }
             else {
                 rec.node->toWorldSpace();
-                updateMesh(doc, obj, *rec.node);
+                updateMesh(doc, obj, *rec.node, rec.prev_indices);
                 // blendshapes
                 if (m_options->import_blendshapes)
                     handle_blendshape(rec, obj);
+                rec.prev_indices = rec.node->indices;
             }
         }
 
@@ -350,7 +353,8 @@ bool DocumentImporter::read(MQDocument doc, double t)
                 auto obj = handle_mqobject(rec);
                 rec.tmp_mesh.clear();
                 rec.node->bake(rec.tmp_mesh, rec.node->global_matrix);
-                updateMesh(doc, obj, rec.tmp_mesh);
+                updateMesh(doc, obj, rec.tmp_mesh, rec.prev_indices);
+                rec.prev_indices = rec.tmp_mesh.indices;
             }
         }
     }
@@ -364,7 +368,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
     return true;
 }
 
-bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNode& src)
+bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNode& src, const RawVector<int>& prev_indices)
 {
     // transform
     if (m_options->import_transform) {
@@ -384,8 +388,8 @@ bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNo
     int npoints = (int)src.points.size();
     int nfaces = (int)src.counts.size();
 
-    if (m_option_changed || obj->GetVertexCount() != npoints || obj->GetFaceCount() != nfaces) {
-        // option or topology changed. re-create mesh.
+    if (obj->GetVertexCount() != npoints || obj->GetFaceCount() != nfaces || src.indices.as_raw() != prev_indices) {
+        // topology changed. re-create mesh.
         obj->Clear();
 
         // reserve space

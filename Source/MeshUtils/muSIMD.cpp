@@ -387,6 +387,8 @@ void MinMax(const float4 *p, size_t num, float4& dst_min, float4& dst_max) { For
 #if defined(muSIMD_NearEqual) || !defined(muEnableISPC)
 bool NearEqual(const float *src1, const float *src2, size_t num, float eps)
 {
+    if (src1 == src2)
+        return true;
     return Forward(NearEqual, src1, src2, num, eps);
 }
 bool NearEqual(const float2 *src1, const float2 *src2, size_t num, float eps)
