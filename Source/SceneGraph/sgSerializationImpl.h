@@ -119,21 +119,18 @@ inline uint32_t read_string(deserializer& d, char* v)
 
 // serializable pointer
 template<class T, sgEnableIf(serializable<T>::value)>
-inline bool write(serializer& s, T* const& v)
+inline hptr write(serializer& s, T* const& v)
 {
-    hptr handle = s.getPointerRecord(v);
+    hptr handle = s.getHandle(v);
     write(s, handle);
     if (handle.isFlesh()) {
         write_string(s, typeid(*v).name());
         write(s, *v);
-        return true;
     }
-    else {
-        return false;
-    }
+    return handle;
 }
 template<class T, sgEnableIf(serializable<T>::value)>
-inline bool read(deserializer& d, T*& v)
+inline hptr read(deserializer& d, T*& v)
 {
     hptr handle;
     read(d, handle);
@@ -147,14 +144,13 @@ inline bool read(deserializer& d, T*& v)
         }
 
         v = create_instance<T>(tname);
-        d.setPointerRecord(handle, v);
+        d.setPointer(handle, v);
         read(d, *v);
-        return true;
     }
     else {
         d.getPointer(handle, v);
-        return false;
     }
+    return handle;
 }
 
 
@@ -194,10 +190,19 @@ struct serializable<std::shared_ptr<T>> : serialize_nonintrusive<T>
     static void deserialize(deserializer& d, std::shared_ptr<T>& v)
     {
         T* p;
-        if (read(d, p))
-            v.reset(p);
-        else
-            v = p ? p->shared_from_this() : nullptr;
+        hptr handle = read(d, p);
+        if (p) {
+            // shared_from_this() can be used only when already owned. so, track ref count.
+            if (d.getRecord(handle).ref++ == 0)
+                v.reset(p);
+            else
+                v = p->shared_from_this();
+        }
+#ifdef mqusdDebug
+        else if(!handle.isNull()) {
+            mu::DbgBreak();
+        }
+#endif
     }
 };
 

@@ -461,9 +461,9 @@ bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNo
         m_bone_manager->AddSkinObject(obj);
 
         std::vector<UINT> joint_ids;
-        if (!src.joint_paths.empty()) {
-            for (auto& path : src.joint_paths) {
-                auto joint = src.skeleton->findJointByPath(path);
+        if (!src.joints.empty()) {
+            for (auto& j : src.joints) {
+                auto joint = src.skeleton->findJointByPath(j->path);
                 if (joint)
                     joint_ids.push_back(((JointRecord*)joint->userdata)->mqid);
                 else

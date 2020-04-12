@@ -39,7 +39,7 @@ bool ConvertOptions::operator!=(const ConvertOptions& v) const
 sgRegisterClass(Node);
 
 #define EachMember(F)\
-    F(path) F(display_name) F(id)
+    F(path) F(display_name) F(id) F(scene) F(parent) F(children)
 
 void Node::serialize(serializer& s)
 {
@@ -49,13 +49,6 @@ void Node::serialize(serializer& s)
 void Node::deserialize(deserializer& d)
 {
     EachMember(sgRead)
-}
-void Node::resolve()
-{
-    children.clear();
-    parent = scene->findNodeByPath(GetParentPath(path));
-    if (parent)
-        parent->children.push_back(this);
 }
 #undef EachMember
 
@@ -121,7 +114,7 @@ Node::Type RootNode::getType() const
 sgRegisterClass(XformNode);
 
 #define EachMember(F)\
-    F(visibility) F(local_matrix) F(global_matrix)
+    F(visibility) F(local_matrix) F(global_matrix) F(parent_xform)
 
 void XformNode::serialize(serializer& s)
 {
@@ -133,12 +126,6 @@ void XformNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
     EachMember(sgRead)
-}
-
-void XformNode::resolve()
-{
-    super::resolve();
-    parent_xform = findParent<XformNode>();
 }
 #undef EachMember
 
@@ -196,11 +183,10 @@ void XformNode::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 sgRegisterClass(FaceSet);
 
 #define EachMember(F)\
-    F(faces) F(indices) F(material_path)
+    F(material) F(faces) F(indices)
 
 void FaceSet::serialize(serializer& s)
 {
-    material_path = material ? material->getPath() : "";
     EachMember(sgWrite)
 }
 void FaceSet::deserialize(deserializer& d)
@@ -209,15 +195,9 @@ void FaceSet::deserialize(deserializer& d)
 }
 #undef EachMember
 
-void FaceSet::resolve()
-{
-    material = static_cast<MaterialNode*>(Scene::getCurrent()->findNodeByPath(material_path));
-}
-
 void FaceSet::clear()
 {
     faces.clear();
-    material_path.clear();
     material = nullptr;
     userdata = nullptr;
 }
@@ -251,29 +231,13 @@ sgRegisterClass(MeshNode);
 
 #define EachMember(F)\
     F(points) F(normals) F(uvs) F(colors) F(material_ids) F(counts) F(indices)\
-    F(joints_per_vertex) F(joint_indices) F(joint_weights) F(bind_transform)\
-    F(blendshape_paths) F(skeleton_path) F(joint_paths)\
-    F(material_paths) F(facesets)
+    F(skeleton) F(joints) F(joints_per_vertex) F(joint_indices) F(joint_weights) F(bind_transform)\
+    F(blendshapes)\
+    F(materials) F(facesets)
 
 void MeshNode::serialize(serializer& s)
 {
     super::serialize(s);
-
-    // preserve paths of related nodes to resolve on deserialize
-
-    transform_container(blendshape_paths, blendshapes, [](auto& d, auto* s) {
-        d = s->path;
-    });
-    if (skeleton) {
-        skeleton_path = skeleton->path;
-        transform_container(joint_paths, joints, [](auto& d, auto* s) {
-            d = s->path;
-        });
-    }
-    transform_container(material_paths, materials, [](auto& d, auto* s) {
-        d = s->path;
-    });
-
     EachMember(sgWrite)
 }
 
@@ -281,37 +245,6 @@ void MeshNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
     EachMember(sgRead)
-}
-void MeshNode::resolve()
-{
-    super::resolve();
-
-    transform_container(blendshapes, blendshape_paths, [this](auto& d, auto& s) {
-        d = static_cast<BlendshapeNode*>(scene->findNodeByPath(s));
-        if (!d) {
-            sgDbgFatal("not found %s\n", s.c_str());
-        }
-    });
-
-    skeleton = static_cast<SkeletonNode*>(scene->findNodeByPath(skeleton_path));
-    if (skeleton) {
-        transform_container(joints, joint_paths, [this](auto& d, auto& s) {
-            d = skeleton->findJointByPath(s);
-            if (!d) {
-                sgDbgFatal("not found %s\n", s.c_str());
-            }
-        });
-    }
-
-    transform_container(materials, material_paths, [this](auto& d, auto& s) {
-        d = static_cast<MaterialNode*>(scene->findNodeByPath(s));
-        if (!d) {
-            sgDbgFatal("not found %s\n", s.c_str());
-        }
-    });
-
-    for (auto& fs : facesets)
-        fs->resolve();
 }
 #undef EachMember
 
@@ -483,12 +416,9 @@ void MeshNode::clear()
     indices.clear();
 
     blendshapes.clear();
-    blendshape_paths.clear();
 
     skeleton = nullptr;
-    skeleton_path.clear();
     joints.clear();
-    joint_paths.clear();
     joint_matrices.clear();
 
     joints_per_vertex = 0;
@@ -497,8 +427,6 @@ void MeshNode::clear()
     bind_transform = float4x4::identity();
 
     materials.clear();
-    material_paths.clear();
-
     facesets.clear();
 }
 
@@ -680,6 +608,8 @@ void BlendshapeTarget::deserialize(deserializer& d)
 #undef EachMember
 
 
+sgRegisterClass(BlendshapeNode);
+
 #define EachMember(F)\
     F(indices) F(targets)
 
@@ -850,15 +780,11 @@ void BlendshapeNode::apply(float3* dst_points, float3* dst_normals, float weight
 sgRegisterClass(SkelRootNode);
 
 #define EachMember(F)\
-    F(skeleton_path)
+    F(skeleton)
 
 void SkelRootNode::serialize(serializer& s)
 {
     super::serialize(s);
-
-    if (skeleton)
-        skeleton_path = skeleton->path;
-
     EachMember(sgWrite)
 }
 
@@ -866,12 +792,6 @@ void SkelRootNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
     EachMember(sgRead)
-}
-
-void SkelRootNode::resolve()
-{
-    super::resolve();
-    skeleton = static_cast<SkeletonNode*>(scene->findNodeByPath(skeleton_path));
 }
 #undef EachMember
 
@@ -889,7 +809,8 @@ Node::Type SkelRootNode::getType() const
 sgRegisterClass(Joint);
 
 #define EachMember(F)\
-    F(path) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)
+    F(path) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)\
+    F(skeleton) F(parent) F(children)
 
 void Joint::serialize(serializer& s)
 {
@@ -899,15 +820,6 @@ void Joint::serialize(serializer& s)
 void Joint::deserialize(deserializer& d)
 {
     EachMember(sgRead)
-}
-
-void Joint::resolve()
-{
-    children.clear();
-    if (auto v = skeleton->findJointByPath(GetParentPath(path))) {
-        parent = v;
-        parent->children.push_back(this);
-    }
 }
 #undef EachMember
 
@@ -964,14 +876,6 @@ void SkeletonNode::deserialize(deserializer& d)
 {
     super::deserialize(d);
     EachMember(sgRead)
-}
-void SkeletonNode::resolve()
-{
-    super::resolve();
-    for (auto& joint : joints) {
-        joint->skeleton = this;
-        joint->resolve();
-    }
 }
 #undef EachMember
 
@@ -1059,19 +963,15 @@ Joint* SkeletonNode::findJointByPath(const std::string& jpath)
     return it == joints.rend() ? nullptr : it->get();
 }
 
+
 sgRegisterClass(InstancerNode);
 
 #define EachMember(F)\
-    F(proto_paths) F(matrices)
+    F(protos) F(proto_indices) F(matrices)
 
 void InstancerNode::serialize(serializer& s)
 {
     super::serialize(s);
-
-    transform_container(proto_paths, protos, [](std::string& d, const Node* s) {
-        d = s->path;
-    });
-
     EachMember(sgWrite)
 }
 
@@ -1080,19 +980,6 @@ void InstancerNode::deserialize(deserializer& d)
     super::deserialize(d);
     EachMember(sgRead)
 }
-
-void InstancerNode::resolve()
-{
-    super::resolve();
-
-    transform_container(protos, proto_paths, [this](auto& d, auto& s) {
-        d = scene->findNodeByPath(s);
-        if (!d) {
-            sgDbgFatal("not found %s\n", s.c_str());
-        }
-    });
-}
-
 #undef EachMember
 
 InstancerNode::InstancerNode(Node* parent, const char* name)
@@ -1218,6 +1105,7 @@ void InstancerNode::bake(MeshNode& dst, const float4x4& trans)
     }
 }
 
+
 sgRegisterClass(Texture);
 
 const float4 Texture::default_fallback = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -1234,13 +1122,13 @@ void Texture::deserialize(deserializer& d)
 {
     EachMember(sgRead)
 }
-
 #undef EachMember
 
 Texture::operator bool() const
 {
     return !file_path.empty();
 }
+
 
 sgRegisterClass(MaterialNode);
 
@@ -1295,15 +1183,21 @@ Scene* Scene::getCurrent()
 
 void Scene::serialize(serializer& s)
 {
+    // add pointer record to make this resolvable
+    hptr handle = s.getHandle(this);
+    sg::write(s, handle);
+
     EachMember(sgWrite)
 }
 
 void Scene::deserialize(deserializer& d)
 {
+    hptr handle;
+    sg::read(d, handle);
+    d.setPointer(handle, this);
+
     EachMember(sgRead)
 
-    for (auto& n : nodes)
-        n->resolve();
     if (impl) {
         for (auto& n : nodes)
             impl->wrapNode(n.get());

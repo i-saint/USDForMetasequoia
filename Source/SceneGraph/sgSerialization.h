@@ -13,7 +13,6 @@ struct hptr
         kIndexMask = 0x7fffffff,
         kFleshFlag = 0x80000000,
     };
-    static hptr null() { return hptr{0}; }
 
     bool isNull() const { return handle == 0; }
     bool isFlesh() const { return (handle & kFleshFlag) != 0; }
@@ -30,7 +29,7 @@ public:
     void write(const void* v, size_t size);
 
     std::ostream& getStream();
-    hptr getPointerRecord(void* v);
+    hptr getHandle(void* v);
 
 private:
     std::ostream& m_stream;
@@ -40,12 +39,19 @@ private:
 class deserializer
 {
 public:
+    struct Record
+    {
+        void* pointer = nullptr;
+        int ref = 0;
+    };
+
     deserializer(std::istream& s);
     ~deserializer();
     void read(void* v, size_t size);
 
     std::istream& getStream();
-    void setPointerRecord(hptr h, void* v);
+    void setPointer(hptr h, void* v);
+    Record& getRecord(hptr h);
     bool getPointer_(hptr h, void*& v);
 
     template<class T>
@@ -56,7 +62,7 @@ public:
 
 private:
     std::istream& m_stream;
-    std::vector<void*> m_pointer_records;
+    std::vector<Record> m_pointer_records;
 };
 
 

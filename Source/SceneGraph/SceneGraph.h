@@ -68,7 +68,6 @@ public:
     virtual Type getType() const;
     virtual void serialize(serializer& s);
     virtual void deserialize(deserializer& d);
-    virtual void resolve();
     virtual void convert(const ConvertOptions& opt);
 
     std::string getName() const;
@@ -110,11 +109,11 @@ public:
     std::string display_name;
     uint32_t id = 0;
 
-    // non-serializable
     Scene* scene = nullptr;
     Node* parent = nullptr;
     std::vector<Node*> children;
 
+    // non-serializable
     void* impl = nullptr;
     void* userdata = nullptr;
     bool removed = false;
@@ -144,7 +143,6 @@ public:
     Type getType() const override;
     void serialize(serializer& s) override;
     void deserialize(deserializer& d) override;
-    void resolve() override;
     void convert(const ConvertOptions& opt) override;
 
     std::tuple<float3, quatf, float3> getLocalTRS() const;
@@ -157,10 +155,9 @@ public:
     bool visibility = true;
     float4x4 local_matrix = float4x4::identity();
     float4x4 global_matrix = float4x4::identity();
-
-    // non-serializable
     XformNode* parent_xform = nullptr;
 };
+sgSerializable(XformNode);
 
 
 struct BlendshapeTarget : public std::enable_shared_from_this<BlendshapeTarget>
@@ -199,6 +196,7 @@ public:
     SharedVector<int> indices;
     std::vector<BlendshapeTargetPtr> targets;
 };
+sgSerializable(BlendshapeNode);
 
 
 class SkelRootNode : public XformNode
@@ -211,15 +209,12 @@ public:
     Type getType() const override;
     void serialize(serializer& s) override;
     void deserialize(deserializer& d) override;
-    void resolve() override;
 
 public:
     // serializable
-    std::string skeleton_path;
-
-    // non-serializable
     SkeletonNode* skeleton = nullptr;
 };
+sgSerializable(SkelRootNode);
 
 
 class Joint : public std::enable_shared_from_this<Joint>
@@ -229,7 +224,6 @@ public:
     Joint(SkeletonNode* skel, const std::string& path);
     void serialize(serializer& s);
     void deserialize(deserializer& d);
-    void resolve();
 
     std::string getName() const;
     std::tuple<float3, quatf, float3> getLocalTRS() const;
@@ -246,10 +240,11 @@ public:
     float4x4 local_matrix = float4x4::identity();  // for animation
     float4x4 global_matrix = float4x4::identity(); // 
 
-    // non-serializable
     SkeletonNode* skeleton = nullptr;
     Joint* parent = nullptr;
     std::vector<Joint*> children;
+
+    // non-serializable
     void* userdata = nullptr;
 };
 sgSerializable(Joint);
@@ -265,7 +260,6 @@ public:
     Type getType() const override;
     void serialize(serializer& s) override;
     void deserialize(deserializer& d) override;
-    void resolve() override;
     void convert(const ConvertOptions& opt) override;
 
     void clear();
@@ -278,6 +272,7 @@ public:
     // serializable
     std::vector<JointPtr> joints;
 };
+sgSerializable(SkeletonNode);
 
 
 class FaceSet : public std::enable_shared_from_this<FaceSet>
@@ -285,7 +280,6 @@ class FaceSet : public std::enable_shared_from_this<FaceSet>
 public:
     void serialize(serializer& s);
     void deserialize(deserializer& d);
-    void resolve();
     void clear();
     std::shared_ptr<FaceSet> clone();
     void merge(const FaceSet& v, int face_offset, int index_offset);
@@ -293,12 +287,11 @@ public:
 
 public:
     // serializable
+    MaterialNode* material = nullptr;
     SharedVector<int> faces;
     SharedVector<int> indices;
-    std::string material_path;
 
     // non-serializable
-    MaterialNode* material = nullptr;
     void* userdata = nullptr;
 };
 sgSerializable(FaceSet);
@@ -314,7 +307,6 @@ public:
     Type getType() const override;
     void serialize(serializer& s) override;
     void deserialize(deserializer& d) override;
-    void resolve() override;
     void convert(const ConvertOptions& opt) override;
 
     void applyTransform(const float4x4& v);
@@ -354,29 +346,24 @@ public:
     SharedVector<int> counts;       // 
     SharedVector<int> indices;
 
+    SkeletonNode* skeleton = nullptr;
+    std::vector<Joint*> joints;
     int joints_per_vertex = 0;
     SharedVector<int> joint_indices;   // size must be points.size() * joints_per_vertex
     SharedVector<float> joint_weights; // 
     float4x4 bind_transform = float4x4::identity();
 
-    std::vector<std::string> blendshape_paths;
-    std::string skeleton_path;
-    std::vector<std::string> joint_paths; // paths to joints in skeleton
-
-    std::vector<std::string> material_paths;
-    std::vector<FaceSetPtr> facesets;
-
-
-    // non-serializable
     std::vector<BlendshapeNode*> blendshapes;
-    RawVector<float> blendshape_weights;
-
-    SkeletonNode* skeleton = nullptr;
-    std::vector<Joint*> joints;
-    RawVector<float4x4> joint_matrices;
 
     std::vector<MaterialNode*> materials;
+    std::vector<FaceSetPtr> facesets;
+
+    // non-serializable
+    RawVector<float> blendshape_weights;
+    RawVector<float4x4> joint_matrices;
+
 };
+sgSerializable(MeshNode);
 sgDeclPtr(MeshNode);
 
 
@@ -390,7 +377,6 @@ public:
     Type getType() const override;
     void serialize(serializer& s) override;
     void deserialize(deserializer& d) override;
-    void resolve() override;
     void convert(const ConvertOptions& opt) override;
 
     void bake(MeshNode& dst, const float4x4& trans = float4x4::identity());
@@ -412,14 +398,14 @@ public:
 
 public:
     // serializable
-    std::vector<std::string> proto_paths;
+    std::vector<Node*> protos;
     SharedVector<int> proto_indices;
     SharedVector<float4x4> matrices;
 
     // non-serializable
-    std::vector<Node*> protos;
     std::vector<ProtoRecord> proto_records;
 };
+sgSerializable(InstancerNode);
 
 
 enum class WrapMode : int
@@ -491,6 +477,7 @@ public:
     TexturePtr opacity_texture;
     TexturePtr bump_texture;
 };
+sgSerializable(MaterialNode);
 
 
 enum class UpAxis : int

@@ -68,7 +68,7 @@ std::ostream& serializer::getStream()
     return m_stream;
 }
 
-hptr serializer::getPointerRecord(void* v)
+hptr serializer::getHandle(void* v)
 {
     if (!v)
         return { 0 };
@@ -104,12 +104,17 @@ std::istream& deserializer::getStream()
     return m_stream;
 }
 
-void deserializer::setPointerRecord(hptr h, void* v)
+void deserializer::setPointer(hptr h, void* v)
 {
     uint32_t index = h.getIndex();
-    while (m_pointer_records.size() < index)
+    while (m_pointer_records.size() <= index)
         m_pointer_records.resize(std::max<size_t>(256, m_pointer_records.size() * 2));
-    m_pointer_records[index] = v;
+    m_pointer_records[index].pointer = v;
+}
+
+deserializer::Record& deserializer::getRecord(hptr h)
+{
+    return m_pointer_records[h.getIndex()];
 }
 
 bool deserializer::getPointer_(hptr h, void*& v)
@@ -128,7 +133,7 @@ bool deserializer::getPointer_(hptr h, void*& v)
         return false;
     }
 #endif
-    v = m_pointer_records[index];
+    v = m_pointer_records[index].pointer;
     return true;
 }
 

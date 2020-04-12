@@ -74,25 +74,26 @@ std::string EncodeNodeName(const std::string& v)
 
 std::string EncodeNodePath(const std::string& v)
 {
-    std::string r;
+    if (v == "/")
+        return v;
 
+    std::string r;
     const char* s = v.data();
     for (;;) {
-        if (*s == '/') {
-            r += *s++;
-
-            size_t n = 0;
-            for (; ; ++n) {
-                if (s[n] == '/' || s[n] == '\0')
-                    break;
-            }
-            std::string tmp;
-            EncodeNodeNameImpl(tmp, s, n);
-            r += tmp;
-            s += n;
-        }
-        else
+        if (*s == '\0')
             break;
+
+        if (*s == '/')
+            r += *s++;
+        size_t n = 0;
+        for (; ; ++n) {
+            if (s[n] == '/' || s[n] == '\0')
+                break;
+        }
+        std::string tmp;
+        EncodeNodeNameImpl(tmp, s, n);
+        r += tmp;
+        s += n;
     }
     return r;
 }
@@ -133,8 +134,10 @@ std::string DecodeNodeName(const std::string& v)
 
 std::string DecodeNodePath(const std::string& v)
 {
-    std::string r;
+    if (v == "/")
+        return v;
 
+    std::string r;
     const char* s = v.data();
     for (;;) {
         if (*s == '\0')
