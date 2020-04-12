@@ -30,7 +30,7 @@ sgRegisterClass(Node);
 #define EachMember(F)\
     F(path) F(display_name) F(id) F(scene) F(parent) F(children)
 
-void Node::serialize(serializer& s)
+void Node::serialize(serializer& s) const
 {
     EachMember(sgWrite)
 }
@@ -40,6 +40,8 @@ void Node::deserialize(deserializer& d)
     EachMember(sgRead)
 }
 #undef EachMember
+
+Node::Node() {}
 
 Node::Node(Node* p, const char* name)
     : parent(p)
@@ -103,7 +105,7 @@ sgRegisterClass(XformNode);
 #define EachMember(F)\
     F(visibility) F(local_matrix) F(global_matrix) F(parent_xform)
 
-void XformNode::serialize(serializer& s)
+void XformNode::serialize(serializer& s) const
 {
     super::serialize(s);
     EachMember(sgWrite)
@@ -115,6 +117,8 @@ void XformNode::deserialize(deserializer& d)
     EachMember(sgRead)
 }
 #undef EachMember
+
+XformNode::XformNode() {}
 
 XformNode::XformNode(Node* p, const char *name)
     : super(p, name)
@@ -172,7 +176,7 @@ sgRegisterClass(FaceSet);
 #define EachMember(F)\
     F(material) F(faces) F(indices)
 
-void FaceSet::serialize(serializer& s)
+void FaceSet::serialize(serializer& s) const
 {
     EachMember(sgWrite)
 }
@@ -222,7 +226,7 @@ sgRegisterClass(MeshNode);
     F(blendshapes)\
     F(materials) F(facesets)
 
-void MeshNode::serialize(serializer& s)
+void MeshNode::serialize(serializer& s) const
 {
     super::serialize(s);
     EachMember(sgWrite)
@@ -234,6 +238,8 @@ void MeshNode::deserialize(deserializer& d)
     EachMember(sgRead)
 }
 #undef EachMember
+
+MeshNode::MeshNode() {}
 
 MeshNode::MeshNode(Node* p, const char* name)
     : super(p, name)
@@ -583,7 +589,7 @@ sgRegisterClass(BlendshapeTarget);
 #define EachMember(F)\
     F(point_offsets) F(normal_offsets) F(weight)
 
-void BlendshapeTarget::serialize(serializer& s)
+void BlendshapeTarget::serialize(serializer& s) const
 {
     EachMember(sgWrite)
 }
@@ -600,7 +606,7 @@ sgRegisterClass(BlendshapeNode);
 #define EachMember(F)\
     F(indices) F(targets)
 
-void BlendshapeNode::serialize(serializer& s)
+void BlendshapeNode::serialize(serializer& s) const
 {
     super::serialize(s);
     EachMember(sgWrite)
@@ -612,6 +618,8 @@ void BlendshapeNode::deserialize(deserializer& d)
     EachMember(sgRead)
 }
 #undef EachMember
+
+BlendshapeNode::BlendshapeNode() {}
 
 BlendshapeNode::BlendshapeNode(Node* p, const char* name)
     : super(p, name)
@@ -769,7 +777,7 @@ sgRegisterClass(SkelRootNode);
 #define EachMember(F)\
     F(skeleton)
 
-void SkelRootNode::serialize(serializer& s)
+void SkelRootNode::serialize(serializer& s) const
 {
     super::serialize(s);
     EachMember(sgWrite)
@@ -781,6 +789,8 @@ void SkelRootNode::deserialize(deserializer& d)
     EachMember(sgRead)
 }
 #undef EachMember
+
+SkelRootNode::SkelRootNode() {}
 
 SkelRootNode::SkelRootNode(Node* parent, const char* name)
     : super(parent, name)
@@ -799,7 +809,7 @@ sgRegisterClass(Joint);
     F(path) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)\
     F(skeleton) F(parent) F(children)
 
-void Joint::serialize(serializer& s)
+void Joint::serialize(serializer& s) const
 {
     EachMember(sgWrite)
 }
@@ -853,7 +863,7 @@ sgRegisterClass(SkeletonNode);
 #define EachMember(F)\
     F(joints)
 
-void SkeletonNode::serialize(serializer& s)
+void SkeletonNode::serialize(serializer& s) const
 {
     super::serialize(s);
     EachMember(sgWrite)
@@ -865,6 +875,8 @@ void SkeletonNode::deserialize(deserializer& d)
     EachMember(sgRead)
 }
 #undef EachMember
+
+SkeletonNode::SkeletonNode() {}
 
 SkeletonNode::SkeletonNode(Node* parent, const char* name)
     : super(parent, name)
@@ -956,7 +968,7 @@ sgRegisterClass(InstancerNode);
 #define EachMember(F)\
     F(protos) F(proto_indices) F(matrices)
 
-void InstancerNode::serialize(serializer& s)
+void InstancerNode::serialize(serializer& s) const
 {
     super::serialize(s);
     EachMember(sgWrite)
@@ -968,6 +980,8 @@ void InstancerNode::deserialize(deserializer& d)
     EachMember(sgRead)
 }
 #undef EachMember
+
+InstancerNode::InstancerNode() {}
 
 InstancerNode::InstancerNode(Node* parent, const char* name)
     : super(parent, name)
@@ -1100,7 +1114,7 @@ const float4 Texture::default_fallback = { 0.0f, 0.0f, 0.0f, 1.0f };
 #define EachMember(F)\
     F(file_path) F(st) F(wrap_s) F(wrap_t) F(fallback)
 
-void Texture::serialize(serializer& s)
+void Texture::serialize(serializer& s) const
 {
     EachMember(sgWrite)
 }
@@ -1125,7 +1139,7 @@ sgRegisterClass(MaterialNode);
     F(ambient_color) F(specular_color) F(emissive_color)\
     F(diffuse_texture) F(opacity_texture) F(bump_texture)
 
-void MaterialNode::serialize(serializer& s)
+void MaterialNode::serialize(serializer& s) const
 {
     super::serialize(s);
     EachMember(sgWrite)
@@ -1137,6 +1151,8 @@ void MaterialNode::deserialize(deserializer& d)
     EachMember(sgRead)
 }
 #undef EachMember
+
+MaterialNode::MaterialNode() {}
 
 MaterialNode::MaterialNode(Node* p, const char* name)
     : super(p, name)
@@ -1158,6 +1174,8 @@ bool MaterialNode::valid() const
 sgRegisterClass(Scene);
 
 static thread_local Scene* g_current_scene;
+static const char sgMagic[] = "sg" sgVersionString;
+
 
 Scene* Scene::getCurrent()
 {
@@ -1168,8 +1186,11 @@ Scene* Scene::getCurrent()
     F(path) F(nodes) F(root_node) F(up_axis)\
     F(frame_rate) F(frame_count) F(time_start) F(time_end) F(time_current)
 
-void Scene::serialize(serializer& s)
+void Scene::serialize(serializer& s) const
 {
+    // magic code
+    sg::write(s, sgMagic, 6);
+
     // add pointer record to make this resolvable
     hptr handle = s.getHandle(this);
     sg::write(s, handle);
@@ -1177,8 +1198,14 @@ void Scene::serialize(serializer& s)
     EachMember(sgWrite)
 }
 
-void Scene::deserialize(deserializer& d)
+bool Scene::deserialize(deserializer& d)
 {
+    // check magic code
+    char magic[6];
+    sg::read(d, magic, 6);
+    if (std::strcmp(magic, sgMagic) != 0)
+        return false;
+
     hptr handle;
     sg::read(d, handle);
     d.setPointer(handle, this);
@@ -1189,6 +1216,7 @@ void Scene::deserialize(deserializer& d)
         for (auto& n : nodes)
             impl->wrapNode(n.get());
     }
+    return true;
 }
 #undef EachMember
 

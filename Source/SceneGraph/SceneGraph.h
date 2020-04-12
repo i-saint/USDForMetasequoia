@@ -63,10 +63,11 @@ public:
         Scope,
     };
 
-    Node(Node* parent = nullptr, const char *name = nullptr);
+    Node();
+    Node(Node* parent, const char *name);
     virtual ~Node();
     virtual Type getType() const;
-    virtual void serialize(serializer& s);
+    virtual void serialize(serializer& s) const;
     virtual void deserialize(deserializer& d);
     virtual void convert(const ConvertOptions& opt);
 
@@ -107,7 +108,7 @@ public:
     // serializable
     std::string path;
     std::string display_name;
-    uint32_t id = 0;
+    uint32_t id = ~0u;
 
     Scene* scene = nullptr;
     Node* parent = nullptr;
@@ -140,9 +141,10 @@ using super = Node;
 public:
     static const Type node_type = Type::Xform;
 
-    XformNode(Node* parent = nullptr, const char* name = nullptr);
+    XformNode();
+    XformNode(Node* parent, const char* name);
     Type getType() const override;
-    void serialize(serializer& s) override;
+    void serialize(serializer& s) const override;
     void deserialize(deserializer& d) override;
     void convert(const ConvertOptions& opt) override;
 
@@ -167,7 +169,7 @@ struct BlendshapeTarget : public std::enable_shared_from_this<BlendshapeTarget>
     SharedVector<float3> normal_offsets;
     float weight = 0.0f;
 
-    void serialize(serializer& s);
+    void serialize(serializer& s) const;
     void deserialize(deserializer& d);
 };
 sgSerializable(BlendshapeTarget);
@@ -179,9 +181,10 @@ using super = Node;
 public:
     static const Type node_type = Type::Blendshape;
 
-    BlendshapeNode(Node* parent = nullptr, const char* name = nullptr);
+    BlendshapeNode();
+    BlendshapeNode(Node* parent, const char* name);
     Type getType() const override;
-    void serialize(serializer& s) override;
+    void serialize(serializer& s) const override;
     void deserialize(deserializer& d) override;
     void convert(const ConvertOptions& opt) override;
 
@@ -206,9 +209,10 @@ using super = XformNode;
 public:
     static const Type node_type = Type::SkelRoot;
 
-    SkelRootNode(Node* parent = nullptr, const char* name = nullptr);
+    SkelRootNode();
+    SkelRootNode(Node* parent, const char* name);
     Type getType() const override;
-    void serialize(serializer& s) override;
+    void serialize(serializer& s) const override;
     void deserialize(deserializer& d) override;
 
 public:
@@ -223,7 +227,7 @@ class Joint : public std::enable_shared_from_this<Joint>
 public:
     Joint();
     Joint(SkeletonNode* skel, const std::string& path);
-    void serialize(serializer& s);
+    void serialize(serializer& s) const;
     void deserialize(deserializer& d);
 
     std::string getName() const;
@@ -257,9 +261,10 @@ using super = XformNode;
 public:
     static const Type node_type = Type::Skeleton;
 
-    SkeletonNode(Node* parent = nullptr, const char* name = nullptr);
+    SkeletonNode();
+    SkeletonNode(Node* parent, const char* name);
     Type getType() const override;
-    void serialize(serializer& s) override;
+    void serialize(serializer& s) const override;
     void deserialize(deserializer& d) override;
     void convert(const ConvertOptions& opt) override;
 
@@ -279,7 +284,7 @@ sgSerializable(SkeletonNode);
 class FaceSet : public std::enable_shared_from_this<FaceSet>
 {
 public:
-    void serialize(serializer& s);
+    void serialize(serializer& s) const;
     void deserialize(deserializer& d);
     void clear();
     std::shared_ptr<FaceSet> clone();
@@ -304,9 +309,10 @@ using super = XformNode;
 public:
     static const Type node_type = Type::Mesh;
 
-    MeshNode(Node* parent = nullptr, const char* name = nullptr);
+    MeshNode();
+    MeshNode(Node* parent, const char* name);
     Type getType() const override;
-    void serialize(serializer& s) override;
+    void serialize(serializer& s) const override;
     void deserialize(deserializer& d) override;
     void convert(const ConvertOptions& opt) override;
 
@@ -374,9 +380,10 @@ using super = XformNode;
 public:
     static const Type node_type = Type::Instancer;
 
-    InstancerNode(Node* parent = nullptr, const char* name = nullptr);
+    InstancerNode();
+    InstancerNode(Node* parent, const char* name);
     Type getType() const override;
-    void serialize(serializer& s) override;
+    void serialize(serializer& s) const override;
     void deserialize(deserializer& d) override;
     void convert(const ConvertOptions& opt) override;
 
@@ -423,7 +430,7 @@ class Texture : public std::enable_shared_from_this<Texture>
 public:
     static const float4 default_fallback;
 
-    void serialize(serializer& s);
+    void serialize(serializer& s) const;
     void deserialize(deserializer& d);
     operator bool() const;
 
@@ -456,9 +463,10 @@ using super = Node;
 public:
     static const Type node_type = Type::Material;
 
-    MaterialNode(Node* parent = nullptr, const char* name = nullptr);
+    MaterialNode();
+    MaterialNode(Node* parent, const char* name);
     Type getType() const override;
-    void serialize(serializer& s) override;
+    void serialize(serializer& s) const override;
     void deserialize(deserializer& d) override;
     virtual bool valid() const;
 
@@ -514,8 +522,8 @@ public:
 
     Scene();
     ~Scene();
-    void serialize(serializer& s);
-    void deserialize(deserializer& d);
+    void serialize(serializer& s) const;
+    bool deserialize(deserializer& d);
 
     bool open(const char* path);
     bool create(const char* path);

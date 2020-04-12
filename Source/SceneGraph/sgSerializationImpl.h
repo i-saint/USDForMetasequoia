@@ -107,10 +107,15 @@ inline uint32_t write_string(serializer& s, const char *v)
     write_align(s, len);
     return len;
 }
-inline uint32_t read_string(deserializer& d, char* v)
+inline uint32_t read_string(deserializer& d, char*& v, uint32_t n)
 {
     uint32_t len;
     read(d, len);
+    if (len >= n) {
+        // exceeds buffer size. create new string.
+        v = new char[len + 1];
+    }
+
     read(d, v, len);
     read_align(d, len);
     v[len] = '\0';
@@ -124,6 +129,7 @@ inline hptr write(serializer& s, T* const& v)
     hptr handle = s.getHandle(v);
     write(s, handle);
     if (handle.isFlesh()) {
+        // write type name
         write_string(s, typeid(*v).name());
         write(s, *v);
     }
@@ -135,15 +141,19 @@ inline hptr read(deserializer& d, T*& v)
     hptr handle;
     read(d, handle);
     if (handle.isFlesh()) {
-        char tname[1024];
-        uint32_t len = read_string(d, tname);
-        if (len >= sizeof(tname)) {
+        // read type name
+        char name_buf[1024];
+        char* name = name_buf;
+        read_string(d, name, sizeof(name_buf));
+        v = create_instance<T>(name);
+
+        if (name != name_buf) {
 #ifdef mqusdDebug
             mu::DbgBreak();
 #endif
+            delete[] name;
         }
 
-        v = create_instance<T>(tname);
         d.setPointer(handle, v);
         read(d, *v);
     }

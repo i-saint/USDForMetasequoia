@@ -24,24 +24,27 @@ struct hptr
 class serializer
 {
 public:
+    using pointer_t = const void*;
+
     serializer(std::ostream& s);
     ~serializer();
     void write(const void* v, size_t size);
 
     std::ostream& getStream();
-    hptr getHandle(void* v);
+    hptr getHandle(pointer_t v);
 
 private:
     std::ostream& m_stream;
-    std::map<void*, uint32_t> m_pointer_records;
+    std::map<pointer_t, uint32_t> m_pointer_records;
 };
 
 class deserializer
 {
 public:
+    using pointer_t = void*;
     struct Record
     {
-        void* pointer = nullptr;
+        pointer_t pointer = nullptr;
         int ref = 0;
     };
 
@@ -50,14 +53,14 @@ public:
     void read(void* v, size_t size);
 
     std::istream& getStream();
-    void setPointer(hptr h, void* v);
+    void setPointer(hptr h, pointer_t v);
     Record& getRecord(hptr h);
-    bool getPointer_(hptr h, void*& v);
+    bool getPointer_(hptr h, pointer_t& v);
 
     template<class T>
     bool getPointer(hptr h, T*& v)
     {
-        return getPointer_(h, (void*&)v);
+        return getPointer_(h, (pointer_t&)v);
     }
 
 private:
@@ -76,7 +79,7 @@ template<class T>
 struct serialize_intrusive
 {
     static constexpr bool value = true;
-    static void serialize(serializer& s, const T& v) { const_cast<T&>(v).serialize(s); }
+    static void serialize(serializer& s, const T& v) { v.serialize(s); }
     static void deserialize(deserializer& d, T& v) { v.deserialize(d); }
 };
 
