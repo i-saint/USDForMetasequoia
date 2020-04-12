@@ -138,7 +138,8 @@ bool USDScenePipe::open(const char* path)
         m_pipe.reset();
 
         mu::MemoryStream stream(m_scene_buffer);
-        m_scene->deserialize(stream);
+        sg::deserializer des(stream);
+        m_scene->deserialize(des);
         return !m_scene->nodes.empty();
     }
     else {
@@ -191,14 +192,16 @@ void USDScenePipe::read()
     if (m_pipe->open(commnd.c_str(), std::ios::in | std::ios::binary)) {
         CopyStream(m_scene_buffer, *m_pipe);
         mu::MemoryStream stream(m_scene_buffer);
-        m_scene->deserialize(stream);
+        sg::deserializer des(stream);
+        m_scene->deserialize(des);
     }
     m_pipe.reset();
 }
 
 void USDScenePipe::write()
 {
-    m_scene->serialize(*m_pipe);
+    sg::serializer ser(*m_pipe);
+    m_scene->serialize(ser);
 }
 
 bool USDScenePipe::isNodeTypeSupported(Node::Type /*type*/)

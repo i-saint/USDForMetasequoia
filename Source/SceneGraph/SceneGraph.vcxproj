@@ -22,12 +22,14 @@
     <ClInclude Include="SceneGraph.h" />
     <ClInclude Include="SceneGraphRemote.h" />
     <ClInclude Include="sgSerialization.h" />
+    <ClInclude Include="sgSerializationImpl.h" />
     <ClInclude Include="sgUtils.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SceneGraph.cpp" />
     <ClCompile Include="SceneGraphRemote.cpp" />
+    <ClCompile Include="sgSerialization.cpp" />
     <ClCompile Include="sgUtils.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>

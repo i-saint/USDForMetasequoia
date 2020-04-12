@@ -27,6 +27,9 @@ int main(int argc, char* argv[])
     bool mode_export = false;
     bool mode_test = false;
     bool mode_header= false;
+#ifdef mqusdDebug
+    bool mode_debug = false;
+#endif
     bool version = false;
     for (int ai = 1; ai < argc;) {
         if (argv[ai][0] == '-') {
@@ -45,6 +48,10 @@ int main(int argc, char* argv[])
 #ifdef _WIN32
             if (strcmp(argv[ai], "-hide") == 0)
                 ::ShowWindow(::GetConsoleWindow(), SW_HIDE);
+#endif
+#ifdef mqusdDebug
+            if (strcmp(argv[ai], "-debug") == 0)
+                mode_debug = true;
 #endif
         }
         else
@@ -87,6 +94,31 @@ int main(int argc, char* argv[])
                 return 1;
         }
    }
+#ifdef mqusdDebug
+    else if (mode_debug) {
+        std::string dst_dir = mu::GetDirectory(usd_path.c_str());
+        std::string dst_bin = dst_dir + muPathSep "debug.bin";
+        std::string dst_usd = dst_dir + muPathSep "debug.usda";
+
+        if (scene->open(usd_path.c_str())) {
+            scene->read(time);
+            {
+                std::fstream f(dst_bin, std::ios::out | std::ios::binary);
+                sg::serializer s(f);
+                scene->serialize(s);
+            }
+
+            scene = sg::CreateUSDScene();
+            if (scene->create(dst_usd.c_str())) {
+                std::fstream f(dst_bin, std::ios::in | std::ios::binary);
+                sg::deserializer s(f);
+                scene->deserialize(s);
+                scene->write(scene->time_current);
+                scene->save();
+            }
+        }
+    }
+#endif
     else if (mode_export) {
         try {
             if (!scene->create(usd_path.c_str()))
@@ -94,10 +126,12 @@ int main(int argc, char* argv[])
 
             if (!file_path.empty()) {
                 std::fstream f(file_path.c_str(), std::ios::in | std::ios::binary);
-                scene->deserialize(f);
+                sg::deserializer d(f);
+                scene->deserialize(d);
             }
             else {
-                scene->deserialize(std::cin);
+                sg::deserializer d(std::cin);
+                scene->deserialize(d);
             }
             scene->write(scene->time_current);
             scene->save();
@@ -115,10 +149,12 @@ int main(int argc, char* argv[])
 
         if (!file_path.empty()) {
             std::fstream of(file_path.c_str(), std::ios::out | std::ios::binary);
-            scene->serialize(of);
+            sg::serializer s(of);
+            scene->serialize(s);
         }
         else {
-            scene->serialize(std::cout);
+            sg::serializer s(std::cout);
+            scene->serialize(s);
         }
     }
     return 0;

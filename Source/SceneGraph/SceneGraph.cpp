@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "SceneGraph.h"
-#include "sgUtils.h"
+#include "sgSerializationImpl.h"
 
 namespace sg {
 
@@ -37,32 +37,29 @@ bool ConvertOptions::operator!=(const ConvertOptions& v) const
 }
 
 
-void Node::create(deserializer& d, NodePtr& ret)
+Node* Node::create(deserializer& d)
 {
     Type type;
     read(d, type);
 
-    if (ret && ret->getType() != type)
-        ret = nullptr;
-
-    if (!ret) {
-        switch (type) {
-        case Type::Unknown: ret = std::make_shared<Node>(); break;
-        case Type::Root: ret = std::make_shared<RootNode>(); break;
-        case Type::Xform: ret = std::make_shared<XformNode>(); break;
-        case Type::Mesh: ret = std::make_shared<MeshNode>(); break;
-        case Type::Blendshape: ret = std::make_shared<BlendshapeNode>(); break;
-        case Type::SkelRoot: ret = std::make_shared<SkelRootNode>(); break;
-        case Type::Skeleton: ret = std::make_shared<SkeletonNode>(); break;
-        case Type::Instancer: ret = std::make_shared<InstancerNode>(); break;
-        case Type::Material: ret = std::make_shared<MaterialNode>(); break;
-        default:
-            throw std::runtime_error("Node::create() failed");
-            break;
-        }
+    Node* ret = nullptr;
+    switch (type) {
+    case Type::Unknown: ret = new Node(); break;
+    case Type::Root: ret = new RootNode(); break;
+    case Type::Xform: ret = new XformNode(); break;
+    case Type::Mesh: ret = new MeshNode(); break;
+    case Type::Blendshape: ret = new BlendshapeNode(); break;
+    case Type::SkelRoot: ret = new SkelRootNode(); break;
+    case Type::Skeleton: ret = new SkeletonNode(); break;
+    case Type::Instancer: ret = new InstancerNode(); break;
+    case Type::Material: ret = new MaterialNode(); break;
+    default:
+        throw std::runtime_error("Node::create() failed");
+        break;
     }
     if (ret)
         ret->deserialize(d);
+    return ret;
 }
 
 #define EachMember(F)\
@@ -219,11 +216,11 @@ void XformNode::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 }
 
 
-void FaceSet::create(deserializer& d, FaceSetPtr& v)
+FaceSet* FaceSet::create(deserializer& d)
 {
-    if (!v)
-        v = std::make_shared<FaceSet>();
-    v->deserialize(d);
+    auto ret = new FaceSet();
+    ret->deserialize(d);
+    return ret;
 }
 
 #define EachMember(F)\
@@ -692,11 +689,11 @@ int MeshNode::getMaxMaterialID() const
 
 
 
-void BlendshapeTarget::create(deserializer& d, BlendshapeTargetPtr& v)
+BlendshapeTarget* BlendshapeTarget::create(deserializer& d)
 {
-    if (!v)
-        v = std::make_shared<BlendshapeTarget>();
-    v->deserialize(d);
+    auto ret = new BlendshapeTarget();
+    ret->deserialize(d);
+    return ret;
 }
 
 #define EachMember(F)\
@@ -943,11 +940,11 @@ void Joint::resolve()
 }
 #undef EachMember
 
-void Joint::create(deserializer& d, JointPtr& ret)
+Joint* Joint::create(deserializer& d)
 {
-    if (!ret)
-        ret = std::make_shared<Joint>();
+    auto ret = new Joint();
     ret->deserialize(d);
+    return ret;
 }
 
 Joint::Joint()
@@ -1261,11 +1258,11 @@ const float4 Texture::default_fallback = { 0.0f, 0.0f, 0.0f, 1.0f };
 #define EachMember(F)\
     F(file_path) F(st) F(wrap_s) F(wrap_t) F(fallback)
 
-void Texture::create(deserializer& d, TexturePtr& v)
+Texture* Texture::create(deserializer& d)
 {
-    if (!v)
-        v = std::make_shared<Texture>();
-    v->deserialize(d);
+    auto ret = new Texture();
+    ret->deserialize(d);
+    return ret;
 }
 
 void Texture::serialize(serializer& s)
@@ -1328,6 +1325,13 @@ Scene* Scene::getCurrent()
     return g_current_scene;
 }
 
+Scene* Scene::create(deserializer& d)
+{
+    auto ret = new Scene();
+    ret->deserialize(d);
+    return ret;
+}
+
 #define EachMember(F)\
     F(path) F(nodes) F(up_axis)\
     F(frame_rate) F(frame_count) F(time_start) F(time_end) F(time_current)
@@ -1349,13 +1353,6 @@ void Scene::deserialize(deserializer& d)
     }
 }
 #undef EachMember
-
-void Scene::deserialize(deserializer& d, ScenePtr& ret)
-{
-    if (!ret)
-        ret = std::make_shared<Scene>();
-    ret->deserialize(d);
-}
 
 Scene::Scene()
 {

@@ -1344,6 +1344,8 @@ bool USDScene::wrapNode(Node* node)
 #define Case(E, T) case Node::Type::E: ret = wrapNodeImpl<T>(node); break;
         EachNodeType(Case);
 #undef Case
+
+    case Node::Type::Root: ret = wrapNodeImpl<USDRootNode>(node); break;
     default: break;
     }
 

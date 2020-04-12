@@ -10,7 +10,7 @@ namespace mu {
 class AllocTable
 {
 public:
-    struct muAllocRecord
+    struct AllocRecord
     {
         size_t index;
         size_t size_alloc;
@@ -29,10 +29,10 @@ public:
 
 private:
     AllocTable();
-    void print(muAllocRecord& rec);
-    void checkAndReport(muAllocRecord& rec);
+    void print(AllocRecord& rec);
+    void checkAndReport(AllocRecord& rec);
 
-    std::map<void*, muAllocRecord> m_records;
+    std::map<void*, AllocRecord> m_records;
     std::mutex m_mutex;
     size_t m_index = 0;
 };
@@ -51,7 +51,7 @@ AllocTable::AllocTable()
 
 void AllocTable::append(void* addr, size_t size_alloc, size_t size_required)
 {
-    muAllocRecord* rec = nullptr;
+    AllocRecord* rec = nullptr;
     {
         lock_t l(m_mutex);
         rec = &m_records[addr];
@@ -85,7 +85,7 @@ void AllocTable::erase(void* addr)
     }
 }
 
-void AllocTable::print(muAllocRecord& rec)
+void AllocTable::print(AllocRecord& rec)
 {
     mu::Print("Alloc Record %d\n", (uint32_t)rec.index);
     mu::Print("  Address 0x%p \n", rec.addr);
@@ -103,7 +103,7 @@ void AllocTable::print(muAllocRecord& rec)
     }
 }
 
-void AllocTable::checkAndReport(muAllocRecord& rec)
+void AllocTable::checkAndReport(AllocRecord& rec)
 {
     size_t sentinel_size = rec.size_alloc - rec.size_required;
     uint8_t* sentinel = (uint8_t*)rec.addr + rec.size_required;

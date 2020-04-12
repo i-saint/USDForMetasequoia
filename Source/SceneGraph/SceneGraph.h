@@ -46,7 +46,7 @@ struct ConvertOptions
 };
 
 
-class Node
+class Node : public std::enable_shared_from_this<Node>
 {
 public:
     enum class Type
@@ -62,7 +62,7 @@ public:
         Material,
         Scope,
     };
-    static void create(deserializer& d, std::shared_ptr<Node>& v);
+    static Node* create(deserializer& d);
 
     Node(Node* parent = nullptr, const char *name = nullptr);
     virtual ~Node();
@@ -164,13 +164,13 @@ public:
 };
 
 
-struct BlendshapeTarget
+struct BlendshapeTarget : public std::enable_shared_from_this<BlendshapeTarget>
 {
     SharedVector<float3> point_offsets;
     SharedVector<float3> normal_offsets;
     float weight = 0.0f;
 
-    static void create(deserializer& d, std::shared_ptr<BlendshapeTarget>& v);
+    static BlendshapeTarget* create(deserializer& d);
     void serialize(serializer& s);
     void deserialize(deserializer& d);
 };
@@ -224,10 +224,10 @@ public:
 };
 
 
-class Joint
+class Joint : public std::enable_shared_from_this<Joint>
 {
 public:
-    static void create(deserializer& d, std::shared_ptr<Joint>& v);
+    static Joint* create(deserializer& d);
 
     Joint();
     Joint(SkeletonNode* skel, const std::string& path);
@@ -284,10 +284,10 @@ public:
 };
 
 
-class FaceSet
+class FaceSet : public std::enable_shared_from_this<FaceSet>
 {
 public:
-    static void create(deserializer& d, std::shared_ptr<FaceSet>& v);
+    static FaceSet* create(deserializer& d);
     void serialize(serializer& s);
     void deserialize(deserializer& d);
     void resolve();
@@ -436,11 +436,11 @@ enum class WrapMode : int
     Black,
 };
 
-class Texture
+class Texture : public std::enable_shared_from_this<Texture>
 {
 public:
     static const float4 default_fallback;
-    static void create(deserializer& d, std::shared_ptr<Texture>& v);
+    static Texture* create(deserializer& d);
 
     void serialize(serializer& s);
     void deserialize(deserializer& d);
@@ -526,8 +526,8 @@ sgDeclPtr(SceneInterface);
 class Scene
 {
 public:
-    static void deserialize(deserializer& d, std::shared_ptr<Scene>& v);
     static Scene* getCurrent();
+    static Scene* create(deserializer& d);
 
     Scene();
     ~Scene();
