@@ -5,6 +5,22 @@
 
 namespace sg {
 
+using type_creator = void*(*)();
+void register_type(const char* name, type_creator creator);
+void* create_instance_(const char* name);
+
+template<class T>
+T* create_instance(const char* name) { return static_cast<T*>(create_instance_(name)); }
+
+
+struct type_registrar
+{
+    type_registrar(const char* name, type_creator creator)
+    {
+        register_type(name, creator);
+    }
+};
+
 
 // keep 4 byte align to directly map with SharedVector later.
 static const int serialize_align = 4;
@@ -83,6 +99,24 @@ inline void read(deserializer& d, T& v)
     serializable<T>::deserialize(d, v);
 }
 
+inline uint32_t write_string(serializer& s, const char *v)
+{
+    uint32_t len = (uint32_t)std::strlen(v);
+    write(s, len);
+    write(s, v, len);
+    write_align(s, len);
+    return len;
+}
+inline uint32_t read_string(deserializer& d, char* v)
+{
+    uint32_t len;
+    read(d, len);
+    read(d, v, len);
+    read_align(d, len);
+    v[len] = '\0';
+    return len;
+}
+
 // serializable pointer
 template<class T, sgEnableIf(serializable<T>::value)>
 inline bool write(serializer& s, T* const& v)
@@ -90,6 +124,7 @@ inline bool write(serializer& s, T* const& v)
     hptr handle = s.getPointerRecord(v);
     write(s, handle);
     if (handle.isFlesh()) {
+        write_string(s, typeid(*v).name());
         write(s, *v);
         return true;
     }
@@ -103,8 +138,17 @@ inline bool read(deserializer& d, T*& v)
     hptr handle;
     read(d, handle);
     if (handle.isFlesh()) {
-        v = T::create(d);
+        char tname[1024];
+        uint32_t len = read_string(d, tname);
+        if (len >= sizeof(tname)) {
+#ifdef mqusdDebug
+            mu::DbgBreak();
+#endif
+        }
+
+        v = create_instance<T>(tname);
         d.setPointerRecord(handle, v);
+        read(d, *v);
         return true;
     }
     else {
@@ -229,6 +273,10 @@ struct serializable<SharedVector<T>> : serialize_nonintrusive<T>
 
 } // namespace sg
 
+
+#define sgRegisterClass(T)\
+    static void* create_##T() { return new T(); }\
+    static sg::type_registrar s_register_##T(typeid(T).name(), create_##T);
 
 #define sgWrite(V) sg::write(s, V);
 #define sgRead(V) sg::read(d, V);

@@ -4,6 +4,51 @@
 
 namespace sg {
 
+struct type_record
+{
+    const char* name;
+    type_creator creator;
+};
+
+static std::vector<type_record>& get_type_records()
+{
+    static std::vector<type_record> s_records;
+    return s_records;
+}
+
+void register_type(const char* name, type_creator creator)
+{
+    auto& records = get_type_records();
+    records.push_back({ name, creator });
+}
+
+void* create_instance_(const char* name)
+{
+    static std::once_flag s_once;
+
+    auto& records = get_type_records();
+    std::call_once(s_once, [&records]() {
+        // sort records
+        std::sort(records.begin(), records.end(), [](auto& a, auto& b) {
+            return std::strcmp(a.name, b.name) < 0;
+        });
+    });
+
+    // find record and call creator
+    auto it = std::lower_bound(records.begin(), records.end(), name, [](auto& a, const char* name) {
+        return std::strcmp(a.name, name) < 0;
+    });
+    if (it != records.end() && std::strcmp(it->name, name) == 0) {
+        return it->creator();
+    }
+    else {
+        // should not be here
+        mu::DbgBreak();
+        return nullptr;
+    }
+}
+
+
 serializer::serializer(std::ostream& s)
     : m_stream(s)
 {

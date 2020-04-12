@@ -62,7 +62,6 @@ public:
         Material,
         Scope,
     };
-    static Node* create(deserializer& d);
 
     Node(Node* parent = nullptr, const char *name = nullptr);
     virtual ~Node();
@@ -170,7 +169,6 @@ struct BlendshapeTarget : public std::enable_shared_from_this<BlendshapeTarget>
     SharedVector<float3> normal_offsets;
     float weight = 0.0f;
 
-    static BlendshapeTarget* create(deserializer& d);
     void serialize(serializer& s);
     void deserialize(deserializer& d);
 };
@@ -227,8 +225,6 @@ public:
 class Joint : public std::enable_shared_from_this<Joint>
 {
 public:
-    static Joint* create(deserializer& d);
-
     Joint();
     Joint(SkeletonNode* skel, const std::string& path);
     void serialize(serializer& s);
@@ -287,7 +283,6 @@ public:
 class FaceSet : public std::enable_shared_from_this<FaceSet>
 {
 public:
-    static FaceSet* create(deserializer& d);
     void serialize(serializer& s);
     void deserialize(deserializer& d);
     void resolve();
@@ -440,7 +435,6 @@ class Texture : public std::enable_shared_from_this<Texture>
 {
 public:
     static const float4 default_fallback;
-    static Texture* create(deserializer& d);
 
     void serialize(serializer& s);
     void deserialize(deserializer& d);
@@ -527,7 +521,6 @@ class Scene
 {
 public:
     static Scene* getCurrent();
-    static Scene* create(deserializer& d);
 
     Scene();
     ~Scene();

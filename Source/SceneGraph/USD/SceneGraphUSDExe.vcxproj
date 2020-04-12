@@ -20,6 +20,9 @@
     <ProjectReference Include="..\SceneGraph.vcxproj">
       <Project>{0945d37c-f1f1-4b88-b738-85816e37d9af}</Project>
     </ProjectReference>
+    <ProjectReference Include="SceneGraphUSD.vcxproj">
+      <Project>{02d2e77e-c1d5-44e0-84e7-1ac84188ddd1}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3663D849-3893-4D6E-8714-86C23946E448}</ProjectGuid>

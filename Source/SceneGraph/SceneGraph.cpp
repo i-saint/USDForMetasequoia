@@ -36,45 +36,18 @@ bool ConvertOptions::operator!=(const ConvertOptions& v) const
     return !(*this == v);
 }
 
-
-Node* Node::create(deserializer& d)
-{
-    Type type;
-    read(d, type);
-
-    Node* ret = nullptr;
-    switch (type) {
-    case Type::Unknown: ret = new Node(); break;
-    case Type::Root: ret = new RootNode(); break;
-    case Type::Xform: ret = new XformNode(); break;
-    case Type::Mesh: ret = new MeshNode(); break;
-    case Type::Blendshape: ret = new BlendshapeNode(); break;
-    case Type::SkelRoot: ret = new SkelRootNode(); break;
-    case Type::Skeleton: ret = new SkeletonNode(); break;
-    case Type::Instancer: ret = new InstancerNode(); break;
-    case Type::Material: ret = new MaterialNode(); break;
-    default:
-        throw std::runtime_error("Node::create() failed");
-        break;
-    }
-    if (ret)
-        ret->deserialize(d);
-    return ret;
-}
+sgRegisterClass(Node);
 
 #define EachMember(F)\
     F(path) F(display_name) F(id)
 
 void Node::serialize(serializer& s)
 {
-    auto type = getType();
-    write(s, type);
     EachMember(sgWrite)
 }
 
 void Node::deserialize(deserializer& d)
 {
-    // type will be consumed by create()
     EachMember(sgRead)
 }
 void Node::resolve()
@@ -132,6 +105,8 @@ const std::string& Node::getPath() const
 }
 
 
+sgRegisterClass(RootNode);
+
 RootNode::RootNode()
     : super(nullptr, "/")
 {
@@ -142,6 +117,8 @@ Node::Type RootNode::getType() const
     return Type::Root;
 }
 
+
+sgRegisterClass(XformNode);
 
 #define EachMember(F)\
     F(visibility) F(local_matrix) F(global_matrix)
@@ -216,12 +193,7 @@ void XformNode::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 }
 
 
-FaceSet* FaceSet::create(deserializer& d)
-{
-    auto ret = new FaceSet();
-    ret->deserialize(d);
-    return ret;
-}
+sgRegisterClass(FaceSet);
 
 #define EachMember(F)\
     F(faces) F(indices) F(material_path)
@@ -274,6 +246,8 @@ void FaceSet::addOffset(int face_offset, int index_offset)
         add(indices.data(), indices.size(), index_offset);
 }
 
+
+sgRegisterClass(MeshNode);
 
 #define EachMember(F)\
     F(points) F(normals) F(uvs) F(colors) F(material_ids) F(counts) F(indices)\
@@ -689,12 +663,7 @@ int MeshNode::getMaxMaterialID() const
 
 
 
-BlendshapeTarget* BlendshapeTarget::create(deserializer& d)
-{
-    auto ret = new BlendshapeTarget();
-    ret->deserialize(d);
-    return ret;
-}
+sgRegisterClass(BlendshapeTarget);
 
 #define EachMember(F)\
     F(point_offsets) F(normal_offsets) F(weight)
@@ -878,6 +847,7 @@ void BlendshapeNode::apply(float3* dst_points, float3* dst_normals, float weight
 }
 
 
+sgRegisterClass(SkelRootNode);
 
 #define EachMember(F)\
     F(skeleton_path)
@@ -916,6 +886,7 @@ Node::Type SkelRootNode::getType() const
 }
 
 
+sgRegisterClass(Joint);
 
 #define EachMember(F)\
     F(path) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)
@@ -939,13 +910,6 @@ void Joint::resolve()
     }
 }
 #undef EachMember
-
-Joint* Joint::create(deserializer& d)
-{
-    auto ret = new Joint();
-    ret->deserialize(d);
-    return ret;
-}
 
 Joint::Joint()
 {
@@ -985,6 +949,7 @@ void Joint::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 }
 
 
+sgRegisterClass(SkeletonNode);
 
 #define EachMember(F)\
     F(joints)
@@ -1094,6 +1059,7 @@ Joint* SkeletonNode::findJointByPath(const std::string& jpath)
     return it == joints.rend() ? nullptr : it->get();
 }
 
+sgRegisterClass(InstancerNode);
 
 #define EachMember(F)\
     F(proto_paths) F(matrices)
@@ -1252,18 +1218,12 @@ void InstancerNode::bake(MeshNode& dst, const float4x4& trans)
     }
 }
 
+sgRegisterClass(Texture);
 
 const float4 Texture::default_fallback = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 #define EachMember(F)\
     F(file_path) F(st) F(wrap_s) F(wrap_t) F(fallback)
-
-Texture* Texture::create(deserializer& d)
-{
-    auto ret = new Texture();
-    ret->deserialize(d);
-    return ret;
-}
 
 void Texture::serialize(serializer& s)
 {
@@ -1282,6 +1242,7 @@ Texture::operator bool() const
     return !file_path.empty();
 }
 
+sgRegisterClass(MaterialNode);
 
 #define EachMember(F)\
     F(index) F(shader_type) F(use_vertex_color) F(double_sided)\
@@ -1318,18 +1279,14 @@ bool MaterialNode::valid() const
 }
 
 
+
+sgRegisterClass(Scene);
+
 static thread_local Scene* g_current_scene;
 
 Scene* Scene::getCurrent()
 {
     return g_current_scene;
-}
-
-Scene* Scene::create(deserializer& d)
-{
-    auto ret = new Scene();
-    ret->deserialize(d);
-    return ret;
 }
 
 #define EachMember(F)\
