@@ -18,7 +18,7 @@ MQBasePlugin* GetPluginClass()
     }
     if (entrypoint)
         return entrypoint();
-    return nullptr;
+    return &mqusd::DummyExportPlugin::getInstance();
 }
 
 mqabcAPI void mqabcDummy()

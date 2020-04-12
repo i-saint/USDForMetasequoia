@@ -148,3 +148,12 @@ TestCase(Test_Corruption)
         // will be reported
     }
 }
+
+
+TestCase(Test_ModulePath)
+{
+    auto mod = mu::GetMainModule();
+    auto path = mu::GetModuleName(mod);
+    Print("main module: %p\n", mod);
+    Print("path of main module: %s\n", path.c_str());
+}

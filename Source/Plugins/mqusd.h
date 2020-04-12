@@ -15,12 +15,12 @@
 #define mqabcExportPluginID     0xB1CC99B2
 
 #ifdef _WIN32
-    #define mqPluginExt ".dll"
+    #define mqusdModuleFile "mqusd.dll"
+    #define mqabcModuleFile "mqabc.dll"
 #else
-    #define mqPluginExt ".plugin"
+    #define mqusdModuleFile "mqusd.plugin/Contents/MacOS/mqusd"
+    #define mqabcModuleFile "mqabc.plugin/Contents/MacOS/mqabc"
 #endif
-#define mqusdModuleFile "mqusd" mqPluginExt
-#define mqabcModuleFile "mqabc" mqPluginExt
 
 
 #ifdef _WIN32

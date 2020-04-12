@@ -376,6 +376,8 @@ void* GetMainModule()
 {
 #if defined(_WIN32)
     return ::GetModuleHandleA(nullptr);
+#elif defined(__APPLE__)
+    return ::dlopen(::_dyld_get_image_name(0), RTLD_LAZY);
 #else
     return ::dlopen(nullptr, RTLD_LAZY);
 #endif
