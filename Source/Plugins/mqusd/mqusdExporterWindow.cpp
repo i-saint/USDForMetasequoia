@@ -11,78 +11,71 @@ mqusdExporterWindow::mqusdExporterWindow(MQBasePlugin* plugin, MQWindowBase& par
 
     setlocale(LC_ALL, "");
     SetTitle(L"Export USD");
-    SetOutSpace(0.4);
+    SetOutSpace(0.2);
 
-    double outer_margin = 0.2;
-    double inner_margin = 0.1;
+    double outer_margin = 0.3;
+    double inner_margin = 0.3;
+
+    MQFrame* vf = CreateVerticalFrame(this);
+    vf->SetOutSpace(outer_margin);
+    vf->SetInSpace(inner_margin);
 
     {
-        MQFrame* vf = CreateVerticalFrame(this);
-        vf->SetOutSpace(outer_margin);
-        vf->SetInSpace(inner_margin);
+        MQGroupBox* group = CreateGroupBox(vf, L"Scale");
 
-        {
-            MQFrame* hf = CreateHorizontalFrame(vf);
-            CreateLabel(hf, L"Scale Factor");
-            m_edit_scale = CreateEdit(hf);
-            m_edit_scale->SetNumeric(MQEdit::NUMERIC_DOUBLE);
-            m_edit_scale->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
-        }
+        MQFrame* hf = CreateHorizontalFrame(group);
+        CreateLabel(hf, L"Scale Factor");
+        m_edit_scale = CreateEdit(hf);
+        m_edit_scale->SetNumeric(MQEdit::NUMERIC_DOUBLE);
+        m_edit_scale->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
+    }
+    {
+        MQGroupBox* group = CreateGroupBox(vf, L"Components");
 
-        m_check_normals = CreateCheckBox(vf, L"Export Normals");
-        m_check_normals->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
-
-        m_check_colors = CreateCheckBox(vf, L"Export Vertex Colors");
-        m_check_colors->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
-
-        m_check_mids = CreateCheckBox(vf, L"Export Material IDs");
-        m_check_mids->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
-
-        m_check_blendshapes = CreateCheckBox(vf, L"Export Morphs");
+        m_check_blendshapes = CreateCheckBox(group, L"Export Morphs");
         m_check_blendshapes->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
 
-        m_check_skeletons = CreateCheckBox(vf, L"Export Bones");
+        m_check_skeletons = CreateCheckBox(group, L"Export Bones");
         m_check_skeletons->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
+    }
+    {
+        MQGroupBox* group = CreateGroupBox(vf, L"Freeze");
 
-        m_check_mirror = CreateCheckBox(vf, L"Freeze Mirror");
+        m_check_mirror = CreateCheckBox(group, L"Freeze Mirror");
         m_check_mirror->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
 
-        m_check_lathe = CreateCheckBox(vf, L"Freeze Lathe");
+        m_check_lathe = CreateCheckBox(group, L"Freeze Lathe");
         m_check_lathe->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
 
-        m_check_subdiv = CreateCheckBox(vf, L"Freeze Subdiv");
+        m_check_subdiv = CreateCheckBox(group, L"Freeze Subdiv");
         m_check_subdiv->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
+    }
+    {
+        MQGroupBox* group = CreateGroupBox(vf, L"Convert Options");
 
-        m_check_flip_x = CreateCheckBox(vf, L"Flip X");
+        m_check_flip_x = CreateCheckBox(group, L"Flip X");
         m_check_flip_x->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
 
-        m_check_flip_yz = CreateCheckBox(vf, L"Flip YZ");
+        m_check_flip_yz = CreateCheckBox(group, L"Flip YZ");
         m_check_flip_yz->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
 
-        m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
+        m_check_flip_faces = CreateCheckBox(group, L"Flip Faces");
         m_check_flip_faces->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
 
-        m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
+        m_check_merge = CreateCheckBox(group, L"Merge Meshes");
         m_check_merge->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
+
+        MQFrame* hf = CreateHorizontalFrame(group);
+        MQLabel* space = CreateLabel(hf, L" ");
+        space->SetWidth(32);
+        m_check_merge_only_visible = CreateCheckBox(hf, L"Only Visible");
+        m_check_merge_only_visible->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
+
     }
 
     {
-        MQFrame* vf = CreateVerticalFrame(this);
-        vf->SetOutSpace(outer_margin);
-        vf->SetInSpace(inner_margin);
-
         m_button_export = CreateButton(vf, L"Export");
         m_button_export->AddClickEvent(this, &mqusdExporterWindow::OnExportClicked);
-    }
-
-    {
-        MQFrame* vf = CreateVerticalFrame(this);
-        vf->SetOutSpace(outer_margin);
-        vf->SetInSpace(inner_margin);
-
-        m_log = CreateMemo(vf);
-        m_log->SetHorzBarStatus(MQMemo::SCROLLBAR_OFF);
-        m_log->SetVertBarStatus(MQMemo::SCROLLBAR_OFF);
     }
 
     this->AddShowEvent(this, &mqusdExporterWindow::OnShow);
@@ -91,7 +84,6 @@ mqusdExporterWindow::mqusdExporterWindow(MQBasePlugin* plugin, MQWindowBase& par
 
 BOOL mqusdExporterWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 {
-    m_log->SetText(L"");
     SyncSettings();
     return 0;
 }
@@ -113,9 +105,6 @@ BOOL mqusdExporterWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     opt.freeze_mirror = m_check_mirror->GetChecked();
     opt.freeze_lathe = m_check_lathe->GetChecked();
     opt.freeze_subdiv = m_check_subdiv->GetChecked();
-    opt.export_normals = m_check_normals->GetChecked();
-    opt.export_colors = m_check_colors->GetChecked();
-    opt.export_material_ids = m_check_mids->GetChecked();
     opt.export_blendshapes = m_check_blendshapes->GetChecked();
     opt.export_skeletons = m_check_skeletons->GetChecked();
 
@@ -123,6 +112,7 @@ BOOL mqusdExporterWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     opt.flip_yz = m_check_flip_yz->GetChecked();
     opt.flip_faces = m_check_flip_faces->GetChecked();
     opt.merge_meshes = m_check_merge->GetChecked();
+    opt.merge_only_visible = m_check_merge_only_visible->GetChecked();
 
     return 0;
 }
@@ -149,9 +139,6 @@ void mqusdExporterWindow::SyncSettings()
     m_check_lathe->SetChecked(opt.freeze_lathe);
     m_check_subdiv->SetChecked(opt.freeze_subdiv);
 
-    m_check_normals->SetChecked(opt.export_normals);
-    m_check_colors->SetChecked(opt.export_colors);
-    m_check_mids->SetChecked(opt.export_material_ids);
     m_check_blendshapes->SetChecked(opt.export_blendshapes);
     m_check_skeletons->SetChecked(opt.export_skeletons);
 
@@ -184,12 +171,6 @@ bool mqusdExporterWindow::DoExport(MQDocument doc)
     exporter->initialize(doc);
     exporter->write(doc, true);
     return true;
-}
-
-void mqusdExporterWindow::LogInfo(const char* message)
-{
-    if (m_log && message)
-        m_log->SetText(mu::ToWCS(message));
 }
 
 } // namespace mqusd

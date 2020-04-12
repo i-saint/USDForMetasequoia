@@ -24,7 +24,7 @@ struct serializable
 
 
 
-// align
+// keep 4 byte align to directly map with SharedVector later.
 static const int serialize_align = 4;
 
 inline void write_align(serializer& s, size_t written_size)
@@ -96,13 +96,25 @@ inline void read(deserializer& d, T& v)
 }
 
 
+template<class T>
+struct serialize_nonintrusive
+{
+    static constexpr bool value = true;
+};
+
+template<class T>
+struct serialize_intrusive
+{
+    static constexpr bool value = true;
+    static void serialize(serializer& s, const T& v) { const_cast<T&>(v).serialize(s); }
+    static void deserialize(deserializer& d, T& v) { v.deserialize(d); }
+};
+
 // specializations
 
 template<class T>
-struct serializable<std::shared_ptr<T>>
+struct serializable<std::shared_ptr<T>> : serialize_nonintrusive<T>
 {
-    static constexpr bool value = true;
-
     static void serialize(serializer& s, const std::shared_ptr<T>& v)
     {
         // flag to distinct from null
@@ -118,15 +130,13 @@ struct serializable<std::shared_ptr<T>>
         if (is_null != 0)
             T::create(d, v);
         else
-            v = {};
+            v = nullptr;
     }
 };
 
 template<class T>
-struct serializable<std::basic_string<T>>
+struct serializable<std::basic_string<T>> : serialize_nonintrusive<T>
 {
-    static constexpr bool value = true;
-
     static void serialize(serializer& s, const std::basic_string<T>& v)
     {
         uint32_t size = (uint32_t)v.size();
@@ -144,10 +154,8 @@ struct serializable<std::basic_string<T>>
 };
 
 template<class T>
-struct serializable<std::vector<T>>
+struct serializable<std::vector<T>> : serialize_nonintrusive<T>
 {
-    static constexpr bool value = true;
-
     static void serialize(serializer& s, const std::vector<T>& v)
     {
         uint32_t size = (uint32_t)v.size();
@@ -167,16 +175,14 @@ struct serializable<std::vector<T>>
 };
 
 template<class T>
-struct serializable<SharedVector<T>>
+struct serializable<SharedVector<T>> : serialize_nonintrusive<T>
 {
-    static constexpr bool value = true;
-
     static void serialize(serializer& s, const SharedVector<T>& v)
     {
         uint32_t size = (uint32_t)v.size();
         write(s, size);
         write(s, v.cdata(), size);
-        write_align(s, sizeof(T) * size); // keep 4 byte alignment
+        write_align(s, sizeof(T) * size); // align
     }
 
     static void deserialize(deserializer& d, SharedVector<T>& v)
@@ -198,15 +204,8 @@ struct serializable<SharedVector<T>>
 
 } // namespace sg
 
-#define sgDeclPtr(T) using T##Ptr = std::shared_ptr<T>
-#define sgSerializable(T) \
-    template<>\
-    struct serializable<T>\
-    {\
-        static constexpr bool value = true;\
-        static void serialize(serializer& s, const T& v) { const_cast<T&>(v).serialize(s); }\
-        static void deserialize(deserializer& d, T& v) { v.deserialize(d); }\
-    }
 
+#define sgSerializable(T) template<> struct serializable<T> : serialize_intrusive<T> {};
 #define sgWrite(V) sg::write(s, V);
 #define sgRead(V) sg::read(d, V);
+#define sgDeclPtr(T) using T##Ptr = std::shared_ptr<T>

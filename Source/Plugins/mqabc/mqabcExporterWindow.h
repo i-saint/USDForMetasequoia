@@ -22,7 +22,6 @@ public:
     void SyncSettings();
     void SetOutputPath(const std::wstring& path);
     bool DoExport(MQDocument doc);
-    void LogInfo(const char* message);
 
 private:
     MQBasePlugin* m_plugin = nullptr;
@@ -34,17 +33,13 @@ private:
     MQCheckBox* m_check_lathe = nullptr;
     MQCheckBox* m_check_subdiv = nullptr;
 
-    MQCheckBox* m_check_normals = nullptr;
-    MQCheckBox* m_check_colors = nullptr;
-    MQCheckBox* m_check_mids = nullptr;
-
     MQCheckBox* m_check_flip_x = nullptr;
     MQCheckBox* m_check_flip_yz = nullptr;
     MQCheckBox* m_check_flip_faces = nullptr;
     MQCheckBox* m_check_merge = nullptr;
+    MQCheckBox* m_check_merge_only_visible = nullptr;
 
     MQButton* m_button_export = nullptr;
-    MQMemo* m_log = nullptr;
 
 
     ExportOptions m_options;

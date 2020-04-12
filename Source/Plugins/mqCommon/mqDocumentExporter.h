@@ -16,6 +16,7 @@ struct ExportOptions : public ConvertOptions
     bool freeze_lathe = true;
     bool freeze_subdiv = false;
     bool merge_meshes = false;
+    bool merge_only_visible = true;
     bool keep_time = false;
     bool separate_xform = false;
     float frame_rate = 30.0f; // relevant only when keep_time is false

@@ -11,65 +11,56 @@ mqabcImporterWindow::mqabcImporterWindow(MQBasePlugin* plugin, MQWindowBase& par
 
     setlocale(LC_ALL, "");
     SetTitle(L"Import Alembic");
-    SetOutSpace(0.4);
+    SetOutSpace(0.2);
 
-    double outer_margin = 0.2;
-    double inner_margin = 0.1;
+    double outer_margin = 0.3;
+    double inner_margin = 0.3;
 
+    MQFrame* vf = CreateVerticalFrame(this);
+    vf->SetInSpace(inner_margin);
+    vf->SetOutSpace(outer_margin);
 
     {
-        MQFrame* vf = CreateVerticalFrame(this);
-        vf->SetOutSpace(outer_margin);
-        vf->SetInSpace(inner_margin);
 
-        MQFrame* hf = CreateHorizontalFrame(vf);
+        MQGroupBox* group = CreateGroupBox(vf, L"Time");
+        MQFrame* hf = CreateHorizontalFrame(group);
         CreateLabel(hf, L"Time");
         m_edit_time = CreateEdit(hf);
         m_edit_time->SetNumeric(MQEdit::NUMERIC_INT);
         m_edit_time->SetText(L"0");
         m_edit_time->AddChangedEvent(this, &mqabcImporterWindow::OnSampleEdit);
 
-        m_slider_time = CreateSlider(vf);
+        m_slider_time = CreateSlider(group);
         m_slider_time->AddChangingEvent(this, &mqabcImporterWindow::OnSampleSlide);
     }
     {
-        MQFrame* vf = CreateVerticalFrame(this);
-        vf->SetOutSpace(outer_margin);
-        vf->SetInSpace(inner_margin);
-
-        MQFrame* hf = CreateHorizontalFrame(vf);
+        MQGroupBox* group = CreateGroupBox(vf, L"Scale");
+        MQFrame* hf = CreateHorizontalFrame(group);
         CreateLabel(hf, L"Scale Factor");
         m_edit_scale = CreateEdit(hf);
         m_edit_scale->SetNumeric(MQEdit::NUMERIC_DOUBLE);
         m_edit_scale->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
+    }
+    {
+        MQGroupBox* group = CreateGroupBox(vf, L"Convert Options");
 
-        m_check_flip_x = CreateCheckBox(vf, L"Flip X");
+        m_check_flip_x = CreateCheckBox(group, L"Flip X");
         m_check_flip_x->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
 
-        m_check_flip_yz = CreateCheckBox(vf, L"Flip YZ");
+        m_check_flip_yz = CreateCheckBox(group, L"Flip YZ");
         m_check_flip_yz->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
 
-        m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
+        m_check_flip_faces = CreateCheckBox(group, L"Flip Faces");
         m_check_flip_faces->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
 
-        m_check_merge = CreateCheckBox(vf, L"Merge Meshes");
+        m_check_merge = CreateCheckBox(group, L"Merge Meshes");
         m_check_merge->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
 
-        hf = CreateHorizontalFrame(vf);
+        MQFrame* hf = CreateHorizontalFrame(group);
         MQLabel* space = CreateLabel(hf, L" ");
         space->SetWidth(32);
         m_check_merge_only_visible = CreateCheckBox(hf, L"Only Visible");
         m_check_merge_only_visible->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
-    }
-
-    {
-        MQFrame* vf = CreateVerticalFrame(this);
-        vf->SetOutSpace(outer_margin);
-        vf->SetInSpace(inner_margin);
-
-        m_log = CreateMemo(vf);
-        m_log->SetHorzBarStatus(MQMemo::SCROLLBAR_OFF);
-        m_log->SetVertBarStatus(MQMemo::SCROLLBAR_OFF);
     }
 
     this->AddShowEvent(this, &mqabcImporterWindow::OnShow);
@@ -78,7 +69,6 @@ mqabcImporterWindow::mqabcImporterWindow(MQBasePlugin* plugin, MQWindowBase& par
 
 BOOL mqabcImporterWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 {
-    m_log->SetText(L"");
     SyncSettings();
     return 0;
 }
@@ -148,13 +138,6 @@ void mqabcImporterWindow::SyncSettings()
     m_check_flip_faces->SetChecked(opt.flip_faces);
     m_check_merge->SetChecked(opt.merge_meshes);
     m_check_merge_only_visible->SetChecked(opt.merge_only_visible);
-}
-
-void mqabcImporterWindow::LogInfo(const char* message)
-{
-    if (m_log) {
-        m_log->SetText(mu::ToWCS(message));
-    }
 }
 
 bool mqabcImporterWindow::Open(MQDocument doc, const std::string& path)

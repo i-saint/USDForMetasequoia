@@ -22,8 +22,6 @@ public:
 
     void UpdateRelations();
     void SyncSettings();
-    void LogInfo(const char *message);
-
     bool Open(MQDocument doc, const std::string& path);
     bool Close();
     void Seek(MQDocument doc, double t);
@@ -48,8 +46,6 @@ private:
     MQCheckBox* m_check_bake = nullptr;
     MQCheckBox* m_check_merge = nullptr;
     MQCheckBox* m_check_merge_only_visible = nullptr;
-
-    MQMemo* m_log = nullptr;
 
 
     ScenePtr m_scene;
