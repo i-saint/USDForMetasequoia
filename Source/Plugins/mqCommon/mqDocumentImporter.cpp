@@ -50,41 +50,6 @@ DocumentImporter::DocumentImporter(MQBasePlugin* plugin, Scene* scene, const Imp
 {
 }
 
-bool DocumentImporter::initialize(MQDocument /*doc*/)
-{
-    m_mesh_nodes = m_scene->getNodes<MeshNode>();
-    transform_container(m_obj_records, m_mesh_nodes, [](auto& rec, MeshNode* node) {
-        rec.node = node;
-        rec.node->userdata = &rec;
-        rec.blendshape_ids.resize(rec.node->blendshapes.size());
-    });
-
-    transform_container(m_inst_records, m_scene->getNodes<InstancerNode>(), [](auto& rec, InstancerNode* node) {
-        rec.node = node;
-        rec.node->userdata = &rec;
-    });
-    
-    transform_container(m_skel_records, m_scene->getNodes<SkeletonNode>(), [](auto& rec, SkeletonNode* node) {
-        rec.node = node;
-        rec.node->userdata = &rec;
-
-        size_t njoints = rec.node->joints.size();
-        rec.joints.resize(njoints);
-        for (size_t ji = 0; ji < njoints; ++ji) {
-            auto& jrec = rec.joints[ji];
-            jrec.joint = rec.node->joints[ji].get();
-            jrec.joint->userdata = &jrec;
-        }
-    });
-
-    transform_container(m_material_records, m_scene->getNodes<MaterialNode>(), [](auto& rec, MaterialNode* node) {
-        rec.node = node;
-        rec.node->userdata = &rec;
-    });
-
-    return true;
-}
-
 void DocumentImporter::clearDocument(MQDocument doc)
 {
     MQEachObject(doc, [doc](MQObject /*obj*/, int i) {
@@ -164,6 +129,38 @@ bool DocumentImporter::deleteMQObject(MQDocument doc, UINT id)
     return false;
 }
 
+bool DocumentImporter::setup()
+{
+    m_mesh_nodes = m_scene->getNodes<MeshNode>();
+    transform_container(m_obj_records, m_mesh_nodes, [](auto& rec, MeshNode* node) {
+        rec.node = node;
+        rec.node->userdata = &rec;
+        rec.blendshape_ids.resize(rec.node->blendshapes.size());
+    });
+
+    transform_container(m_inst_records, m_scene->getNodes<InstancerNode>(), [](auto& rec, InstancerNode* node) {
+        rec.node = node;
+        rec.node->userdata = &rec;
+    });
+    
+    transform_container(m_skel_records, m_scene->getNodes<SkeletonNode>(), [](auto& rec, SkeletonNode* node) {
+        rec.node = node;
+        rec.node->userdata = &rec;
+
+        transform_container(rec.joints, rec.node->joints, [](auto& jrec, JointPtr& joint) {
+            jrec.joint = joint.get();
+            jrec.joint->userdata = &jrec;
+        });
+    });
+
+    transform_container(m_material_records, m_scene->getNodes<MaterialNode>(), [](auto& rec, MaterialNode* node) {
+        rec.node = node;
+        rec.node->userdata = &rec;
+    });
+
+    return true;
+}
+
 bool DocumentImporter::read(MQDocument doc, double t)
 {
     if (!m_scene)
@@ -196,6 +193,7 @@ bool DocumentImporter::read(MQDocument doc, double t)
 
     // read scene
     m_scene->read(t);
+    setup();
 
     // convert
     mu::parallel_for_each(m_scene->nodes.begin(), m_scene->nodes.end(), [this](NodePtr& n) {
@@ -476,12 +474,12 @@ bool DocumentImporter::updateMesh(MQDocument /*doc*/, MQObject obj, const MeshNo
             }
         }
 
-        int jpv = src.joints_per_vertex;
+        uint32_t jpv = src.joints_per_vertex;
         auto* indices = src.joint_indices.cdata();
         auto* weights = src.joint_weights.cdata();
 
         auto assign_weight = [&](int pi) {
-            for (int ji = 0; ji < jpv; ++ji) {
+            for (uint32_t ji = 0; ji < jpv; ++ji) {
                 float weight = weights[ji];
                 if (weight > 0) {
                     m_bone_manager->SetVertexWeight(obj, obj->GetVertexUniqueID(pi), joint_ids[indices[ji]], weight);

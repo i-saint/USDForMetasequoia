@@ -158,7 +158,6 @@ bool mqabcImporterWindow::Open(MQDocument doc, const std::string& path)
     }
 
     m_importer.reset(new DocumentImporter(m_plugin, m_scene.get(), &m_options));
-    m_importer->initialize(doc);
     m_importer->read(doc, m_scene->time_start);
 
     m_slider_time->SetMin(0.0);

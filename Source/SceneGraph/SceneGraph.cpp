@@ -11,17 +11,6 @@ bool IsDefaultTime(double t)
     return std::isnan(t);
 }
 
-static uint32_t GenID()
-{
-    static uint32_t s_seed;
-    if (s_seed == 0) {
-        auto r = std::mt19937{};
-        auto d = std::uniform_int_distribution<uint32_t>{ 0, 0xefffffff };
-        s_seed = d(r);
-    }
-    return ++s_seed;
-}
-
 bool ConvertOptions::operator==(const ConvertOptions& v) const
 {
     return
@@ -55,8 +44,6 @@ void Node::deserialize(deserializer& d)
 Node::Node(Node* p, const char* name)
     : parent(p)
 {
-    scene = Scene::getCurrent();
-    id = GenID();
     if (parent)
         parent->children.push_back(this);
     if (name) {
@@ -1178,7 +1165,7 @@ Scene* Scene::getCurrent()
 }
 
 #define EachMember(F)\
-    F(path) F(nodes) F(up_axis)\
+    F(path) F(nodes) F(root_node) F(up_axis)\
     F(frame_rate) F(frame_count) F(time_start) F(time_end) F(time_current)
 
 void Scene::serialize(serializer& s)
@@ -1310,6 +1297,8 @@ Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
 void Scene::registerNode(Node* n)
 {
     if (n) {
+        n->scene = this;
+        n->id = (uint32_t)nodes.size();
         nodes.push_back(NodePtr(n));
         if (n->getType() == Node::Type::Root)
             root_node = static_cast<RootNode*>(n);

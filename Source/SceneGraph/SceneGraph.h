@@ -131,6 +131,7 @@ public:
     RootNode();
     Type getType() const override;
 };
+sgSerializable(RootNode);
 
 
 class XformNode : public Node
@@ -426,6 +427,8 @@ public:
     void deserialize(deserializer& d);
     operator bool() const;
 
+public:
+    // serializable
     std::string file_path;
     float2 st = float2::zero();
     WrapMode wrap_s = WrapMode::Unknown;
@@ -581,6 +584,7 @@ public:
     // serializable
     std::string path;
     std::vector<NodePtr> nodes;
+    RootNode* root_node = nullptr;
     UpAxis up_axis = UpAxis::Unknown;
     double frame_rate = 30.0;
     int frame_count = 0;
@@ -590,7 +594,6 @@ public:
 
     // non-serializable
     SceneInterfacePtr impl;
-    RootNode* root_node = nullptr;
 };
 sgSerializable(Scene);
 sgDeclPtr(Scene);

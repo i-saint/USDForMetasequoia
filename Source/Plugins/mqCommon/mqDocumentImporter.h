@@ -25,7 +25,6 @@ class DocumentImporter
 {
 public:
     DocumentImporter(MQBasePlugin* plugin, Scene* scene, const ImportOptions* options);
-    bool initialize(MQDocument doc);
     bool read(MQDocument doc, double t);
 
 private:
@@ -64,6 +63,7 @@ private:
         UINT mqid = 0;
     };
 
+    bool setup();
     void clearDocument(MQDocument doc);
     std::string makeUniqueObjectName(MQDocument doc, const std::string& name, MQObject ignored = nullptr);
     std::string makeUniqueMaterialName(MQDocument doc, const std::string& name, MQMaterial ignored = nullptr);
