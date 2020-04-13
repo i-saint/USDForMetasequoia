@@ -33,9 +33,11 @@ private:
     MQCheckBox* m_check_lathe = nullptr;
     MQCheckBox* m_check_subdiv = nullptr;
 
+    MQCheckBox* m_check_flip_v = nullptr;
     MQCheckBox* m_check_flip_x = nullptr;
     MQCheckBox* m_check_flip_yz = nullptr;
     MQCheckBox* m_check_flip_faces = nullptr;
+
     MQCheckBox* m_check_merge = nullptr;
     MQCheckBox* m_check_merge_only_visible = nullptr;
 

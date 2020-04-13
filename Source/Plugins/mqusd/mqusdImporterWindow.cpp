@@ -44,18 +44,6 @@ mqusdImporterWindow::mqusdImporterWindow(MQBasePlugin* plugin, MQWindowBase& par
         m_edit_scale->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
     }
     {
-        MQGroupBox* group = CreateGroupBox(vf, L"Convert Options");
-
-        m_check_flip_x = CreateCheckBox(group, L"Flip X");
-        m_check_flip_x->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
-
-        m_check_flip_yz = CreateCheckBox(group, L"Flip YZ");
-        m_check_flip_yz->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
-
-        m_check_flip_faces = CreateCheckBox(group, L"Flip Faces");
-        m_check_flip_faces->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
-    }
-    {
         MQGroupBox* group = CreateGroupBox(vf, L"Components");
 
         m_check_blendshapes = CreateCheckBox(group, L"Import Blendshapes");
@@ -66,6 +54,21 @@ mqusdImporterWindow::mqusdImporterWindow(MQBasePlugin* plugin, MQWindowBase& par
 
         m_check_instancers = CreateCheckBox(group, L"Import Instancers");
         m_check_instancers->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
+    }
+    {
+        MQGroupBox* group = CreateGroupBox(vf, L"Convert Options");
+
+        m_check_flip_v = CreateCheckBox(group, L"Flip V");
+        m_check_flip_v->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
+
+        m_check_flip_x = CreateCheckBox(group, L"Flip X");
+        m_check_flip_x->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
+
+        m_check_flip_yz = CreateCheckBox(group, L"Flip YZ");
+        m_check_flip_yz->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
+
+        m_check_flip_faces = CreateCheckBox(group, L"Flip Faces");
+        m_check_flip_faces->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
     }
     {
         MQGroupBox* group = CreateGroupBox(vf, L"Bake");
@@ -140,12 +143,15 @@ BOOL mqusdImporterWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
             opt.scale_factor = (float)value;
     }
 
-    opt.flip_x = m_check_flip_x->GetChecked();
-    opt.flip_yz = m_check_flip_yz->GetChecked();
-    opt.flip_faces = m_check_flip_faces->GetChecked();
     opt.import_blendshapes = m_check_blendshapes->GetChecked();
     opt.import_skeletons = m_check_skeletons->GetChecked();
     opt.import_instancers = m_check_instancers->GetChecked();
+
+    opt.flip_v = m_check_flip_v->GetChecked();
+    opt.flip_x = m_check_flip_x->GetChecked();
+    opt.flip_yz = m_check_flip_yz->GetChecked();
+    opt.flip_faces = m_check_flip_faces->GetChecked();
+
     opt.bake_meshes = m_check_bake->GetChecked();
     opt.merge_meshes = m_check_merge->GetChecked();
     opt.merge_only_visible = m_check_merge_only_visible->GetChecked();
@@ -181,12 +187,15 @@ void mqusdImporterWindow::SyncSettings()
     swprintf(buf, buf_len, L"%.2f", opt.scale_factor);
     m_edit_scale->SetText(buf);
 
-    m_check_flip_x->SetChecked(opt.flip_x);
-    m_check_flip_yz->SetChecked(opt.flip_yz);
-    m_check_flip_faces->SetChecked(opt.flip_faces);
     m_check_blendshapes->SetChecked(opt.import_blendshapes);
     m_check_skeletons->SetChecked(opt.import_skeletons);
     m_check_instancers->SetChecked(opt.import_instancers);
+
+    m_check_flip_v->SetChecked(opt.flip_v);
+    m_check_flip_x->SetChecked(opt.flip_x);
+    m_check_flip_yz->SetChecked(opt.flip_yz);
+    m_check_flip_faces->SetChecked(opt.flip_faces);
+
     m_check_bake->SetChecked(opt.bake_meshes);
     m_check_merge->SetChecked(opt.merge_meshes);
     m_check_merge_only_visible->SetChecked(opt.merge_only_visible);

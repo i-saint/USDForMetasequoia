@@ -53,6 +53,9 @@ mqusdExporterWindow::mqusdExporterWindow(MQBasePlugin* plugin, MQWindowBase& par
     {
         MQGroupBox* group = CreateGroupBox(vf, L"Convert Options");
 
+        m_check_flip_v = CreateCheckBox(group, L"Flip V");
+        m_check_flip_v->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
+
         m_check_flip_x = CreateCheckBox(group, L"Flip X");
         m_check_flip_x->AddChangedEvent(this, &mqusdExporterWindow::OnSettingsUpdate);
 
@@ -102,15 +105,18 @@ BOOL mqusdExporterWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
         if (value != 0.0)
             opt.scale_factor = (float)value;
     }
-    opt.freeze_mirror = m_check_mirror->GetChecked();
-    opt.freeze_lathe = m_check_lathe->GetChecked();
-    opt.freeze_subdiv = m_check_subdiv->GetChecked();
     opt.export_blendshapes = m_check_blendshapes->GetChecked();
     opt.export_skeletons = m_check_skeletons->GetChecked();
 
+    opt.freeze_mirror = m_check_mirror->GetChecked();
+    opt.freeze_lathe = m_check_lathe->GetChecked();
+    opt.freeze_subdiv = m_check_subdiv->GetChecked();
+
+    opt.flip_v = m_check_flip_v->GetChecked();
     opt.flip_x = m_check_flip_x->GetChecked();
     opt.flip_yz = m_check_flip_yz->GetChecked();
     opt.flip_faces = m_check_flip_faces->GetChecked();
+
     opt.merge_meshes = m_check_merge->GetChecked();
     opt.merge_only_visible = m_check_merge_only_visible->GetChecked();
 
@@ -135,17 +141,20 @@ void mqusdExporterWindow::SyncSettings()
     swprintf(buf, buf_len, L"%.3f", opt.scale_factor);
     m_edit_scale->SetText(buf);
 
+    m_check_blendshapes->SetChecked(opt.export_blendshapes);
+    m_check_skeletons->SetChecked(opt.export_skeletons);
+
     m_check_mirror->SetChecked(opt.freeze_mirror);
     m_check_lathe->SetChecked(opt.freeze_lathe);
     m_check_subdiv->SetChecked(opt.freeze_subdiv);
 
-    m_check_blendshapes->SetChecked(opt.export_blendshapes);
-    m_check_skeletons->SetChecked(opt.export_skeletons);
-
+    m_check_flip_v->SetChecked(opt.flip_v);
     m_check_flip_x->SetChecked(opt.flip_x);
     m_check_flip_yz->SetChecked(opt.flip_yz);
     m_check_flip_faces->SetChecked(opt.flip_faces);
+
     m_check_merge->SetChecked(opt.merge_meshes);
+    m_check_merge_only_visible->SetChecked(opt.merge_only_visible);
 }
 
 void mqusdExporterWindow::SetOutputPath(const std::wstring& path)

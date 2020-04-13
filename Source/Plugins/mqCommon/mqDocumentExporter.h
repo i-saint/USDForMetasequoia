@@ -14,6 +14,7 @@ struct ExportOptions : public ConvertOptions
     bool freeze_mirror = true;
     bool freeze_lathe = true;
     bool freeze_subdiv = false;
+    bool bake_meshes = false;
     bool merge_meshes = false;
     bool merge_only_visible = true;
     bool keep_time = false;

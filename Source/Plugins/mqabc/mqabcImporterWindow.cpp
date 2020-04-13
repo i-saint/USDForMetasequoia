@@ -44,6 +44,9 @@ mqabcImporterWindow::mqabcImporterWindow(MQBasePlugin* plugin, MQWindowBase& par
     {
         MQGroupBox* group = CreateGroupBox(vf, L"Convert Options");
 
+        m_check_flip_v = CreateCheckBox(group, L"Flip V");
+        m_check_flip_v->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
+
         m_check_flip_x = CreateCheckBox(group, L"Flip X");
         m_check_flip_x->AddChangedEvent(this, &mqabcImporterWindow::OnSettingsUpdate);
 
@@ -118,9 +121,11 @@ BOOL mqabcImporterWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
             opt.scale_factor = (float)value;
     }
 
+    opt.flip_v = m_check_flip_v->GetChecked();
     opt.flip_x = m_check_flip_x->GetChecked();
     opt.flip_yz = m_check_flip_yz->GetChecked();
     opt.flip_faces = m_check_flip_faces->GetChecked();
+
     opt.merge_meshes = m_check_merge->GetChecked();
     opt.merge_only_visible = m_check_merge_only_visible->GetChecked();
 
@@ -143,9 +148,11 @@ void mqabcImporterWindow::SyncSettings()
     swprintf(buf, buf_len, L"%.2f", opt.scale_factor);
     m_edit_scale->SetText(buf);
 
+    m_check_flip_v->SetChecked(opt.flip_v);
     m_check_flip_x->SetChecked(opt.flip_x);
     m_check_flip_yz->SetChecked(opt.flip_yz);
     m_check_flip_faces->SetChecked(opt.flip_faces);
+
     m_check_merge->SetChecked(opt.merge_meshes);
     m_check_merge_only_visible->SetChecked(opt.merge_only_visible);
 }

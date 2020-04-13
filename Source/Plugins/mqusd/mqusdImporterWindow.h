@@ -37,13 +37,15 @@ private:
     MQSlider* m_slider_time = nullptr;
     MQEdit* m_edit_scale = nullptr;
 
+    MQCheckBox* m_check_blendshapes = nullptr;
+    MQCheckBox* m_check_skeletons = nullptr;
+    MQCheckBox* m_check_instancers = nullptr;
+
+    MQCheckBox* m_check_flip_v = nullptr;
     MQCheckBox* m_check_flip_x = nullptr;
     MQCheckBox* m_check_flip_yz = nullptr;
     MQCheckBox* m_check_flip_faces = nullptr;
 
-    MQCheckBox* m_check_blendshapes = nullptr;
-    MQCheckBox* m_check_skeletons = nullptr;
-    MQCheckBox* m_check_instancers = nullptr;
     MQCheckBox* m_check_bake = nullptr;
     MQCheckBox* m_check_merge = nullptr;
     MQCheckBox* m_check_merge_only_visible = nullptr;

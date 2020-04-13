@@ -11,6 +11,7 @@ mqabcRecorderWindow::mqabcRecorderWindow(MQBasePlugin* plugin, MQWindowBase& par
     m_plugin = dynamic_cast<mqabcRecorderPlugin*>(plugin);
 
     m_options.merge_meshes = true;
+    m_options.merge_only_visible = true;
     m_options.export_blendshapes = false;
     m_options.export_skeletons = false;
     m_options.separate_xform = true;
@@ -38,7 +39,7 @@ mqabcRecorderWindow::mqabcRecorderWindow(MQBasePlugin* plugin, MQWindowBase& par
         }
     }
     {
-        MQGroupBox* group = CreateGroupBox(vf, L"Components");
+        MQGroupBox* group = CreateGroupBox(vf, L"Vertex Elements");
 
         m_check_normals = CreateCheckBox(group, L"Export Normals");
         m_check_normals->AddChangedEvent(this, &mqabcRecorderWindow::OnSettingsUpdate);
@@ -63,6 +64,9 @@ mqabcRecorderWindow::mqabcRecorderWindow(MQBasePlugin* plugin, MQWindowBase& par
     }
     {
         MQGroupBox* group = CreateGroupBox(vf, L"Convert Options");
+
+        m_check_flip_v = CreateCheckBox(group, L"Flip V");
+        m_check_flip_v->AddChangedEvent(this, &mqabcRecorderWindow::OnSettingsUpdate);
 
         m_check_flip_x = CreateCheckBox(group, L"Flip X");
         m_check_flip_x->AddChangedEvent(this, &mqabcRecorderWindow::OnSettingsUpdate);
@@ -135,10 +139,12 @@ BOOL mqabcRecorderWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     opt.freeze_mirror = m_check_mirror->GetChecked();
     opt.freeze_lathe = m_check_lathe->GetChecked();
     opt.freeze_subdiv = m_check_subdiv->GetChecked();
+
     opt.export_normals = m_check_normals->GetChecked();
     opt.export_colors = m_check_colors->GetChecked();
     opt.export_materials = m_check_materials->GetChecked();
 
+    opt.flip_v = m_check_flip_v->GetChecked();
     opt.flip_x = m_check_flip_x->GetChecked();
     opt.flip_yz = m_check_flip_yz->GetChecked();
     opt.flip_faces = m_check_flip_faces->GetChecked();
@@ -203,9 +209,10 @@ void mqabcRecorderWindow::SyncSettings()
     m_check_colors->SetChecked(opt.export_colors);
     m_check_materials->SetChecked(opt.export_materials);
 
-    m_check_flip_faces->SetChecked(opt.flip_faces);
+    m_check_flip_v->SetChecked(opt.flip_v);
     m_check_flip_x->SetChecked(opt.flip_x);
     m_check_flip_yz->SetChecked(opt.flip_yz);
+    m_check_flip_faces->SetChecked(opt.flip_faces);
 
     if (IsRecording()) {
         SetBackColor(MQCanvasColor(255, 0, 0));
