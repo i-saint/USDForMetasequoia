@@ -100,7 +100,7 @@ std::string USDNode::makeUniqueName(const std::string& name) const
 USDRootNode::USDRootNode(UsdPrim prim)
     : super(nullptr, prim, false)
 {
-    setNode(new RootNode());
+    setNode(CreateNode<RootNode>(nullptr, prim));
 }
 
 USDRootNode::USDRootNode(Node* n, UsdPrim prim)

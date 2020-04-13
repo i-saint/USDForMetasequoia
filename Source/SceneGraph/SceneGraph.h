@@ -46,7 +46,7 @@ struct ConvertOptions
 };
 
 
-class Node : public std::enable_shared_from_this<Node>
+class Node
 {
 public:
     enum class Type
@@ -164,8 +164,9 @@ public:
 sgSerializable(XformNode);
 
 
-struct BlendshapeTarget : public std::enable_shared_from_this<BlendshapeTarget>
+class BlendshapeTarget
 {
+public:
     SharedVector<float3> point_offsets;
     SharedVector<float3> normal_offsets;
     float weight = 0.0f;
@@ -223,7 +224,7 @@ public:
 sgSerializable(SkelRootNode);
 
 
-class Joint : public std::enable_shared_from_this<Joint>
+class Joint
 {
 public:
     Joint();
@@ -282,7 +283,7 @@ public:
 sgSerializable(SkeletonNode);
 
 
-class FaceSet : public std::enable_shared_from_this<FaceSet>
+class FaceSet
 {
 public:
     void serialize(serializer& s) const;
@@ -426,7 +427,7 @@ enum class WrapMode : int
     Black,
 };
 
-class Texture : public std::enable_shared_from_this<Texture>
+class Texture
 {
 public:
     static const float4 default_fallback;
@@ -502,7 +503,7 @@ enum class UpAxis : int
 class SceneInterface
 {
 public:
-    virtual ~SceneInterface();
+    virtual ~SceneInterface() {}
     virtual bool open(const char* path) = 0;
     virtual bool create(const char* path) = 0;
     virtual bool save() = 0;

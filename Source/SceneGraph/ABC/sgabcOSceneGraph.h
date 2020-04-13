@@ -145,6 +145,7 @@ public:
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
     bool wrapNode(Node* node) override;
 
+    Scene* getHostScene();
     uint32_t getWriteCount() const;
     uint32_t getTimeSampling(double start_time);
     ABCONode* findABCNodeImpl(const std::string& path);

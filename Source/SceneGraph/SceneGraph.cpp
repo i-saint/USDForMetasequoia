@@ -1347,13 +1347,10 @@ Node* Scene::createNodeImpl(Node* parent, const char* name, Node::Type type)
         Case(Material, MaterialNode);
         Case(Unknown, Node);
 #undef Case
+    case Node::Type::Root: ret = new RootNode(); break;
     default: break;
     }
     return ret;
-}
-
-SceneInterface::~SceneInterface()
-{
 }
 
 } // namespace sg

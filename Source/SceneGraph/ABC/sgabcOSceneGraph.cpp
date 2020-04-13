@@ -6,9 +6,11 @@ namespace sg {
 template<class NodeT>
 static inline NodeT* CreateNode(ABCONode* parent, Abc::OObject* obj)
 {
-    return new NodeT(
+    auto ret = ABCOScene::getCurrent()->getHostScene()->createNodeImpl(
         parent ? parent->m_node : nullptr,
-        obj->getName().c_str());
+        obj->getName().c_str(),
+        NodeT::node_type);
+    return static_cast<NodeT*>(ret);
 }
 
 template<class T>
@@ -112,7 +114,7 @@ std::string ABCONode::makeUniqueName(const std::string& name) const
 ABCORootNode::ABCORootNode(Abc::OObject* obj)
     : super(nullptr, obj, false)
 {
-    setNode(new RootNode());
+    setNode(CreateNode<RootNode>(nullptr, obj));
 }
 
 
@@ -443,6 +445,11 @@ bool ABCOScene::wrapNode(Node* /*node*/)
 {
     // not supported
     return false;
+}
+
+Scene* ABCOScene::getHostScene()
+{
+    return m_scene;
 }
 
 uint32_t ABCOScene::getWriteCount() const

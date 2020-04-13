@@ -5,19 +5,20 @@
 
 namespace sg {
 
-using type_creator = void*(*)();
-void register_type(const char* name, type_creator creator);
+using creator_t = void* (*)();
+void register_type(const char* name, creator_t c);
+
 void* create_instance_(const char* name);
+template<class T> T* create_instance(const char* name) { return static_cast<T*>(create_instance_(name)); }
 
 template<class T>
-T* create_instance(const char* name) { return static_cast<T*>(create_instance_(name)); }
-
-
 struct type_registrar
 {
-    type_registrar(const char* name, type_creator creator)
+    static void* create() { return new T(); }
+
+    type_registrar()
     {
-        register_type(name, creator);
+        register_type(typeid(T).name(), &create);
     }
 };
 
@@ -52,12 +53,6 @@ template<size_t n, sgEnableIf(n % serialize_align != 0)> inline void read_align(
     d.read(&dummy, serialize_align - (n % serialize_align));
 }
 
-
-template<class T>
-struct serializable_pod
-{
-    static constexpr bool value = std::is_pod<T>::value && !std::is_pointer<T>::value;
-};
 
 // POD
 template<class T, sgEnableIf(serializable_pod<T>::value)>
@@ -112,7 +107,7 @@ inline uint32_t read_string(deserializer& d, char*& v, uint32_t n)
     uint32_t len;
     read(d, len);
     if (len >= n) {
-        // exceeds buffer size. create new string.
+        // exceeds buffer size. allocate new string.
         v = new char[len + 1];
     }
 
@@ -168,12 +163,6 @@ inline hptr read(deserializer& d, T*& v)
 // specializations
 
 template<class T>
-struct serialize_nonintrusive
-{
-    static constexpr bool value = true;
-};
-
-template<class T>
 struct serializable<std::unique_ptr<T>> : serialize_nonintrusive<T>
 {
     static void serialize(serializer& s, const std::unique_ptr<T>& v)
@@ -202,11 +191,14 @@ struct serializable<std::shared_ptr<T>> : serialize_nonintrusive<T>
         T* p;
         hptr handle = read(d, p);
         if (p) {
-            // shared_from_this() can be used only when already owned. so, track ref count.
-            if (d.getRecord(handle).ref++ == 0)
+            auto& rec = d.getRecord(handle);
+            if (!rec.shared) {
                 v.reset(p);
-            else
-                v = p->shared_from_this();
+                rec.shared = v;
+            }
+            else {
+                v = std::static_pointer_cast<T>(rec.shared);
+            }
         }
 #ifdef mqusdDebug
         else if(!handle.isNull()) {
@@ -289,9 +281,7 @@ struct serializable<SharedVector<T>> : serialize_nonintrusive<T>
 } // namespace sg
 
 
-#define sgRegisterClass(T)\
-    static void* create_##T() { return new T(); }\
-    static sg::type_registrar s_register_##T(typeid(T).name(), create_##T);
+#define sgRegisterClass(T) static ::sg::type_registrar<T> s_register_##T
 
 #define sgWrite(V) sg::write(s, V);
 #define sgRead(V) sg::read(d, V);

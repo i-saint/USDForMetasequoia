@@ -45,7 +45,7 @@ public:
     struct Record
     {
         pointer_t pointer = nullptr;
-        int ref = 0;
+        std::shared_ptr<void> shared;
     };
 
     deserializer(std::istream& s);
@@ -76,6 +76,18 @@ struct serializable
 };
 
 template<class T>
+struct serializable_pod
+{
+    static constexpr bool value = std::is_pod<T>::value && !std::is_pointer<T>::value;
+};
+
+template<class T>
+struct serialize_nonintrusive
+{
+    static constexpr bool value = true;
+};
+
+template<class T>
 struct serialize_intrusive
 {
     static constexpr bool value = true;
@@ -86,5 +98,5 @@ struct serialize_intrusive
 } // namespace sg
 
 
-#define sgSerializable(T) template<> struct serializable<T> : serialize_intrusive<T> {};
+#define sgSerializable(T) template<> struct ::sg::serializable<T> : ::sg::serialize_intrusive<T> {};
 #define sgDeclPtr(T) using T##Ptr = std::shared_ptr<T>

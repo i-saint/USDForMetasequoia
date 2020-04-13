@@ -7,45 +7,78 @@ namespace sg {
 struct type_record
 {
     const char* name;
-    type_creator creator;
+    creator_t creator;
 };
 
-static std::vector<type_record>& get_type_records()
+class type_table
 {
-    static std::vector<type_record> s_records;
-    return s_records;
-}
+public:
+    static type_table& getInstance()
+    {
+        static type_table s_inst;
+        return s_inst;
+    }
 
-void register_type(const char* name, type_creator creator)
+    void append(const char* name, creator_t c)
+    {
+        // if the type is already registered, update the record.
+        // this is a common occurrence when hot-reloading dlls.
+        if (auto* rec = find(name)) {
+            rec->creator = c;
+        }
+        else {
+            m_records.push_back({ name, c });
+            m_dirty = true;
+        }
+    }
+
+    type_record* find(const char* name)
+    {
+        sort();
+
+        auto it = std::lower_bound(m_records.begin(), m_records.end(), name, [](type_record& a, const char* name) {
+            return std::strcmp(a.name, name) < 0;
+        });
+
+        if (it != m_records.end() && std::strcmp(it->name, name) == 0)
+            return &*it;
+        else
+            return nullptr;
+    }
+
+private:
+    type_table()
+    {}
+
+    void sort()
+    {
+        if (!m_dirty)
+            return;
+
+        m_dirty = false;
+        std::sort(m_records.begin(), m_records.end(), [](type_record& a, type_record& b) {
+            return std::strcmp(a.name, b.name) < 0;
+        });
+    }
+
+private:
+    std::vector<type_record> m_records;
+    bool m_dirty = false;
+};
+
+using register_type_t = void(*)(const char*, creator_t);
+using create_instance_t = void*(*)(const char* name);
+
+void register_type(const char* name, creator_t c)
 {
-    auto& records = get_type_records();
-    records.push_back({ name, creator });
+    type_table::getInstance().append(name, c);
 }
 
 void* create_instance_(const char* name)
 {
-    static std::once_flag s_once;
-
-    auto& records = get_type_records();
-    std::call_once(s_once, [&records]() {
-        // sort records
-        std::sort(records.begin(), records.end(), [](auto& a, auto& b) {
-            return std::strcmp(a.name, b.name) < 0;
-        });
-    });
-
-    // find record and call creator
-    auto it = std::lower_bound(records.begin(), records.end(), name, [](auto& a, const char* name) {
-        return std::strcmp(a.name, name) < 0;
-    });
-    if (it != records.end() && std::strcmp(it->name, name) == 0) {
-        return it->creator();
-    }
-    else {
-        // should not be here
-        mu::DbgBreak();
-        return nullptr;
-    }
+    if (type_record* rec = type_table::getInstance().find(name))
+        return rec->creator();
+    return nullptr;
 }
 
 

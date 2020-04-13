@@ -119,7 +119,7 @@ std::string ABCINode::getPath() const
 ABCIRootNode::ABCIRootNode(Abc::IObject obj)
     : super(nullptr, obj, false)
 {
-    setNode(new RootNode());
+    setNode(CreateNode<RootNode>(nullptr, obj));
 }
 
 
