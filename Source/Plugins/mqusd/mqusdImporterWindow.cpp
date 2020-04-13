@@ -66,6 +66,9 @@ mqusdImporterWindow::mqusdImporterWindow(MQBasePlugin* plugin, MQWindowBase& par
 
         m_check_instancers = CreateCheckBox(group, L"Import Instancers");
         m_check_instancers->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
+    }
+    {
+        MQGroupBox* group = CreateGroupBox(vf, L"Bake");
 
         m_check_bake = CreateCheckBox(group, L"Bake Meshes");
         m_check_bake->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);

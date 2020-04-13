@@ -16,50 +16,60 @@ mqusdRecorderWindow::mqusdRecorderWindow(MQBasePlugin* plugin, MQWindowBase& par
 
     setlocale(LC_ALL, "");
     SetTitle(L"Recording USD");
-    SetOutSpace(0.4);
+    SetOutSpace(0.2);
 
-    double outer_margin = 0.2;
-    double inner_margin = 0.1;
+    double outer_margin = 0.3;
+    double inner_margin = 0.3;
+
+    MQFrame* vf = CreateVerticalFrame(this);
+    vf->SetOutSpace(outer_margin);
+    vf->SetInSpace(inner_margin);
+    m_frame_settings = vf;
 
     {
-        MQFrame* vf = CreateVerticalFrame(this);
-        vf->SetOutSpace(outer_margin);
-        vf->SetInSpace(inner_margin);
-        m_frame_settings = vf;
-
+        MQGroupBox* group = CreateGroupBox(vf, L"Scale");
         {
-            MQFrame* hf = CreateHorizontalFrame(vf);
+            MQFrame* hf = CreateHorizontalFrame(group);
             CreateLabel(hf, L"Scale Factor");
             m_edit_scale = CreateEdit(hf);
             m_edit_scale->SetNumeric(MQEdit::NUMERIC_DOUBLE);
             m_edit_scale->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
         }
+    }
+    {
+        MQGroupBox* group = CreateGroupBox(vf, L"Elements");
 
-        m_check_normals = CreateCheckBox(vf, L"Export Normals");
+        m_check_normals = CreateCheckBox(group, L"Export Normals");
         m_check_normals->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
-        m_check_colors = CreateCheckBox(vf, L"Export Vertex Colors");
+        m_check_colors = CreateCheckBox(group, L"Export Vertex Colors");
         m_check_colors->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
-        m_check_mids = CreateCheckBox(vf, L"Export Material IDs");
-        m_check_mids->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
+        m_check_materials = CreateCheckBox(group, L"Export Materials");
+        m_check_materials->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
+    }
+    {
+        MQGroupBox* group = CreateGroupBox(vf, L"Freeze");
 
-        m_check_mirror = CreateCheckBox(vf, L"Freeze Mirror");
+        m_check_mirror = CreateCheckBox(group, L"Freeze Mirror");
         m_check_mirror->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
-        m_check_lathe = CreateCheckBox(vf, L"Freeze Lathe");
+        m_check_lathe = CreateCheckBox(group, L"Freeze Lathe");
         m_check_lathe->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
-        m_check_subdiv = CreateCheckBox(vf, L"Freeze Subdiv");
+        m_check_subdiv = CreateCheckBox(group, L"Freeze Subdiv");
         m_check_subdiv->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
+    }
+    {
+        MQGroupBox* group = CreateGroupBox(vf, L"Convert Options");
 
-        m_check_flip_x = CreateCheckBox(vf, L"Flip X");
+        m_check_flip_x = CreateCheckBox(group, L"Flip X");
         m_check_flip_x->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
-        m_check_flip_yz = CreateCheckBox(vf, L"Flip YZ");
+        m_check_flip_yz = CreateCheckBox(group, L"Flip YZ");
         m_check_flip_yz->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
 
-        m_check_flip_faces = CreateCheckBox(vf, L"Flip Faces");
+        m_check_flip_faces = CreateCheckBox(group, L"Flip Faces");
         m_check_flip_faces->AddChangedEvent(this, &mqusdRecorderWindow::OnSettingsUpdate);
     }
 
@@ -127,7 +137,7 @@ BOOL mqusdRecorderWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     opt.freeze_subdiv = m_check_subdiv->GetChecked();
     opt.export_normals = m_check_normals->GetChecked();
     opt.export_colors = m_check_colors->GetChecked();
-    opt.export_material_ids = m_check_mids->GetChecked();
+    opt.export_materials = m_check_materials->GetChecked();
 
     opt.flip_x = m_check_flip_x->GetChecked();
     opt.flip_yz = m_check_flip_yz->GetChecked();
@@ -191,7 +201,7 @@ void mqusdRecorderWindow::SyncSettings()
 
     m_check_normals->SetChecked(opt.export_normals);
     m_check_colors->SetChecked(opt.export_colors);
-    m_check_mids->SetChecked(opt.export_material_ids);
+    m_check_materials->SetChecked(opt.export_materials);
 
     m_check_flip_x->SetChecked(opt.flip_x);
     m_check_flip_yz->SetChecked(opt.flip_yz);

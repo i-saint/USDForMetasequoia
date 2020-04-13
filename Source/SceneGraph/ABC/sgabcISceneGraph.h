@@ -138,6 +138,7 @@ public:
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
     bool wrapNode(Node* node) override;
 
+    Scene* getHostScene();
     ABCINode* findABCNodeImpl(const std::string& path);
     Node* findNodeImpl(const std::string& path);
 

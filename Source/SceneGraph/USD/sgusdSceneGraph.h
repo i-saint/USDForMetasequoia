@@ -323,6 +323,7 @@ public:
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
     bool wrapNode(Node* node) override;
 
+    Scene* getHostScene();
     UsdStageRefPtr& getStage();
     UsdTimeCode toTimeCode(double time) const;
     UsdTimeCode getPrevTime() const;

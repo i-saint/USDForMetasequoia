@@ -1345,6 +1345,7 @@ Node* Scene::createNodeImpl(Node* parent, const char* name, Node::Type type)
         Case(Skeleton, SkeletonNode);
         Case(Instancer, InstancerNode);
         Case(Material, MaterialNode);
+        Case(Unknown, Node);
 #undef Case
     default: break;
     }

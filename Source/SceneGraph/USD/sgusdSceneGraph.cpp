@@ -1355,6 +1355,11 @@ bool USDScene::wrapNode(Node* node)
     return ret;
 }
 
+Scene* USDScene::getHostScene()
+{
+    return m_scene;
+}
+
 UsdStageRefPtr& USDScene::getStage()
 {
     return m_stage;

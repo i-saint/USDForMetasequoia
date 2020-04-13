@@ -6,9 +6,11 @@ namespace sg {
 template<class NodeT>
 static inline NodeT* CreateNode(ABCINode* parent, Abc::IObject obj)
 {
-    return new NodeT(
+    auto ret = ABCIScene::getCurrent()->getHostScene()->createNodeImpl(
         parent ? parent->m_node : nullptr,
-        DecodeNodeName(obj.getName()).c_str());
+        DecodeNodeName(obj.getName()).c_str(),
+        NodeT::node_type);
+    return static_cast<NodeT*>(ret);
 }
 
 template<class NodeT>
@@ -499,6 +501,11 @@ bool ABCIScene::wrapNode(Node* /*node*/)
 {
     // not supported
     return false;
+}
+
+Scene* ABCIScene::getHostScene()
+{
+    return m_scene;
 }
 
 ABCINode* ABCIScene::findABCNodeImpl(const std::string& path)

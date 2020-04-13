@@ -323,13 +323,16 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst, XformNode& xf)
     for (int fi = 0; fi < nfaces; ++fi)
         nindices += obj->GetFacePointCount(fi);
 
-    dst.points.resize_discard(npoints);
-    dst.normals.resize_discard(nindices);
-    dst.uvs.resize_discard(nindices);
-    dst.colors.resize_discard(nindices);
-    dst.material_ids.resize_discard(nfaces);
     dst.counts.resize_discard(nfaces);
     dst.indices.resize_discard(nindices);
+    dst.points.resize_discard(npoints);
+    dst.uvs.resize_discard(nindices);
+    if (m_options->export_normals)
+        dst.normals.resize_discard(nindices);
+    if (m_options->export_colors)
+        dst.colors.resize_discard(nindices);
+    if (m_options->export_materials)
+        dst.material_ids.resize_discard(nfaces);
 
     auto dst_points = dst.points.data();
     auto dst_normals = dst.normals.data();
@@ -349,10 +352,7 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst, XformNode& xf)
         int count = obj->GetFacePointCount(fi);
         if (count == 0)
             continue;
-        dst_counts[fc] = count;
-
-        // material IDs
-        dst_mids[fc] = obj->GetFaceMaterial(fi);
+        *dst_counts++ = count;
 
         // indices
         obj->GetFacePointArray(fi, dst_indices);
@@ -362,24 +362,32 @@ bool DocumentExporter::extractMesh(MQObject obj, MeshNode& dst, XformNode& xf)
         obj->GetFaceCoordinateArray(fi, (MQCoordinate*)dst_uvs);
         dst_uvs += count;
 
+        // material IDs
+        if (m_options->export_materials)
+            *dst_mids++ = obj->GetFaceMaterial(fi);
+
         for (int ci = 0; ci < count; ++ci) {
             // vertex color
-            *(dst_colors++) = mu::Color32ToFloat4(obj->GetFaceVertexColor(fi, ci));
+            if (m_options->export_colors)
+                *dst_colors++ = mu::Color32ToFloat4(obj->GetFaceVertexColor(fi, ci));
 
 #if MQPLUGIN_VERSION >= 0x0460
             // normal
-            BYTE flags;
-            obj->GetFaceVertexNormal(fi, ci, flags, (MQPoint&)*(dst_normals++));
+            if (m_options->export_normals) {
+                BYTE flags;
+                obj->GetFaceVertexNormal(fi, ci, flags, (MQPoint&)*(dst_normals++));
+            }
 #endif
         }
-
         ++fc;
     }
 
     if (nfaces != fc) {
         // refit
         dst.counts.resize(fc);
-        dst.material_ids.resize(fc);
+
+        if (dst.material_ids.size() == dst.counts.size())
+            dst.material_ids.resize(fc);
     }
 
 #if MQPLUGIN_VERSION >= 0x0470

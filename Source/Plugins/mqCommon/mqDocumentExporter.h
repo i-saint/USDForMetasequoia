@@ -8,7 +8,6 @@ struct ExportOptions : public ConvertOptions
     bool export_uvs = true;
     bool export_normals = true;
     bool export_colors = false;
-    bool export_material_ids = true;
     bool export_materials = true;
     bool export_blendshapes = true;
     bool export_skeletons = true;

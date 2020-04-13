@@ -42,7 +42,7 @@ private:
 
     MQCheckBox* m_check_normals = nullptr;
     MQCheckBox* m_check_colors = nullptr;
-    MQCheckBox* m_check_mids = nullptr;
+    MQCheckBox* m_check_materials = nullptr;
 
     MQCheckBox* m_check_flip_x = nullptr;
     MQCheckBox* m_check_flip_yz = nullptr;

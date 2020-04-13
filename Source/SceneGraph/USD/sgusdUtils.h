@@ -34,9 +34,11 @@ inline void EachChild(UsdPrim prim, const Body& body)
 template<class NodeT>
 inline NodeT* CreateNode(USDNode* parent, UsdPrim prim)
 {
-    return new NodeT(
+    auto ret = USDScene::getCurrent()->getHostScene()->createNodeImpl(
         parent ? parent->m_node : nullptr,
-        DecodeNodeName(prim.GetName().GetText()).c_str());
+        DecodeNodeName(prim.GetName().GetText()).c_str(),
+        NodeT::node_type);
+    return static_cast<NodeT*>(ret);
 }
 
 template<class T> inline void GetValue(const T& src, float& v, UsdTimeCode t = { default_time })

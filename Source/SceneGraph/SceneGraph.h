@@ -62,6 +62,7 @@ public:
         Material,
         Scope,
     };
+    static const Type node_type = Type::Unknown;
 
     Node();
     Node(Node* parent, const char *name);
@@ -521,7 +522,7 @@ public:
     static Scene* getCurrent();
 
     Scene();
-    ~Scene();
+    virtual ~Scene();
     void serialize(serializer& s) const;
     bool deserialize(deserializer& d);
 
@@ -536,7 +537,6 @@ public:
     Node* findNodeByPath(const std::string& path);
     bool isNodeTypeSupported(Node::Type type) const;
     Node* createNode(Node* parent, const char* name, Node::Type type);
-    void registerNode(Node* n);
 
     template<class NodeT>
     bool isNodeTypeSupported() const
@@ -586,7 +586,8 @@ public:
     }
 
     // internal
-    Node* createNodeImpl(Node* parent, const char* name, Node::Type type);
+    virtual void registerNode(Node* n);
+    virtual Node* createNodeImpl(Node* parent, const char* name, Node::Type type);
 
 public:
     // serializable
