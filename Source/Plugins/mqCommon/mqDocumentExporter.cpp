@@ -70,7 +70,7 @@ Node* DocumentExporter::findOrCreateNode(UINT mqid)
 
                 if (m_options->separate_xform) {
                     rec->xform = m_scene->createNode<XformNode>(parent, rec->name.c_str());
-                    rec->mesh = m_scene->createNode<MeshNode>(rec->xform, (rec->name + "_Mesh").c_str());
+                    rec->mesh = m_scene->createNode<MeshNode>(rec->xform, (rec->name + "Shape").c_str());
                 }
                 else {
                     rec->xform = rec->mesh = m_scene->createNode<MeshNode>(parent, rec->name.c_str());

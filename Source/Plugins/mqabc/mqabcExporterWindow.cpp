@@ -68,8 +68,8 @@ mqabcExporterWindow::mqabcExporterWindow(MQBasePlugin* plugin, MQWindowBase& par
     }
 
     {
-        m_button_export = CreateButton(vf, L"Export");
-        m_button_export->AddClickEvent(this, &mqabcExporterWindow::OnExportClicked);
+        m_button_ok = CreateButton(vf, L"OK");
+        m_button_ok->AddClickEvent(this, &mqabcExporterWindow::OnOKClicked);
     }
 
     this->AddShowEvent(this, &mqabcExporterWindow::OnShow);
@@ -109,7 +109,7 @@ BOOL mqabcExporterWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
     return 0;
 }
 
-BOOL mqabcExporterWindow::OnExportClicked(MQWidgetBase* sender, MQDocument doc)
+BOOL mqabcExporterWindow::OnOKClicked(MQWidgetBase* sender, MQDocument doc)
 {
     if (DoExport(doc)) {
         SetVisible(false);

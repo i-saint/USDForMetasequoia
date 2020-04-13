@@ -15,7 +15,7 @@ mqusdRecorderWindow::mqusdRecorderWindow(MQBasePlugin* plugin, MQWindowBase& par
     m_options.export_skeletons = false;
 
     setlocale(LC_ALL, "");
-    SetTitle(L"Recording USD");
+    SetTitle(L"USD Recorder");
     SetOutSpace(0.2);
 
     double outer_margin = 0.3;
@@ -114,7 +114,7 @@ BOOL mqusdRecorderWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqusdRecorderWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
-    Close();
+    m_plugin->WindowClose();
     return 0;
 }
 

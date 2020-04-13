@@ -16,7 +16,7 @@ mqabcRecorderWindow::mqabcRecorderWindow(MQBasePlugin* plugin, MQWindowBase& par
     m_options.separate_xform = true;
 
     setlocale(LC_ALL, "");
-    SetTitle(L"Recording Alembic");
+    SetTitle(L"Alembic Recorder");
     SetOutSpace(0.2);
 
     double outer_margin = 0.3;
@@ -114,7 +114,7 @@ BOOL mqabcRecorderWindow::OnShow(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqabcRecorderWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 {
-    Close();
+    m_plugin->WindowClose();
     return 0;
 }
 

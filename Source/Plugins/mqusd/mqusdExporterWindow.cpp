@@ -74,7 +74,7 @@ mqusdExporterWindow::mqusdExporterWindow(MQBasePlugin* plugin, MQWindowBase& par
     }
 
     {
-        m_button_export = CreateButton(vf, L"Export");
+        m_button_export = CreateButton(vf, L"OK");
         m_button_export->AddClickEvent(this, &mqusdExporterWindow::OnExportClicked);
     }
 

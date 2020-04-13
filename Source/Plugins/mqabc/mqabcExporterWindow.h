@@ -17,7 +17,7 @@ public:
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
     BOOL OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc);
-    BOOL OnExportClicked(MQWidgetBase* sender, MQDocument doc);
+    BOOL OnOKClicked(MQWidgetBase* sender, MQDocument doc);
 
     void SyncSettings();
     void SetOutputPath(const std::wstring& path);
@@ -39,7 +39,7 @@ private:
     MQCheckBox* m_check_merge = nullptr;
     MQCheckBox* m_check_merge_only_visible = nullptr;
 
-    MQButton* m_button_export = nullptr;
+    MQButton* m_button_ok = nullptr;
 
 
     ExportOptions m_options;

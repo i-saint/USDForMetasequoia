@@ -318,8 +318,18 @@ bool DocumentImporter::read(MQDocument doc, double t)
 
             bool created;
             MQObject obj = findOrCreateMQObject(doc, rec.mqid, parent_id, created);
-            if (created)
-                MQSetName(obj, makeUniqueObjectName(doc, rec.node->getDisplayName(), obj).c_str());
+            if (created) {
+                std::string name;
+                if (rec.node->parent && rec.node->parent->getType() == Node::Type::Xform) {
+                    // this case is likely to be Alembic and parent Xform has a real name.
+                    // (e.g. Xform's name is "Cube" and Mesh's is "CubeShape")
+                    name = rec.node->parent->getDisplayName();
+                }
+                else
+                    name = rec.node->getDisplayName();
+
+                MQSetName(obj, makeUniqueObjectName(doc, name, obj).c_str());
+            }
             return obj;
         };
 

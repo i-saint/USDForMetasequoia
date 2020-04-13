@@ -82,6 +82,10 @@ mqusdImporterWindow::mqusdImporterWindow(MQBasePlugin* plugin, MQWindowBase& par
         m_check_merge_only_visible = CreateCheckBox(hf, L"Only Visible");
         m_check_merge_only_visible->AddChangedEvent(this, &mqusdImporterWindow::OnSettingsUpdate);
     }
+    {
+        m_button_ok = CreateButton(vf, L"OK");
+        m_button_ok->AddClickEvent(this, &mqusdImporterWindow::OnOKClicked);
+    }
 
     this->AddShowEvent(this, &mqusdImporterWindow::OnShow);
     this->AddHideEvent(this, &mqusdImporterWindow::OnHide);
@@ -148,6 +152,12 @@ BOOL mqusdImporterWindow::OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc)
 
     Refresh(doc);
     return 0;
+}
+
+BOOL mqusdImporterWindow::OnOKClicked(MQWidgetBase* sender, MQDocument doc)
+{
+    SetVisible(false);
+    return true;
 }
 
 void mqusdImporterWindow::UpdateRelations()
@@ -223,8 +233,8 @@ void mqusdImporterWindow::Seek(MQDocument doc, double t)
     if (!m_importer)
         return;
 
-    m_seek_time = t + m_scene->time_start;
-    m_importer->read(doc, m_seek_time);
+    m_seek_time = t;
+    m_importer->read(doc, m_seek_time + m_scene->time_start);
 
     // repaint
     MQ_RefreshView(nullptr);
