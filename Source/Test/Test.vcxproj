@@ -16,6 +16,7 @@
     </ClCompile>
     <ClCompile Include="Test.cpp" />
     <ClCompile Include="TestMeshUtils.cpp" />
+    <ClCompile Include="TestSerialization.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MeshUtils\MeshUtils.vcxproj">
@@ -23,6 +24,9 @@
     </ProjectReference>
     <ProjectReference Include="..\Plugins\mqCommon\mqCommon.vcxproj">
       <Project>{b970a73a-2b06-41ad-8870-266153e82d21}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\SceneGraph\SceneGraph.vcxproj">
+      <Project>{0945d37c-f1f1-4b88-b738-85816e37d9af}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

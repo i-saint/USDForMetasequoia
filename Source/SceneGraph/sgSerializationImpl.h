@@ -3,6 +3,13 @@
 #include "sgSerialization.h"
 #include "sgUtils.h"
 
+#include <string>
+#include <vector>
+#include <list>
+#include <set>
+#include <map>
+
+
 namespace sg {
 
 using creator_t = void* (*)();
@@ -209,7 +216,7 @@ struct serializable<std::shared_ptr<T>> : serialize_nonintrusive<T>
 };
 
 template<class T>
-struct serializable<std::basic_string<T>> : serialize_nonintrusive<T>
+struct serializable<std::basic_string<T>> : serialize_nonintrusive<std::basic_string<T>>
 {
     static void serialize(serializer& s, const std::basic_string<T>& v)
     {
@@ -228,7 +235,7 @@ struct serializable<std::basic_string<T>> : serialize_nonintrusive<T>
 };
 
 template<class T>
-struct serializable<std::vector<T>> : serialize_nonintrusive<T>
+struct serializable<std::vector<T>> : serialize_nonintrusive<std::vector<T>>
 {
     static void serialize(serializer& s, const std::vector<T>& v)
     {
@@ -249,7 +256,78 @@ struct serializable<std::vector<T>> : serialize_nonintrusive<T>
 };
 
 template<class T>
-struct serializable<SharedVector<T>> : serialize_nonintrusive<T>
+struct serializable<std::list<T>> : serialize_nonintrusive<std::list<T>>
+{
+    static void serialize(serializer& s, const std::list<T>& v)
+    {
+        uint32_t size = (uint32_t)v.size();
+        write(s, size);
+        for (const auto& e : v)
+            write(s, e);
+    }
+
+    static void deserialize(deserializer& d, std::list<T>& v)
+    {
+        uint32_t size;
+        read(d, size);
+        v.resize(size);
+        for (auto& e : v)
+            read(d, e);
+    }
+};
+
+template<class T>
+struct serializable<std::set<T>> : serialize_nonintrusive<std::set<T>>
+{
+    static void serialize(serializer& s, const std::set<T>& v)
+    {
+        uint32_t size = (uint32_t)v.size();
+        write(s, size);
+        for (const auto& e : v)
+            write(s, e);
+    }
+
+    static void deserialize(deserializer& d, std::set<T>& v)
+    {
+        uint32_t size;
+        read(d, size);
+        for (uint32_t i = 0; i < size; ++i) {
+            T value;
+            read(d, value);
+            v.insert(std::move(value));
+        }
+    }
+};
+
+template<class K, class V>
+struct serializable<std::map<K, V>> : serialize_nonintrusive<std::map<K, V>>
+{
+    static void serialize(serializer& s, const std::map<K, V>& v)
+    {
+        uint32_t size = (uint32_t)v.size();
+        write(s, size);
+        for (const auto& kvp : v) {
+            write(s, kvp.first);
+            write(s, kvp.second);
+        }
+    }
+
+    static void deserialize(deserializer& d, std::map<K, V>& v)
+    {
+        uint32_t size;
+        read(d, size);
+        for (uint32_t i = 0; i < size; ++i) {
+            K key;
+            V value;
+            read(d, key);
+            read(d, value);
+            v.insert(std::make_pair(std::move(key), std::move(value)));
+        }
+    }
+};
+
+template<class T>
+struct serializable<SharedVector<T>> : serialize_nonintrusive<SharedVector<T>>
 {
     static void serialize(serializer& s, const SharedVector<T>& v)
     {
@@ -281,7 +359,9 @@ struct serializable<SharedVector<T>> : serialize_nonintrusive<T>
 } // namespace sg
 
 
-#define sgRegisterClass(T) static ::sg::type_registrar<T> s_register_##T
+#define sgConcat2(x,y) x##y
+#define sgConcat(x, y) sgConcat2(x, y)
+#define sgRegisterType(T) static ::sg::type_registrar<T> sgConcat(g_sg_registrar, __COUNTER__);
 
-#define sgWrite(V) sg::write(s, V);
-#define sgRead(V) sg::read(d, V);
+#define sgWrite(V) ::sg::write(s, V);
+#define sgRead(V) ::sg::read(d, V);

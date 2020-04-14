@@ -78,6 +78,10 @@ void* create_instance_(const char* name)
 {
     if (type_record* rec = type_table::getInstance().find(name))
         return rec->creator();
+
+    // type not found. should not be here.
+    mu::Print("type %s not found. maybe forgot sgRegisterType()?\n", name);
+    mu::DbgBreak();
     return nullptr;
 }
 

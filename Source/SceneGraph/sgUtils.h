@@ -9,31 +9,28 @@
 namespace sg {
 
 
-namespace detail
+template<class R, class... Args>
+struct lambda_traits_impl
 {
-    template<class R, class... Args>
-    struct lambda_traits_impl
-    {
-        using return_type = R;
-        enum { arity = sizeof...(Args) };
+    using return_type = R;
+    enum { arity = sizeof...(Args) };
 
-        template<size_t i> struct arg
-        {
-            using type = typename std::tuple_element<i, std::tuple<Args...>>::type;
-        };
+    template<size_t i> struct arg
+    {
+        using type = typename std::tuple_element<i, std::tuple<Args...>>::type;
     };
-}
+};
 
 template<class L>
 struct lambda_traits : lambda_traits<decltype(&L::operator())>
 {};
 
 template<class R, class T, class... Args>
-struct lambda_traits<R(T::*)(Args...)> : detail::lambda_traits_impl<R, Args...>
+struct lambda_traits<R(T::*)(Args...)> : lambda_traits_impl<R, Args...>
 {};
 
 template<class R, class T, class... Args>
-struct lambda_traits<R(T::*)(Args...) const> : detail::lambda_traits_impl<R, Args...>
+struct lambda_traits<R(T::*)(Args...) const> : lambda_traits_impl<R, Args...>
 {};
 
 

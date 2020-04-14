@@ -25,7 +25,7 @@ bool ConvertOptions::operator!=(const ConvertOptions& v) const
     return !(*this == v);
 }
 
-sgRegisterClass(Node);
+sgRegisterType(Node);
 
 #define EachMember(F)\
     F(path) F(display_name) F(id) F(scene) F(parent) F(children)
@@ -87,7 +87,7 @@ const std::string& Node::getPath() const
 }
 
 
-sgRegisterClass(RootNode);
+sgRegisterType(RootNode);
 
 RootNode::RootNode()
     : super(nullptr, "/")
@@ -100,7 +100,7 @@ Node::Type RootNode::getType() const
 }
 
 
-sgRegisterClass(XformNode);
+sgRegisterType(XformNode);
 
 #define EachMember(F)\
     F(visibility) F(local_matrix) F(global_matrix) F(parent_xform)
@@ -171,7 +171,7 @@ void XformNode::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 }
 
 
-sgRegisterClass(FaceSet);
+sgRegisterType(FaceSet);
 
 #define EachMember(F)\
     F(material) F(faces) F(indices)
@@ -218,7 +218,7 @@ void FaceSet::addOffset(int face_offset, int index_offset)
 }
 
 
-sgRegisterClass(MeshNode);
+sgRegisterType(MeshNode);
 
 #define EachMember(F)\
     F(points) F(normals) F(uvs) F(colors) F(material_ids) F(counts) F(indices)\
@@ -584,7 +584,7 @@ int MeshNode::getMaxMaterialID() const
 
 
 
-sgRegisterClass(BlendshapeTarget);
+sgRegisterType(BlendshapeTarget);
 
 #define EachMember(F)\
     F(point_offsets) F(normal_offsets) F(weight)
@@ -601,7 +601,7 @@ void BlendshapeTarget::deserialize(deserializer& d)
 #undef EachMember
 
 
-sgRegisterClass(BlendshapeNode);
+sgRegisterType(BlendshapeNode);
 
 #define EachMember(F)\
     F(indices) F(targets)
@@ -772,7 +772,7 @@ void BlendshapeNode::apply(float3* dst_points, float3* dst_normals, float weight
 }
 
 
-sgRegisterClass(SkelRootNode);
+sgRegisterType(SkelRootNode);
 
 #define EachMember(F)\
     F(skeleton)
@@ -803,7 +803,7 @@ Node::Type SkelRootNode::getType() const
 }
 
 
-sgRegisterClass(Joint);
+sgRegisterType(Joint);
 
 #define EachMember(F)\
     F(path) F(index) F(bindpose) F(restpose) F(local_matrix) F(global_matrix)\
@@ -858,7 +858,7 @@ void Joint::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 }
 
 
-sgRegisterClass(SkeletonNode);
+sgRegisterType(SkeletonNode);
 
 #define EachMember(F)\
     F(joints)
@@ -963,7 +963,7 @@ Joint* SkeletonNode::findJointByPath(const std::string& jpath)
 }
 
 
-sgRegisterClass(InstancerNode);
+sgRegisterType(InstancerNode);
 
 #define EachMember(F)\
     F(protos) F(proto_indices) F(matrices)
@@ -1107,7 +1107,7 @@ void InstancerNode::bake(MeshNode& dst, const float4x4& trans)
 }
 
 
-sgRegisterClass(Texture);
+sgRegisterType(Texture);
 
 const float4 Texture::default_fallback = { 0.0f, 0.0f, 0.0f, 1.0f };
 
@@ -1131,7 +1131,7 @@ Texture::operator bool() const
 }
 
 
-sgRegisterClass(MaterialNode);
+sgRegisterType(MaterialNode);
 
 #define EachMember(F)\
     F(index) F(shader_type) F(use_vertex_color) F(double_sided)\
@@ -1171,7 +1171,7 @@ bool MaterialNode::valid() const
 
 
 
-sgRegisterClass(Scene);
+sgRegisterType(Scene);
 
 static thread_local Scene* g_current_scene;
 static const char sgMagic[] = "sg" sgVersionString;
