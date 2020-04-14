@@ -4,8 +4,7 @@
 
 namespace mqusd {
 
-mqusdExporterWindow::mqusdExporterWindow(MQBasePlugin* plugin, MQWindowBase& parent)
-    : super(parent)
+mqusdExporterWindow::mqusdExporterWindow(MQBasePlugin* plugin)
 {
     m_plugin = plugin;
 

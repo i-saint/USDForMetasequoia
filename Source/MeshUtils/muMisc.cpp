@@ -91,7 +91,7 @@ void Print(const wchar_t *fmt, ...)
     }
 }
 
-std::string Format(const char *fmt, ...)
+const char* Format(const char *fmt, ...)
 {
     char* buf = GetPrintBuffer();
 

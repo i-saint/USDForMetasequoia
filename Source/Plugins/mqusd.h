@@ -56,8 +56,6 @@ using mu::float3x3;
 using mu::float4x4;
 using mu::double4x4;
 
-void mqusdLog(const char* fmt, ...);
-
 inline std::string GetPluginsDir()
 {
     std::string path = mu::GetCurrentModuleDirectory();

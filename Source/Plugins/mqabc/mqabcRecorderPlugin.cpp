@@ -71,9 +71,8 @@ BOOL mqabcRecorderPlugin::Activate(MQDocument doc, BOOL flag)
 {
     bool active = flag ? true : false;
     if (!m_window)
-        m_window = mqabcRecorderWindow::create(this);
-    if (m_window)
-        m_window->SetVisible(active);
+        m_window = new mqabcRecorderWindow(this);
+    m_window->SetVisible(active);
     return active;
 }
 
@@ -141,23 +140,9 @@ bool mqabcRecorderPlugin::ExecuteCallback(MQDocument /*doc*/, void* /*option*/)
     return false;
 }
 
-void mqabcRecorderPlugin::LogInfo(const char* message)
-{
-}
-
 const std::string& mqabcRecorderPlugin::GetMQOPath() const
 {
     return m_mqo_path;
-}
-
-void mqusdLog(const char* fmt, ...)
-{
-    const size_t bufsize = 1024 * 16;
-    static char* s_buf = new char[bufsize];
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(s_buf, bufsize, fmt, args);
-    va_end(args);
 }
 
 } // namespace mqusd

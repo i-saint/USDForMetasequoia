@@ -4,8 +4,7 @@
 
 namespace mqusd {
 
-mqusdImporterWindow::mqusdImporterWindow(MQBasePlugin* plugin, MQWindowBase& parent)
-    : super(parent)
+mqusdImporterWindow::mqusdImporterWindow(MQBasePlugin* plugin)
 {
     setlocale(LC_ALL, "");
 
@@ -212,7 +211,7 @@ bool mqusdImporterWindow::Open(MQDocument doc, const std::string& path)
         return false;
 
     if (!m_scene->open(path.c_str())) {
-        mqusdLog(
+        MQMessageDialog(
             "failed to open %s\n"
             "it may not an usd file"
             , path.c_str());

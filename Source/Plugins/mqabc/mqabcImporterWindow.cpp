@@ -4,8 +4,7 @@
 
 namespace mqusd {
 
-mqabcImporterWindow::mqabcImporterWindow(MQBasePlugin* plugin, MQWindowBase& parent)
-    : super(parent)
+mqabcImporterWindow::mqabcImporterWindow(MQBasePlugin* plugin)
 {
     m_plugin = plugin;
 
@@ -166,7 +165,7 @@ bool mqabcImporterWindow::Open(MQDocument doc, const std::string& path)
         return false;
 
     if (!m_scene->open(path.c_str())) {
-        mqusdLog(
+        MQMessageDialog(
             "failed to open %s\n"
             "it may not an usd file"
             , path.c_str());

@@ -23,6 +23,8 @@ struct ExportOptions : public ConvertOptions
     float time_scale = 1.0f; // relevant only when keep_time is true
     double capture_interval = 5.0; // in seconds
 
+    std::function<void(const char*)> log_info;
+
     ExportOptions();
 };
 

@@ -3,6 +3,17 @@
 
 namespace mqusd {
 
+void MQMessageDialog(const char* fmt, ...)
+{
+    const size_t bufsize = 1024 * 16;
+    static char* s_buf = new char[bufsize];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(s_buf, bufsize, fmt, args);
+    va_end(args);
+
+}
+
 std::string MQGetName(MQObject obj)
 {
 #if MQPLUGIN_VERSION >= 0x0470

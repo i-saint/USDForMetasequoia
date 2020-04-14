@@ -18,7 +18,7 @@ exit /B 0
         exit /B 1
     )
 
-    set SRC_MQ32=out\Win32_Release\%MQ_VERSION%
+    set SRC_MQ32=_out\Win32_Release\%MQ_VERSION%
     set DIST_DIR32=_dist\mqusd_Windows_32bit
     set DIST_IMPORT32=%DIST_DIR32%\Import
     set DIST_EXPORT32=%DIST_DIR32%\Export
@@ -33,7 +33,7 @@ exit /B 0
     copy %SRC_MQ32%\mqabcExporter.dll "%DIST_EXPORT32%"
     copy %SRC_MQ32%\mqusdExporter.dll "%DIST_EXPORT32%"
     copy %SRC_MQ32%\mqabcRecorder.dll "%DIST_STATION32%"
-    copy %SRC_MQ32%\mqusdRecorder.dll "%DIST_STATION32%"
+    rem copy %SRC_MQ32%\mqusdRecorder.dll "%DIST_STATION32%"
     copy %SRC_MQ32%\mqabc.dll "%DIST_MISC32%"
     copy %SRC_MQ32%\mqusd.dll "%DIST_MISC32%"
     copy _out\x64_Release\SceneGraphUSD.dll "%DIST_MISC32%\mqusd"
@@ -57,7 +57,7 @@ exit /B 0
     copy %SRC_MQ64%\mqabcExporter.dll "%DIST_EXPORT64%"
     copy %SRC_MQ64%\mqusdExporter.dll "%DIST_EXPORT64%"
     copy %SRC_MQ64%\mqabcRecorder.dll "%DIST_STATION64%"
-    copy %SRC_MQ64%\mqusdRecorder.dll "%DIST_STATION64%"
+    rem copy %SRC_MQ64%\mqusdRecorder.dll "%DIST_STATION64%"
     copy %SRC_MQ64%\mqabc.dll "%DIST_MISC64%"
     copy %SRC_MQ64%\mqusd.dll "%DIST_MISC64%"
     copy _out\x64_Release\SceneGraphUSD.dll "%DIST_MISC64%\mqusd"

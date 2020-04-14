@@ -38,7 +38,7 @@ using PrintHandler = std::function<void(const char*)>;
 void SetPrintHandler(const PrintHandler& v);
 void Print(const char *fmt, ...);
 void Print(const wchar_t *fmt, ...);
-std::string Format(const char *fmt, ...);
+const char* Format(const char *fmt, ...);
 
 std::string ToUTF8(const char* src);
 std::string ToUTF8(const wchar_t* src);

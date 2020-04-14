@@ -5,8 +5,7 @@
 
 namespace mqusd {
 
-mqabcRecorderWindow::mqabcRecorderWindow(MQBasePlugin* plugin, MQWindowBase& parent)
-    : super(parent)
+mqabcRecorderWindow::mqabcRecorderWindow(MQBasePlugin* plugin)
 {
     m_plugin = dynamic_cast<mqabcRecorderPlugin*>(plugin);
 
@@ -15,6 +14,7 @@ mqabcRecorderWindow::mqabcRecorderWindow(MQBasePlugin* plugin, MQWindowBase& par
     m_options.export_blendshapes = false;
     m_options.export_skeletons = false;
     m_options.separate_xform = true;
+    m_options.log_info = [this](const char* message) { LogInfo(message); };
 
     setlocale(LC_ALL, "");
     SetTitle(L"Alembic Recorder");
@@ -177,16 +177,25 @@ BOOL mqabcRecorderWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument do
             if (Open(doc, mu::ToMBS(path))) {
                 CaptureFrame(doc);
             }
+            else {
+                // todo
+                //MQMessageDialog();
+            }
         }
     }
     else {
         if (Close()) {
-            mqusdLog("recording finished");
+            LogInfo("recording finished");
         }
     }
     SyncSettings();
 
     return 0;
+}
+
+void mqabcRecorderWindow::LogInfo(const char* message)
+{
+    m_log->SetText(mu::ToWCS(message));
 }
 
 void mqabcRecorderWindow::SyncSettings()
@@ -226,12 +235,6 @@ void mqabcRecorderWindow::SyncSettings()
     }
 }
 
-void mqabcRecorderWindow::LogInfo(const char* message)
-{
-    if (m_log && message)
-        m_log->SetText(mu::ToWCS(message));
-}
-
 
 bool mqabcRecorderWindow::Open(MQDocument doc, const std::string& path)
 {
@@ -252,7 +255,7 @@ bool mqabcRecorderWindow::Open(MQDocument doc, const std::string& path)
     m_recording = true;
     m_dirty = true;
 
-    mqusdLog("succeeded to open %s\nrecording started", path.c_str());
+    LogInfo("recording started");
     return true;
 }
 

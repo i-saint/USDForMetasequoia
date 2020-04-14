@@ -49,6 +49,8 @@ inline void MQEachMaterial(MQDocument doc, const Body& body)
     }
 }
 
+void MQMessageDialog(const char* fmt, ...);
+
 std::string MQGetName(MQObject obj);
 std::string MQGetPath(MQDocument doc, MQObject obj);
 std::string MQGetName(MQMaterial obj);

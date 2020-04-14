@@ -206,8 +206,8 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
             if (!m_one_shot) {
                 if (!rec.node) {
                     // use unique id as name to track rename. actual name is stored in display_name.
-                    std::string node_name = mu::Format("mqmat%08x", mat->GetUniqueID());
-                    rec.node = m_scene->createNode<MaterialNode>(m_root, node_name.c_str());
+                    const char* node_name = mu::Format("mqmat%08x", mat->GetUniqueID());
+                    rec.node = m_scene->createNode<MaterialNode>(m_root, node_name);
                 }
                 rec.node->display_name = MQGetName(mat);
             }
@@ -283,8 +283,10 @@ bool DocumentExporter::write(MQDocument doc, bool one_shot)
             total_faces += (int)rec.mesh->counts.size();
         }
     }
-    mqusdLog("frame %d: %d vertices, %d faces",
-        m_frame - 1, total_vertices, total_faces);
+
+    if (m_options->log_info) {
+        m_options->log_info(mu::Format("frame %d: %d vertices, %d faces", m_frame - 1, total_vertices, total_faces));
+    }
     return true;
 }
 

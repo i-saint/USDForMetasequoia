@@ -13,6 +13,9 @@ public:
     const char* EnumFileType(int index) override;
     const char* EnumFileExt(int index) override;
     BOOL ImportFile(int index, const wchar_t* filename, MQDocument doc) override;
+
+private:
+    mqusdImporterWindow* m_window = nullptr;
 };
 
 
@@ -56,8 +59,10 @@ const char* mqusdImporterPlugin::EnumFileExt(int index)
 
 BOOL mqusdImporterPlugin::ImportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
 {
-    auto w = mqusdImporterWindow::create(this);
-    return w->Open(doc, mu::ToMBS(filename).c_str());
+    if (!m_window)
+        m_window = new mqusdImporterWindow(this);
+    m_window->SetVisible(true);
+    return m_window->Open(doc, mu::ToMBS(filename).c_str());
 }
 
 } // namespace mqusd

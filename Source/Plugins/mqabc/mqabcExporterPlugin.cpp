@@ -14,6 +14,9 @@ public:
     const char* EnumFileType(int index) override;
     const char* EnumFileExt(int index) override;
     BOOL ExportFile(int index, const wchar_t* filename, MQDocument doc) override;
+
+private:
+    mqabcExporterWindow* m_window = nullptr;
 };
 
 
@@ -57,8 +60,9 @@ const char* mqabcExporterPlugin::EnumFileExt(int index)
 
 BOOL mqabcExporterPlugin::ExportFile(int /*index*/, const wchar_t* filename, MQDocument doc)
 {
-    auto w = mqabcExporterWindow::create(this);
-    w->SetOutputPath(filename);
+    if (!m_window)
+        m_window = new mqabcExporterWindow(this);
+    m_window->SetOutputPath(filename);
     return true;
 }
 

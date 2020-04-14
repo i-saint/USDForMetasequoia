@@ -23,7 +23,6 @@
     <ClInclude Include="mqDocumentExporter.h" />
     <ClInclude Include="mqDocumentImporter.h" />
     <ClInclude Include="mqDummyPlugins.h" />
-    <ClInclude Include="mqTWindow.h" />
     <ClInclude Include="mqUtils.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>

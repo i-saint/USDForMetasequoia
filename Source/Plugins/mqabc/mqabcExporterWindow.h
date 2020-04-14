@@ -1,19 +1,15 @@
 #pragma once
 #include "MQWidget.h"
-#include "mqCommon/mqTWindow.h"
 #include "mqCommon/mqDocumentExporter.h"
 #include "mqabcInternal.h"
 
 namespace mqusd {
 
-class mqabcExporterWindow : public mqTWindow<mqabcExporterWindow>
+class mqabcExporterWindow : public MQWindow
 {
-using super = mqTWindow<mqabcExporterWindow>;
-friend mqabcExporterWindow* super::create(MQBasePlugin* plugin);
-protected:
-    mqabcExporterWindow(MQBasePlugin* plugin, MQWindowBase& parent);
-
+using super = MQWindow;
 public:
+    mqabcExporterWindow(MQBasePlugin* plugin);
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
     BOOL OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc);

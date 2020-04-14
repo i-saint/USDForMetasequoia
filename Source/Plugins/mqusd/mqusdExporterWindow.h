@@ -1,19 +1,15 @@
 #pragma once
 #include "MQWidget.h"
-#include "mqCommon/mqTWindow.h"
 #include "mqCommon/mqDocumentExporter.h"
 #include "mqusdInternal.h"
 
 namespace mqusd {
 
-class mqusdExporterWindow : public mqTWindow<mqusdExporterWindow>
+class mqusdExporterWindow : public MQWindow
 {
-using super = mqTWindow<mqusdExporterWindow>;
-friend mqusdExporterWindow* super::create(MQBasePlugin* plugin);
-protected:
-    mqusdExporterWindow(MQBasePlugin* plugin, MQWindowBase& parent);
-
+using super = MQWindow;
 public:
+    mqusdExporterWindow(MQBasePlugin* plugin);
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
     BOOL OnHide(MQWidgetBase* sender, MQDocument doc);
     BOOL OnSettingsUpdate(MQWidgetBase* sender, MQDocument doc);
@@ -44,7 +40,6 @@ private:
     MQCheckBox* m_check_merge_only_visible = nullptr;
 
     MQButton* m_button_export = nullptr;
-
 
     ExportOptions m_options;
     std::wstring m_out_path;

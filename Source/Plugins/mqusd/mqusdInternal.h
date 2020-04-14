@@ -1,6 +1,7 @@
 #pragma once
 #include "mqusd.h"
 #include "mqCommon/mqDummyPlugins.h"
+#include "mqCommon/mqUtils.h"
 
 namespace mqusd {
 

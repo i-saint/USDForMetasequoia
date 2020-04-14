@@ -13,6 +13,9 @@ public:
     const char* EnumFileType(int index) override;
     const char* EnumFileExt(int index) override;
     BOOL ExportFile(int index, const wchar_t* filename, MQDocument doc) override;
+
+private:
+    mqusdExporterWindow* m_window = nullptr;
 };
 
 
@@ -55,8 +58,10 @@ const char* mqusdExporterPlugin::EnumFileExt(int index)
 
 BOOL mqusdExporterPlugin::ExportFile(int /*index*/, const wchar_t* filename, MQDocument /*doc*/)
 {
-    auto w = mqusdExporterWindow::create(this);
-    w->SetOutputPath(filename);
+    if (!m_window)
+        m_window = new mqusdExporterWindow(this);
+    m_window->SetOutputPath(filename);
+    m_window->SetVisible(true);
     return true;
 }
 
