@@ -3,15 +3,27 @@
 
 namespace mqusd {
 
-void MQMessageDialog(const char* fmt, ...)
-{
-    const size_t bufsize = 1024 * 16;
-    static char* s_buf = new char[bufsize];
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(s_buf, bufsize, fmt, args);
-    va_end(args);
 
+static Language g_language;
+
+void MQSetLanguage(MQBasePlugin* v)
+{
+    auto lang = v->GetSettingValue(MQSETTINGVALUE_LANGUAGE);
+    if (lang == L"Japanese")
+        g_language = Language::Japanese;
+    else
+        g_language = Language::English;
+}
+
+Language MQGetLanguage()
+{
+    return g_language;
+}
+
+void MQShowError(const char* message)
+{
+    MQWindow parent = MQWindow::GetMainWindow();
+    MQDialog::MessageWarningBox(parent, mu::ToWCS(message), L"Error");
 }
 
 std::string MQGetName(MQObject obj)

@@ -207,15 +207,15 @@ bool mqusdImporterWindow::Open(MQDocument doc, const std::string& path)
     Close();
 
     m_scene = CreateUSDScene();
-    if (!m_scene)
+    if (!m_scene) {
+        MQShowError("Failed to create USD scene.\nPossible reason: required DLLs are missing in Plugins/Misc/mqusd directory.");
         return false;
+    }
 
     if (!m_scene->open(path.c_str())) {
-        MQMessageDialog(
-            "failed to open %s\n"
-            "it may not an usd file"
-            , path.c_str());
         m_scene = {};
+
+        MQShowError("Failed to open USD file.\nPossible reason: path contains multi-byte characters, or symbolic links.");
         return false;
     }
 

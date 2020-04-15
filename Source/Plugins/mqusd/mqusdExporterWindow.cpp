@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "mqusd.h"
 #include "mqusdExporterWindow.h"
 
@@ -165,13 +165,13 @@ bool mqusdExporterWindow::DoExport(MQDocument doc)
 {
     auto scene = CreateUSDScene();
     if (!scene) {
-        // todo: log
+        MQShowError("Failed to create USD scene.\nPossible reason: required DLLs are missing in Plugins/Misc/mqusd directory.");
         return false;
     }
 
     if (!scene->create(mu::ToMBS(m_out_path).c_str())) {
         scene = {};
-        // todo: log
+        MQShowError("Failed to create USD file.\nPossible reason: path contains multi-byte characters, or symbolic links.");
         return false;
     }
 

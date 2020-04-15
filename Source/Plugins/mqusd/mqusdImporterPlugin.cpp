@@ -22,6 +22,7 @@ private:
 mqusdImporterPlugin::mqusdImporterPlugin()
 {
     mqusd::mqusdInitialize();
+    MQSetLanguage(this);
 }
 
 void mqusdImporterPlugin::GetPlugInID(DWORD* Product, DWORD* ID)

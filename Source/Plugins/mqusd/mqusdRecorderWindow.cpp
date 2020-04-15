@@ -178,10 +178,6 @@ BOOL mqusdRecorderWindow::OnRecordingClicked(MQWidgetBase* sender, MQDocument do
             if (Open(doc, mu::ToMBS(path))) {
                 CaptureFrame(doc);
             }
-            else {
-                // todo
-                //MQMessageDialog();
-            }
         }
     }
     else {
@@ -242,11 +238,15 @@ bool mqusdRecorderWindow::Open(MQDocument doc, const std::string& path)
     Close();
 
     m_scene = CreateUSDScene();
-    if (!m_scene)
+    if (!m_scene) {
+        MQShowError("Failed to create USD scene.\nPossible reason: required DLLs are missing in Plugins/Misc/mqusd directory.");
         return false;
+    }
 
     if (!m_scene->create(path.c_str())) {
         m_scene = {};
+
+        MQShowError("Failed to create USD file.\nPossible reason: path contains multi-byte characters, or symbolic links.");
         return false;
     }
 

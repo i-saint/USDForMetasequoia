@@ -161,15 +161,15 @@ bool mqabcImporterWindow::Open(MQDocument doc, const std::string& path)
     Close();
 
     m_scene = CreateABCIScene();
-    if (!m_scene)
+    if (!m_scene) {
+        MQShowError("Failed to create Alembic scene.");
         return false;
+    }
 
     if (!m_scene->open(path.c_str())) {
-        MQMessageDialog(
-            "failed to open %s\n"
-            "it may not an usd file"
-            , path.c_str());
         m_scene = {};
+
+        MQShowError("Failed to open Alembic file.\nPossible reason: path contains multi-byte characters.");
         return false;
     }
 

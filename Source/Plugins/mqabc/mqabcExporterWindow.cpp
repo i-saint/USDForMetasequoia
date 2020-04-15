@@ -154,13 +154,14 @@ bool mqabcExporterWindow::DoExport(MQDocument doc)
 {
     auto scene = CreateABCOScene();
     if (!scene) {
-        // todo: log
+        MQShowError("Failed to create Alembic scene.");
         return false;
     }
 
     if (!scene->create(mu::ToMBS(m_out_path).c_str())) {
         scene = {};
-        // todo: log
+
+        MQShowError("Failed to create Alembic file.\nPossible reason: path contains multi-byte characters.");
         return false;
     }
 

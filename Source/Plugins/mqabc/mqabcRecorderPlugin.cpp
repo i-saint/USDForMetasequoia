@@ -8,6 +8,7 @@ namespace mqusd {
 mqabcRecorderPlugin::mqabcRecorderPlugin()
 {
     mqabcInitialize();
+    MQSetLanguage(this);
 }
 
 mqabcRecorderPlugin::~mqabcRecorderPlugin()

@@ -23,6 +23,7 @@ private:
 mqabcExporterPlugin::mqabcExporterPlugin()
 {
     mqabcInitialize();
+    MQSetLanguage(this);
 }
 
 mqabcExporterPlugin::~mqabcExporterPlugin()
@@ -62,6 +63,7 @@ BOOL mqabcExporterPlugin::ExportFile(int /*index*/, const wchar_t* filename, MQD
 {
     if (!m_window)
         m_window = new mqabcExporterWindow(this);
+    m_window->SetVisible(true);
     m_window->SetOutputPath(filename);
     return true;
 }

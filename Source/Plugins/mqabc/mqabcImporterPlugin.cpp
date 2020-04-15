@@ -23,6 +23,7 @@ private:
 mqabcImporterPlugin::mqabcImporterPlugin()
 {
     mqabcInitialize();
+    MQSetLanguage(this);
 }
 
 mqabcImporterPlugin::~mqabcImporterPlugin()
