@@ -297,6 +297,7 @@ public:
     // serializable
     MaterialNode* material = nullptr;
     SharedVector<int> faces;
+    SharedVector<int> counts;
     SharedVector<int> indices;
 
     // non-serializable
@@ -596,8 +597,8 @@ public:
     std::vector<NodePtr> nodes;
     RootNode* root_node = nullptr;
     UpAxis up_axis = UpAxis::Unknown;
-    double frame_rate = 30.0;
     int frame_count = 0;
+    double frame_rate = 30.0;
     double time_start = 0.0;
     double time_end = 0.0;
     double time_current = default_time;

@@ -174,7 +174,7 @@ void XformNode::setGlobalTRS(const float3& t, const quatf& r, const float3& s)
 sgRegisterType(FaceSet);
 
 #define EachMember(F)\
-    F(material) F(faces) F(indices)
+    F(material) F(faces) F(counts) F(indices)
 
 void FaceSet::serialize(serializer& s) const
 {
@@ -188,8 +188,10 @@ void FaceSet::deserialize(deserializer& d)
 
 void FaceSet::clear()
 {
-    faces.clear();
     material = nullptr;
+    faces.clear();
+    counts.clear();
+    indices.clear();
     userdata = nullptr;
 }
 
@@ -203,6 +205,8 @@ void FaceSet::merge(const FaceSet& v, int face_offset, int index_offset)
     auto* fv = append(faces, v.faces);
     if (face_offset > 0)
         add(fv, v.faces.size(), face_offset);
+
+    append(counts, v.counts);
 
     auto* iv = append(indices, v.indices);
     if (index_offset > 0)
@@ -1184,12 +1188,12 @@ Scene* Scene::getCurrent()
 
 #define EachMember(F)\
     F(path) F(nodes) F(root_node) F(up_axis)\
-    F(frame_rate) F(frame_count) F(time_start) F(time_end) F(time_current)
+    F(frame_count) F(frame_rate) F(time_start) F(time_end) F(time_current)
 
 void Scene::serialize(serializer& s) const
 {
     // magic code
-    sg::write(s, sgMagic, 6);
+    sg::write_array(s, sgMagic, 6);
 
     // add pointer record to make this resolvable
     hptr handle = s.getHandle(this);
@@ -1202,7 +1206,7 @@ bool Scene::deserialize(deserializer& d)
 {
     // check magic code
     char magic[6];
-    sg::read(d, magic, 6);
+    sg::read_array(d, magic, 6);
     if (std::strcmp(magic, sgMagic) != 0)
         return false;
 

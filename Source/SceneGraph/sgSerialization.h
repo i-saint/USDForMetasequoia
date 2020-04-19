@@ -99,4 +99,6 @@ struct serialize_intrusive
 
 
 #define sgSerializable(T) template<> struct ::sg::serializable<T> : ::sg::serialize_intrusive<T> {};
+#define sgSerializablePOD(T) template<> struct ::sg::serializable_pod<T> { static constexpr bool value = true; };
+
 #define sgDeclPtr(T) using T##Ptr = std::shared_ptr<T>

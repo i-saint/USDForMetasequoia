@@ -75,19 +75,6 @@ inline void read(deserializer& d, T& v)
     read_align<sizeof(T)>(d);
 }
 
-// POD array
-template<class T, sgEnableIf(serializable_pod<T>::value)>
-inline void write(serializer& s, const T* v, uint32_t n)
-{
-    s.write(v, sizeof(T) * n);
-    write_align(s, sizeof(T) * n);
-}
-template<class T, sgEnableIf(serializable_pod<T>::value)>
-inline void read(deserializer& d, T* v, uint32_t n)
-{
-    d.read(v, sizeof(T) * n);
-    read_align(d, sizeof(T) * n);
-}
 
 // serializable object
 template<class T, sgEnableIf(serializable<T>::value)>
@@ -101,15 +88,15 @@ inline void read(deserializer& d, T& v)
     serializable<T>::deserialize(d, v);
 }
 
-inline uint32_t write_string(serializer& s, const char *v)
+
+// string helper
+inline void write_string(serializer& s, const char *v, uint32_t n)
 {
-    uint32_t len = (uint32_t)std::strlen(v);
-    write(s, len);
-    write(s, v, len);
-    write_align(s, len);
-    return len;
+    write(s, n);
+    s.write(v, n);
+    write_align(s, n);
 }
-inline uint32_t read_string(deserializer& d, char*& v, uint32_t n)
+inline void read_string(deserializer& d, char*& v, uint32_t n)
 {
     uint32_t len;
     read(d, len);
@@ -118,10 +105,9 @@ inline uint32_t read_string(deserializer& d, char*& v, uint32_t n)
         v = new char[len + 1];
     }
 
-    read(d, v, len);
+    d.read(v, len);
     read_align(d, len);
     v[len] = '\0';
-    return len;
 }
 
 // serializable pointer
@@ -132,7 +118,8 @@ inline hptr write(serializer& s, T* const& v)
     write(s, handle);
     if (handle.isFlesh()) {
         // write type name
-        write_string(s, typeid(*v).name());
+        const char* type_name = typeid(*v).name();
+        write_string(s, type_name, (uint32_t)std::strlen(type_name));
         write(s, *v);
     }
     return handle;
@@ -165,6 +152,91 @@ inline hptr read(deserializer& d, T*& v)
     return handle;
 }
 
+
+
+// POD fixed array
+template<class T, uint32_t N, sgEnableIf(serializable_pod<T>::value)>
+inline void write(serializer& s, const T(&v)[N])
+{
+    s.write(v, sizeof(T) * N);
+    write_align(s, sizeof(T) * N);
+}
+template<class T, uint32_t N, sgEnableIf(serializable_pod<T>::value)>
+inline void read(deserializer& d, T(&v)[N])
+{
+    d.read(v, sizeof(T) * N);
+    read_align(d, sizeof(T) * N);
+}
+
+// object fixed array
+template<class T, size_t N, sgEnableIf(serializable<T>::value)>
+inline void write(serializer& s, const T(&v)[N])
+{
+    for (size_t i = 0; i < N; ++i)
+        s.write(v[i]);
+}
+template<class T, size_t N, sgEnableIf(serializable<T>::value)>
+inline void read(deserializer& d, T(&v)[N])
+{
+    for (size_t i = 0; i < N; ++i)
+        d.read(v[i]);
+}
+
+// pointer fixed array
+template<class T, size_t N, sgEnableIf(serializable<T>::value)>
+static void write(serializer& s, const T* (&v)[N])
+{
+    for (size_t i = 0; i < N; ++i)
+        s.write(v[i]);
+}
+template<class T, size_t N, sgEnableIf(serializable<T>::value)>
+static void read(deserializer& d, T* (&v)[N])
+{
+    for (size_t i = 0; i < N; ++i)
+        d.read(v[i]);
+}
+
+// POD array
+template<class T, sgEnableIf(serializable_pod<T>::value)>
+inline void write_array(serializer& s, const T* v, uint32_t n)
+{
+    s.write(v, sizeof(T) * n);
+    write_align(s, sizeof(T) * n);
+}
+template<class T, sgEnableIf(serializable_pod<T>::value)>
+inline void read_array(deserializer& d, T* v, uint32_t n)
+{
+    d.read(v, sizeof(T) * n);
+    read_align(d, sizeof(T) * n);
+}
+
+// object array
+template<class T, sgEnableIf(serializable<T>::value)>
+static void write_array(serializer& s, const T* v, uint32_t n)
+{
+    for (uint32_t i = 0; i < n; ++i)
+        write(s, v[i]);
+}
+template<class T, sgEnableIf(serializable<T>::value)>
+static void read_array(deserializer& d, T* v, uint32_t n)
+{
+    for (uint32_t i = 0; i < n; ++i)
+        read(d, v[i]);
+}
+
+// pointer array
+template<class T, sgEnableIf(serializable<T>::value)>
+static void write_array(serializer& s, T* const* v, uint32_t n)
+{
+    for (uint32_t i = 0; i < n; ++i)
+        write(s, v[i]);
+}
+template<class T, sgEnableIf(serializable<T>::value)>
+static void read_array(deserializer& d, T** v, uint32_t n)
+{
+    for (uint32_t i = 0; i < n; ++i)
+        read(d, v[i]);
+}
 
 
 // specializations
@@ -222,7 +294,7 @@ struct serializable<std::basic_string<T>> : serialize_nonintrusive<std::basic_st
     {
         uint32_t size = (uint32_t)v.size();
         write(s, size);
-        write(s, v.data(), size);
+        write_array(s, v.data(), size);
     }
 
     static void deserialize(deserializer& d, std::basic_string<T>& v)
@@ -230,10 +302,12 @@ struct serializable<std::basic_string<T>> : serialize_nonintrusive<std::basic_st
         uint32_t size;
         read(d, size);
         v.resize(size);
-        read(d, (T*)v.data(), size);
+        read_array(d, (T*)v.data(), size);
     }
 };
 
+
+// std::vector
 template<class T>
 struct serializable<std::vector<T>> : serialize_nonintrusive<std::vector<T>>
 {
@@ -241,8 +315,7 @@ struct serializable<std::vector<T>> : serialize_nonintrusive<std::vector<T>>
     {
         uint32_t size = (uint32_t)v.size();
         write(s, size);
-        for (const auto& e : v)
-            write(s, e);
+        write_array(s, v.data(), size);
     }
 
     static void deserialize(deserializer& d, std::vector<T>& v)
@@ -250,11 +323,11 @@ struct serializable<std::vector<T>> : serialize_nonintrusive<std::vector<T>>
         uint32_t size;
         read(d, size);
         v.resize(size);
-        for (auto& e : v)
-            read(d, e);
+        read_array(d, v.data(), size);
     }
 };
 
+// std::list
 template<class T>
 struct serializable<std::list<T>> : serialize_nonintrusive<std::list<T>>
 {
@@ -276,6 +349,7 @@ struct serializable<std::list<T>> : serialize_nonintrusive<std::list<T>>
     }
 };
 
+// std::set
 template<class T>
 struct serializable<std::set<T>> : serialize_nonintrusive<std::set<T>>
 {
@@ -299,6 +373,7 @@ struct serializable<std::set<T>> : serialize_nonintrusive<std::set<T>>
     }
 };
 
+// std::map
 template<class K, class V>
 struct serializable<std::map<K, V>> : serialize_nonintrusive<std::map<K, V>>
 {
@@ -326,6 +401,30 @@ struct serializable<std::map<K, V>> : serialize_nonintrusive<std::map<K, V>>
     }
 };
 
+
+// RawVector
+template<class T>
+struct serializable<RawVector<T>> : serialize_nonintrusive<RawVector<T>>
+{
+    static void serialize(serializer& s, const RawVector<T>& v)
+    {
+        uint32_t size = (uint32_t)v.size();
+        write(s, size);
+        write_array(s, v.cdata(), size);
+        write_align(s, sizeof(T) * size); // align
+    }
+
+    static void deserialize(deserializer& d, RawVector<T>& v)
+    {
+        uint32_t size;
+        read(d, size);
+        v.resize_discard(size);
+        read_array(d, v.data(), size);
+        read_align(d, sizeof(T) * size); // align
+    }
+};
+
+// SharedVector
 template<class T>
 struct serializable<SharedVector<T>> : serialize_nonintrusive<SharedVector<T>>
 {
@@ -333,7 +432,7 @@ struct serializable<SharedVector<T>> : serialize_nonintrusive<SharedVector<T>>
     {
         uint32_t size = (uint32_t)v.size();
         write(s, size);
-        write(s, v.cdata(), size);
+        write_array(s, v.cdata(), size);
         write_align(s, sizeof(T) * size); // align
     }
 
@@ -350,7 +449,7 @@ struct serializable<SharedVector<T>> : serialize_nonintrusive<SharedVector<T>>
         }
         else {
             v.resize_discard(size);
-            read(d, v.data(), size);
+            read_array(d, v.data(), size);
         }
         read_align(d, sizeof(T) * size); // align
     }
