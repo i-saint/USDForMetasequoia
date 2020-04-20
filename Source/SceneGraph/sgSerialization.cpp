@@ -79,9 +79,11 @@ void* create_instance_(const char* name)
     if (type_record* rec = type_table::getInstance().find(name))
         return rec->creator();
 
+#ifdef mqusdDebug
     // type not found. should not be here.
-    mu::Print("type %s not found. maybe forgot sgRegisterType()?\n", name);
+    mu::Print("create_instance_(): type \"%s\" is not registered. maybe forgot sgRegisterType()?\n", name);
     mu::DbgBreak();
+#endif
     return nullptr;
 }
 

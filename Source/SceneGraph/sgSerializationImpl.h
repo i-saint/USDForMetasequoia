@@ -89,27 +89,6 @@ inline void read(deserializer& d, T& v)
 }
 
 
-// string helper
-inline void write_string(serializer& s, const char *v, uint32_t n)
-{
-    write(s, n);
-    s.write(v, n);
-    write_align(s, n);
-}
-inline void read_string(deserializer& d, char*& v, uint32_t n)
-{
-    uint32_t len;
-    read(d, len);
-    if (len >= n) {
-        // exceeds buffer size. allocate new string.
-        v = new char[len + 1];
-    }
-
-    d.read(v, len);
-    read_align(d, len);
-    v[len] = '\0';
-}
-
 // serializable pointer
 template<class T, sgEnableIf(serializable<T>::value)>
 inline hptr write(serializer& s, T* const& v)
@@ -119,7 +98,12 @@ inline hptr write(serializer& s, T* const& v)
     if (handle.isFlesh()) {
         // write type name
         const char* type_name = typeid(*v).name();
-        write_string(s, type_name, (uint32_t)std::strlen(type_name));
+        uint32_t name_len = (uint32_t)std::strlen(type_name);
+        write(s, name_len);
+        s.write(type_name, name_len);
+        write_align(s, name_len);
+
+        // write data
         write(s, *v);
     }
     return handle;
@@ -130,20 +114,32 @@ inline hptr read(deserializer& d, T*& v)
     hptr handle;
     read(d, handle);
     if (handle.isFlesh()) {
-        // read type name
-        char name_buf[1024];
-        char* name = name_buf;
-        read_string(d, name, sizeof(name_buf));
-        v = create_instance<T>(name);
+        // read type name and create instance
+        uint32_t name_len;
+        read(d, name_len);
 
-        if (name != name_buf) {
-#ifdef mqusdDebug
-            mu::DbgBreak();
-#endif
+        auto read_name = [&d, name_len](char* name) {
+            d.read(name, name_len);
+            read_align(d, name_len);
+            name[name_len] = '\0';
+        };
+
+        if (name_len < 1024) {
+            char name[1024];
+            read_name(name);
+            v = create_instance<T>(name);
+        }
+        else {
+            char *name = new char[name_len + 1];
+            read_name(name);
+            v = create_instance<T>(name);
             delete[] name;
         }
 
+        // register pointer
         d.setPointer(handle, v);
+
+        // deserialize instance
         read(d, *v);
     }
     else {
