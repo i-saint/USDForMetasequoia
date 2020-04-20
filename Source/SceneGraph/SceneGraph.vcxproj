@@ -70,7 +70,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <AdditionalIncludeDirectories>$(IntDir)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>mqusdDebug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>sgDebug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>

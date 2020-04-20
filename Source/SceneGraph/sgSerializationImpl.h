@@ -275,7 +275,7 @@ struct serializable<std::shared_ptr<T>> : serialize_nonintrusive<T>
                 v = std::static_pointer_cast<T>(rec.shared);
             }
         }
-#ifdef mqusdDebug
+#ifdef sgDebug
         else if(!handle.isNull()) {
             mu::DbgBreak();
         }

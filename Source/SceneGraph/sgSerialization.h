@@ -34,8 +34,8 @@ public:
     hptr getHandle(pointer_t v);
 
 private:
-    std::ostream& m_stream;
-    std::map<pointer_t, uint32_t> m_pointer_records;
+    struct impl;
+    std::unique_ptr<impl> m_impl;
 };
 
 class deserializer
@@ -64,8 +64,8 @@ public:
     }
 
 private:
-    std::istream& m_stream;
-    std::vector<Record> m_pointer_records;
+    struct impl;
+    std::unique_ptr<impl> m_impl;
 };
 
 
