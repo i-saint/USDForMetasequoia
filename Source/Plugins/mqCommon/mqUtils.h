@@ -66,4 +66,6 @@ std::string MQGetName(MQMaterial obj);
 void MQSetName(MQObject obj, const std::string& name);
 void MQSetName(MQMaterial obj, const std::string& name);
 
+MQWindow& MQGetMainWindow();
+
 } // namespace mqusd

@@ -1,3 +1,4 @@
+#include "mqUtils.h"
 #include "pch.h"
 #include "mqUtils.h"
 
@@ -77,6 +78,13 @@ void MQSetName(MQMaterial obj, const std::string& name)
 #else
     obj->SetName(name.c_str());
 #endif
+}
+
+MQWindow& MQGetMainWindow()
+{
+    static MQWindow s_window;
+    s_window = MQWindow::GetMainWindow();
+    return s_window;
 }
 
 } // namespace mqusd

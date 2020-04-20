@@ -5,6 +5,7 @@
 namespace mqusd {
 
 mqusdImporterWindow::mqusdImporterWindow(MQBasePlugin* plugin)
+    : super(MQGetMainWindow())
 {
     setlocale(LC_ALL, "");
 

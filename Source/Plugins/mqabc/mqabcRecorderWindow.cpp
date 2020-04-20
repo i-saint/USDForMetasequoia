@@ -6,6 +6,7 @@
 namespace mqusd {
 
 mqabcRecorderWindow::mqabcRecorderWindow(MQBasePlugin* plugin)
+    : super(MQGetMainWindow())
 {
     m_plugin = dynamic_cast<mqabcRecorderPlugin*>(plugin);
 

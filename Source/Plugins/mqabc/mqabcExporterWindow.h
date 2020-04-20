@@ -5,9 +5,9 @@
 
 namespace mqusd {
 
-class mqabcExporterWindow : public MQWindow
+class mqabcExporterWindow : public MQDialog
 {
-using super = MQWindow;
+using super = MQDialog;
 public:
     mqabcExporterWindow(MQBasePlugin* plugin);
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);

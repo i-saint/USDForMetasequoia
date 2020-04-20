@@ -5,6 +5,7 @@
 namespace mqusd {
 
 mqabcImporterWindow::mqabcImporterWindow(MQBasePlugin* plugin)
+    : super(MQGetMainWindow())
 {
     m_plugin = plugin;
 

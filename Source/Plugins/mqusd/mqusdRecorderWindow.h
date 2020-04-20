@@ -5,9 +5,9 @@
 
 namespace mqusd {
 
-class mqusdRecorderWindow : public MQWindow
+class mqusdRecorderWindow : public MQDialog
 {
-using super = MQWindow;
+using super = MQDialog;
 public:
     mqusdRecorderWindow(MQBasePlugin* plugin);
     BOOL OnShow(MQWidgetBase* sender, MQDocument doc);
