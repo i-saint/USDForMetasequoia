@@ -144,6 +144,7 @@ public:
     bool isNodeTypeSupported(Node::Type type) override;
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
     bool wrapNode(Node* node) override;
+    double frameToTime(int frame) override;
 
     Scene* getHostScene();
     uint32_t getWriteCount() const;

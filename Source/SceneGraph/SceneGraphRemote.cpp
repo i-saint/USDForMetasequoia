@@ -80,6 +80,7 @@ public:
     bool isNodeTypeSupported(Node::Type type) override;
     Node* createNode(Node* parent, const char* name, Node::Type type) override;
     bool wrapNode(Node* node) override;
+    double frameToTime(int frame) override;
 
 private:
     Scene* m_scene = nullptr;
@@ -218,6 +219,11 @@ bool USDScenePipe::wrapNode(Node* /*node*/)
 {
     // nothing to do here
     return true;
+}
+
+double USDScenePipe::frameToTime(int frame)
+{
+    return (1.0 / m_scene->frame_rate) * frame + m_scene->time_start;
 }
 
 

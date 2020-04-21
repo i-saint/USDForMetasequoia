@@ -503,6 +503,18 @@ bool ABCIScene::wrapNode(Node* /*node*/)
     return false;
 }
 
+double ABCIScene::frameToTime(int frame)
+{
+    if (m_times.empty())
+        return 0.0;
+    else if (frame < 0)
+        return m_times.front();
+    else if (frame >= m_times.size())
+        return m_times.back();
+    else
+        return m_times[frame];
+}
+
 Scene* ABCIScene::getHostScene()
 {
     return m_scene;

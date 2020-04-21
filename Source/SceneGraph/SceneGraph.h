@@ -515,6 +515,7 @@ public:
     virtual bool isNodeTypeSupported(Node::Type type) = 0;
     virtual Node* createNode(Node* parent, const char* name, Node::Type type) = 0;
     virtual bool wrapNode(Node* node) = 0;
+    virtual double frameToTime(int frame) = 0;
 };
 sgDeclPtr(SceneInterface);
 
@@ -539,6 +540,7 @@ public:
     Node* findNodeByPath(const std::string& path);
     bool isNodeTypeSupported(Node::Type type) const;
     Node* createNode(Node* parent, const char* name, Node::Type type);
+    double frameToTime(int frame);
 
     template<class NodeT>
     bool isNodeTypeSupported() const

@@ -1121,6 +1121,7 @@ bool USDScene::open(const char* path_)
 
     g_current_scene = this;
 
+    m_scene->frame_count = int(m_stage->GetEndTimeCode() - m_stage->GetStartTimeCode());
     m_scene->frame_rate = m_frame_rate = m_stage->GetFramesPerSecond();
     m_scene->time_start = m_stage->GetStartTimeCode() / m_frame_rate;
     m_scene->time_end = m_stage->GetEndTimeCode() / m_frame_rate;
@@ -1353,6 +1354,11 @@ bool USDScene::wrapNode(Node* node)
         m_nodes.push_back(USDNodePtr(ret));
     }
     return ret;
+}
+
+double USDScene::frameToTime(int frame)
+{
+    return (1.0 / m_scene->frame_rate) * frame + m_scene->time_start;
 }
 
 Scene* USDScene::getHostScene()

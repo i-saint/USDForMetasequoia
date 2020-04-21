@@ -1326,6 +1326,13 @@ Node* Scene::createNode(Node* parent, const char* name, Node::Type type)
     return ret;
 }
 
+double Scene::frameToTime(int frame)
+{
+    if (impl)
+        return impl->frameToTime(frame);
+    return (1.0 / frame_rate) * frame + time_start;
+}
+
 void Scene::registerNode(Node* n)
 {
     if (n) {

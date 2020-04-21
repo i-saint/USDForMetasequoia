@@ -447,6 +447,11 @@ bool ABCOScene::wrapNode(Node* /*node*/)
     return false;
 }
 
+double ABCOScene::frameToTime(int frame)
+{
+    return (1.0 / m_scene->frame_rate) * frame + m_scene->time_start;
+}
+
 Scene* ABCOScene::getHostScene()
 {
     return m_scene;
