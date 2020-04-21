@@ -21,16 +21,15 @@ public:
     void SyncSettings();
     bool Open(MQDocument doc, const std::string& path);
     bool Close();
-    void Seek(MQDocument doc, double t);
+    void Seek(MQDocument doc, int frame);
     void Refresh(MQDocument doc);
     bool IsOpened() const;
-    double GetTimeRange() const;
 
 private:
     MQBasePlugin* m_plugin = nullptr;
 
-    MQEdit* m_edit_time = nullptr;
-    MQSlider* m_slider_time = nullptr;
+    MQEdit* m_edit_frame = nullptr;
+    MQSlider* m_slider_frame = nullptr;
     MQEdit* m_edit_scale = nullptr;
 
     MQCheckBox* m_check_blendshapes = nullptr;
@@ -52,7 +51,7 @@ private:
     ScenePtr m_scene;
     ImportOptions m_options;
     DocumentImporterPtr m_importer;
-    double m_seek_time = 0;
+    int m_last_frame = 0;
 };
 
 } // namespace mqusd

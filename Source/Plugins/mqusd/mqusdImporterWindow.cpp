@@ -25,14 +25,14 @@ mqusdImporterWindow::mqusdImporterWindow(MQBasePlugin* plugin)
     {
         MQGroupBox* group = CreateGroupBox(vf, L"Time");
         MQFrame* hf = CreateHorizontalFrame(group);
-        CreateLabel(hf, L"Time");
-        m_edit_time = CreateEdit(hf);
-        m_edit_time->SetNumeric(MQEdit::NUMERIC_INT);
-        m_edit_time->SetText(L"0");
-        m_edit_time->AddChangedEvent(this, &mqusdImporterWindow::OnSampleEdit);
+        CreateLabel(hf, L"Frame");
+        m_edit_frame = CreateEdit(hf);
+        m_edit_frame->SetNumeric(MQEdit::NUMERIC_INT);
+        m_edit_frame->SetText(L"1");
+        m_edit_frame->AddChangedEvent(this, &mqusdImporterWindow::OnSampleEdit);
 
-        m_slider_time = CreateSlider(group);
-        m_slider_time->AddChangingEvent(this, &mqusdImporterWindow::OnSampleSlide);
+        m_slider_frame = CreateSlider(group);
+        m_slider_frame->AddChangingEvent(this, &mqusdImporterWindow::OnSampleSlide);
     }
     {
         MQGroupBox* group = CreateGroupBox(vf, L"Scale");
@@ -108,9 +108,9 @@ BOOL mqusdImporterWindow::OnHide(MQWidgetBase* sender, MQDocument doc)
 
 BOOL mqusdImporterWindow::OnSampleEdit(MQWidgetBase* sender, MQDocument doc)
 {
-    auto str = mu::ToMBS(m_edit_time->GetText());
-    auto value = std::atof(str.c_str());
-    m_slider_time->SetPosition(value);
+    std::string str = mu::ToMBS(m_edit_frame->GetText());
+    int value = std::atoi(str.c_str());
+    m_slider_frame->SetPosition(value);
     Repaint(true);
 
     Seek(doc, value);
@@ -121,9 +121,9 @@ BOOL mqusdImporterWindow::OnSampleSlide(MQWidgetBase* sender, MQDocument doc)
 {
     const size_t buf_len = 128;
     wchar_t buf[buf_len];
-    auto value = m_slider_time->GetPosition();
-    swprintf(buf, buf_len, L"%lf", value);
-    m_edit_time->SetText(buf);
+    int value = (int)m_slider_frame->GetPosition();
+    swprintf(buf, buf_len, L"%d", value);
+    m_edit_frame->SetText(buf);
     Repaint(true);
 
     Seek(doc, value);
@@ -223,8 +223,14 @@ bool mqusdImporterWindow::Open(MQDocument doc, const std::string& path)
     m_importer.reset(new DocumentImporter(m_plugin, m_scene.get(), &m_options));
     m_importer->read(doc, m_scene->time_start);
 
-    m_slider_time->SetMin(0.0);
-    m_slider_time->SetMax(GetTimeRange());
+    if (m_scene->frame_count > 0) {
+        m_slider_frame->SetMin(1.0);
+        m_slider_frame->SetMax(double(m_scene->frame_count));
+    }
+    else {
+        m_slider_frame->SetMin(1.0);
+        m_slider_frame->SetMax(1.0);
+    }
 
     return true;
 }
@@ -233,17 +239,17 @@ bool mqusdImporterWindow::Close()
 {
     m_importer = {};
     m_scene = {};
-    m_seek_time = 0;
+    m_last_frame = 0;
     return true;
 }
 
-void mqusdImporterWindow::Seek(MQDocument doc, double t)
+void mqusdImporterWindow::Seek(MQDocument doc, int frame)
 {
     if (!m_importer)
         return;
 
-    m_seek_time = t;
-    m_importer->read(doc, m_seek_time + m_scene->time_start);
+    m_last_frame = frame;
+    m_importer->read(doc, m_scene->frameToTime(frame - 1));
 
     // repaint
     MQ_RefreshView(nullptr);
@@ -251,18 +257,12 @@ void mqusdImporterWindow::Seek(MQDocument doc, double t)
 
 void mqusdImporterWindow::Refresh(MQDocument doc)
 {
-    Seek(doc, m_seek_time);
+    Seek(doc, m_last_frame);
 }
 
 bool mqusdImporterWindow::IsOpened() const
 {
     return m_scene != nullptr;
 }
-
-double mqusdImporterWindow::GetTimeRange() const
-{
-    return m_scene ? m_scene->time_end - m_scene->time_start : 0.0;
-}
-
 
 } // namespace mqusd

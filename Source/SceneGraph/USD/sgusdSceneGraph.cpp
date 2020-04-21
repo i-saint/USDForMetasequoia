@@ -1121,7 +1121,7 @@ bool USDScene::open(const char* path_)
 
     g_current_scene = this;
 
-    m_scene->frame_count = int(m_stage->GetEndTimeCode() - m_stage->GetStartTimeCode());
+    m_scene->frame_count = int(m_stage->GetEndTimeCode() - m_stage->GetStartTimeCode()) + 1;
     m_scene->frame_rate = m_frame_rate = m_stage->GetFramesPerSecond();
     m_scene->time_start = m_stage->GetStartTimeCode() / m_frame_rate;
     m_scene->time_end = m_stage->GetEndTimeCode() / m_frame_rate;
