@@ -1,7 +1,7 @@
 #pragma once
 
-#define mqusdVersion        0.9.0
-#define mqusdVersionString  "0.9.0"
+#define mqusdVersion        1.0.0
+#define mqusdVersionString  "1.0.0"
 #define mqusdCopyRight      "Copyright(C) 2020, i-saint"
 
 #define mqusdPluginProduct      0x493ADF11
